@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Перед любой игрой — экран настроек: сколько игроков (2–5), имя, цвет и правила партии\n• «Играть онлайн» подбирает соперников на выбранное число игроков; можно добавить ботов, если ждать долго\n• Загрузка и поиск — анимация из пазлов, которые собираются по одной\n• Подсказки и кнопки больше не наезжают друг на друга"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Перед любой игрой — экран настроек: сколько игроков (2–5), имя, цвет и правила партии\n• «Играть онлайн» подбирает соперников на выбранное число игроков; можно добавить ботов, если ждать долго\n• Загрузка и поиск — анимация из пазлов, которые собираются по одной\n• Чище главный экран: версия игры теперь только в настройках"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -115,7 +115,6 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 .mode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 6px 12px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:var(--ink);cursor:pointer;min-width:0}
 .mode .mic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;margin-bottom:5px;color:var(--m);background:rgba(255,255,255,.07);background:color-mix(in srgb,var(--m) 18%,transparent);border:1px solid color-mix(in srgb,var(--m) 35%,transparent)}
 .mode b{font:700 13px var(--f-display);white-space:nowrap}.mode small{color:var(--muted);font-size:11px;line-height:1.25;text-align:center}
-.mfoot{color:var(--muted);font-size:11.5px;text-align:center;opacity:.7}
 @media (max-width:370px){.mode b{font-size:12px}.mode small{font-size:10.5px}}
 @media (max-height:640px){.logo{font-size:28px}.tag{display:none}.playon{min-height:72px}.mode{padding:10px 4px}.mode .mic{width:40px;height:40px}}
 #scr-match{background:radial-gradient(120% 70% at 50% 35%,#2d4174 0%,#18213d 55%,#0f1528 100%)}
@@ -403,7 +402,6 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
             <button class="mode" data-mode="local"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
           </div>
-          <div class="mfoot"><span id="ver"></span></div>
         </div>
       </section>
 
@@ -1479,7 +1477,7 @@ function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wall
 const giftReady = () => wallet.dailyBox !== today();
 function dailyBonus() {
   document.querySelectorAll('.goldchip').forEach(c => c.classList.toggle('hasgift', giftReady()));
-  if (giftReady() && wallet.daily !== today()) { wallet.daily = today(); saveWallet(); setTimeout(() => toastAny('Ежедневный подарок ждёт в магазине'), 700); }
+  if (giftReady() && wallet.daily !== today()) { wallet.daily = today(); saveWallet(); }
 }
 function openGift() {
   if (!giftReady()) return;
@@ -2196,9 +2194,8 @@ $('#again').onclick = () => { newGame(); show('game'); };
 const isApp = !!window.AndroidApp;
 if (isApp) {
   document.documentElement.classList.add('app');
-  $('#ver').textContent = 'версия ' + AndroidApp.versionName();
   showWhatsNew(AndroidApp.versionName());
-} else $('#ver').textContent = 'макет';
+}
 // After an update (from Google Play or GitHub) show what changed, once per version.
 function showWhatsNew(ver) {
   let last = null;
