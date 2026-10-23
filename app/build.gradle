@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+// CI passes -PversionCode=<n>; local builds use 1.
+def vc = (project.findProperty('versionCode') ?: '1') as int
+
+android {
+    namespace 'com.crownfall.mosaic'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.crownfall.mosaic'
+        minSdk 24
+        targetSdk 34
+        versionCode vc
+        versionName "1.0.${vc}"
+        buildConfigField 'String', 'UPDATE_REPO', '"crownfall90-dot/play"'
+    }
+    buildFeatures { buildConfig true }
+    signingConfigs {
+        release {
+            // Same key for every build, otherwise Android refuses to install updates over the old app.
+            storeFile file(System.getenv('KEYSTORE_FILE') ?: 'release.keystore')
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'mosaic-kingdom'
+            keyAlias System.getenv('KEY_ALIAS') ?: 'mosaic'
+            keyPassword System.getenv('KEY_PASSWORD') ?: 'mosaic-kingdom'
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.release }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}
+
+dependencies { implementation 'androidx.core:core:1.13.1' }
