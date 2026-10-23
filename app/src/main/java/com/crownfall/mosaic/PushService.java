@@ -34,7 +34,9 @@ public class PushService extends FirebaseMessagingService {
             return;
         }
         if (code <= BuildConfig.VERSION_CODE) return;
-        UpdateNotifier.announce(this, code, d.get("version"), d.get("notes"));
+        MainActivity open = MainActivity.visible();
+        if (open != null) open.runOnUiThread(open::checkSoon);
+        else UpdateNotifier.announce(this, code, d.get("version"), d.get("notes"));
     }
 
     @Override

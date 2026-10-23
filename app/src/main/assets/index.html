@@ -2,7 +2,20 @@
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <link rel="stylesheet" href="fonts/fonts.css">
-<script>window.RELEASE_NOTES = "• Онлайн с друзьями теперь на собственном сервере игры: быстрее, надёжнее и без дневных лимитов\n• Push-уведомление сразу, как выходит новая версия (можно выключить в настройках)"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>
+/* If the game cannot start (usually an outdated Android System WebView), say how to fix it instead of a blank screen. */
+(function () {
+  var m = /Chrome\/(\d+)/.exec(navigator.userAgent), old = m && +m[1] < 80;
+  function fail() {
+    if (window.__ready) return;
+    document.body.innerHTML = '<div style="font:16px sans-serif;color:#eef1f8;background:#101729;position:fixed;top:0;left:0;right:0;bottom:0;padding:32px;line-height:1.5">' +
+      '<h2 style="margin:0 0 12px">Не удалось запустить игру</h2><p>Обновите приложения «Android System WebView» и «Chrome» в Google Play и откройте игру снова.</p>' +
+      '<p><a style="color:#f2b84b" href="https://play.google.com/store/apps/details?id=com.google.android.webview">Открыть Android System WebView в Google Play</a></p></div>';
+  }
+  if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
+})();
+</script>
+<script>window.RELEASE_NOTES = "• Новая иконка игры\n• Меню во время партии: пауза в игре с ботами, отмена партии; в онлайне — сдаться или предложить ничью\n• Шестерёнка настроек в главном меню, настройка графики для слабых телефонов\n• Новую версию игра предлагает и при входе, и при возвращении в игру, и прямо во время игры\n• Надёжность: игра не вылетает на старых Android, сама восстанавливается после сбоев, кнопка «Назад» работает внутри игры"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -77,6 +90,12 @@ html.app .screen{padding-top:env(safe-area-inset-top,0px)}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
 .goldchip b{font:800 14px var(--f-display);font-variant-numeric:tabular-nums}
 .goldchip.static{position:static;margin-left:auto;cursor:default}
+.gearbtn{position:absolute;top:10px;left:14px;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
+.ocard .ghostbtn.danger{color:#ff8a80;border-color:rgba(255,138,128,.35)}
+.ocard .row2b{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pl.out{opacity:.45}
+html.lowgfx .tile .shd,html.lowgfx .tile .sd,html.lowgfx .bsh{display:none}
+html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 .figgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fig{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;color:var(--ink);font:600 12px var(--f-body)}
 .fig img{width:40px;height:52px}
@@ -275,6 +294,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 
       <section class="screen" id="scr-menu" hidden>
         <div class="hero"><div class="mini" id="mini"></div>
+          <button class="gearbtn" data-go="settings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
           <button class="goldchip" data-go="shop" aria-label="Золото, открыть магазин"><i class="coin"></i><b class="goldN">0</b></button></div>
         <div class="mbody">
           <h2 class="logo">Puzzle<span>grad</span></h2>
@@ -300,7 +320,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 
       <section class="screen scroll" id="scr-settings" hidden>
         <div class="lb">
-          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Настройки</b></div>
+          <div class="ltop"><button class="iconbtn" id="settingsBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Настройки</b></div>
           <div class="h3">Игра</div>
           <div class="opts" id="prefs"></div>
           <div class="h3">Ваше имя</div>
@@ -361,6 +381,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <button class="chip" id="addBot">+ Добавить бота</button>
             <div class="h3">Правила партии</div>
             <div class="opts" data-rules id="lbRules"></div>
+            <button class="cta wide" id="backToGame" hidden>Вернуться в партию</button>
             <button class="cta wide" id="lobbyStart">Начать игру</button>
             <p class="shint" id="lbWait" hidden>Ждём, когда создатель комнаты начнёт игру. Правила выбирает он.</p>
           </div>
@@ -369,7 +390,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 
       <section class="screen" id="scr-game">
         <div class="gtop">
-          <button class="iconbtn" data-go="menu" aria-label="Меню"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+          <button class="iconbtn" id="gameMenu" aria-label="Меню партии"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
           <div class="room"><b>Комната K7Q2</b><span><i></i>онлайн · 4 игрока</span></div>
           <div class="deck"><span class="dstack"><i></i><i></i><i></i></span><span><b id="deckN">0</b><small>в стопке</small></span></div>
         </div>
@@ -490,7 +511,9 @@ const hash = s => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 let net = null;
 let queue = [], applied = 0, gameLog = null;
 const fast = () => queue.length > 1;
-const wait = ms => new Promise(r => setTimeout(r, RM || fast() ? Math.min(ms, 40) : ms));
+// A paused offline game (game menu open) holds bots and animations until it resumes.
+let paused = false;
+const wait = ms => new Promise(r => { const go = () => paused && !net ? setTimeout(go, 150) : r(); setTimeout(go, RM || fast() ? Math.min(ms, 40) : ms); });
 const myId = (() => { let v = null; try { v = localStorage.getItem('clientId'); if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem('clientId', v); } } catch (_) {} return v || Math.random().toString(36).slice(2, 10); })();
 const $ = s => document.querySelector(s);
 const meepleSvg = col => `<svg viewBox="0 0 100 110"><path d="${MEEPLE_D}" fill="${col}" stroke="rgba(0,0,0,.35)" stroke-width="6"/></svg>`;
@@ -724,6 +747,7 @@ function addSprite(parent, kind, x, y, cls, delay, scale = 1) {
   parent.append(sh, b);
   return b;
 }
+const lowGfx = () => document.documentElement.classList.contains('lowgfx');
 function addDecor(el, t, delay) {
   const E = [0,1,2,3].map(d => edgeAt(t, d)), R = rng(t.seed), items = [];
   const city = [0,1,2,3].filter(d => E[d] === 'c');
@@ -738,7 +762,7 @@ function addDecor(el, t, delay) {
   }
   if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
   for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
-    if (E[a] === 'c' || E[b] === 'c') continue;
+    if (E[a] === 'c' || E[b] === 'c' || lowGfx()) continue;
     if (R() < .62) items.push([R() < .55 ? 'pine' : 'oak', sx * (.33 + R()*.06) + (R() - .5) * .06, sy * (.33 + R()*.06)]);
   }
   items.sort((p, q) => p[2] - q[2]);
@@ -859,7 +883,7 @@ $('#view').onclick = e => { const top = cam.tilt > 40; e.currentTarget.textConte
 const playersEl = $('#players'), statusEl = $('#status'), toastEl = $('#toast'), okBtn = $('#ok'), rotBtn = $('#rot');
 const prow = $('#prow'), mrow = $('#mrow'), tface = $('#tface'), ct = $('#ct'), cname = $('#cname');
 function renderPlayers(bump = []) {
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -1019,11 +1043,14 @@ function stopTimer() { clearInterval(timerId); $('#timer').hidden = true; }
 function startTimer() {
   stopTimer();
   if (!gameRules.timer) return;
-  const el = $('#timer'), end = Date.now() + gameRules.timer * 1000, my = token, who = turn;
+  const el = $('#timer'), my = token, who = turn;
+  let end = Date.now() + gameRules.timer * 1000, last = Date.now();
   el.hidden = false;
   const tick = () => {
     if (my !== token || who !== turn || !['place', 'meeple', 'handover'].includes(phase)) return stopTimer();
-    if (phase === 'handover') return;
+    const now = Date.now();
+    if (phase === 'handover' || (paused && !net)) { end += now - last; last = now; return; }
+    last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
     el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
     if (left > 0) return;
@@ -1062,30 +1089,37 @@ async function aiTurn() {
   await dropAt(t); if (my !== token) return;
   afterPlace(t, p);
 }
-async function endGame() {
+// reason: undefined — the deck ran out; 'draw' — everyone agreed to a draw; 'resign' — only one person is left.
+async function endGame(reason) {
+  if (phase === 'end') return;
+  if (reason) { token++; turnTok++; stopTimer(); if (ghost) { ghost.remove(); ghost = null; } if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; } }
   const my = token;
   phase = 'end'; clearSlots(); renderPlayers(); okBtn.disabled = rotBtn.disabled = true; renderTray();
-  setStatus('Стопка закончилась — досчитываем недостроенное');
-  await wait(500);
-  const seen = new Set();
-  for (const m of [...meeples]) {
-    if (my !== token) return;
-    if (!meeples.includes(m) || seen.has(m.gid)) continue;
-    const c = component(m.t, m.g); c.ids.forEach(i => seen.add(i));
-    await resolveFeature(c, true);
+  if (!reason) {
+    setStatus('Стопка закончилась — досчитываем недостроенное');
+    await wait(500);
+    const seen = new Set();
+    for (const m of [...meeples]) {
+      if (my !== token) return;
+      if (!meeples.includes(m) || seen.has(m.gid)) continue;
+      const c = component(m.t, m.g); c.ids.forEach(i => seen.add(i));
+      await resolveFeature(c, true);
+    }
   }
   if (!net) clearSave();
-  const gold = payout();
+  const gold = payout(reason);
   renderResults(true, gold);
   const order = ranked(), top = order[0];
   const over = $('#over');
-  over.innerHTML = `<div class="ocard"><h3>${winTitle(top, true)}</h3><p>${top.score} очков · стопка закончилась</p>${gold ? `<div class="goldres${gold.delta < 0 ? ' neg' : ''}"><i class="coin"></i>${gold.text}</div>` : ''}<button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
+  const title = reason === 'draw' ? 'Ничья' : winTitle(top, true);
+  const sub = reason === 'draw' ? 'Все игроки согласились на ничью' : reason === 'resign' ? 'Соперники сдались' : `${top.score} очков · стопка закончилась`;
+  over.innerHTML = `<div class="ocard"><h3>${title}</h3><p>${sub}</p>${gold ? `<div class="goldres${gold.delta < 0 ? ' neg' : ''}"><i class="coin"></i>${gold.text}</div>` : ''}<button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
   $('#again2').onclick = () => net ? show('lobby') : newGame();
   setStatus('Партия окончена');
 }
 const winTitle = (p, final) => isMe(p) ? (final ? 'Вы победили!' : 'Вы лидируете') : `${final ? 'Побеждает' : 'Лидирует'} ${p.name}`;
-const ranked = () => players.map((p, i) => ({...p, i})).sort((a, b) => b.score - a.score);
+const ranked = () => players.map((p, i) => ({...p, i})).sort((a, b) => (a.resigned ? 1 : 0) - (b.resigned ? 1 : 0) || b.score - a.score);
 
 /* ---------------- setup ---------------- */
 function buildBoard() {
@@ -1128,7 +1162,7 @@ function newGame() {
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
-  token++; turnTok++; stopTimer();
+  token++; turnTok++; stopTimer(); closeGameMenu();
   queue = replay.slice(); applied = 0;
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
@@ -1199,9 +1233,14 @@ function dailyBonus() {
 // Win against bots: +10 per opponent. Online: everyone stakes 20, the pot goes to the best places.
 // Several people on one phone: no gold, since one person could play all seats.
 const SHARES = {2: [1, 0], 3: [.7, .3, 0], 4: [.6, .3, .1, 0], 5: [.5, .3, .2, 0, 0]};
-function payout() {
+function payout(reason) {
   const meIdx = players.findIndex(p => isMe(p));
   if (meIdx < 0) return null;
+  if (reason === 'draw') {
+    if (net) wallet.paid = ['g' + net.gameId, ...wallet.paid].slice(0, 30);
+    saveWallet();
+    return net && gameLog.staked ? {delta: 0, text: 'Ничья — ставка вернулась'} : null;
+  }
   const higher = i => players.filter(p => p.score > players[i].score).length;
   let delta;
   if (net) {
@@ -1211,8 +1250,8 @@ function payout() {
     const humans = players.map((p, i) => i).filter(i => players[i].human);
     if (humans.length < 2) { saveWallet(); return null; }
     if (!gameLog.staked) { saveWallet(); return {delta: 0, text: 'Без ставки: золота было меньше 20'}; }
-    const share = SHARES[humans.length], rank = humans.filter(i => players[i].score > players[meIdx].score).length;
-    const tied = humans.filter(i => players[i].score === players[meIdx].score).length;
+    const share = SHARES[humans.length], rank = reason === 'resign' ? 0 : humans.filter(i => players[i].score > players[meIdx].score).length;
+    const tied = reason === 'resign' ? 1 : humans.filter(i => players[i].score === players[meIdx].score).length;
     const got = share.slice(rank, rank + tied).reduce((a, b) => a + b, 0) / tied;
     delta = Math.round(20 * humans.length * got) - 20;
   } else {
@@ -1331,8 +1370,13 @@ const PREFS = [
   {k: 'notify', label: 'Уведомления об обновлениях', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
   {k: 'view', label: 'Вид поля', opts: [['3d', '3D'], ['top', 'Сверху']]},
   {k: 'speed', label: 'Скорость ботов', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
+  {k: 'gfx', label: 'Графика', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
 ];
-Object.assign(wallet, Object.assign({notify: true, view: '3d', speed: 'normal'}, wallet));
+// Phones with little memory start on the light graphics (no tile sides, shadows and trees).
+const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
+Object.assign(wallet, Object.assign({notify: true, view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high'}, wallet));
+const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
+applyGfx();
 function renderPrefs() {
   $('#prefs').innerHTML = PREFS.filter(r => !r.app || window.AndroidApp).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span></div>`).join('');
   $('#prefName').value = clean(setup.seats[0].name);
@@ -1347,11 +1391,84 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'sound') beep('turn');
   if (r.k === 'notify' && window.AndroidApp && AndroidApp.setUpdateNotifications) AndroidApp.setUpdateNotifications(wallet.notify);
   if (r.k === 'view') setView(wallet.view);
+  if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
 });
 $('#prefName').addEventListener('input', e => { setup.seats[0].name = e.target.value; saveSetup(); renderSetup(); });
 $('#checkUpd').onclick = () => { $('#checkUpd').textContent = 'Проверяем…'; AndroidApp.checkUpdates(); setTimeout(() => $('#checkUpd').textContent = 'Проверить обновления', 4000); };
 window.onNoUpdate = () => { $('#checkUpd').textContent = 'Проверить обновления'; toastAny('У вас последняя версия'); };
 function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
+
+/* ---------------- game menu: pause, settings, cancel / resign, draw ---------------- */
+const mySeat = () => players.findIndex((p, i) => net && p.owner === myId && !p.resigned);
+let settingsReturn = 'menu';
+function closeGameMenu() { const b = document.getElementById('gmenu'); if (b) b.remove(); paused = false; }
+function openGameMenu() {
+  if (document.getElementById('gmenu')) return;
+  const live = phase !== 'end' && players.length;
+  if (!net && live) paused = true;
+  const online = !!net, seat = mySeat();
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'gmenu'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><h3>${online ? 'Онлайн-партия' : live ? 'Пауза' : 'Меню'}</h3>
+    <p>${online ? 'Партия идёт, пока вы в меню' : live ? 'Боты ждут, время хода остановлено' : ''}</p>
+    <button class="cta wide" data-a="resume">Продолжить</button>
+    <button class="ghostbtn" data-a="settings">Настройки</button>
+    ${online && live && seat >= 0 ? `<div class="row2b"><button class="ghostbtn" data-a="draw">Предложить ничью</button><button class="ghostbtn danger" data-a="resign">Сдаться</button></div>` : ''}
+    ${!online && live ? '<button class="ghostbtn danger" data-a="cancel">Отменить партию</button>' : ''}
+    <button class="ghostbtn" data-a="menu">Выйти в главное меню</button></div>`;
+  document.body.append(box);
+  const confirmOnce = (b, text) => { if (b.dataset.sure) return true; b.dataset.sure = 1; b.textContent = text; return false; };
+  box.addEventListener('click', e => {
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const a = b.dataset.a;
+    if (a === 'resume') return closeGameMenu();
+    if (a === 'settings') { box.remove(); settingsReturn = 'game'; return show('settings'); }
+    if (a === 'menu') { box.remove(); return show('menu'); }
+    if (a === 'cancel') {
+      if (!confirmOnce(b, 'Точно отменить? Нажмите ещё раз')) return;
+      token++; turnTok++; stopTimer(); clearSave(); closeGameMenu(); phase = 'end';
+      toastAny('Партия отменена'); return show('menu');
+    }
+    if (a === 'resign') {
+      if (phase === 'meeple' && turn === seat) return toastAny('Сначала завершите ход');
+      if (!confirmOnce(b, 'Точно сдаться? Нажмите ещё раз')) return;
+      const key = 'g' + net.gameId;
+      if (gameLog.staked && !wallet.paid.includes(key)) { wallet.gold = Math.max(0, wallet.gold - 20); wallet.paid = [key, ...wallet.paid].slice(0, 30); saveWallet(); toastAny('Вы сдались: −20 золота'); }
+      netSend({t: 'resign', g: net.gameId, p: seat}); return closeGameMenu();
+    }
+    if (a === 'draw') {
+      netSend({t: 'draw', g: net.gameId, p: seat, id: Math.random().toString(36).slice(2, 8)});
+      toast('Предложение ничьей отправлено'); return closeGameMenu();
+    }
+  });
+}
+$('#gameMenu').onclick = openGameMenu;
+$('#settingsBack').onclick = () => { const back = settingsReturn; settingsReturn = 'menu'; show(back); if (back === 'game') openGameMenu(); };
+const activeHumans = () => players.map((p, i) => i).filter(i => players[i].human && !players[i].resigned);
+function onResign(p) {
+  const pl = players[p];
+  if (pl.resigned) return;
+  // The seat is played by a bot from now on (run by the room creator's phone).
+  pl.resigned = true; pl.human = false; pl.owner = null;
+  toast(`${pl.name} сдаётся`); renderPlayers();
+  if (activeHumans().length <= 1) return endGame('resign');
+  if (turn === p && ['remote', 'place', 'handover', 'ai'].includes(phase)) { cancelTurn(); if (net.host) { phase = 'ai'; aiTurn(); } else waitRemote(); }
+}
+const drawOffers = {};
+function onDrawOffer(m) {
+  drawOffers[m.id] = {from: m.p, yes: new Set([m.p])};
+  const me = mySeat();
+  if (me < 0 || me === m.p) return;
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><h3>${players[m.p].name} предлагает ничью</h3><p>Если согласятся все, партия закончится, ставки вернутся</p><div class="row2b"><button class="cta" data-ok="1">Принять</button><button class="ghostbtn" data-ok="0">Отказаться</button></div></div>`;
+  document.body.append(box);
+  box.onclick = e => { const b = e.target.closest('[data-ok]'); if (!b) return; box.remove(); netSend({t: 'drawReply', g: net.gameId, p: me, id: m.id, ok: b.dataset.ok === '1'}); };
+}
+function onDrawReply(m) {
+  const d = drawOffers[m.id]; if (!d) return;
+  if (!m.ok) { delete drawOffers[m.id]; if (mySeat() === d.from) toastAny(`${players[m.p].name} отказывается от ничьей`); return; }
+  d.yes.add(m.p);
+  if (activeHumans().every(i => d.yes.has(i))) { delete drawOffers[m.id]; endGame('draw'); }
+}
 
 /* ---------------- setup ---------------- */
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
@@ -1496,6 +1613,10 @@ function onNet(d) {
     return show('game');
   }
   if (m.t === 'move') return onMove(m);
+  if (m.g !== net.gameId || !players[m.p] || phase === 'end') return;
+  if (m.t === 'resign') return onResign(m.p);
+  if (m.t === 'draw') return onDrawOffer(m);
+  if (m.t === 'drawReply') return onDrawReply(m);
 }
 function onMove(m) {
   if (m.g !== net.gameId || m.n < applied || queue.some(q => q.n === m.n)) return;
@@ -1537,9 +1658,10 @@ function renderLobby() {
   $('#lbCount').textContent = `Игроки · ${seats.length} из 5`;
   $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= 5;
-  $('#lobbyStart').hidden = !net.host; $('#lobbyStart').disabled = seats.length < 2;
+  $('#lobbyStart').hidden = !net.host || (!!net.gameId && phase !== 'end'); $('#lobbyStart').disabled = seats.length < 2;
   $('#lobbyStart').textContent = seats.length < 2 ? 'Нужно хотя бы 2 игрока' : 'Начать игру';
-  $('#lbWait').hidden = net.host;
+  $('#lbWait').hidden = net.host || (!!net.gameId && phase !== 'end');
+  $('#backToGame').hidden = !(net.gameId && phase !== 'end');
   $('#lbRules').style.pointerEvents = net.host ? '' : 'none';
   renderRules();
 }
@@ -1556,6 +1678,7 @@ $('#join').onclick = () => {
 $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.gameId) leaveRoom(); show('menu'); renderLobby(); };
 $('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig()}); publishLobby(seats); };
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
+$('#backToGame').onclick = () => show('game');
 $('#lobbyStart').onclick = () => {
   const seats = net.lobby.seats;
   netSend({t: 'start', seats: seats.map(x => ({name: x.name, owner: x.owner || null, fig: x.fig || 'classic'})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
@@ -1599,22 +1722,50 @@ function showWhatsNew(ver) {
   box.querySelector('.cta').onclick = () => box.remove();
   document.body.append(box);
 }
-// Called by the Android shell when GitHub has a newer release.
-window.onUpdateAvailable = info => {
-  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+// Called by the Android shell (GitHub build) when a newer release exists: on launch, on return
+// to the app, on an update push while the game is open, and every 15 minutes while it stays open.
+let updBox = null;
+const updLater = {};
+window.onUpdateAvailable = (info, manual) => {
+  if (updBox && document.body.contains(updBox)) return;
+  // "Later" quiets this version for half an hour unless the player asked to check.
+  if (!manual && updLater[info.version] && Date.now() - updLater[info.version] < 30 * 60 * 1000) return;
+  const box = updBox = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><h3>Вышло обновление ${info.version}</h3><p>Что нового:</p><div class="notes-list"></div><div class="prog" hidden><i></i></div><button class="cta wide" id="upd">Обновить</button><button class="ghostbtn" id="later">Позже</button></div>`;
   box.querySelector('.notes-list').textContent = info.notes || 'Исправления и улучшения';
+  if (players.length && phase !== 'end' && phase !== 'idle') box.querySelector('p').textContent = (net ? 'После обновления вернитесь в комнату по коду. ' : 'Партия сохранится. ') + 'Что нового:';
   document.body.append(box);
-  box.querySelector('#later').onclick = () => box.remove();
+  box.querySelector('#later').onclick = () => { updLater[info.version] = Date.now(); box.remove(); };
   box.querySelector('#upd').onclick = e => { e.currentTarget.disabled = true; e.currentTarget.textContent = 'Скачиваем…'; box.querySelector('.prog').hidden = false; AndroidApp.startUpdate(info.url); };
   window.onUpdateProgress = pct => { const i = box.querySelector('.prog i'); if (i) i.style.width = pct + '%'; };
   window.onUpdateError = msg => { const b = box.querySelector('#upd'); b.disabled = false; b.textContent = 'Повторить'; toast(msg); };
 };
 
+// Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.
+window.onBack = () => {
+  const dlg = [...document.querySelectorAll('body > .over')].pop();
+  if (dlg) { if (dlg.id === 'gmenu') closeGameMenu(); else if (dlg !== updBox || !dlg.querySelector('#upd').disabled) dlg.remove(); return true; }
+  const cur = [...document.querySelectorAll('.screen')].find(x => !x.hidden);
+  if (!cur || cur.id === 'scr-menu') return false;
+  if (cur.id === 'scr-game' && phase !== 'end') { openGameMenu(); return true; }
+  if (cur.id === 'scr-settings') { $('#settingsBack').click(); return true; }
+  show('menu'); return true;
+};
+
+// Errors must never leave a dead screen: report them and keep playing.
+let errShown = false;
+function reportError(msg) {
+  try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError(String(msg).slice(0, 500)); } catch (_) {}
+  if (!errShown) { errShown = true; toast('Что-то пошло не так, игра продолжает работу'); }
+}
+window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
+window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.reason && e.reason.message || e.reason)));
+
 injectArt();
 dailyBonus(); renderResume(); renderPrefs();
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
+window.__ready = true;
 show(isApp ? 'menu' : 'game');
 })();
 </script>
