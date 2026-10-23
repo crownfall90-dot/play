@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "467929090444",
+    "firebase_url": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "puzzlegrad",
+    "storage_bucket": "puzzlegrad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:467929090444:android:411729a8a499a51d9a6ea9",
+        "android_client_info": {
+          "package_name": "com.crownfall.mosaic"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
