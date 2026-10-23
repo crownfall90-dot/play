@@ -66,7 +66,7 @@ class Updater {
             } catch (Exception ignored) {
                 // No internet: play offline.
             }
-            if (info != null) activity.js("window.onUpdateAvailable && window.onUpdateAvailable(" + info + ")");
+            if (info != null) activity.js("window.onUpdateAvailable && window.onUpdateAvailable(" + info + ", " + manual + ")");
             else if (manual) activity.js("window.onNoUpdate && window.onNoUpdate()");
         }).start();
     }
