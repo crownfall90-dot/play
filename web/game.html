@@ -261,6 +261,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .ocard p{margin:0;color:var(--muted)}
 .ocard .notes-list{text-align:left;max-height:40vh;overflow:auto;background:rgba(0,0,0,.2);border-radius:12px;padding:10px 12px;white-space:pre-wrap;font-size:13px;color:var(--ink)}
 .prog{height:8px;border-radius:4px;background:rgba(255,255,255,.1);overflow:hidden} .prog i{display:block;height:100%;width:0;background:var(--brass);transition:width .2s}
+.ghostbtn.manual{display:grid;place-items:center;text-decoration:none;color:var(--brass)}
 .ghostbtn{height:46px;border-radius:14px;border:1px solid var(--line);background:transparent;font:600 13px var(--f-body);cursor:pointer;color:var(--muted)}
 
 /* ---------- results ---------- */
@@ -1910,14 +1911,19 @@ window.onUpdateAvailable = (info, manual) => {
   // "Later" quiets this version for half an hour unless the player asked to check.
   if (!manual && updLater[info.version] && Date.now() - updLater[info.version] < 30 * 60 * 1000) return;
   const box = updBox = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>Вышло обновление ${info.version}</h3><p>Что нового:</p><div class="notes-list"></div><div class="prog" hidden><i></i></div><button class="cta wide" id="upd">Обновить</button><button class="ghostbtn" id="later">Позже</button></div>`;
+  box.innerHTML = `<div class="ocard"><h3>Вышло обновление ${info.version}</h3><p>Что нового:</p><div class="notes-list"></div><div class="prog" hidden><i></i></div><button class="cta wide" id="upd">Обновить</button><a class="ghostbtn manual" id="manual" hidden href="https://github.com/crownfall90-dot/play/releases/latest">Скачать вручную</a><button class="ghostbtn" id="later">Позже</button></div>`;
   box.querySelector('.notes-list').textContent = info.notes || 'Исправления и улучшения';
   if (players.length && phase !== 'end' && phase !== 'idle') box.querySelector('p').textContent = (net ? 'После обновления вернитесь в комнату по коду. ' : 'Партия сохранится. ') + 'Что нового:';
   document.body.append(box);
   box.querySelector('#later').onclick = () => { updLater[info.version] = Date.now(); box.remove(); };
   box.querySelector('#upd').onclick = e => { e.currentTarget.disabled = true; e.currentTarget.textContent = 'Скачиваем…'; box.querySelector('.prog').hidden = false; AndroidApp.startUpdate(info.url); };
   window.onUpdateProgress = pct => { const i = box.querySelector('.prog i'); if (i) i.style.width = pct + '%'; };
-  window.onUpdateError = msg => { const b = box.querySelector('#upd'); b.disabled = false; b.textContent = 'Повторить'; toast(msg); };
+  // If installing fails, the release page in the browser is the way out.
+  window.onUpdateError = msg => {
+    const b = box.querySelector('#upd'); b.disabled = false; b.textContent = 'Повторить';
+    box.querySelector('.prog').hidden = true; box.querySelector('#manual').hidden = false;
+    toastAny(msg);
+  };
 };
 
 // Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.
