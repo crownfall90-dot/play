@@ -65,21 +65,58 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 
 /* ---------- menu ---------- */
 #scr-menu{background:radial-gradient(120% 60% at 50% 20%,#34477a 0%,#18213d 55%,#0f1528 100%)}
-.hero{position:relative;flex:0 0 40%;perspective:700px;overflow:hidden}
-.mini{position:absolute;left:50%;top:56%;width:0;height:0;transform-style:preserve-3d;--tilt:56deg;animation:sway 9s ease-in-out infinite}
+.mtop{position:relative;z-index:3;display:flex;justify-content:space-between;align-items:center;padding:10px 14px 0}
+.mside{display:flex;gap:8px;align-items:center}
+.topbtn{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);color:var(--ink);cursor:pointer;padding:0}
+.topbtn:active,.goldchip:active{transform:scale(.94)}
+.mtop .goldchip{position:relative;top:auto;right:auto;height:40px;box-sizing:border-box}
+.hero{position:relative;flex:1 1 34%;min-height:120px;perspective:700px;overflow:hidden;margin-top:-50px;pointer-events:none}
+.hero{-webkit-mask-image:linear-gradient(to bottom,#000 72%,transparent);mask-image:linear-gradient(to bottom,#000 72%,transparent)}
+.mini{position:absolute;left:50%;top:58%;width:0;height:0;transform-style:preserve-3d;--tilt:56deg;animation:sway 9s ease-in-out infinite}
 @keyframes sway{0%,100%{transform:rotateX(56deg) rotateZ(-12deg) scale3d(.8,.8,.8)}50%{transform:rotateX(56deg) rotateZ(10deg) scale3d(.8,.8,.8)}}
-.mbody{flex:1;display:flex;flex-direction:column;gap:10px;padding:0 22px 22px}
-.logo{font-family:var(--f-display);font-weight:800;font-size:30px;line-height:1.02;margin:0;text-wrap:balance}
+.mbody{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:0 18px calc(14px + var(--ib,0px));width:100%;max-width:440px;margin:0 auto;box-sizing:border-box}
+.logo{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1;margin:0;text-align:center;letter-spacing:-.5px;text-shadow:0 4px 24px rgba(0,0,0,.45)}
 .logo span{color:var(--brass)}
-.tag{color:var(--muted);margin:0 0 6px;font-size:13.5px}
-.mbtn{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;width:100%;border:1px solid var(--line);background:rgba(255,255,255,.05);border-radius:16px;padding:11px 16px;cursor:pointer}
-.mbtn span{font:700 14px var(--f-display)} .mbtn small{color:var(--muted);font-size:12px}
-.mbtn.primary{background:var(--brass);border-color:transparent;color:var(--brass-ink)} .mbtn.primary small{color:#5b3f0e}
-.mfoot{margin-top:auto;color:var(--muted);font-size:12px;text-align:center}
-.online{font:600 11px var(--f-body);font-style:normal;color:#7fe0a8;margin-left:6px;white-space:nowrap;vertical-align:2px}
-.online i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fc27a;margin-right:5px;box-shadow:0 0 0 3px rgba(63,194,122,.2)}
+.tag{color:var(--muted);margin:-4px 0 4px;font-size:13px;text-align:center}
+.resume{display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border-radius:18px;border:1px solid rgba(242,184,75,.45);background:rgba(242,184,75,.1);color:var(--ink);text-align:left;cursor:pointer}
+.resume .ric{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--brass);color:var(--brass-ink);flex:0 0 auto}
+.resume .rtx{display:flex;flex-direction:column;min-width:0}.resume b{font:700 14px var(--f-display)}.resume small{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.playon{position:relative;overflow:hidden;display:flex;align-items:center;gap:14px;width:100%;min-height:84px;padding:14px 18px;border:0;border-radius:24px;cursor:pointer;text-align:left;color:var(--brass-ink);
+  background:linear-gradient(160deg,#ffd77a 0%,#f2b84b 45%,#d9902a 100%);box-shadow:0 10px 30px rgba(242,184,75,.32),inset 0 1px 0 rgba(255,255,255,.55),inset 0 -3px 0 rgba(120,70,0,.25)}
+.playon:active,.mode:active,.resume:active{transform:scale(.97)}
+.playon .pglow{position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);transform:translateX(-120%);animation:shine 3.6s ease-in-out infinite;pointer-events:none}
+@keyframes shine{0%,55%{transform:translateX(-120%)}85%,100%{transform:translateX(120%)}}
+.playon .pic{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;background:rgba(42,26,2,.14);flex:0 0 auto}
+.playon .ptx{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.playon .ptx>b{font:800 20px var(--f-display);letter-spacing:-.2px}.playon .ptx small{font-size:12.5px;color:#5b3f0e}
+.playon .psub{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.playon .online{margin:0;padding:2px 8px;border-radius:999px;background:rgba(20,40,25,.82);color:#7fe0a8}
+.online{font:600 11px var(--f-body);font-style:normal;color:#7fe0a8;margin-left:6px;white-space:nowrap}
+.online i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fc27a;margin-right:5px;box-shadow:0 0 0 3px rgba(63,194,122,.2);animation:blink 2s ease-in-out infinite;vertical-align:1px}
+@keyframes blink{50%{opacity:.35}}
 .online b{font-variant-numeric:tabular-nums}
-.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.mode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 6px 12px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:var(--ink);cursor:pointer;min-width:0}
+.mode .mic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;margin-bottom:5px;color:var(--m);background:rgba(255,255,255,.07);background:color-mix(in srgb,var(--m) 18%,transparent);border:1px solid color-mix(in srgb,var(--m) 35%,transparent)}
+.mode b{font:700 13px var(--f-display);white-space:nowrap}.mode small{color:var(--muted);font-size:11px;line-height:1.25;text-align:center}
+.mfoot{color:var(--muted);font-size:11.5px;text-align:center;opacity:.7}
+@media (max-width:370px){.mode b{font-size:12px}.mode small{font-size:10.5px}}
+@media (max-height:640px){.logo{font-size:28px}.tag{display:none}.playon{min-height:72px}.mode{padding:10px 4px}.mode .mic{width:40px;height:40px}}
+#scr-match{background:radial-gradient(120% 70% at 50% 35%,#2d4174 0%,#18213d 55%,#0f1528 100%)}
+.mwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 24px calc(24px + var(--ib,0px));text-align:center}
+.radar{position:relative;width:150px;height:150px;display:grid;place-items:center;margin-bottom:10px}
+.radar span{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(242,184,75,.55);animation:ping 2.4s ease-out infinite;opacity:0}
+.radar span:nth-child(2){animation-delay:.8s}.radar span:nth-child(3){animation-delay:1.6s}
+@keyframes ping{from{transform:scale(.45);opacity:.9}to{transform:scale(1.15);opacity:0}}
+.radar i{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;color:var(--brass-ink);background:linear-gradient(160deg,#ffd77a,#d9902a);box-shadow:0 8px 30px rgba(242,184,75,.4)}
+.radar.found span{border-color:rgba(63,194,122,.6)}.radar.found i{background:linear-gradient(160deg,#8ff0b6,#2f9e60)}
+.mtitle{font:800 20px var(--f-display);margin:0}
+.mclock{font:700 15px var(--f-display);color:var(--brass);font-variant-numeric:tabular-nums}
+.mseats{list-style:none;margin:6px 0;padding:0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:58px}
+.mseats li{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);max-width:64px;animation:chestpop .4s cubic-bezier(.3,1.6,.5,1)}
+.mseats .av{width:44px;height:44px;font-size:17px}
+.mseats li.wait .av{background:transparent;border:2px dashed var(--line);color:var(--muted);animation:blink 1.6s ease-in-out infinite}
+.mact{display:flex;flex-direction:column;gap:10px;width:100%;max-width:360px;margin-top:8px}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -306,17 +343,26 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
       <div class="sbar"><span>9:41</span><span class="cam"></span><span>▾ ◢ 87%</span></div>
 
       <section class="screen" id="scr-menu" hidden>
-        <div class="hero"><div class="mini" id="mini"></div>
-          <button class="gearbtn" data-go="settings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
-          <button class="goldchip" data-go="shop" aria-label="Золото, открыть магазин"><i class="coin"></i><b class="goldN">0</b></button></div>
+        <div class="mtop">
+          <div class="mside"><button class="topbtn" data-go="settings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
+            <button class="topbtn" data-go="rules" aria-label="Как играть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button></div>
+          <div class="mside"><button class="topbtn shopbtn" data-go="shop" aria-label="Магазин"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg></button>
+            <button class="goldchip" data-go="shop" aria-label="Золото, открыть магазин"><i class="coin"></i><b class="goldN">0</b></button></div>
+        </div>
+        <div class="hero"><div class="mini" id="mini"></div></div>
         <div class="mbody">
           <h2 class="logo">Puzzle<span>grad</span></h2>
-          <p class="tag">Тяните карту из общей стопки и достраивайте города, дороги и крепости. Когда стопка закончится, побеждает тот, у кого больше очков.</p>
-          <button class="mbtn primary" id="resume" hidden><span>Продолжить партию</span><small id="resumeInfo"></small></button>
-          <button class="mbtn" id="playBtn" data-go="setup"><span>Играть</span><small>2–5 игроков: друзья с одного телефона и боты</small></button>
-          <button class="mbtn" data-go="lobby"><span>Онлайн с друзьями <em class="online" id="onlineN" hidden><i></i><b>0</b> в сети</em></span><small>Каждый со своего телефона, комната по коду</small></button>
-          <div class="mrow2"><button class="mbtn" data-go="shop"><span>Магазин</span><small>Фигурки и локации</small></button><button class="mbtn" data-go="rules"><span>Как играть</span><small>Правила за минуту</small></button></div>
-          <div class="mfoot"><button class="linkbtn" data-go="settings">Настройки</button> · <span id="ver"></span></div>
+          <p class="tag">Стройте города, дороги и крепости из общей стопки</p>
+          <button class="resume" id="resume" hidden><span class="ric"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg></span><span class="rtx"><b>Продолжить партию</b><small id="resumeInfo"></small></span></button>
+          <button class="playon" id="playOnline"><span class="pglow"></span>
+            <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
+            <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
+          <div class="modes">
+            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С друзьями</b><small>Комната по коду</small></button>
+            <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
+            <button class="mode" data-mode="local"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
+          </div>
+          <div class="mfoot"><span id="ver"></span></div>
         </div>
       </section>
 
@@ -359,21 +405,33 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
           <div class="rcard"><b>Золото</b><p>За место в партии с ботами или онлайн:</p><dl class="pts"><dt>1-е место</dt><dd>+15</dd><dt>2-е место</dt><dd>+10</dd><dt>3-е место</dt><dd>+5</dd><dt>4-е место</dt><dd>0</dd><dt>5-е место</dt><dd>−5</dd></dl><p>За одним телефоном золото не начисляется. Сдавшийся игрок золота не получает.</p></div>
           <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Дороги, города и крепости окрашиваются в цвет владельца; у спорных цвета чередуются.</p></div>
-          <button class="cta wide" data-go="setup">Сыграть</button>
+          <button class="cta wide" data-mode="bots">Сыграть</button>
         </div>
       </section>
 
       <section class="screen scroll" id="scr-setup" hidden>
         <div class="lb">
-          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Новая партия</b></div>
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b id="setupTitle">Новая партия</b></div>
           <div class="h3">Сколько игроков</div>
           <div class="seg" id="seg"><button>2</button><button>3</button><button>4</button><button>5</button></div>
           <div class="h3">Кто играет</div>
           <ul class="plist" id="slist"></ul>
           <div class="h3">Правила партии</div>
           <div class="opts" data-rules></div>
-          <p class="shint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
+          <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
           <button class="cta wide" id="start">Начать партию</button>
+        </div>
+      </section>
+
+      <section class="screen" id="scr-match" hidden>
+        <div class="lb"><div class="ltop"><button class="iconbtn" id="mBack" aria-label="Отменить поиск"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Играть онлайн</b><em class="online onlineN" hidden style="margin-left:auto"><i></i><b>0</b> в сети</em></div></div>
+        <div class="mwrap">
+          <div class="radar"><span></span><span></span><span></span><i><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></i></div>
+          <h3 class="mtitle" id="mTitle">Ищем соперников…</h3>
+          <p class="shint" id="mSub">Обычно это занимает меньше минуты</p>
+          <div class="mclock" id="mClock">0:00</div>
+          <ul class="mseats" id="mSeats"></ul>
+          <div class="mact"><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
         </div>
       </section>
 
@@ -1499,7 +1557,6 @@ function loadSave() { try { return JSON.parse(localStorage.getItem('savedGame'))
 function renderResume() {
   const sv = loadSave(), b = $('#resume');
   b.hidden = !sv || !sv.moves || !sv.cfg;
-  $('#playBtn').className = b.hidden ? 'mbtn primary' : 'mbtn';
   if (!b.hidden) $('#resumeInfo').textContent = `${sv.cfg.seats.length} ${sv.cfg.seats.length < 5 ? 'игрока' : 'игроков'} · сделано ходов: ${sv.moves.length}`;
 }
 $('#resume').onclick = () => { const sv = loadSave(); if (!sv) return renderResume(); if (net) leaveRoom(); startGame(sv.cfg, sv.moves); show('game'); };
@@ -1648,6 +1705,22 @@ $('#slist').addEventListener('click', e => {
 });
 $('#slist').addEventListener('click', e => { const b = e.target.closest('.kind button'); if (!b) return; setup.seats[+b.parentNode.dataset.i].human = b.dataset.h === '1'; saveSetup(); renderSetup(); });
 $('#start').onclick = () => { newGame(); show('game'); };
+// "С ботами": you against bots; "Локально": everyone at the table passes one phone. Any seat can still be switched.
+const SETUP_MODES = {
+  bots: {title: 'Игра с ботами', hint: 'Вы играете против ботов — они ходят сами. Любое место можно переключить на человека.', n: 2},
+  local: {title: 'На одном телефоне', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.', n: 2},
+};
+function openSetup(mode) {
+  const m = SETUP_MODES[mode];
+  setup.seats.forEach((x, i) => {
+    x.human = mode === 'local' || i === 0;
+    if (mode === 'local' && i && x.name === PL0[i].name) x.name = 'Игрок ' + (i + 1);
+    if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
+  });
+  $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
+  colorEdit = -1; saveSetup(); renderSetup(); show('setup');
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 function renderRules() {
   const total = Object.entries(TYPES).reduce((a, [, t]) => a + (setup.rules.rivers || !t.e.includes('w') ? t.n : 0), 0);
   const html = RULES.map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
@@ -1757,7 +1830,7 @@ async function presenceCount() {
     const r = await fetch(`${FB.dbUrl}/presence.json?auth=${tok}&orderBy=%22t%22&startAt=${Date.now() - 150000}`);
     if (!r.ok) return;
     const n = Object.keys((await r.json()) || {}).length;
-    $('#onlineN').hidden = !n; $('#onlineN b').textContent = n;
+    document.querySelectorAll('.onlineN').forEach(e => { e.hidden = !n; e.querySelector('b').textContent = n; });
   } catch (_) {}
 }
 let presenceTimer = 0;
@@ -1774,17 +1847,17 @@ function netSend(msg) {
   return TRANSPORT.send(net.code, msg).catch(() => toast('Нет связи — проверьте интернет'));
 }
 function leaveRoom() { if (net && net.close) net.close(); net = null; }
-function connect(code, asHost) {
+function connect(code, asHost, quick) {
   leaveRoom();
-  const me = net = {code, host: false, hostId: null, seen: new Set(), lobby: null, gameId: null, since: Date.now() / 1000};
+  const me = net = {code, host: false, hostId: null, seen: new Set(), lobby: null, gameId: null, since: Date.now() / 1000, quick: !!quick};
   let opened = false;
   net.close = TRANSPORT.listen(code, {
     open() {
       if (opened || net !== me) return; opened = true;
       (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, name: myName(), fig: wallet.fig, col: wallet.color}));
-      if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
+      if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { if (me.quick) return matchSkip(code); toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
     },
-    error() { if (!opened && net === me) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); } },
+    error() { if (!opened && net === me) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); if (me.quick) stopMatch(); } },
     msg(d) { if (net === me) onNet(d); },
   });
   renderLobby();
@@ -1805,6 +1878,8 @@ function onNet(d) {
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
   if (m.t === 'start') {
+    // Quick match: a room that started without us is no use — look for another one.
+    if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
     startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
@@ -1849,6 +1924,7 @@ async function pumpRemote() {
   afterPlace(t, mv.p, mv.m >= 0 ? groupsOf(t)[mv.m] : null);
 }
 function renderLobby() {
+  if (mm) matchRender();
   $('#lbJoin').hidden = !!net; $('#lbRoom').hidden = !net;
   if (!net) { if (!$('#myName').value) $('#myName').value = clean(setup.seats[0].name) || ''; return; }
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
@@ -1895,18 +1971,133 @@ $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.game
 $('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col}); publishLobby(seats); };
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
 $('#backToGame').onclick = () => show('game');
-$('#lobbyStart').onclick = () => {
-  const seats = net.lobby.seats;
+$('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
+function startOnline(seats) {
   netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, fig: x.fig || 'classic', col: x.col})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
-};
+}
 renderLobby();
 renderSetup();
+
+/* ---------------- quick match ("Играть онлайн") ----------------
+   Waiting rooms announce themselves in one shared log (room QMATCH): {t:'seek', code} every
+   10 s while they wait, {t:'close', code} once they start or give up. A player looking for a
+   game joins the freshest open room or, if there is none, opens one and waits there. Two
+   players who opened rooms at the same moment meet in the one with the smaller code. The
+   room's creator starts the game a few seconds after the second player comes in (at once
+   when it is full); from then on it is an ordinary online game. */
+const MATCH_ROOM = 'QMATCH', SEEK_MS = 10000, SEEK_FRESH = 25000, START_IN = 6;
+var mm = null; // var: renderLobby() looks at it before this line runs
+function quickMatch() {
+  if (!FB) return toastAny('Онлайн-поиск недоступен — используйте «С друзьями»');
+  if (net && net.gameId && phase !== 'end') return show('game');
+  stopMatch(true);
+  leaveRoom();
+  mm = {t0: Date.now(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0};
+  const me = mm;
+  me.timers.push(setInterval(() => matchTick(me), 1000));
+  (async () => {
+    let tok; try { tok = await fbToken(); } catch (_) { return matchFail(me); }
+    if (mm !== me) return;
+    const es = me.es = new EventSource(`${FB.dbUrl}/rooms/${MATCH_ROOM}/msgs.json?auth=${tok}&orderBy=%22%24key%22&limitToLast=40`);
+    const take = (v) => {
+      if (!v || typeof v.m !== 'string') return;
+      let m; try { m = JSON.parse(v.m); } catch (_) { return; }
+      if (!/^[A-Z0-9]{5}$/.test(m.code || '')) return;
+      if (m.t === 'close') me.closed.add(m.code);
+      if (m.t === 'seek' && m.id !== myId) me.seeks.set(m.code, Math.max(me.seeks.get(m.code) || 0, v.ts || 0));
+    };
+    const put = e => {
+      let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+      if (!d || !d.data) return;
+      if (d.path === '/') Object.values(d.data).forEach(take);
+      else if (d.path.split('/').length === 2) take(d.data);
+      if (!me.ready) { me.ready = true; matchDecide(me); } else matchDecide(me);
+    };
+    es.addEventListener('put', put); es.addEventListener('patch', put);
+    es.onopen = () => setTimeout(() => { if (!me.ready && mm === me) { me.ready = true; matchDecide(me); } }, 1500);
+    es.onerror = () => { if (!me.ready && mm === me) matchFail(me); };
+  })();
+  show('match'); matchRender();
+}
+function matchFail(me) { if (mm !== me) return; toastAny('Нет связи с сервером — проверьте интернет'); stopMatch(); show('menu'); }
+const matchSay = (msg) => FIRE.send(MATCH_ROOM, msg).catch(() => {});
+// Open rooms other players are waiting in, freshest first.
+function matchOpen(me) {
+  const now = Date.now();
+  return [...me.seeks].filter(([c, ts]) => !me.closed.has(c) && !me.skip.has(c) && now - ts < SEEK_FRESH && (!net || c !== net.code))
+    .sort((a, b) => b[1] - a[1]).map(x => x[0]);
+}
+function matchDecide(me) {
+  if (mm !== me || !me.ready) return;
+  const open = matchOpen(me);
+  if (!net) {
+    if (open.length) return connect(open[0], false, true);
+    const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    connect(Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''), true, true);
+    me.lastSeek = 0; return matchTick(me);
+  }
+  // Waiting alone in our own room while someone else waits too: one of us moves over.
+  const seats = net.lobby ? net.lobby.seats : [];
+  if (net.host && seats.length <= 1 && !net.gameId) {
+    const other = open.filter(c => c < net.code)[0];
+    if (other) { matchSay({t: 'close', code: net.code}); return connect(other, false, true); }
+  }
+}
+// A room turned out to be gone or already playing: forget it and look again.
+function matchSkip(code) {
+  if (!mm) return;
+  mm.skip.add(code); leaveRoom(); matchRender(); matchDecide(mm);
+}
+function matchTick(me) {
+  if (mm !== me) return;
+  const sec = Math.floor((Date.now() - me.t0) / 1000);
+  $('#mClock').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  $('#mBots').hidden = sec < 20 || !!me.startAt;
+  if (!net || !net.quick || net.gameId) return;
+  const seats = net.lobby ? net.lobby.seats : [];
+  if (net.host && !me.startAt && seats.length < 5 && Date.now() - me.lastSeek > SEEK_MS) { me.lastSeek = Date.now(); matchSay({t: 'seek', code: net.code, id: myId, n: seats.length}); }
+  // We knocked but the room's creator never let us in (closed the app, or the room is full).
+  if (!net.host && Date.now() - net.since * 1000 > 9000 && !seats.some(x => x.owner === myId)) return matchSkip(net.code);
+  if (net.host && me.startAt && Date.now() >= me.startAt) {
+    me.startAt = Infinity; matchSay({t: 'close', code: net.code}); startOnline(net.lobby.seats);
+  }
+  matchRender();
+}
+const meLabel = (me, name) => (name = clean(name), me && name !== 'Вы' ? name + ' (вы)' : name);
+function matchRender() {
+  if (!mm) return;
+  const seats = net && net.quick && net.lobby ? net.lobby.seats : [];
+  if (net && net.host && seats.length >= 2 && !mm.startAt) {
+    mm.startAt = Date.now() + (seats.length >= 5 ? 0 : START_IN * 1000);
+    matchSay({t: seats.length >= 5 ? 'close' : 'seek', code: net.code, id: myId, n: seats.length});
+  }
+  const found = seats.length >= 2, left = mm.startAt && mm.startAt !== Infinity ? Math.max(0, Math.ceil((mm.startAt - Date.now()) / 1000)) : 0;
+  $('.radar').classList.toggle('found', found);
+  $('#mTitle').textContent = !found ? 'Ищем соперников…' : net.host ? (left ? `Старт через ${left}…` : 'Начинаем!') : 'Соперник найден!';
+  $('#mSub').textContent = !found ? 'Обычно это занимает меньше минуты' : net.host ? 'Пока идёт отсчёт, могут подключиться ещё игроки' : 'Ждём, когда создатель комнаты начнёт партию';
+  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}</li>`);
+  if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
+  if (list.length < 2) list.push('<li class="wait"><span class="av">?</span>Соперник</li>');
+  const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
+}
+// keepRoom: the game is starting, so stay in the room; otherwise leave it (and close it if ours).
+function stopMatch(keepRoom) {
+  const me = mm; if (!me) return;
+  mm = null;
+  me.timers.forEach(clearInterval);
+  if (me.es) me.es.close();
+  if (!keepRoom && net && net.quick) { if (net.host && !net.gameId) matchSay({t: 'close', code: net.code}); if (!net.gameId) leaveRoom(); }
+}
+$('#playOnline').onclick = quickMatch;
+$('#mCancel').onclick = $('#mBack').onclick = () => show('menu');
+$('#mBots').onclick = () => openSetup('bots');
 
 /* ---------------- screens ---------------- */
 function show(name) {
   document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
   document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
   gameVisible = name === 'game';
+  if (mm && name !== 'match') stopMatch(name === 'game');
   if (name === 'results') renderResults(phase === 'end');
   if (gameVisible) { applyCam(); if (pendingStart) startTurn(); else pumpRemote(); }
   if (name === 'lobby') renderLobby();
