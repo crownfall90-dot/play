@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Обучение: первая партия с подсказками по шагам — выбрать место, повернуть, поставить, фишка. Награда 30 золота\n• Пройти обучение можно в любой момент: «Как играть» → «Пройти обучение»\n• Прогресс: уровни, ежедневные задания, достижения и рейтинг — кнопка с кубком в меню"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Объёмные пазлы: каждая карта — толстая плитка с травой и слоями земли по краям, скошенными гранями и зазорами между картами\n• Обучение для новичков, задания, достижения и рейтинг\n• Звуки и музыка; онлайн-партия не зависает, если игрок ушёл"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -216,7 +216,7 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .ocard .ghostbtn.danger{color:#ff8a80;border-color:rgba(255,138,128,.35)}
 .ocard .row2b{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pl.out{opacity:.45}
-html.lowgfx .tile .shd,html.lowgfx .tile .sd,html.lowgfx .bsh{display:none}
+html.lowgfx .tile .shd,html.lowgfx .bsh{display:none}
 html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .gift{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(242,184,75,.16),rgba(242,184,75,.04));border:1px solid rgba(242,184,75,.35)}
 .gift .gi{flex:1;min-width:0}.gift .gi b{display:block;font:700 14px var(--f-display)}.gift .gi small{color:var(--muted);font-size:12px}
@@ -337,10 +337,19 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .board.dragging{cursor:grabbing}
 .vp{position:absolute;inset:0;perspective:1000px;perspective-origin:50% 30%}
 .world{position:absolute;left:50%;top:48%;width:0;height:0;transform-style:preserve-3d;will-change:transform}
-.ground{position:absolute;left:-1800px;top:-1800px;width:3600px;height:3600px;transform:translateZ(-10px);background:radial-gradient(closest-side,rgba(64,98,66,.5),rgba(30,48,44,.22) 55%,transparent 100%);pointer-events:none}
+.ground{position:absolute;left:-1800px;top:-1800px;width:3600px;height:3600px;transform:translateZ(-15px);background:radial-gradient(closest-side,rgba(64,98,66,.5),rgba(30,48,44,.22) 55%,transparent 100%);pointer-events:none}
 .tile{position:absolute;width:88px;height:88px;transform-style:preserve-3d}
 .face{position:absolute;inset:0;background-size:100% 100%;border-radius:2px;transform:rotate(var(--r,0deg));transition:transform .28s cubic-bezier(.3,1.4,.5,1),filter .4s,box-shadow .4s}
-.tile .sd{position:absolute;left:0;right:0;top:100%;height:8px;transform-origin:top;transform:rotateX(-90deg);background:linear-gradient(#7a5d37,#3a2b18)}
+/* Chunky pieces: the top face sits on four walls of turf and soil hanging 14px down, with a
+   bevelled rim and a hair of space between neighbours so each piece reads on its own. */
+.tile .face{inset:.6px;border-radius:5px;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.28),inset -2px -2px 0 rgba(0,0,0,.22),inset 0 0 0 1px rgba(0,0,0,.12)}
+.tile .sd{position:absolute;background:linear-gradient(#5f9a3e 0,#5f9a3e 2.5px,#8a6a40 3px,#6f5232 55%,#4a3520 100%)}
+.tile .sd.s{left:.6px;right:.6px;top:calc(100% - .6px);height:14px;transform-origin:top;transform:rotateX(-90deg)}
+.tile .sd.n{left:.6px;right:.6px;top:.6px;height:14px;transform-origin:top;transform:rotateX(-90deg);filter:brightness(1.15)}
+.tile .sd.e{top:.6px;bottom:.6px;left:calc(100% - .6px);width:14px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#8a6a40 3px,#6f5232 55%,#4a3520 100%);filter:brightness(.82)}
+.tile .sd.w{top:.6px;bottom:.6px;left:.6px;width:14px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#8a6a40 3px,#6f5232 55%,#4a3520 100%);filter:brightness(1.08)}
+html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
+html.lowgfx .tile .sd.s{display:block}
 .tile .shd{position:absolute;inset:0;transform:translate3d(5px,8px,-9.5px);background:rgba(0,0,0,.35);border-radius:4px}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
 .tile.ghost .face{box-shadow:0 0 0 2.5px var(--brass),0 0 26px rgba(242,184,75,.65)}
@@ -376,7 +385,8 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .rbtn{width:54px;height:54px;border-radius:16px;border:1px solid var(--line);background:rgba(255,255,255,.06);display:grid;place-items:center;cursor:pointer}
 .card{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
 .ctw{perspective:320px}
-.ct{position:relative;width:74px;height:74px;transform:rotateX(26deg);transform-style:preserve-3d;border-radius:4px;box-shadow:0 0 0 2px var(--c,transparent),0 16px 16px -6px rgba(0,0,0,.6)}
+.ct{position:relative;width:74px;height:74px;transform:rotateX(26deg);transform-style:preserve-3d;border-radius:6px;box-shadow:0 0 0 2px var(--c,transparent),0 3px 0 #5f9a3e,0 5px 0 #7a5a36,0 10px 0 #4a3520,0 22px 18px -6px rgba(0,0,0,.6)}
+.ct .face{border-radius:6px;box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.3),inset -2px -2px 0 rgba(0,0,0,.2)}
 .ct::after{content:"";position:absolute;left:0;right:0;top:100%;height:7px;transform-origin:top;transform:rotateX(-90deg);background:linear-gradient(#7a5d37,#3a2b18)}
 .cname{text-align:center;font-size:12px;line-height:1.25;max-width:100%} .cname b{display:block;font-weight:600} .cname small{color:var(--muted);font-size:11px}
 .cta{height:54px;padding:0 18px;border-radius:16px;background:var(--brass);color:var(--brass-ink);font:700 13px var(--f-display);border:0;cursor:pointer}
@@ -965,10 +975,18 @@ function addDecor(el, t, delay) {
 function tileEl(t, decor, delay) {
   const el = document.createElement('div'); el.className = 'tile';
   el.style.left = (t.x * T - T / 2) + 'px'; el.style.top = (t.y * T - T / 2) + 'px';
-  el.innerHTML = `<i class="sd"></i><div class="face t-${t.type}" style="--r:${t.r * 90}deg"></div>`;
+  el.innerHTML = `<i class="sd n"></i><i class="sd e"></i><i class="sd s"></i><i class="sd w"></i><div class="face t-${t.type}" style="--r:${t.r * 90}deg"></div>`;
   if (decor) addDecor(el, t, delay);
   return el;
 }
+// Walls between two pieces are never seen: drop them, so only the outline of the kingdom has
+// walls (four planes per piece would slow down panning on weak phones).
+function walls(t, has = (x, y) => tiles.has(key(x, y))) {
+  if (!t.el) return;
+  const sd = t.el.querySelectorAll('.sd');
+  for (let d = 0; d < 4; d++) sd[d].hidden = has(t.x + DX[d], t.y + DY[d]);
+}
+function wallsAround(t) { walls(t); for (let d = 0; d < 4; d++) { const n = at(t.x + DX[d], t.y + DY[d]); if (n) walls(n); } }
 function placeMeeple(t, g, p, anim) {
   const [x, y] = groupPos(t, g);
   const el = addSprite(t.el, 'm' + p, x, y, '', anim && !fast() ? 0 : null);
@@ -1254,7 +1272,7 @@ async function dropAt(t) {
   ghost.classList.remove('ghost');
   await ghost.animate([{transform: 'translateZ(26px)'}, {transform: 'translateZ(0)'}], {duration: RM || fast() ? 1 : 260, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
   ghost.remove(); ghost = null;
-  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); markOwn();
+  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); markOwn();
   if (!fast()) beep('place');
   const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
   current = null; sel = null; renderDeck();
@@ -1527,7 +1545,8 @@ function startGame(cfg, replay = []) {
 }
 function buildMini() {
   const mini = $('#mini'); mini.innerHTML = '';
-  for (const t of tiles.values()) if (Math.abs(t.x) <= 1 && Math.abs(t.y - .5) <= 1.5) mini.append(tileEl(t, true, null));
+  const inMini = (x, y) => Math.abs(x) <= 1 && Math.abs(y - .5) <= 1.5 && tiles.has(key(x, y));
+  for (const t of tiles.values()) if (inMini(t.x, t.y)) { const el = tileEl(t, true, null); mini.append(el); walls({...t, el}, inMini); }
 }
 function renderResults(final, gold) {
   const o = ranked();
