@@ -27,38 +27,59 @@ class Updater {
         this.activity = activity;
     }
 
-    /** Asks GitHub for the latest release; tags look like v123 where 123 is the versionCode. */
-    void check() {
+    /** Latest GitHub release newer than this build, or null. Tags look like v123 where 123 is the versionCode. */
+    private static JSONObject latest() throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(
+                "https://api.github.com/repos/" + BuildConfig.UPDATE_REPO + "/releases/latest").openConnection();
+        c.setRequestProperty("Accept", "application/vnd.github+json");
+        c.setConnectTimeout(8000);
+        c.setReadTimeout(8000);
+        if (c.getResponseCode() != 200) return null;
+        String body;
+        try (Scanner sc = new Scanner(c.getInputStream(), "UTF-8").useDelimiter("\\A")) {
+            body = sc.hasNext() ? sc.next() : "";
+        }
+        JSONObject rel = new JSONObject(body);
+        int code = Integer.parseInt(rel.getString("tag_name").replaceAll("[^0-9]", ""));
+        if (code <= BuildConfig.VERSION_CODE) return null;
+        String url = null;
+        JSONArray assets = rel.getJSONArray("assets");
+        for (int i = 0; i < assets.length(); i++) {
+            JSONObject a = assets.getJSONObject(i);
+            if (a.getString("name").endsWith(".apk")) url = a.getString("browser_download_url");
+        }
+        if (url == null) return null;
+        JSONObject info = new JSONObject();
+        info.put("code", code);
+        info.put("version", rel.optString("name", "1.0." + code));
+        info.put("notes", rel.optString("body", ""));
+        info.put("url", url);
+        return info;
+    }
+
+    /** On launch (and from Settings): offer the newer version in the game. */
+    void check(boolean manual) {
+        new Thread(() -> {
+            JSONObject info = null;
+            try {
+                info = latest();
+            } catch (Exception ignored) {
+                // No internet: play offline.
+            }
+            if (info != null) activity.js("window.onUpdateAvailable && window.onUpdateAvailable(" + info + ")");
+            else if (manual) activity.js("window.onNoUpdate && window.onNoUpdate()");
+        }).start();
+    }
+
+    /** Background check for the update notification. */
+    static void findUpdate(android.content.Context c, UpdateNotifier.Found cb) {
         new Thread(() -> {
             try {
-                HttpURLConnection c = (HttpURLConnection) new URL(
-                        "https://api.github.com/repos/" + BuildConfig.UPDATE_REPO + "/releases/latest").openConnection();
-                c.setRequestProperty("Accept", "application/vnd.github+json");
-                c.setConnectTimeout(8000);
-                c.setReadTimeout(8000);
-                if (c.getResponseCode() != 200) return;
-                String body;
-                try (Scanner sc = new Scanner(c.getInputStream(), "UTF-8").useDelimiter("\\A")) {
-                    body = sc.hasNext() ? sc.next() : "";
-                }
-                JSONObject rel = new JSONObject(body);
-                int code = Integer.parseInt(rel.getString("tag_name").replaceAll("[^0-9]", ""));
-                if (code <= BuildConfig.VERSION_CODE) return;
-                String url = null;
-                JSONArray assets = rel.getJSONArray("assets");
-                for (int i = 0; i < assets.length(); i++) {
-                    JSONObject a = assets.getJSONObject(i);
-                    if (a.getString("name").endsWith(".apk")) url = a.getString("browser_download_url");
-                }
-                if (url == null) return;
-                JSONObject info = new JSONObject();
-                info.put("version", rel.optString("name", "1.0." + code));
-                info.put("notes", rel.optString("body", ""));
-                info.put("url", url);
-                activity.js("window.onUpdateAvailable && window.onUpdateAvailable(" + info + ")");
+                JSONObject info = latest();
+                if (info != null) { cb.found(info.getInt("code"), info.getString("version"), info.getString("notes")); return; }
             } catch (Exception ignored) {
-                // No internet or no releases yet: play offline.
             }
+            cb.found(0, "", "");
         }).start();
     }
 

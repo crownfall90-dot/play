@@ -19,6 +19,13 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         updater = new Updater(this);
+        UpdateNotifier.schedule(this);
+        if (android.os.Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                && !UpdateNotifier.prefs(this).getBoolean("askedNotify", false)) {
+            UpdateNotifier.prefs(this).edit().putBoolean("askedNotify", true).apply();
+            requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+        }
 
         // Android 15 draws apps edge to edge; keep the game clear of the status and navigation bars.
         FrameLayout root = new FrameLayout(this);
@@ -45,7 +52,7 @@ public class MainActivity extends Activity {
         web.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                updater.check();
+                updater.check(false);
             }
         });
         root.addView(web, new FrameLayout.LayoutParams(-1, -1));
@@ -75,5 +82,11 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void startUpdate(String url) { updater.download(url); }
+
+        @JavascriptInterface
+        public void checkUpdates() { updater.check(true); }
+
+        @JavascriptInterface
+        public void setUpdateNotifications(boolean on) { UpdateNotifier.setEnabled(MainActivity.this, on); }
     }
 }

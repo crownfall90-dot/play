@@ -17,13 +17,26 @@ class Updater {
         this.manager = AppUpdateManagerFactory.create(activity);
     }
 
-    void check() {
+    /** On launch (and from Settings): if Google Play has a newer version, open its update screen. */
+    void check(boolean manual) {
         manager.getAppUpdateInfo().addOnSuccessListener(info -> {
             if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
                     && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
                 start(info);
+            } else if (manual) {
+                activity.js("window.onNoUpdate && window.onNoUpdate()");
             }
+        }).addOnFailureListener(e -> {
+            if (manual) activity.js("window.onNoUpdate && window.onNoUpdate()");
         });
+    }
+
+    /** Background check for the update notification. */
+    static void findUpdate(android.content.Context c, UpdateNotifier.Found cb) {
+        AppUpdateManagerFactory.create(c).getAppUpdateInfo()
+                .addOnSuccessListener(info -> cb.found(
+                        info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE ? info.availableVersionCode() : 0, "", ""))
+                .addOnFailureListener(e -> cb.found(0, "", ""));
     }
 
     void onResume() {

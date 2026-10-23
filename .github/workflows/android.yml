@@ -27,12 +27,12 @@ jobs:
           echo "CODE=$CODE" >> "$GITHUB_ENV"
           chmod +x gradlew
           ./gradlew assembleGithubRelease bundlePlayRelease -PversionCode=$CODE --no-daemon
-          cp app/build/outputs/apk/github/release/app-github-release.apk "MosaicKingdom-1.0.$CODE.apk"
-          cp app/build/outputs/bundle/playRelease/app-play-release.aab "MosaicKingdom-1.0.$CODE-google-play.aab"
+          cp app/build/outputs/apk/github/release/app-github-release.apk "Puzzlegrad-1.0.$CODE.apk"
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab "Puzzlegrad-1.0.$CODE-google-play.aab"
       # The .apk updates GitHub installs; the .aab is uploaded to Google Play by hand.
       - name: Publish release (the app checks it on start)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v$CODE" "MosaicKingdom-1.0.$CODE.apk" "MosaicKingdom-1.0.$CODE-google-play.aab" \
+          gh release create "v$CODE" "Puzzlegrad-1.0.$CODE.apk" "Puzzlegrad-1.0.$CODE-google-play.aab" \
             --title "1.0.$CODE" --notes-file release-notes.md --latest

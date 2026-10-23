@@ -11,7 +11,8 @@ const out = f => path.join(root, 'store', f);
   const page = async (vp, dpr) => {
     const p = await b.newPage({viewport: vp, deviceScaleFactor: dpr, reducedMotion: 'reduce'});
     await p.addInitScript(() => {
-      window.AndroidApp = {versionName: () => '1.0', startUpdate() {}};
+      window.AndroidApp = {versionName: () => '1.0', startUpdate() {}, checkUpdates() {}, setUpdateNotifications() {}};
+      localStorage.setItem('wallet', JSON.stringify({gold: 2400, owned: ['classic', 'knight', 'king'], fig: 'knight', daily: new Date().toISOString().slice(0, 10)}));
       localStorage.setItem('setup', JSON.stringify({n: 3, seats: [{name: 'Аня', human: true}, {name: 'Маша', human: false}, {name: 'Дима', human: false}, {name: 'Лёша', human: false}, {name: 'Катя', human: false}], rules: {deck: 0, rivers: true, meeples: 7, timer: 0, hints: true}}));
     });
     await p.goto(game); await p.waitForTimeout(700);
@@ -22,8 +23,11 @@ const out = f => path.join(root, 'store', f);
   const p = await page({width: 360, height: 640}, 3);
   await p.addStyleTag({content: '.mini{animation:none!important;transform:rotateX(56deg) rotateZ(-8deg) scale3d(.8,.8,.8)!important}'});
   await p.screenshot({path: out('screenshots/1-menu.png')});
-  await p.click('.mbtn.primary'); await p.waitForTimeout(200);
+  await p.click('#playBtn'); await p.waitForTimeout(200);
   await p.screenshot({path: out('screenshots/4-setup.png')});
+  await p.click('#scr-setup [data-go="menu"]'); await p.click('[data-go="shop"]'); await p.waitForTimeout(300);
+  await p.screenshot({path: out('screenshots/6-shop.png')});
+  await p.click('#scr-shop [data-go="menu"]'); await p.click('#playBtn'); await p.waitForTimeout(200);
   await p.click('#start'); await p.waitForTimeout(500);
   // Play our turns until the kingdom has grown.
   for (let i = 0; i < 40 && (await p.$$('#world .tile:not(.ghost)')).length < 22; i++) {
@@ -57,7 +61,7 @@ const out = f => path.join(root, 'store', f);
   // Icon 512x512: the menu's little 3D kingdom on the brand background.
   const ic = await page({width: 360, height: 640}, 2);
   await ic.addStyleTag({content: `.mini{animation:none!important;transform:rotateX(50deg) rotateZ(-10deg) scale3d(.95,.95,.95)!important}
-    #scr-menu{background:radial-gradient(circle at 50% 45%,#3a4f86,#141b33 75%)!important}.mbody,.sbar{visibility:hidden}.hero{flex:0 0 100%!important}`});
+    #scr-menu{background:radial-gradient(circle at 50% 45%,#3a4f86,#141b33 75%)!important}.mbody,.sbar,.goldchip{visibility:hidden}.hero{flex:0 0 100%!important}`});
   await ic.waitForTimeout(300);
   await ic.screenshot({path: out('icon-512.png'), clip: {x: 52, y: 215, width: 256, height: 256}});
 
@@ -65,7 +69,7 @@ const out = f => path.join(root, 'store', f);
   const fg = await page({width: 1024, height: 500}, 1);
   await fg.addStyleTag({content: `html.app .phone{position:fixed;inset:0}#scr-menu{background:radial-gradient(90% 120% at 75% 40%,#3a4f86,#141b33 70%)!important;flex-direction:row-reverse!important}
     .hero{flex:0 0 55%!important}.mini{animation:none!important;transform:rotateX(55deg) rotateZ(-12deg) scale3d(1.25,1.25,1.25)!important;top:58%!important}
-    .mbody{flex:0 0 45%!important;justify-content:center;padding:0 0 0 56px!important}.mbtn,.mfoot{display:none!important}.logo{font-size:44px!important}.tag{font-size:18px!important;max-width:360px}`});
+    .mbody{flex:0 0 45%!important;justify-content:center;padding:0 0 0 56px!important}.mbtn,.mfoot,.mrow2,.goldchip{display:none!important}.logo{font-size:56px!important}.tag{font-size:18px!important;max-width:360px}`});
   await fg.waitForTimeout(300);
   await fg.screenshot({path: out('feature-1024x500.png')});
   await b.close();
