@@ -53,7 +53,15 @@ html.app .page{padding:0;max-width:none;height:100%}
 html.app .stage{height:100%;display:block}
 html.app .phone{height:100%;width:100%;min-height:0;aspect-ratio:auto;padding:0;border-radius:0;box-shadow:none;background:none}
 html.app .scr{border-radius:0}
-html.app .screen{padding-top:env(safe-area-inset-top,0px)}
+/* Full-screen app: --it… are the camera-cutout insets from Android; the game and main menu use
+   the whole height (their top buttons sit in the corners, clear of a central camera hole). */
+html.app .screen{padding-top:var(--it,0px);padding-left:var(--il,0px);padding-right:var(--ir,0px)}
+html.app #scr-game,html.app #scr-menu{padding-top:var(--itg,0px)}
+html.app .gtop{padding-top:6px}
+html.app .room{flex:0 1 auto;max-width:32%}
+html.app .deck{margin-left:auto}
+html.app .room b,html.app .room span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 
 /* ---------- menu ---------- */
 #scr-menu{background:radial-gradient(120% 60% at 50% 20%,#34477a 0%,#18213d 55%,#0f1528 100%)}
@@ -80,6 +88,14 @@ html.app .screen{padding-top:env(safe-area-inset-top,0px)}
 .pl.out{opacity:.45}
 html.lowgfx .tile .shd,html.lowgfx .tile .sd,html.lowgfx .bsh{display:none}
 html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
+.gift{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(242,184,75,.16),rgba(242,184,75,.04));border:1px solid rgba(242,184,75,.35)}
+.gift .gi{flex:1;min-width:0}.gift .gi b{display:block;font:700 14px var(--f-display)}.gift .gi small{color:var(--muted);font-size:12px}
+.gift .cta{height:44px;padding:0 16px}
+.chest.ready svg{animation:wob 1.6s ease-in-out infinite}
+.ocard .chest{display:flex;justify-content:center}.ocard .chest svg{animation:chestpop .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes chestpop{from{transform:scale(.2)}}
+@keyframes wob{0%,100%{transform:rotate(0)}10%{transform:rotate(-8deg)}20%{transform:rotate(8deg)}30%{transform:rotate(0)}}
+.goldchip.hasgift::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
 .figgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .fig{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;color:var(--ink);font:600 12px var(--f-body)}
 .fig img{width:40px;height:52px}
@@ -139,6 +155,13 @@ html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 .kind button{border:0;background:transparent;color:var(--muted);font:600 12px var(--f-body);padding:7px 9px;cursor:pointer}
 .kind button[aria-pressed="true"]{background:rgba(242,184,75,.18);color:var(--brass)}
 .shint{margin:0;color:var(--muted);font-size:12.5px}
+.plist li.seat{flex-wrap:wrap}
+.colbtn{border:2px solid rgba(255,255,255,.7);cursor:pointer;font:700 12px var(--f-display);color:#10131c}
+.swatches{display:flex;flex-wrap:wrap;gap:8px;width:100%;padding:4px 0 2px 2px}
+.sw{width:30px;height:30px;border-radius:50%;background:var(--c);border:2px solid transparent;cursor:pointer;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.sw.on{border-color:#fff;box-shadow:0 0 0 2px var(--brass)}
+.sw:disabled{opacity:.18;cursor:not-allowed}
+.mycolor{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .col{display:flex;flex-direction:column;gap:14px}
 .field{width:100%;height:48px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:600 16px var(--f-body);padding:0 14px}
 .field:focus{outline:none;border-color:var(--brass)}
@@ -152,6 +175,9 @@ html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 .world.nohint .slot{border-color:transparent;background:transparent;animation:none}
 .world.nohint .slot::after{display:none}
 .timer{position:absolute;left:10px;top:10px;z-index:4;font:800 14px var(--f-display);font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:5px 9px}
+.edgeglow{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--c,#f2b84b),inset 0 0 38px 6px var(--c,#f2b84b)}
+.edgeglow.on{animation:edge 2.4s ease-in-out}
+@keyframes edge{0%,100%{opacity:0}15%,45%,75%{opacity:1}30%,60%{opacity:.35}}
 .timer.low{color:#ff8a80;border-color:rgba(255,138,128,.5)}
 
 /* ---------- game ---------- */
@@ -180,23 +206,25 @@ html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 .board{position:relative;flex:1;min-height:0;overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .board.dragging{cursor:grabbing}
 .vp{position:absolute;inset:0;perspective:1000px;perspective-origin:50% 30%}
-.world{position:absolute;left:50%;top:48%;width:0;height:0;transform-style:preserve-3d}
+.world{position:absolute;left:50%;top:48%;width:0;height:0;transform-style:preserve-3d;will-change:transform}
 .ground{position:absolute;left:-1800px;top:-1800px;width:3600px;height:3600px;transform:translateZ(-10px);background:radial-gradient(closest-side,rgba(64,98,66,.5),rgba(30,48,44,.22) 55%,transparent 100%);pointer-events:none}
 .tile{position:absolute;width:88px;height:88px;transform-style:preserve-3d}
 .face{position:absolute;inset:0;background-size:100% 100%;border-radius:2px;transform:rotate(var(--r,0deg));transition:transform .28s cubic-bezier(.3,1.4,.5,1),filter .4s,box-shadow .4s}
 .tile .sd{position:absolute;left:0;right:0;top:100%;height:8px;transform-origin:top;transform:rotateX(-90deg);background:linear-gradient(#7a5d37,#3a2b18)}
-.tile .shd{position:absolute;inset:0;transform:translate3d(6px,9px,-9.5px);background:rgba(0,0,0,.32);box-shadow:0 0 14px 5px rgba(0,0,0,.28);border-radius:4px}
+.tile .shd{position:absolute;inset:0;transform:translate3d(5px,8px,-9.5px);background:rgba(0,0,0,.35);border-radius:4px}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
 .tile.ghost .face{box-shadow:0 0 0 2.5px var(--brass),0 0 26px rgba(242,184,75,.65)}
 .tile.ghost .shd{transform:translate3d(10px,16px,-28px);opacity:.6}
 .tile.shake{animation:shk .35s}
 @keyframes hov{50%{transform:translateZ(26px)}}
 @keyframes shk{25%{transform:translateZ(18px) translateX(-5px)}75%{transform:translateZ(18px) translateX(5px)}}
+.zone{position:absolute;inset:3px;border-radius:5px;transform:translateZ(.6px);pointer-events:none;box-shadow:inset 0 0 0 3px var(--zc),inset 0 0 18px var(--zc);opacity:.9}
+.zone.multi{box-shadow:inset 0 0 0 3px var(--zc),inset 0 0 0 6px rgba(255,255,255,.85),inset 0 0 18px var(--zc)}
 .tile.glow .face{filter:brightness(1.3) saturate(1.15);box-shadow:0 0 0 2px #ffe08a,0 0 22px rgba(255,214,120,.85)}
-.slot{position:absolute;width:88px;height:88px;box-sizing:border-box;border-radius:12px;transform:translateZ(1px);border:2.5px dashed rgba(242,184,75,.9);background:rgba(242,184,75,.10);cursor:pointer;animation:br 1.6s ease-in-out infinite}
+.slot{position:absolute;width:88px;height:88px;box-sizing:border-box;border-radius:12px;transform:translateZ(1px);border:2.5px dashed rgba(242,184,75,.9);background:rgba(242,184,75,.16);cursor:pointer;animation:br 1.6s ease-in-out infinite}
 .slot::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);background:linear-gradient(var(--brass),var(--brass)) center/100% 3px no-repeat,linear-gradient(var(--brass),var(--brass)) center/3px 100% no-repeat;opacity:.9}
 .slot.sel{opacity:0}
-@keyframes br{50%{background:rgba(242,184,75,.24);border-color:#ffd88a}}
+@keyframes br{50%{opacity:.55}}
 .bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1));pointer-events:none}
 .bb.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
 @keyframes pop{from{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
@@ -210,8 +238,8 @@ html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 @keyframes rise{0%{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) translateY(0);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) translateY(-50px);opacity:0}}
 .fog{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#2a3a63 0%,rgba(42,58,99,0) 26%),linear-gradient(0deg,rgba(16,23,41,.85) 0%,rgba(16,23,41,0) 12%)}
 .fabs{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:3}
-.fab{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;font:700 11px var(--f-display);backdrop-filter:blur(6px)}
-.toast{position:absolute;top:8px;left:50%;transform:translate(-50%,-8px);opacity:0;transition:.25s;z-index:5;background:var(--glass);border:1px solid var(--line);padding:7px 12px;border-radius:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;pointer-events:none;backdrop-filter:blur(6px)}
+.fab{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;font:700 11px var(--f-display);}
+.toast{position:absolute;top:8px;left:50%;transform:translate(-50%,-8px);opacity:0;transition:.25s;z-index:5;background:var(--glass);border:1px solid var(--line);padding:7px 12px;border-radius:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;pointer-events:none;}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .hint{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;background:var(--glass);border:1px solid var(--line);padding:8px 12px;border-radius:14px;font-size:12px;white-space:nowrap;transition:opacity .5s;pointer-events:none;z-index:3}
 .hint.gone{opacity:0}
@@ -294,7 +322,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
       <section class="screen scroll" id="scr-shop" hidden>
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Магазин</b><span class="goldchip static"><i class="coin"></i><b class="goldN">0</b></span></div>
-          <p class="shint">Золото дают за победы над ботами и за места в онлайн-партиях. Каждый день — бонус 20 золота.</p>
+          <p class="shint">Золото дают за 1–3 места в партиях с ботами и онлайн: +15, +10, +5.</p>
+          <div class="gift" id="gift"></div>
           <div class="h3">Фигурки</div>
           <div class="figgrid" id="figgrid"></div>
           <div class="h3">Локации</div>
@@ -327,7 +356,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="rcard"><b>Фигурка</b><p>После хода можно поставить одну свою фигурку на только что положенную карту: на город, на дорогу или на крепость — только в одно место. Объект становится вашим. Занятый объект забрать нельзя.</p></div>
           <div class="rcard"><b>Очки</b><p>Когда объект достроен, очки получает его хозяин, даже если последнюю карту положил соперник, а фигурка возвращается.</p>
             <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
-          <div class="rcard"><b>Золото</b><p>Победа над ботами: +10 за каждого соперника. Онлайн каждый ставит 20 золота, банк делят лучшие места, последний теряет ставку. За одним телефоном золото не начисляется.</p></div>
+          <div class="rcard"><b>Золото</b><p>За место в партии с ботами или онлайн:</p><dl class="pts"><dt>1-е место</dt><dd>+15</dd><dt>2-е место</dt><dd>+10</dd><dt>3-е место</dt><dd>+5</dd><dt>4-е место</dt><dd>0</dd><dt>5-е место</dt><dd>−5</dd></dl><p>За одним телефоном золото не начисляется. Сдавшийся игрок золота не получает.</p></div>
+          <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Спорные объекты подсвечиваются белой рамкой.</p></div>
           <button class="cta wide" data-go="setup">Сыграть</button>
         </div>
       </section>
@@ -360,6 +390,9 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="col" id="lbRoom" hidden>
             <div class="codecard"><small>Код комнаты</small><div class="code" id="codeShow"></div>
               <div class="row2"><button class="chip" id="invite">Пригласить друзей</button><button class="chip" id="copyLink">Скопировать код</button></div></div>
+            <div class="h3">Ваш цвет</div>
+            <div class="mycolor" id="myColor"></div>
+            <p class="shint">Если два игрока выберут один цвет, при старте он достанется одному из них случайно, второму — другой свободный.</p>
             <div class="h3" id="lbCount">Игроки</div>
             <ul class="plist" id="plist"></ul>
             <button class="chip" id="addBot">+ Добавить бота</button>
@@ -384,6 +417,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="fog"></div>
           <div class="toast" id="toast"></div>
           <div class="timer" id="timer" hidden></div>
+          <div class="edgeglow" id="edgeglow"></div>
           <div class="fabs">
             <button class="fab" id="zin" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
             <button class="fab" id="zout" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
@@ -455,16 +489,24 @@ const PL0 = [
   {name:'Лёша',col:'#3fc27a',human:false},
   {name:'Катя',col:'#b06cf0',human:false},
 ];
-const setup = {n: 4, seats: PL0.map(p => ({name: p.name, human: p.human}))};
+// Colours players can pick; seats start with the first five.
+const PALETTE = [
+  {col: '#ef5350', name: 'Красный'}, {col: '#4c8dff', name: 'Синий'}, {col: '#f7c948', name: 'Жёлтый'}, {col: '#3fc27a', name: 'Зелёный'},
+  {col: '#b06cf0', name: 'Фиолетовый'}, {col: '#ff8c42', name: 'Оранжевый'}, {col: '#ff6fae', name: 'Розовый'}, {col: '#2ec4d6', name: 'Бирюзовый'},
+];
+const validCol = c => PALETTE.some(x => x.col === c);
+const setup = {n: 4, seats: PL0.map(p => ({name: p.name, human: p.human, col: p.col}))};
 try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
+setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
 const RULES = [
   {k: 'deck', label: 'Карт в стопке', opts: [[30, '30'], [45, '45'], [0, 'Все']]},
   {k: 'rivers', label: 'Реки', opts: [[true, 'Есть'], [false, 'Нет']]},
   {k: 'meeples', label: 'Фигурок у игрока', opts: [[5, '5'], [7, '7'], [9, '9']]},
   {k: 'timer', label: 'Время на ход', opts: [[0, 'Без'], [30, '30 с'], [60, '60 с']]},
   {k: 'hints', label: 'Подсветка мест', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'tie', label: 'Спорный объект: очки', opts: [['all', 'Каждому'], ['split', 'Поровну']]},
 ];
-setup.rules = Object.assign({deck: 0, rivers: true, meeples: 7, timer: 0, hints: true}, setup.rules);
+setup.rules = Object.assign({deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, setup.rules);
 const isHuman = i => players[i].human;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
@@ -723,12 +765,10 @@ const label = g => g.kind === 'r' && g.edges.length === 1 ? 'Дорога ' + AR
 const world = $('#world'), board = $('#board');
 function addSprite(parent, kind, x, y, cls, delay, scale = 1) {
   const d = SPR[kind], L = (0.5 + x) * T, Tp = (0.5 + y) * T;
-  const sh = document.createElement('i'); sh.className = 'bsh';
-  sh.style.cssText = `left:${L}px;top:${Tp}px;width:${d.w * 1.1 * scale}px;height:${d.w * .45 * scale}px`;
   const b = document.createElement('i'); b.className = 'bb s-' + kind + (cls ? ' ' + cls : '');
   b.style.cssText = `left:${L}px;top:${Tp}px;width:${d.w * scale}px;height:${d.h * scale}px`;
   if (delay != null) { b.classList.add('pop'); b.style.setProperty('--d', delay + 's'); }
-  parent.append(sh, b);
+  parent.append(b);
   return b;
 }
 const lowGfx = () => document.documentElement.classList.contains('lowgfx');
@@ -755,7 +795,7 @@ function addDecor(el, t, delay) {
 function tileEl(t, decor, delay) {
   const el = document.createElement('div'); el.className = 'tile';
   el.style.left = (t.x * T - T / 2) + 'px'; el.style.top = (t.y * T - T / 2) + 'px';
-  el.innerHTML = `<i class="shd"></i><i class="sd"></i><div class="face t-${t.type}" style="--r:${t.r * 90}deg"></div>`;
+  el.innerHTML = `<i class="sd"></i><div class="face t-${t.type}" style="--r:${t.r * 90}deg"></div>`;
   if (decor) addDecor(el, t, delay);
   return el;
 }
@@ -767,9 +807,8 @@ function placeMeeple(t, g, p, anim) {
 }
 function removeMeeple(m) {
   meeples.splice(meeples.indexOf(m), 1); players[m.p].meeples++;
-  const sh = m.el.previousSibling;
   const a = m.el.animate([{opacity: 1, translate: '0 0'}, {opacity: 0, translate: '0 -30px'}], {duration: RM ? 1 : 600, easing: 'ease-in'});
-  a.onfinish = () => { m.el.remove(); sh && sh.remove(); };
+  a.onfinish = () => m.el.remove();
 }
 function floatText(t, [x, y], txt, col) {
   const f = document.createElement('i'); f.className = 'fl'; f.textContent = txt;
@@ -780,11 +819,16 @@ function floatText(t, [x, y], txt, col) {
 /* ---------------- camera & input ---------------- */
 const cam = {px: 0, py: 0, z: .92, tilt: 55};
 let camAnim = 0, lastTilt = null, inertia = 0;
+let camFrame = 0;
+// Finger moves arrive faster than the screen redraws; move the 3D scene once per frame.
+function applyCamSoon() { if (!camFrame) camFrame = requestAnimationFrame(() => { camFrame = 0; applyCam(); }); }
 function applyCam() {
   world.style.transform = `rotateX(${cam.tilt}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
   if (cam.tilt !== lastTilt) { world.style.setProperty('--tilt', cam.tilt + 'deg'); lastTilt = cam.tilt; }
 }
-function bounds() { let x0 = 0, x1 = 0, y0 = 0, y1 = 0; for (const t of tiles.values()) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); } return {x0, x1, y0, y1}; }
+let boundsCache = null;
+function bounds() { if (boundsCache && boundsCache.n === tiles.size) return boundsCache; boundsCache = calcBounds(); boundsCache.n = tiles.size; return boundsCache; }
+function calcBounds() { let x0 = 0, x1 = 0, y0 = 0, y1 = 0; for (const t of tiles.values()) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); } return {x0, x1, y0, y1}; }
 function clampCam() {
   const b = bounds();
   cam.px = Math.max(-(b.x1 + 1.5) * T, Math.min(-(b.x0 - 1.5) * T, cam.px));
@@ -812,7 +856,7 @@ function ensureVisible(x, y) {
   const hx = vw / 2 / cam.z / T - .9, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
   if (Math.abs(x + cam.px / T) > hx || Math.abs(y + cam.py / T) > hy) return tweenCam({px: -x * T, py: -y * T}, 650);
 }
-function panBy(dx, dy) { cam.px += dx / cam.z; cam.py += dy / (cam.z * Math.cos(cam.tilt * Math.PI / 180)); clampCam(); applyCam(); }
+function panBy(dx, dy) { cam.px += dx / cam.z; cam.py += dy / (cam.z * Math.cos(cam.tilt * Math.PI / 180)); clampCam(); applyCamSoon(); }
 const hint = $('#hint');
 let hintTimer = setTimeout(hideHint, 7000);
 function hideHint() { hint.classList.add('gone'); clearTimeout(hintTimer); }
@@ -837,7 +881,7 @@ board.addEventListener('pointermove', e => {
   p.x = nx; p.y = ny;
   if (pts.size === 2) {
     const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
-    if (pinch) { cam.z *= d / pinch; clampCam(); applyCam(); }
+    if (pinch) { cam.z *= d / pinch; clampCam(); applyCamSoon(); }
     pinch = d; hideHint();
   }
 });
@@ -866,7 +910,26 @@ $('#view').onclick = e => { const top = cam.tilt > 40; e.currentTarget.textConte
 /* ---------------- hud ---------------- */
 const playersEl = $('#players'), statusEl = $('#status'), toastEl = $('#toast'), okBtn = $('#ok'), rotBtn = $('#rot');
 const prow = $('#prow'), mrow = $('#mrow'), tface = $('#tface'), ct = $('#ct'), cname = $('#cname');
+// Your objects (cities, roads, forts with your figures) glow in your colour; contested ones get a white ring.
+function updateZones() {
+  world.querySelectorAll('.zone').forEach(z => z.remove());
+  if (!wallet.zones || !players.length) return;
+  const who = net ? players.findIndex(p => p.owner === myId) : localHumans() === 1 ? players.findIndex((p, i) => isLocal(i)) : isLocal(turn) ? turn : -1;
+  if (who < 0) return;
+  const done = new Set();
+  for (const m of meeples) {
+    if (m.p !== who || done.has(m.gid)) continue;
+    const c = component(m.t, m.g); c.ids.forEach(i => done.add(i));
+    const multi = c.meeples.some(x => x.p !== who);
+    for (const t of c.tiles) {
+      if (t.el.querySelector('.zone')) continue;
+      const z = document.createElement('i'); z.className = 'zone' + (multi ? ' multi' : ''); z.style.setProperty('--zc', players[who].col);
+      t.el.append(z);
+    }
+  }
+}
 function renderPlayers(bump = []) {
+  updateZones();
   playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
@@ -950,7 +1013,7 @@ function askMeeple(t, opts, p) {
   prow.hidden = true; mrow.hidden = false;
   setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   return new Promise(res => {
-    meepleResolve = g => { meepleResolve = null; gms.forEach(b => { b.previousSibling.remove(); b.remove(); }); mrow.hidden = true; prow.hidden = false; res(g); };
+    meepleResolve = g => { meepleResolve = null; gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(g); };
     mrow.onpointerover = e => { const b = e.target.closest('.chip'); gms.forEach((m, i) => m.classList.toggle('hl', b && +b.dataset.i === i)); };
   });
 }
@@ -995,13 +1058,15 @@ async function resolveFeature(c, final, placer) {
   const mx = Math.max(...cnt);
   if (!mx) { toast(`${KIND[c.kind]} ${{c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind]} · фишек нет, очков нет`); await wait(600); return; }
   const win = cnt.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
-  const m0 = c.meeples.find(m => win.includes(m.p));
-  floatText(m0.t, groupPos(m0.t, m0.g), '+' + pts, players[win[0]].col);
-  win.forEach(i => { players[i].score += pts; players[i].stats[c.kind] += pts; });
+  // Several leaders with the same number of figures: everyone gets the points, or they split them.
+  const each = win.length > 1 && gameRules.tie === 'split' ? Math.floor(pts / win.length) : pts;
+  win.forEach(i => { const m = c.meeples.find(x => x.p === i); floatText(m.t, groupPos(m.t, m.g), '+' + each, players[i].col); });
+  win.forEach(i => { players[i].score += each; players[i].stats[c.kind] += each; });
   if (!fast()) beep('score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
   const help = !final && placer != null && !win.includes(placer) ? ` · помог${isMe(players[placer]) ? 'ли вы' : ': ' + players[placer].name}` : '';
-  toast(`${KIND[c.kind]} ${final ? 'не достроен' : done}${help} · ${win.map(i => players[i].name).join(' и ')} +${pts}`);
+  const share = win.length > 1 ? ` (спорный, ${gameRules.tie === 'split' ? 'поровну' : 'каждому'})` : '';
+  toast(`${KIND[c.kind]} ${final ? 'не достроен' : done}${help} · ${win.map(i => players[i].name).join(' и ')} +${each}${share}`);
   [...c.meeples].forEach(removeMeeple);
   renderPlayers(win);
   await wait(final ? 700 : 950);
@@ -1045,8 +1110,14 @@ function startTimer() {
   };
   tick(); timerId = setInterval(tick, 250);
 }
+function turnAlert() {
+  if (!wallet.alert) return;
+  const g = $('#edgeglow'); g.style.setProperty('--c', players[turn].col);
+  g.classList.remove('on'); void g.offsetWidth; g.classList.add('on');
+  try { if (navigator.vibrate) navigator.vibrate(40); } catch (_) {}
+}
 function beginHumanTurn() {
-  beep('turn');
+  beep('turn'); turnAlert();
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer();
   setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
@@ -1140,9 +1211,15 @@ function newGame() {
   const seats = setup.seats.slice(0, setup.n).map(s => {
     const fig = s.human ? (firstHuman ? wallet.fig : 'classic') : randomFig();
     if (s.human) firstHuman = false;
-    return {name: s.name, human: s.human, fig};
+    return {name: s.name, human: s.human, fig, col: s.col};
   });
-  startGame({seats, rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
+  // An "extra figure" gift gives you one more figure in a game against bots.
+  let bonus = -1;
+  if (wallet.boosts.meeple > 0 && seats.some(x => !x.human) && seats.filter(x => x.human).length === 1) {
+    bonus = seats.findIndex(x => x.human); wallet.boosts.meeple--; saveWallet();
+  }
+  startGame({seats, rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0, bonus});
+  if (bonus >= 0) toastAny('Подарок: +1 фигурка в этой партии');
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
@@ -1155,7 +1232,8 @@ function startGame(cfg, replay = []) {
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples}; });
+  if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
   paintFigures();
   if (!net) saveGame();
   world.classList.toggle('nohint', !rules.hints);
@@ -1204,48 +1282,55 @@ const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() *
 const today = () => new Date().toISOString().slice(0, 10);
 const wallet = (() => {
   let w = null; try { w = JSON.parse(localStorage.getItem('wallet')); } catch (_) {}
-  return Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', paid: [], sound: true}, w);
+  const v = Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'}, w);
+  v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
+  return v;
 })();
 function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); }
+// Daily gift in the shop: a chest once a day with gold, a one-game boost or, rarely, a figure.
+const giftReady = () => wallet.dailyBox !== today();
 function dailyBonus() {
-  if (wallet.daily === today()) return;
-  const first = !wallet.daily;
-  wallet.daily = today(); if (!first) wallet.gold += 20;
-  saveWallet();
-  if (!first) setTimeout(() => toastAny('Ежедневный бонус: +20 золота'), 600);
+  document.querySelectorAll('.goldchip').forEach(c => c.classList.toggle('hasgift', giftReady()));
+  if (giftReady() && wallet.daily !== today()) { wallet.daily = today(); saveWallet(); setTimeout(() => toastAny('Ежедневный подарок ждёт в магазине'), 700); }
 }
-// Win against bots: +10 per opponent. Online: everyone stakes 20, the pot goes to the best places.
-// Several people on one phone: no gold, since one person could play all seats.
-const SHARES = {2: [1, 0], 3: [.7, .3, 0], 4: [.6, .3, .1, 0], 5: [.5, .3, .2, 0, 0]};
+function openGift() {
+  if (!giftReady()) return;
+  wallet.dailyBox = today();
+  const r = Math.random(), notOwned = Object.keys(FIGS).filter(k => !wallet.owned.includes(k));
+  let text;
+  if (r < .06 && notOwned.length) { const k = notOwned[(Math.random() * notOwned.length) | 0]; wallet.owned.push(k); text = `Фигурка «${FIGS[k].name}»!`; }
+  else if (r < .22) { wallet.boosts.double++; text = 'Двойное золото за следующую победу'; }
+  else if (r < .38) { wallet.boosts.meeple++; text = '+1 фигурка в следующей партии с ботами'; }
+  else { const g = [10, 15, 20, 20, 25, 30, 50][(Math.random() * 7) | 0]; wallet.gold += g; text = `+${g} золота`; }
+  saveWallet(); beep('coin'); dailyBonus();
+  renderShop();
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><div class="chest open">${CHEST_SVG}</div><h3>${text}</h3><p>Следующий подарок — завтра</p><button class="cta wide">Забрать</button></div>`;
+  box.querySelector('.cta').onclick = () => box.remove();
+  document.body.append(box);
+}
+const CHEST_SVG = '<svg viewBox="0 0 64 56" width="72" height="63" aria-hidden="true"><rect x="6" y="22" width="52" height="30" rx="4" fill="#9a5b2c"/><rect x="6" y="22" width="52" height="7" fill="#7b4521"/><path d="M6 22 Q32 0 58 22 Z" fill="#b36a32"/><rect x="28" y="14" width="8" height="38" fill="#f2b84b"/><rect x="26" y="26" width="12" height="10" rx="2" fill="#ffd36b" stroke="#8a5a12" stroke-width="1.5"/><rect x="6" y="38" width="52" height="3" fill="#f2b84b"/></svg>';
+// Gold by place: 1st +15, 2nd +10, 3rd +5, 4th 0, 5th −5 (ties share the higher place).
+// Paid for games against bots and online games; several people on one phone get none,
+// since one person could play every seat. A "double gold" gift doubles the next win.
+const PLACE_GOLD = [15, 10, 5, 0, -5];
 function payout(reason) {
   const meIdx = players.findIndex(p => isMe(p));
   if (meIdx < 0) return null;
-  if (reason === 'draw') {
-    if (net) wallet.paid = ['g' + net.gameId, ...wallet.paid].slice(0, 30);
-    saveWallet();
-    return net && gameLog.staked ? {delta: 0, text: 'Ничья — ставка вернулась'} : null;
-  }
-  const higher = i => players.filter(p => p.score > players[i].score).length;
-  let delta;
   if (net) {
     const key = 'g' + net.gameId;
     if (wallet.paid.includes(key)) return null;
     wallet.paid = [key, ...wallet.paid].slice(0, 30);
-    const humans = players.map((p, i) => i).filter(i => players[i].human);
-    if (humans.length < 2) { saveWallet(); return null; }
-    if (!gameLog.staked) { saveWallet(); return {delta: 0, text: 'Без ставки: золота было меньше 20'}; }
-    const share = SHARES[humans.length], rank = reason === 'resign' ? 0 : humans.filter(i => players[i].score > players[meIdx].score).length;
-    const tied = reason === 'resign' ? 1 : humans.filter(i => players[i].score === players[meIdx].score).length;
-    const got = share.slice(rank, rank + tied).reduce((a, b) => a + b, 0) / tied;
-    delta = Math.round(20 * humans.length * got) - 20;
-  } else {
-    if (localHumans() > 1 || players.every(p => p.human)) return null;
-    delta = higher(meIdx) === 0 ? 10 * (players.length - 1) : 0;
-    if (!delta) return {delta: 0, text: 'Победите ботов, чтобы получить золото'};
-  }
+  } else if (localHumans() > 1 || players.every(p => p.human)) return null;
+  if (reason === 'draw') { saveWallet(); return {delta: 0, text: 'Ничья — золото не меняется'}; }
+  const place = ranked().findIndex(p => p.i === meIdx), tied = ranked().findIndex(p => !p.resigned && p.score === players[meIdx].score);
+  let delta = PLACE_GOLD[Math.max(0, reason === 'resign' ? place : tied)];
+  let doubled = false;
+  if (delta > 0 && wallet.boosts.double > 0) { wallet.boosts.double--; delta *= 2; doubled = true; }
   wallet.gold = Math.max(0, wallet.gold + delta); saveWallet();
   if (delta > 0) beep('coin');
-  return {delta, text: `${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} золота`};
+  const where = ['1-е', '2-е', '3-е', '4-е', '5-е'][Math.max(0, tied)];
+  return {delta, text: `${where} место: ${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} золота${doubled ? ' (двойное!)' : ''}`};
 }
 
 // Figures: the classic meeple in the player's colour plus an outfit.
@@ -1302,6 +1387,9 @@ const LOCS = [
 ];
 function renderShop() {
   saveWallet();
+  const b = wallet.boosts, inv = [b.double ? `Двойное золото ×${b.double}` : '', b.meeple ? `+1 фигурка ×${b.meeple}` : ''].filter(Boolean).join(' · ');
+  $('#gift').innerHTML = `<div class="chest${giftReady() ? ' ready' : ''}">${CHEST_SVG}</div><div class="gi"><b>Ежедневный подарок</b><small>${giftReady() ? 'Золото, бонус на партию или фигурка' : 'Следующий подарок — завтра'}${inv ? '<br>У вас: ' + inv : ''}</small></div>${giftReady() ? '<button class="cta" id="openGift">Открыть</button>' : ''}`;
+  if (giftReady()) $('#openGift').onclick = openGift;
   $('#figgrid').innerHTML = Object.entries(FIGS).map(([k, f]) => {
     const own = wallet.owned.includes(k), sel = wallet.fig === k;
     const tag = sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`;
@@ -1317,7 +1405,7 @@ $('#figgrid').addEventListener('click', e => {
     wallet.gold -= f.price; wallet.owned.push(k); beep('coin'); toastAny(`${f.name} — ваша фигурка!`);
   }
   wallet.fig = k; saveWallet(); renderShop();
-  if (net) netSend({t: 'hello', id: myId, name: myName(), fig: k});
+  if (net) netSend({t: 'hello', id: myId, name: myName(), fig: k, col: wallet.color});
 });
 
 /* ---------------- saved game (offline) ---------------- */
@@ -1355,10 +1443,12 @@ const PREFS = [
   {k: 'view', label: 'Вид поля', opts: [['3d', '3D'], ['top', 'Сверху']]},
   {k: 'speed', label: 'Скорость ботов', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
   {k: 'gfx', label: 'Графика', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
+  {k: 'zones', label: 'Подсветка своих объектов', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'alert', label: 'Подсветка экрана в ваш ход', opts: [[true, 'Вкл'], [false, 'Выкл']]},
 ];
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
-Object.assign(wallet, Object.assign({notify: true, view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high'}, wallet));
+Object.assign(wallet, Object.assign({notify: true, view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
 const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
 applyGfx();
 function renderPrefs() {
@@ -1375,6 +1465,7 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'sound') beep('turn');
   if (r.k === 'notify' && window.AndroidApp && AndroidApp.setUpdateNotifications) AndroidApp.setUpdateNotifications(wallet.notify);
   if (r.k === 'view') setView(wallet.view);
+  if (r.k === 'zones') updateZones();
   if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
 });
 $('#prefName').addEventListener('input', e => { setup.seats[0].name = e.target.value; saveSetup(); renderSetup(); });
@@ -1415,8 +1506,8 @@ function openGameMenu() {
     if (a === 'resign') {
       if (phase === 'meeple' && turn === seat) return toastAny('Сначала завершите ход');
       if (!confirmOnce(b, 'Точно сдаться? Нажмите ещё раз')) return;
-      const key = 'g' + net.gameId;
-      if (gameLog.staked && !wallet.paid.includes(key)) { wallet.gold = Math.max(0, wallet.gold - 20); wallet.paid = [key, ...wallet.paid].slice(0, 30); saveWallet(); toastAny('Вы сдались: −20 золота'); }
+      const key = 'g' + net.gameId; // a resigned player gets no gold for this game
+      if (!wallet.paid.includes(key)) { wallet.paid = [key, ...wallet.paid].slice(0, 30); saveWallet(); }
       netSend({t: 'resign', g: net.gameId, p: seat}); return closeGameMenu();
     }
     if (a === 'draw') {
@@ -1443,7 +1534,7 @@ function onDrawOffer(m) {
   const me = mySeat();
   if (me < 0 || me === m.p) return;
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>${players[m.p].name} предлагает ничью</h3><p>Если согласятся все, партия закончится, ставки вернутся</p><div class="row2b"><button class="cta" data-ok="1">Принять</button><button class="ghostbtn" data-ok="0">Отказаться</button></div></div>`;
+  box.innerHTML = `<div class="ocard"><h3>${players[m.p].name} предлагает ничью</h3><p>Если согласятся все, партия закончится без победителя</p><div class="row2b"><button class="cta" data-ok="1">Принять</button><button class="ghostbtn" data-ok="0">Отказаться</button></div></div>`;
   document.body.append(box);
   box.onclick = e => { const b = e.target.closest('[data-ok]'); if (!b) return; box.remove(); netSend({t: 'drawReply', g: net.gameId, p: me, id: m.id, ok: b.dataset.ok === '1'}); };
 }
@@ -1458,12 +1549,19 @@ function onDrawReply(m) {
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
 function renderSetup() {
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === setup.n));
-  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li><span class="av" style="--c:${PL0[i].col}">${i + 1}</span><span class="who"><input id="pn${i}" value="${s.name.replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"></span><span class="kind" data-i="${i}"><button data-h="1" aria-pressed="${s.human}">Человек</button><button data-h="0" aria-pressed="${!s.human}">Бот</button></span></li>`).join('');
+  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${s.name.replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"></span><span class="kind" data-i="${i}"><button data-h="1" aria-pressed="${s.human}">Человек</button><button data-h="0" aria-pressed="${!s.human}">Бот</button></span>${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
   const ok = setup.seats.slice(0, setup.n).some(s => s.human);
   $('#start').disabled = !ok; $('#start').textContent = ok ? 'Начать партию' : 'Нужен хотя бы один человек';
 }
 $('#seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; setup.n = +b.textContent; saveSetup(); renderSetup(); };
 $('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
+// Seats pick colours in turn: a colour another seat already holds can't be taken.
+let colorEdit = -1;
+const swatches = (cur, taken) => `<span class="swatches">${PALETTE.map(c => `<button class="sw${c.col === cur ? ' on' : ''}" style="--c:${c.col}" data-sw="${c.col}" ${taken.includes(c.col) ? 'disabled' : ''} aria-label="${c.name}"></button>`).join('')}</span>`;
+$('#slist').addEventListener('click', e => {
+  const cb = e.target.closest('[data-col]'); if (cb) { colorEdit = colorEdit === +cb.dataset.col ? -1 : +cb.dataset.col; return renderSetup(); }
+  const sw = e.target.closest('[data-sw]'); if (sw && colorEdit >= 0) { setup.seats[colorEdit].col = sw.dataset.sw; if (colorEdit === 0) { wallet.color = sw.dataset.sw; saveWallet(); } colorEdit = -1; saveSetup(); return renderSetup(); }
+});
 $('#slist').addEventListener('click', e => { const b = e.target.closest('.kind button'); if (!b) return; setup.seats[+b.parentNode.dataset.i].human = b.dataset.h === '1'; saveSetup(); renderSetup(); });
 $('#start').onclick = () => { newGame(); show('game'); };
 function renderRules() {
@@ -1566,7 +1664,7 @@ function connect(code, asHost) {
   net.close = TRANSPORT.listen(code, {
     open() {
       if (opened || net !== me) return; opened = true;
-      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, name: myName(), fig: wallet.fig}));
+      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, name: myName(), fig: wallet.fig, col: wallet.color}));
       if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
     },
     error() { if (!opened && net === me) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); } },
@@ -1584,16 +1682,15 @@ function onNet(d) {
   if (m.t === 'hello' && net.host && live) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
     const s = seats.find(x => x.owner === m.id);
-    if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig) { s.name = clean(m.name); s.fig = m.fig; publishLobby(seats); } }
-    else if (seats.length < 5) { seats.push({owner: m.id, name: clean(m.name), fig: m.fig}); publishLobby(seats); }
+    if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig || s.col !== m.col) { s.name = clean(m.name); s.fig = m.fig; s.col = m.col; publishLobby(seats); } }
+    else if (seats.length < 5) { seats.push({owner: m.id, name: clean(m.name), fig: m.fig, col: m.col}); publishLobby(seats); }
     return;
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
   if (m.t === 'start') {
     net.gameId = d.id;
-    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id});
+    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
-    else if (m.seats.filter(x => x.owner).length > 1) { gameLog.staked = wallet.gold >= 20 || wallet.paid.includes('g' + d.id); if (live && gameLog.staked) toast('Ставка: 20 золота'); }
     return show('game');
   }
   if (m.t === 'move') return onMove(m);
@@ -1638,9 +1735,10 @@ function renderLobby() {
   $('#lbJoin').hidden = !!net; $('#lbRoom').hidden = !net;
   if (!net) { if (!$('#myName').value) $('#myName').value = clean(setup.seats[0].name) || ''; return; }
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
+  renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
   $('#lbCount').textContent = `Игроки · ${seats.length} из 5`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= 5;
   $('#lobbyStart').hidden = !net.host || (!!net.gameId && phase !== 'end'); $('#lobbyStart').disabled = seats.length < 2;
   $('#lobbyStart').textContent = seats.length < 2 ? 'Нужно хотя бы 2 игрока' : 'Начать игру';
@@ -1650,6 +1748,23 @@ function renderLobby() {
   renderRules();
 }
 const BOT_NAMES = ['Бот Ёж', 'Бот Сова', 'Бот Лис', 'Бот Барсук'];
+// Everyone may want any colour; a colour wanted by several goes to one of them at random,
+// the others (and anyone without a valid choice) get random colours nobody took.
+function assignColors(seats) {
+  const out = seats.map(x => ({...x, col: null})), order = seats.map((x, i) => i).sort(() => Math.random() - .5);
+  for (const i of order) if (validCol(seats[i].col) && !out.some(x => x.col === seats[i].col)) out[i].col = seats[i].col;
+  const free = PALETTE.map(c => c.col).filter(c => !out.some(x => x.col === c)).sort(() => Math.random() - .5);
+  out.forEach(x => { if (!x.col) x.col = free.pop(); });
+  return out;
+}
+function renderMyColor() {
+  $('#myColor').innerHTML = swatches(wallet.color, []);
+}
+$('#myColor').addEventListener('click', e => {
+  const sw = e.target.closest('[data-sw]'); if (!sw) return;
+  wallet.color = sw.dataset.sw; saveWallet(); renderMyColor();
+  if (net) netSend({t: 'hello', id: myId, name: myName(), fig: wallet.fig, col: wallet.color});
+});
 $('#create').onclick = () => {
   const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   connect(Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''), true);
@@ -1660,12 +1775,12 @@ $('#join').onclick = () => {
   connect(code, false);
 };
 $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.gameId) leaveRoom(); show('menu'); renderLobby(); };
-$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig()}); publishLobby(seats); };
+$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col}); publishLobby(seats); };
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
 $('#backToGame').onclick = () => show('game');
 $('#lobbyStart').onclick = () => {
   const seats = net.lobby.seats;
-  netSend({t: 'start', seats: seats.map(x => ({name: x.name, owner: x.owner || null, fig: x.fig || 'classic'})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
+  netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, fig: x.fig || 'classic', col: x.col})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
 };
 renderLobby();
 renderSetup();

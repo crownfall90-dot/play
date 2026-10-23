@@ -52,21 +52,69 @@ public class MainActivity extends Activity {
             requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
         }
 
-        // Android 15 draws apps edge to edge; keep the game clear of the status and navigation bars.
+        // Full screen: the game draws under the status bar and camera cutout, system bars are hidden
+        // (a swipe from the edge shows them for a moment). The page gets the cutout sizes as CSS
+        // variables, so buttons stay clear of a camera hole in a corner.
         root = new FrameLayout(this);
         root.setBackgroundColor(0xFF101729);
+        if (Build.VERSION.SDK_INT >= 28) {
+            android.view.WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
         root.setOnApplyWindowInsetsListener((v, insets) -> {
-            if (Build.VERSION.SDK_INT >= 30) {
-                android.graphics.Insets i = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
-                v.setPadding(i.left, i.top, i.right, i.bottom);
-            } else {
-                v.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(),
-                        insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
-            }
+            sendInsets(insets);
             return insets;
         });
         setContentView(root);
+        hideSystemBars();
         createWebView();
+    }
+
+    private String insetsJs = "";
+
+    /** Camera cutout sizes in CSS pixels → --it/--ib/--il/--ir; --itg is the top gap for the game screen. */
+    private void sendInsets(WindowInsets insets) {
+        float d = getResources().getDisplayMetrics().density;
+        int top = 0, bottom = 0, left = 0, right = 0;
+        boolean cornerCut = false;
+        if (Build.VERSION.SDK_INT >= 28 && insets.getDisplayCutout() != null) {
+            android.view.DisplayCutout c = insets.getDisplayCutout();
+            top = c.getSafeInsetTop(); bottom = c.getSafeInsetBottom(); left = c.getSafeInsetLeft(); right = c.getSafeInsetRight();
+            int w = root.getWidth() > 0 ? root.getWidth() : getResources().getDisplayMetrics().widthPixels;
+            for (android.graphics.Rect r : c.getBoundingRects()) {
+                if (r.top < w && (r.left < w * 0.3 || r.right > w * 0.7)) cornerCut = true;
+            }
+        }
+        // A hole in the middle of the top edge sits between our corner buttons, so the game screen
+        // can start at the very top; a cutout in a corner pushes it down.
+        insetsJs = String.format(java.util.Locale.US,
+                "(function(s){s.setProperty('--it','%.1fpx');s.setProperty('--ib','%.1fpx');s.setProperty('--il','%.1fpx');s.setProperty('--ir','%.1fpx');s.setProperty('--itg','%.1fpx');})(document.documentElement.style)",
+                top / d, bottom / d, left / d, right / d, (cornerCut ? top : 0) / d);
+        if (pageReady) js(insetsJs);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void hideSystemBars() {
+        if (Build.VERSION.SDK_INT >= 30) {
+            android.view.WindowInsetsController c = getWindow().getInsetsController();
+            if (c != null) {
+                getWindow().setDecorFitsSystemWindows(false);
+                c.hide(WindowInsets.Type.systemBars());
+                c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) hideSystemBars();
     }
 
     private void createWebView() {
@@ -98,6 +146,7 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 pageReady = true;
+                if (!insetsJs.isEmpty()) view.evaluateJavascript(insetsJs, null);
                 checkSoon();
             }
 
