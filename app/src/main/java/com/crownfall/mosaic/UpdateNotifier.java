@@ -15,7 +15,8 @@ import android.content.SharedPreferences;
 import android.os.Build;
 
 /**
- * Twice a day, with the game closed, asks the store whether a newer version exists
+ * Twice a day, with the game closed, asks the store whether a newer version exists (a fallback
+ * for the Firebase push in PushService)
  * and shows a notification with what's new. Tapping it opens the game, which offers the update.
  */
 public class UpdateNotifier extends JobService {
@@ -38,16 +39,21 @@ public class UpdateNotifier extends JobService {
 
     static void setEnabled(Context c, boolean on) {
         prefs(c).edit().putBoolean("notify", on).apply();
+        PushService.subscribe(c, on);
+    }
+
+    /** Shows the "new version" notification once per version, if the player allows it. */
+    static void announce(Context c, int code, String version, String notes) {
+        if (!prefs(c).getBoolean("notify", true) || prefs(c).getInt("notified", 0) >= code) return;
+        show(c, version, notes);
+        prefs(c).edit().putInt("notified", code).apply();
     }
 
     @Override
     public boolean onStartJob(JobParameters params) {
         if (!prefs(this).getBoolean("notify", true)) return false;
         Updater.findUpdate(this, (code, version, notes) -> {
-            if (code > 0 && prefs(this).getInt("notified", 0) < code) {
-                show(this, version, notes);
-                prefs(this).edit().putInt("notified", code).apply();
-            }
+            if (code > 0) announce(this, code, version, notes);
             jobFinished(params, false);
         });
         return true;
@@ -58,7 +64,7 @@ public class UpdateNotifier extends JobService {
         return true;
     }
 
-    private static void show(Context c, String version, String notes) {
+    static void show(Context c, String version, String notes) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26) {
             nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Обновления игры", NotificationManager.IMPORTANCE_DEFAULT));

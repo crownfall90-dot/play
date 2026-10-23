@@ -11,6 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      HAS_FCM: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -36,3 +38,9 @@ jobs:
         run: |
           gh release create "v$CODE" "Puzzlegrad-1.0.$CODE.apk" "Puzzlegrad-1.0.$CODE-google-play.aab" \
             --title "1.0.$CODE" --notes-file release-notes.md --latest
+      # Push "new version" to GitHub-build players; skipped until the FIREBASE_SERVICE_ACCOUNT secret exists.
+      - name: Notify players
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        if: env.HAS_FCM == 'true'
+        run: python3 scripts/fcm-send.py updates-github "$CODE" "1.0.$CODE" release-notes.md
