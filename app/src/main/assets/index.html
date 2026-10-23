@@ -2,9 +2,9 @@
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <link rel="stylesheet" href="fonts/fonts.css">
-<script>window.RELEASE_NOTES = "• Онлайн с друзьями: создайте комнату, отправьте код — каждый играет со своего телефона. Можно добавить ботов\n• Новая партия: от 2 до 5 игроков, каждый — человек или бот; люди могут играть с одного телефона по очереди\n• Настраиваемые правила: размер стопки, реки, число фигурок, время на ход, подсветка мест\n• Партия начинается с пустого стола: первая карта из стопки ложится в центр\n• Шрифты встроены, новая иконка, игра не заходит под системные панели\n• Экран «Что нового» после каждого обновления";</script>
+<script>window.RELEASE_NOTES = "• Новое название — Puzzlegrad\n• Золото: +10 за каждого соперника при победе над ботами, ставки в онлайн-партиях, ежедневный бонус 20\n• Магазин: фигурки за золото — крестьянин, монах, рыцарь, лучник, король. Соперники видят вашу фигурку\n• Скоро новые локации: мегаполис, Сибирь и джунгли — загляните в магазин\n• Партия сохраняется: закрыли игру — нажмите «Продолжить партию»\n• Настройки: звук, вид поля, скорость ботов, версия и проверка обновлений\n• Уведомление, когда выходит новая версия, и экран «Как играть»";</script>
 </head><body>
-<title>Мозаика Королевства</title>
+<title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: portrait phone prototype on a night "game table"; screen tabs above, notes beside on wide screens. In the app (html.app) the phone fills the whole screen. */
@@ -29,7 +29,7 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 .brand h1{font-family:var(--f-display);font-weight:800;font-size:19px;margin:0}
 .brand p{margin:2px 0 0;color:var(--muted);font-size:12.5px}
-.tabs{display:flex;gap:3px;background:var(--panel);padding:4px;border-radius:999px;border:1px solid var(--line)}
+.tabs{display:flex;gap:3px;overflow-x:auto;max-width:100%;background:var(--panel);padding:4px;border-radius:999px;border:1px solid var(--line)}
 .tabs button{appearance:none;border:0;background:transparent;color:var(--muted);font:600 13px var(--f-body);padding:7px 13px;border-radius:999px;cursor:pointer}
 .tabs button[aria-selected="true"]{background:var(--brass);color:var(--brass-ink)}
 .stage{display:flex;gap:40px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
@@ -71,7 +71,37 @@ html.app .screen{padding-top:env(safe-area-inset-top,0px)}
 .mbtn span{font:700 14px var(--f-display)} .mbtn small{color:var(--muted);font-size:12px}
 .mbtn.primary{background:var(--brass);border-color:transparent;color:var(--brass-ink)} .mbtn.primary small{color:#5b3f0e}
 .mfoot{margin-top:auto;color:var(--muted);font-size:12px;text-align:center}
-.mfoot i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fc27a;margin-right:6px}
+.mrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
+.coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
+.goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
+.goldchip b{font:800 14px var(--f-display);font-variant-numeric:tabular-nums}
+.goldchip.static{position:static;margin-left:auto;cursor:default}
+.figgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fig{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer;color:var(--ink);font:600 12px var(--f-body)}
+.fig img{width:40px;height:52px}
+.fig small{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:11px}
+.fig small .coin{width:11px;height:11px}
+.fig.sel{border-color:var(--brass);background:rgba(242,184,75,.12)}
+.fig.sel small{color:var(--brass)}
+.fig.poor{opacity:.55}
+.locgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.loc{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#141b33}
+.loc svg{display:block;width:100%;height:auto}
+.loc .li{padding:8px 10px 10px}
+.loc .li b{display:block;font:700 13px var(--f-display)}
+.loc .li small{color:var(--muted);font-size:11px;line-height:1.3;display:block}
+.loc .badge{position:absolute;top:8px;left:8px;font:700 10px var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;background:var(--brass);color:var(--brass-ink)}
+.loc.locked svg{filter:saturate(.5) brightness(.7)}
+.loc.locked .badge{background:rgba(10,14,26,.8);color:var(--ink);display:flex;gap:5px;align-items:center}
+.rules .rcard{border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:12px 14px}
+.rules .rcard b{font:700 14px var(--f-display)}
+.rules .rcard p{margin:6px 0 0;color:var(--muted)}
+.rules dl.pts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 0}.rules dt{font-weight:600}.rules dd{margin:0;color:var(--muted)}
+.goldres{display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--f-display);padding:10px;border-radius:14px;background:rgba(242,184,75,.1);border:1px solid rgba(242,184,75,.3)}
+.goldres.neg{background:rgba(239,83,80,.1);border-color:rgba(239,83,80,.3)}
+.chip img{width:15px;height:20px}
+.pc img{width:34px;height:44px;filter:drop-shadow(0 4px 4px rgba(0,0,0,.4))}
 
 /* ---------- lobby ---------- */
 #scr-lobby{background:linear-gradient(180deg,#1d2848,#111829)}
@@ -228,11 +258,13 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 
 <div class="page">
   <header class="head">
-    <div class="brand"><h1>Мозаика Королевства</h1><p>Макет Android-игры · вертикальный экран · поле в 3D</p></div>
+    <div class="brand"><h1>Puzzlegrad</h1><p>Макет Android-игры · вертикальный экран · поле в 3D</p></div>
     <nav class="tabs" role="tablist" aria-label="Экраны">
       <button role="tab" data-tab="menu" aria-selected="false">Меню</button>
       <button role="tab" data-tab="setup" aria-selected="false">Состав</button>
-      <button role="tab" data-tab="lobby" aria-selected="false">Комната</button>
+      <button role="tab" data-tab="lobby" aria-selected="false">Онлайн</button>
+      <button role="tab" data-tab="shop" aria-selected="false">Магазин</button>
+      <button role="tab" data-tab="settings" aria-selected="false">Настройки</button>
       <button role="tab" data-tab="game" aria-selected="true">Игра</button>
       <button role="tab" data-tab="results" aria-selected="false">Итоги</button>
     </nav>
@@ -242,14 +274,57 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
       <div class="sbar"><span>9:41</span><span class="cam"></span><span>▾ ◢ 87%</span></div>
 
       <section class="screen" id="scr-menu" hidden>
-        <div class="hero"><div class="mini" id="mini"></div></div>
+        <div class="hero"><div class="mini" id="mini"></div>
+          <button class="goldchip" data-go="shop" aria-label="Золото, открыть магазин"><i class="coin"></i><b class="goldN">0</b></button></div>
         <div class="mbody">
-          <h2 class="logo">Мозаика <span>Королевства</span></h2>
+          <h2 class="logo">Puzzle<span>grad</span></h2>
           <p class="tag">Тяните карту из общей стопки и достраивайте города, дороги и крепости. Когда стопка закончится, побеждает тот, у кого больше очков.</p>
-          <button class="mbtn primary" data-go="lobby"><span>Играть онлайн</span><small>Комната по коду, 2–5 игроков</small></button>
-          <button class="mbtn" data-go="setup"><span>За одним телефоном</span><small>2–5 игроков, телефон по кругу</small></button>
-          <button class="mbtn" data-go="setup"><span>Против ботов</span><small>Тренировка без интернета</small></button>
-          <div class="mfoot"><i></i>3 друга сейчас в сети · <span id="ver"></span></div>
+          <button class="mbtn primary" id="resume" hidden><span>Продолжить партию</span><small id="resumeInfo"></small></button>
+          <button class="mbtn" id="playBtn" data-go="setup"><span>Играть</span><small>2–5 игроков: друзья с одного телефона и боты</small></button>
+          <button class="mbtn" data-go="lobby"><span>Онлайн с друзьями</span><small>Каждый со своего телефона, комната по коду</small></button>
+          <div class="mrow2"><button class="mbtn" data-go="shop"><span>Магазин</span><small>Фигурки и локации</small></button><button class="mbtn" data-go="rules"><span>Как играть</span><small>Правила за минуту</small></button></div>
+          <div class="mfoot"><button class="linkbtn" data-go="settings">Настройки</button> · <span id="ver"></span></div>
+        </div>
+      </section>
+
+      <section class="screen scroll" id="scr-shop" hidden>
+        <div class="lb">
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Магазин</b><span class="goldchip static"><i class="coin"></i><b class="goldN">0</b></span></div>
+          <p class="shint">Золото дают за победы над ботами и за места в онлайн-партиях. Каждый день — бонус 20 золота.</p>
+          <div class="h3">Фигурки</div>
+          <div class="figgrid" id="figgrid"></div>
+          <div class="h3">Локации</div>
+          <div class="locgrid" id="locgrid"></div>
+        </div>
+      </section>
+
+      <section class="screen scroll" id="scr-settings" hidden>
+        <div class="lb">
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Настройки</b></div>
+          <div class="h3">Игра</div>
+          <div class="opts" id="prefs"></div>
+          <div class="h3">Ваше имя</div>
+          <input class="field" id="prefName" maxlength="12" autocomplete="off">
+          <div class="h3">О приложении</div>
+          <div class="opts">
+            <div class="opt"><span>Версия</span><b id="verFull">—</b></div>
+            <div class="opt"><span>Золото</span><b class="goldN">0</b></div>
+          </div>
+          <button class="cta wide" id="checkUpd">Проверить обновления</button>
+          <p class="shint">Puzzlegrad. Без рекламы и покупок. Политика конфиденциальности: github.com/crownfall90-dot/play</p>
+        </div>
+      </section>
+
+      <section class="screen scroll" id="scr-rules" hidden>
+        <div class="lb rules">
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Как играть</b></div>
+          <div class="rcard"><b>Цель</b><p>Строить королевство из общей стопки карт. Когда стопка закончится, побеждает игрок с наибольшим числом очков.</p></div>
+          <div class="rcard"><b>Ход</b><p>Вы получаете верхнюю карту стопки. Тапните по жёлтой рамке на поле, поверните карту и нажмите «Поставить». Края карты должны совпадать с соседями: дорога к дороге, город к городу, река к реке.</p></div>
+          <div class="rcard"><b>Фигурка</b><p>После хода можно поставить одну свою фигурку на только что положенную карту: на город, на дорогу или на крепость — только в одно место. Объект становится вашим. Занятый объект забрать нельзя.</p></div>
+          <div class="rcard"><b>Очки</b><p>Когда объект достроен, очки получает его хозяин, даже если последнюю карту положил соперник, а фигурка возвращается.</p>
+            <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
+          <div class="rcard"><b>Золото</b><p>Победа над ботами: +10 за каждого соперника. Онлайн каждый ставит 20 золота, банк делят лучшие места, последний теряет ставку. За одним телефоном золото не начисляется.</p></div>
+          <button class="cta wide" data-go="setup">Сыграть</button>
         </div>
       </section>
 
@@ -328,6 +403,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="rs">
           <div><small class="k" id="rk"></small><h2 id="rt"></h2></div>
           <div class="podium" id="podium"></div>
+          <div class="goldres" id="goldres" hidden></div>
           <table class="bd"><thead><tr><th>Игрок</th><th>Города</th><th>Дороги</th><th>Крепости</th><th>Всего</th></tr></thead><tbody id="bd"></tbody></table>
           <div class="ract"><button class="cta wide" id="again">Ещё партию</button><button class="ghostbtn" data-go="menu">В меню</button></div>
         </div>
@@ -343,6 +419,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <li><b>Тап по карте</b> или кнопка поворота — повернуть</li>
         <li><b>Поставить</b>, затем можно выставить фишку</li>
         <li><b>3D / 2D</b> — сменить угол обзора</li>
+        <li><b>Магазин</b> — фигурки за золото, будущие локации</li>
+        <li><b>Настройки</b> — звук, вид поля, скорость ботов, версия</li>
       </ul>
       <h2>Очки</h2>
       <dl>
@@ -410,7 +488,8 @@ const KIND = {c:'Город',r:'Дорога',f:'Крепость'};
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const hash = s => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 let net = null;
-const fast = () => !!(net && net.queue.length > 1);
+let queue = [], applied = 0, gameLog = null;
+const fast = () => queue.length > 1;
 const wait = ms => new Promise(r => setTimeout(r, RM || fast() ? Math.min(ms, 40) : ms));
 const myId = (() => { let v = null; try { v = localStorage.getItem('clientId'); if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem('clientId', v); } } catch (_) {} return v || Math.random().toString(36).slice(2, 10); })();
 const $ = s => document.querySelector(s);
@@ -674,7 +753,7 @@ function tileEl(t, decor, delay) {
 }
 function placeMeeple(t, g, p, anim) {
   const [x, y] = groupPos(t, g);
-  const el = addSprite(t.el, 'm' + p, x, y, '', anim ? 0 : null);
+  const el = addSprite(t.el, 'm' + p, x, y, '', anim && !fast() ? 0 : null);
   meeples.push({gid: gid(t, g), p, el, t, g});
   players[p].meeples--;
 }
@@ -850,7 +929,8 @@ async function dropAt(t) {
   ghost.classList.remove('ghost');
   await ghost.animate([{transform: 'translateZ(26px)'}, {transform: 'translateZ(0)'}], {duration: RM || fast() ? 1 : 260, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
   ghost.remove(); ghost = null;
-  t.el = tileEl(t, true, .02); world.append(t.el); tiles.set(key(t.x, t.y), t);
+  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t);
+  if (!fast()) beep('place');
   const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
   current = null; sel = null; renderDeck();
 }
@@ -858,7 +938,7 @@ let meepleResolve = null, meepleOpts = [];
 function askMeeple(t, opts, p) {
   meepleOpts = opts; phase = 'meeple';
   const gms = opts.map((g, i) => { const [x, y] = groupPos(t, g); const b = addSprite(t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
-  mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleSvg(players[p].col)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+  mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
   prow.hidden = true; mrow.hidden = false;
   setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   return new Promise(res => {
@@ -879,11 +959,12 @@ async function afterPlace(t, p, forced) {
     else if (Math.random() < .55) { const cs = opts.filter(g => g.kind !== 'r'); choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : opts[(Math.random() * opts.length) | 0]; }
   }
   if (my !== token) return;
-  if (net && forced === undefined) {
-    const m = choice ? groupsOf(t).findIndex(g => gid(t, g) === gid(t, choice)) : -1;
-    netSend({t: 'move', g: net.gameId, n: net.applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed, m});
+  if (forced === undefined) {
+    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed, m: choice ? groupsOf(t).findIndex(g => gid(t, g) === gid(t, choice)) : -1};
+    gameLog.moves.push(mv);
+    if (net) netSend({t: 'move', g: net.gameId, ...mv}); else saveGame();
   }
-  if (choice) placeMeeple(t, choice, p, true);
+  if (choice) { placeMeeple(t, choice, p, true); if (!fast()) beep('meeple'); }
   renderPlayers();
   await scoreAfter(t, p);
   if (my !== token) return;
@@ -909,6 +990,7 @@ async function resolveFeature(c, final, placer) {
   const m0 = c.meeples.find(m => win.includes(m.p));
   floatText(m0.t, groupPos(m0.t, m0.g), '+' + pts, players[win[0]].col);
   win.forEach(i => { players[i].score += pts; players[i].stats[c.kind] += pts; });
+  if (!fast()) beep('score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
   const help = !final && placer != null && !win.includes(placer) ? ` · помог${isMe(players[placer]) ? 'ли вы' : ': ' + players[placer].name}` : '';
   toast(`${KIND[c.kind]} ${final ? 'не достроен' : done}${help} · ${win.map(i => players[i].name).join(' и ')} +${pts}`);
@@ -923,7 +1005,7 @@ function startTurn() {
   renderDeck();
   if (!current) return endGame();
   renderTray(); renderPlayers(); turnTok++;
-  if (net && net.queue.some(q => q.n === net.applied)) return waitRemote();
+  if (queue.some(q => q.n === applied)) return waitRemote();
   if (isLocal(turn)) {
     if (localHumans() > 1) return handOver();
     beginHumanTurn();
@@ -953,6 +1035,7 @@ function startTimer() {
   tick(); timerId = setInterval(tick, 250);
 }
 function beginHumanTurn() {
+  beep('turn');
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer();
   setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
@@ -968,12 +1051,13 @@ function handOver() {
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
   setStatus(`Ходит <b>${players[p].name}</b>…`);
-  await wait(900); if (my !== token || tt !== turnTok) return;
+  const k = wallet.speed === 'fast' ? .35 : 1;
+  await wait(900 * k); if (my !== token || tt !== turnTok) return;
   let best = null, bs = -1e9;
   for (const m of allMoves(current.type)) { let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++; const s = n * 1.5 + Math.random() * 2.5; if (s > bs) { bs = s; best = m; } }
   await ensureVisible(best.x, best.y); if (my !== token || tt !== turnTok) return;
   sel = {x: best.x, y: best.y}; setRot(best.r); placeGhost();
-  await wait(650); if (my !== token || tt !== turnTok) return;
+  await wait(650 * k); if (my !== token || tt !== turnTok) return;
   const t = {x: best.x, y: best.y, type: current.type, r: current.r, seed: (Math.random() * 1e9) | 0};
   await dropAt(t); if (my !== token) return;
   afterPlace(t, p);
@@ -990,10 +1074,12 @@ async function endGame() {
     const c = component(m.t, m.g); c.ids.forEach(i => seen.add(i));
     await resolveFeature(c, true);
   }
-  renderResults(true);
+  if (!net) clearSave();
+  const gold = payout();
+  renderResults(true, gold);
   const order = ranked(), top = order[0];
   const over = $('#over');
-  over.innerHTML = `<div class="ocard"><h3>${winTitle(top, true)}</h3><p>${top.score} очков · стопка закончилась</p><button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
+  over.innerHTML = `<div class="ocard"><h3>${winTitle(top, true)}</h3><p>${top.score} очков · стопка закончилась</p>${gold ? `<div class="goldres${gold.delta < 0 ? ' neg' : ''}"><i class="coin"></i>${gold.text}</div>` : ''}<button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
   $('#again2').onclick = () => net ? show('lobby') : newGame();
   setStatus('Партия окончена');
@@ -1032,18 +1118,28 @@ function makeDeck(rules) {
 // Offline game on this phone.
 function newGame() {
   if (net) leaveRoom();
-  startGame({seats: setup.seats.slice(0, setup.n).map(s => ({name: s.name, human: s.human})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
+  let firstHuman = true;
+  const seats = setup.seats.slice(0, setup.n).map(s => {
+    const fig = s.human ? (firstHuman ? wallet.fig : 'classic') : randomFig();
+    if (s.human) firstHuman = false;
+    return {name: s.name, human: s.human, fig};
+  });
+  startGame({seats, rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
-function startGame(cfg) {
+function startGame(cfg, replay = []) {
   token++; turnTok++; stopTimer();
+  queue = replay.slice(); applied = 0;
+  gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
   buildBoard(); buildMini();
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: PL0[i].col, human: s.human, owner: s.owner, score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples}; });
+  paintFigures();
+  if (!net) saveGame();
   world.classList.toggle('nohint', !rules.hints);
   playersEl.style.gridTemplateColumns = `repeat(${players.length},1fr)`;
   const h = humanCount(), b = players.length - h;
@@ -1055,7 +1151,8 @@ function startGame(cfg) {
   tiles = new Map([[key(0, 0), first]]);
   first.el = tileEl(first, true, .05); world.append(first.el);
   $('#over').hidden = true;
-  Object.assign(cam, {px: 0, py: 0, z: 1.05}); applyCam();
+  Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
+  $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
   renderPlayers(); renderResults(false);
   toast(`Первая карта из стопки: ${TYPES[first.type].name}`);
   startTurn();
@@ -1064,14 +1161,197 @@ function buildMini() {
   const mini = $('#mini'); mini.innerHTML = '';
   for (const t of tiles.values()) if (Math.abs(t.x) <= 1 && Math.abs(t.y - .5) <= 1.5) mini.append(tileEl(t, true, null));
 }
-function renderResults(final) {
+function renderResults(final, gold) {
   const o = ranked();
+  $('#goldres').hidden = !gold;
+  if (gold) { $('#goldres').className = 'goldres' + (gold.delta < 0 ? ' neg' : ''); $('#goldres').innerHTML = `<i class="coin"></i>${gold.text} · всего ${wallet.gold}`; }
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
   $('#rt').textContent = winTitle(o[0], final);
   const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
-  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleSvg(p.col)}<b>${p.name}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
+  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${p.name}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
   $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.score}</td></tr>`).join('');
 }
+
+/* ---------------- gold, figures, shop ----------------
+   Gold lives on this phone only (no accounts yet) and is never sold for money. */
+const FIGS = {
+  classic: {name: 'Классика', price: 0},
+  peasant: {name: 'Крестьянин', price: 150},
+  monk: {name: 'Монах', price: 300},
+  knight: {name: 'Рыцарь', price: 600},
+  archer: {name: 'Лучник', price: 900},
+  king: {name: 'Король', price: 1500},
+};
+const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
+const today = () => new Date().toISOString().slice(0, 10);
+const wallet = (() => {
+  let w = null; try { w = JSON.parse(localStorage.getItem('wallet')); } catch (_) {}
+  return Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', paid: [], sound: true}, w);
+})();
+function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); }
+function dailyBonus() {
+  if (wallet.daily === today()) return;
+  const first = !wallet.daily;
+  wallet.daily = today(); if (!first) wallet.gold += 20;
+  saveWallet();
+  if (!first) setTimeout(() => toastAny('Ежедневный бонус: +20 золота'), 600);
+}
+// Win against bots: +10 per opponent. Online: everyone stakes 20, the pot goes to the best places.
+// Several people on one phone: no gold, since one person could play all seats.
+const SHARES = {2: [1, 0], 3: [.7, .3, 0], 4: [.6, .3, .1, 0], 5: [.5, .3, .2, 0, 0]};
+function payout() {
+  const meIdx = players.findIndex(p => isMe(p));
+  if (meIdx < 0) return null;
+  const higher = i => players.filter(p => p.score > players[i].score).length;
+  let delta;
+  if (net) {
+    const key = 'g' + net.gameId;
+    if (wallet.paid.includes(key)) return null;
+    wallet.paid = [key, ...wallet.paid].slice(0, 30);
+    const humans = players.map((p, i) => i).filter(i => players[i].human);
+    if (humans.length < 2) { saveWallet(); return null; }
+    if (!gameLog.staked) { saveWallet(); return {delta: 0, text: 'Без ставки: золота было меньше 20'}; }
+    const share = SHARES[humans.length], rank = humans.filter(i => players[i].score > players[meIdx].score).length;
+    const tied = humans.filter(i => players[i].score === players[meIdx].score).length;
+    const got = share.slice(rank, rank + tied).reduce((a, b) => a + b, 0) / tied;
+    delta = Math.round(20 * humans.length * got) - 20;
+  } else {
+    if (localHumans() > 1 || players.every(p => p.human)) return null;
+    delta = higher(meIdx) === 0 ? 10 * (players.length - 1) : 0;
+    if (!delta) return {delta: 0, text: 'Победите ботов, чтобы получить золото'};
+  }
+  wallet.gold = Math.max(0, wallet.gold + delta); saveWallet();
+  if (delta > 0) beep('coin');
+  return {delta, text: `${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} золота`};
+}
+
+// Figures: the classic meeple in the player's colour plus an outfit.
+function drawFigure(g, w, h, fill, fig, ghost) {
+  const p = new Path2D(MEEPLE_D);
+  g.save(); g.scale(w / 100, h / 130); g.translate(0, 20);
+  if (fig === 'king') { g.fillStyle = '#8e2430'; g.beginPath(); g.moveTo(34, 36); g.lineTo(66, 36); g.lineTo(84, 104); g.lineTo(16, 104); g.closePath(); g.fill(); }
+  g.fillStyle = fill; g.fill(p);
+  g.save(); g.clip(p);
+  g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(36, 32, 20, 40, -.3, 0, 7); g.fill();
+  g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, 84, 100, 30);
+  if (fig === 'monk') { g.fillStyle = '#d8c08a'; g.fillRect(0, 62, 100, 5); }
+  g.restore();
+  g.lineWidth = 6; g.strokeStyle = ghost ? '#f2b84b' : 'rgba(0,0,0,.4)'; g.stroke(p);
+  const shape = (col, fn) => { g.fillStyle = col; g.beginPath(); fn(); g.fill(); g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,.35)'; g.stroke(); };
+  if (fig === 'peasant') {
+    shape('#e8c45a', () => g.ellipse(50, 9, 30, 7, 0, 0, 7));
+    shape('#d9ae3f', () => { g.moveTo(38, 9); g.lineTo(42, -8); g.lineTo(58, -8); g.lineTo(62, 9); g.closePath(); });
+  } else if (fig === 'monk') {
+    shape('#7a5230', () => { g.moveTo(28, 26); g.quadraticCurveTo(28, -6, 50, -6); g.quadraticCurveTo(72, -6, 72, 26); g.lineTo(64, 34); g.quadraticCurveTo(66, 6, 50, 6); g.quadraticCurveTo(34, 6, 36, 34); g.closePath(); });
+  } else if (fig === 'knight') {
+    shape('#cfd6de', () => { g.moveTo(31, 30); g.lineTo(31, 12); g.quadraticCurveTo(31, -2, 50, -2); g.quadraticCurveTo(69, -2, 69, 12); g.lineTo(69, 30); g.closePath(); });
+    g.fillStyle = '#2a2f38'; g.fillRect(36, 15, 28, 4);
+    shape('#d63b2f', () => { g.moveTo(48, -1); g.quadraticCurveTo(40, -18, 58, -18); g.quadraticCurveTo(50, -10, 54, -1); g.closePath(); });
+  } else if (fig === 'archer') {
+    shape('#3f8f4a', () => { g.moveTo(26, 14); g.quadraticCurveTo(46, -10, 78, 6); g.lineTo(70, 16); g.closePath(); });
+    shape('#f2e6c8', () => { g.moveTo(66, 8); g.quadraticCurveTo(84, -16, 94, -14); g.quadraticCurveTo(86, -4, 70, 12); g.closePath(); });
+  } else if (fig === 'king') {
+    shape('#f2c230', () => { g.moveTo(32, 10); g.lineTo(32, -6); g.lineTo(41, 3); g.lineTo(50, -10); g.lineTo(59, 3); g.lineTo(68, -6); g.lineTo(68, 10); g.closePath(); });
+    g.fillStyle = '#d6303f'; g.beginPath(); g.arc(50, 4, 3, 0, 7); g.fill();
+  }
+  g.restore();
+}
+const FIG_W = 20, FIG_H = 26;
+let figStyle = null;
+function paintFigures() {
+  let css = '';
+  players.forEach((p, i) => {
+    const [c, g] = cv(FIG_W, FIG_H, 3); drawFigure(g, FIG_W, FIG_H, p.col, p.fig);
+    SPR['m' + i] = {url: c.toDataURL(), w: FIG_W, h: FIG_H};
+    css += `.s-m${i}{background-image:url(${SPR['m' + i].url})}`;
+  });
+  if (!figStyle) { figStyle = document.createElement('style'); document.head.appendChild(figStyle); }
+  figStyle.textContent = css;
+}
+const meepleImg = i => SPR['m' + i] ? `<img src="${SPR['m' + i].url}" alt="">` : meepleSvg(players[i].col);
+const figPreview = (() => { const cache = {}; return fig => cache[fig] || (cache[fig] = (() => { const [c, g] = cv(40, 52, 3); drawFigure(g, 40, 52, '#ef5350', fig); return c.toDataURL(); })()); })();
+
+const LOCS = [
+  {name: 'Деревня', desc: 'Дороги, города, реки и крепости', open: true, art: '<rect width="160" height="90" fill="#7cb85a"/><path d="M0 60Q40 40 80 58T160 52V90H0z" fill="#5f9e40"/><path d="M0 70L160 64" stroke="#e2c690" stroke-width="7"/><path d="M110 0Q100 40 120 90" stroke="#3b88cf" stroke-width="9" fill="none"/><g fill="#c1452f"><path d="M28 40l10-10 10 10z"/><path d="M50 44l9-9 9 9z"/></g><g fill="#eadcbc"><rect x="30" y="40" width="16" height="10"/><rect x="52" y="44" width="14" height="9"/></g><path d="M130 30h12v24h-12z" fill="#b7ae9b"/><path d="M136 18l8 4-8 4z" fill="#e04a3a"/>'},
+  {name: 'Мегаполис', desc: 'Проспекты, кварталы, метро и небоскрёбы', art: '<rect width="160" height="90" fill="#1d2550"/><circle cx="130" cy="18" r="8" fill="#f4e7b0"/><g fill="#2f3a72"><rect x="8" y="40" width="22" height="50"/><rect x="34" y="22" width="18" height="68"/><rect x="56" y="48" width="24" height="42"/><rect x="84" y="12" width="20" height="78"/><rect x="108" y="34" width="22" height="56"/><rect x="134" y="52" width="20" height="38"/></g><g fill="#ffd36b"><rect x="38" y="30" width="4" height="4"/><rect x="45" y="40" width="4" height="4"/><rect x="88" y="22" width="4" height="4"/><rect x="96" y="36" width="4" height="4"/><rect x="88" y="50" width="4" height="4"/><rect x="12" y="50" width="4" height="4"/><rect x="114" y="44" width="4" height="4"/><rect x="62" y="58" width="4" height="4"/></g>'},
+  {name: 'Сибирь', desc: 'Зимники, остроги и замёрзшие реки', art: '<rect width="160" height="90" fill="#a9c7e8"/><path d="M0 60L40 22L70 52L100 18L160 64V90H0z" fill="#e8f1fb"/><path d="M40 22L52 34L44 34L36 30zM100 18L114 32L104 30z" fill="#fff"/><g fill="#2d5a46"><path d="M20 78l8-22 8 22z"/><path d="M120 80l9-26 9 26z"/><path d="M140 84l7-18 7 18z"/></g><path d="M0 82h160v8H0z" fill="#fff"/><g fill="#fff"><circle cx="70" cy="10" r="1.6"/><circle cx="20" cy="16" r="1.4"/><circle cx="140" cy="10" r="1.6"/><circle cx="90" cy="40" r="1.2"/></g>'},
+  {name: 'Джунгли', desc: 'Тропы, руины, реки и пирамиды', art: '<rect width="160" height="90" fill="#1f5a3a"/><path d="M60 90L80 40L100 90z" fill="#8f8a6a"/><path d="M66 74h28M70 64h20M74 54h12" stroke="#6d684e" stroke-width="3"/><g fill="#2e8a4e"><ellipse cx="18" cy="30" rx="30" ry="12" transform="rotate(-25 18 30)"/><ellipse cx="146" cy="24" rx="32" ry="12" transform="rotate(25 146 24)"/><ellipse cx="20" cy="80" rx="30" ry="10" transform="rotate(20 20 80)"/><ellipse cx="140" cy="78" rx="30" ry="10" transform="rotate(-20 140 78)"/></g><path d="M0 0Q30 40 10 90" stroke="#3a9e5a" stroke-width="3" fill="none"/>'},
+];
+function renderShop() {
+  saveWallet();
+  $('#figgrid').innerHTML = Object.entries(FIGS).map(([k, f]) => {
+    const own = wallet.owned.includes(k), sel = wallet.fig === k;
+    const tag = sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`;
+    return `<button class="fig${sel ? ' sel' : ''}${!own && wallet.gold < f.price ? ' poor' : ''}" data-fig="${k}"><img src="${figPreview(k)}" alt=""><span>${f.name}</span><small>${tag}</small></button>`;
+  }).join('');
+  $('#locgrid').innerHTML = LOCS.map(l => `<div class="loc${l.open ? '' : ' locked'}"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><span class="badge">${l.open ? 'Открыта' : '<svg width="10" height="11" viewBox="0 0 10 11"><rect x="1" y="5" width="8" height="6" rx="1" fill="currentColor"/><path d="M3 5V3.5a2 2 0 014 0V5" stroke="currentColor" fill="none" stroke-width="1.4"/></svg>Скоро'}</span><div class="li"><b>${l.name}</b><small>${l.open ? l.desc : l.desc + '. Появится в одном из следующих обновлений'}</small></div></div>`).join('');
+}
+$('#figgrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-fig]'); if (!b) return;
+  const k = b.dataset.fig, f = FIGS[k];
+  if (!wallet.owned.includes(k)) {
+    if (wallet.gold < f.price) return toastAny(`Не хватает ${f.price - wallet.gold} золота`);
+    wallet.gold -= f.price; wallet.owned.push(k); beep('coin'); toastAny(`${f.name} — ваша фигурка!`);
+  }
+  wallet.fig = k; saveWallet(); renderShop();
+  if (net) netSend({t: 'hello', id: myId, name: myName(), fig: k});
+});
+
+/* ---------------- saved game (offline) ---------------- */
+function saveGame() { try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {} }
+function clearSave() { try { localStorage.removeItem('savedGame'); } catch (_) {} renderResume(); }
+function loadSave() { try { return JSON.parse(localStorage.getItem('savedGame')); } catch (_) { return null; } }
+function renderResume() {
+  const sv = loadSave(), b = $('#resume');
+  b.hidden = !sv || !sv.moves || !sv.cfg;
+  $('#playBtn').className = b.hidden ? 'mbtn primary' : 'mbtn';
+  if (!b.hidden) $('#resumeInfo').textContent = `${sv.cfg.seats.length} ${sv.cfg.seats.length < 5 ? 'игрока' : 'игроков'} · сделано ходов: ${sv.moves.length}`;
+}
+$('#resume').onclick = () => { const sv = loadSave(); if (!sv) return renderResume(); if (net) leaveRoom(); startGame(sv.cfg, sv.moves); show('game'); };
+
+/* ---------------- sound ---------------- */
+let actx = null;
+const TONES = {place: [[150, .09, 'triangle']], meeple: [[520, .06, 'sine']], score: [[660, .09, 'sine'], [880, .14, 'sine']], turn: [[440, .07, 'sine']], coin: [[988, .07, 'square'], [1319, .12, 'square']]};
+function beep(kind) {
+  if (!wallet.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    let t = actx.currentTime;
+    for (const [f, d, type] of TONES[kind]) {
+      const o = actx.createOscillator(), gn = actx.createGain();
+      o.type = type; o.frequency.value = f;
+      gn.gain.setValueAtTime(.0001, t); gn.gain.exponentialRampToValueAtTime(type === 'square' ? .05 : .16, t + .01); gn.gain.exponentialRampToValueAtTime(.0001, t + d);
+      o.connect(gn).connect(actx.destination); o.start(t); o.stop(t + d + .02); t += d * .8;
+    }
+  } catch (_) {}
+}
+/* ---------------- settings ---------------- */
+const PREFS = [
+  {k: 'sound', label: 'Звук', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'notify', label: 'Уведомления об обновлениях', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
+  {k: 'view', label: 'Вид поля', opts: [['3d', '3D'], ['top', 'Сверху']]},
+  {k: 'speed', label: 'Скорость ботов', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
+];
+Object.assign(wallet, Object.assign({notify: true, view: '3d', speed: 'normal'}, wallet));
+function renderPrefs() {
+  $('#prefs').innerHTML = PREFS.filter(r => !r.app || window.AndroidApp).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span></div>`).join('');
+  $('#prefName').value = clean(setup.seats[0].name);
+  $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : 'веб-макет';
+  $('#checkUpd').hidden = !window.AndroidApp;
+}
+$('#prefs').addEventListener('click', e => {
+  const b = e.target.closest('.mseg button'); if (!b) return;
+  e.stopPropagation();
+  const r = PREFS.find(x => x.k === b.parentNode.dataset.pref);
+  wallet[r.k] = r.opts[+b.dataset.i][0]; saveWallet(); renderPrefs();
+  if (r.k === 'sound') beep('turn');
+  if (r.k === 'notify' && window.AndroidApp && AndroidApp.setUpdateNotifications) AndroidApp.setUpdateNotifications(wallet.notify);
+  if (r.k === 'view') setView(wallet.view);
+});
+$('#prefName').addEventListener('input', e => { setup.seats[0].name = e.target.value; saveSetup(); renderSetup(); });
+$('#checkUpd').onclick = () => { $('#checkUpd').textContent = 'Проверяем…'; AndroidApp.checkUpdates(); setTimeout(() => $('#checkUpd').textContent = 'Проверить обновления', 4000); };
+window.onNoUpdate = () => { $('#checkUpd').textContent = 'Проверить обновления'; toastAny('У вас последняя версия'); };
+function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
 
 /* ---------------- setup ---------------- */
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
@@ -1091,7 +1371,7 @@ function renderRules() {
   document.querySelectorAll('[data-rules]').forEach(el => el.innerHTML = html);
 }
 document.addEventListener('click', e => {
-  const b = e.target.closest('.mseg button'); if (!b) return;
+  const b = e.target.closest('.mseg button'); if (!b || !b.parentNode.dataset.k) return;
   const r = RULES.find(x => x.k === b.parentNode.dataset.k);
   setup.rules[r.k] = r.opts[+b.dataset.i][0]; saveSetup(); renderRules();
   if (net && net.host && net.lobby && !net.gameId) publishLobby(net.lobby.seats);
@@ -1100,7 +1380,7 @@ renderRules();
 function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on'; d.style.position = 'fixed'; d.style.top = '40px'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); }
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
 $('#copyLink').onclick = () => copyText(net.code, `Код ${net.code} скопирован`);
-$('#invite').onclick = () => copyText(`Заходи в «Мозаику Королевства»: Онлайн с друзьями → код ${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
+$('#invite').onclick = () => copyText(`Заходи в Puzzlegrad: Онлайн с друзьями → код ${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 
 /* ---------------- online ----------------
    Phones in a room talk through a public ntfy.sh topic named after the room code.
@@ -1110,17 +1390,19 @@ $('#invite').onclick = () => copyText(`Заходи в «Мозаику Коро
 const NET = 'https://ntfy.sh/';
 const myName = () => clean($('#myName').value) || clean(setup.seats[0].name) || 'Игрок';
 function netSend(msg) {
-  return fetch(NET + net.topic, {method: 'POST', body: JSON.stringify(msg)}).catch(() => toast('Нет связи — проверьте интернет'));
+  return fetch(NET + net.topic, {method: 'POST', body: JSON.stringify(msg)})
+    .then(r => { if (r.status === 429) toastAny('Сервер онлайн-игры исчерпал лимит для вашей сети на сегодня. Попробуйте с мобильного интернета или завтра'); })
+    .catch(() => toast('Нет связи — проверьте интернет'));
 }
 function leaveRoom() { if (net && net.es) net.es.close(); net = null; }
 function connect(code, asHost) {
   leaveRoom();
-  const me = net = {code, topic: 'mosaic-kingdom-' + code, host: false, hostId: null, seen: new Set(), lobby: null, gameId: null, applied: 0, queue: [], since: Date.now() / 1000};
+  const me = net = {code, topic: 'puzzlegrad-' + code, host: false, hostId: null, seen: new Set(), lobby: null, gameId: null, since: Date.now() / 1000};
   const es = net.es = new EventSource(NET + net.topic + '/sse?since=all');
   let opened = false;
   es.onopen = () => {
     if (opened) return; opened = true;
-    (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, name: myName()}));
+    (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, name: myName(), fig: wallet.fig}));
     if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 5000);
   };
   es.onerror = () => { if (!opened && net === me) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); } };
@@ -1137,24 +1419,25 @@ function onNet(d) {
   if (m.t === 'hello' && net.host && live) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
     const s = seats.find(x => x.owner === m.id);
-    if (s) { if (s.name !== clean(m.name)) { s.name = clean(m.name); publishLobby(seats); } }
-    else if (seats.length < 5) { seats.push({owner: m.id, name: clean(m.name)}); publishLobby(seats); }
+    if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig) { s.name = clean(m.name); s.fig = m.fig; publishLobby(seats); } }
+    else if (seats.length < 5) { seats.push({owner: m.id, name: clean(m.name), fig: m.fig}); publishLobby(seats); }
     return;
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
   if (m.t === 'start') {
-    net.gameId = d.id; net.applied = 0; net.queue = [];
-    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner})), rules: m.rules, deck: m.deck, seed: m.seed});
+    net.gameId = d.id;
+    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
+    else if (m.seats.filter(x => x.owner).length > 1) { gameLog.staked = wallet.gold >= 20 || wallet.paid.includes('g' + d.id); if (live && gameLog.staked) toast('Ставка: 20 золота'); }
     return show('game');
   }
   if (m.t === 'move') return onMove(m);
 }
 function onMove(m) {
-  if (m.g !== net.gameId || m.n < net.applied || net.queue.some(q => q.n === m.n)) return;
-  net.queue.push(m);
+  if (m.g !== net.gameId || m.n < applied || queue.some(q => q.n === m.n)) return;
+  queue.push(m);
   // This turn was already played earlier (e.g. before an app restart): take it from the history.
-  if (m.n === net.applied && m.p === turn && ['place', 'handover', 'ai'].includes(phase)) cancelTurn();
+  if (m.n === applied && m.p === turn && ['place', 'handover', 'ai'].includes(phase)) cancelTurn();
   if (phase === 'remote') pumpRemote();
 }
 function cancelTurn() {
@@ -1164,16 +1447,16 @@ function cancelTurn() {
 }
 function waitRemote() {
   phase = 'remote'; okBtn.disabled = rotBtn.disabled = true;
-  setStatus(`Ходит <b>${players[turn].name}</b>…`);
+  setStatus(net ? `Ходит <b>${players[turn].name}</b>…` : 'Восстанавливаем партию…');
   pumpRemote();
 }
 async function pumpRemote() {
-  if (!net || phase !== 'remote' || !gameVisible) return;
-  const i = net.queue.findIndex(q => q.n === net.applied);
+  if (phase !== 'remote' || !gameVisible) return;
+  const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
-  const mv = net.queue.splice(i, 1)[0], my = token;
+  const mv = queue.splice(i, 1)[0], my = token;
   if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toast('Партия разошлась между телефонами — начните новую'); return; }
-  phase = 'busy'; net.applied++;
+  phase = 'busy'; applied++;
   if (!fast()) await ensureVisible(mv.x, mv.y);
   if (my !== token) return;
   sel = {x: mv.x, y: mv.y}; setRot(mv.r); placeGhost();
@@ -1207,11 +1490,11 @@ $('#join').onclick = () => {
   connect(code, false);
 };
 $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.gameId) leaveRoom(); show('menu'); renderLobby(); };
-$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот'}); publishLobby(seats); };
+$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig()}); publishLobby(seats); };
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
 $('#lobbyStart').onclick = () => {
   const seats = net.lobby.seats;
-  netSend({t: 'start', seats: seats.map(x => ({name: x.name, owner: x.owner || null})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
+  netSend({t: 'start', seats: seats.map(x => ({name: x.name, owner: x.owner || null, fig: x.fig || 'classic'})), rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0});
 };
 renderLobby();
 renderSetup();
@@ -1224,6 +1507,9 @@ function show(name) {
   if (name === 'results') renderResults(phase === 'end');
   if (gameVisible) { applyCam(); if (pendingStart) startTurn(); else pumpRemote(); }
   if (name === 'lobby') renderLobby();
+  if (name === 'shop') renderShop();
+  if (name === 'settings') renderPrefs();
+  if (name === 'menu') { renderResume(); saveWallet(); }
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-tab],[data-go]'); if (!b) return;
@@ -1235,13 +1521,7 @@ $('#again').onclick = () => { newGame(); show('game'); };
 const isApp = !!window.AndroidApp;
 if (isApp) {
   document.documentElement.classList.add('app');
-  // The app ships only the bot game for now, so it doesn't advertise online play as working.
-  const btns = document.querySelectorAll('#scr-menu .mbtn');
-  btns[0].dataset.go = 'setup'; btns[0].innerHTML = '<span>Играть</span><small>2–5 игроков: друзья с одного телефона и боты</small>';
-  btns[1].className = 'mbtn'; btns[1].dataset.go = 'lobby';
-  btns[1].innerHTML = '<span>Онлайн с друзьями</span><small>Каждый со своего телефона, комната по коду</small>';
-  btns[2].remove();
-  $('.mfoot').textContent = 'Версия ' + AndroidApp.versionName();
+  $('#ver').textContent = 'версия ' + AndroidApp.versionName();
   showWhatsNew(AndroidApp.versionName());
 } else $('#ver').textContent = 'макет';
 // After an update (from Google Play or GitHub) show what changed, once per version.
@@ -1268,7 +1548,9 @@ window.onUpdateAvailable = info => {
 };
 
 injectArt();
-newGame();
+dailyBonus(); renderResume(); renderPrefs();
+// The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
+if (!isApp) newGame(); else { buildBoard(); buildMini(); }
 show(isApp ? 'menu' : 'game');
 })();
 </script>
