@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Объёмные пазлы в 3D: толстые плитки с травой и землёй по краям; в виде 2D карты плоские, как раньше\n• Обучение для новичков, задания, достижения и рейтинг\n• Звуки и музыка; онлайн-партия не зависает, если игрок ушёл"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Водопады: если река уходит за край королевства, вода стекает по объёмной плитке вниз\n• Подсказки «+» опустились к основанию плиток — объём пазлов виден лучше\n• Объёмные пазлы в 3D, плоские карты в 2D"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -350,9 +350,23 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .tile .sd.w{top:.6px;bottom:.6px;left:.6px;width:14px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#8a6a40 3px,#6f5232 55%,#4a3520 100%);filter:brightness(1.08)}
 /* 2D (top-down) view: plain flat cards, no walls or rims. */
 html.flat #world .tile .sd{display:none}
+/* Hint frames sit at the foot of the pieces in 3D, so the walls show; flat in 2D. */
+html.flat #world .slot,html.lowgfx #world .slot{transform:translateZ(1px)}
 html.flat #world .tile .face{inset:0;border-radius:2px;box-shadow:none}
 html.flat .ct{border-radius:4px;box-shadow:0 0 0 2px var(--c,transparent),0 16px 16px -6px rgba(0,0,0,.6)}
 html.flat .ct .face{border-radius:4px;box-shadow:none}
+/* Waterfall: water stripes sliding down the middle of a wall, with foam at the foot.
+   On the north and south walls "down" is along y, on the east and west walls along x. */
+.tile .sd.fall::before{content:"";position:absolute;background:repeating-linear-gradient(180deg,#9fd8ff 0 3px,#4ea2e4 3px 7px,#3b88cf 7px 10px);background-size:100% 10px;animation:fallY .5s linear infinite;box-shadow:0 0 0 1.5px rgba(200,189,124,.8)}
+.tile .sd.n.fall::before,.tile .sd.s.fall::before{left:calc(50% - 6.5px);width:13px;top:0;bottom:0}
+.tile .sd.e.fall::before,.tile .sd.w.fall::before{top:calc(50% - 6.5px);height:13px;left:0;right:0;background:repeating-linear-gradient(90deg,#9fd8ff 0 3px,#4ea2e4 3px 7px,#3b88cf 7px 10px);background-size:10px 100%;animation-name:fallX}
+.tile .sd.fall::after{content:"";position:absolute;border-radius:50%;background:radial-gradient(rgba(255,255,255,.95),rgba(190,230,255,.5) 55%,transparent 72%);animation:foam .9s ease-in-out infinite alternate}
+.tile .sd.n.fall::after,.tile .sd.s.fall::after{left:calc(50% - 11px);width:22px;bottom:-4px;height:8px}
+.tile .sd.e.fall::after,.tile .sd.w.fall::after{top:calc(50% - 11px);height:22px;right:-4px;width:8px}
+@keyframes fallY{to{background-position:0 10px}}
+@keyframes fallX{to{background-position:10px 0}}
+@keyframes foam{to{transform:scale(1.25);opacity:.7}}
+html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
 .tile .shd{position:absolute;inset:0;transform:translate3d(5px,8px,-9.5px);background:rgba(0,0,0,.35);border-radius:4px}
@@ -363,7 +377,7 @@ html.lowgfx .tile .sd.s{display:block}
 @keyframes hov{50%{transform:translateZ(26px)}}
 @keyframes shk{25%{transform:translateZ(18px) translateX(-5px)}75%{transform:translateZ(18px) translateX(5px)}}
 .tile.glow .face{filter:brightness(1.3) saturate(1.15);box-shadow:0 0 0 2px #ffe08a,0 0 22px rgba(255,214,120,.85)}
-.slot{position:absolute;width:88px;height:88px;box-sizing:border-box;border-radius:12px;transform:translateZ(1px);border:2.5px dashed rgba(242,184,75,.95);background:rgba(242,184,75,.18);cursor:pointer}
+.slot{position:absolute;width:88px;height:88px;box-sizing:border-box;border-radius:12px;transform:translateZ(-14px);border:2.5px dashed rgba(242,184,75,.95);background:rgba(242,184,75,.18);cursor:pointer}
 .slot::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);background:linear-gradient(var(--brass),var(--brass)) center/100% 3px no-repeat,linear-gradient(var(--brass),var(--brass)) center/3px 100% no-repeat;opacity:.9}
 .slot.sel{opacity:0}
 .bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1));pointer-events:none}
@@ -989,7 +1003,11 @@ function tileEl(t, decor, delay) {
 function walls(t, has = (x, y) => tiles.has(key(x, y))) {
   if (!t.el) return;
   const sd = t.el.querySelectorAll('.sd');
-  for (let d = 0; d < 4; d++) sd[d].hidden = has(t.x + DX[d], t.y + DY[d]);
+  for (let d = 0; d < 4; d++) {
+    sd[d].hidden = has(t.x + DX[d], t.y + DY[d]);
+    // A river that runs off the edge of the kingdom pours down the wall as a waterfall.
+    sd[d].classList.toggle('fall', !sd[d].hidden && edgeAt(t, d) === 'w');
+  }
 }
 function wallsAround(t) { walls(t); for (let d = 0; d < 4; d++) { const n = at(t.x + DX[d], t.y + DY[d]); if (n) walls(n); } }
 function placeMeeple(t, g, p, anim) {
