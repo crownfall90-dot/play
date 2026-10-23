@@ -70,6 +70,8 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 .topbtn{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);color:var(--ink);cursor:pointer;padding:0}
 .topbtn:active,.goldchip:active{transform:scale(.94)}
 .mtop .goldchip{position:relative;top:auto;right:auto;height:40px;box-sizing:border-box}
+.shopchip{padding:4px 14px 4px 4px;gap:8px;color:var(--ink)}
+.shopchip .sbag{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--brass);color:var(--brass-ink)}
 .hero{position:relative;flex:1 1 34%;min-height:120px;perspective:700px;overflow:hidden;margin-top:-50px;pointer-events:none}
 .hero{-webkit-mask-image:linear-gradient(to bottom,#000 72%,transparent);mask-image:linear-gradient(to bottom,#000 72%,transparent)}
 .mini{position:absolute;left:50%;top:58%;width:0;height:0;transform-style:preserve-3d;--tilt:56deg;animation:sway 9s ease-in-out infinite}
@@ -370,8 +372,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="mtop">
           <div class="mside"><button class="topbtn" data-go="settings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
             <button class="topbtn" data-go="rules" aria-label="Как играть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button></div>
-          <div class="mside"><button class="topbtn shopbtn" data-go="shop" aria-label="Магазин"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg></button>
-            <button class="goldchip" data-go="shop" aria-label="Золото, открыть магазин"><i class="coin"></i><b class="goldN">0</b></button></div>
+          <button class="goldchip shopchip" data-go="shop" aria-label="Магазин, золото"><span class="sbag"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg></span><i class="coin"></i><b class="goldN">0</b></button>
         </div>
         <div class="hero"><div class="mini" id="mini"></div></div>
         <div class="mbody">
