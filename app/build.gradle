@@ -5,19 +5,31 @@ def vc = (project.findProperty('versionCode') ?: '1') as int
 
 android {
     namespace 'com.crownfall.mosaic'
-    compileSdk 34
+    compileSdk 35
     defaultConfig {
         applicationId 'com.crownfall.mosaic'
         minSdk 24
-        targetSdk 34
+        targetSdk 35
         versionCode vc
         versionName "1.0.${vc}"
-        buildConfigField 'String', 'UPDATE_REPO', '"crownfall90-dot/play"'
     }
     buildFeatures { buildConfig true }
+
+    // play: Google Play build (AAB), updates come through Google Play.
+    // github: APK from GitHub Releases that updates itself.
+    flavorDimensions 'store'
+    productFlavors {
+        play { dimension 'store' }
+        github {
+            dimension 'store'
+            buildConfigField 'String', 'UPDATE_REPO', '"crownfall90-dot/play"'
+        }
+    }
+
     signingConfigs {
         release {
             // Same key for every build, otherwise Android refuses to install updates over the old app.
+            // For Google Play this is the upload key; Google re-signs with the app signing key.
             storeFile file(System.getenv('KEYSTORE_FILE') ?: 'release.keystore')
             storePassword System.getenv('KEYSTORE_PASSWORD') ?: 'mosaic-kingdom'
             keyAlias System.getenv('KEY_ALIAS') ?: 'mosaic'
@@ -30,4 +42,7 @@ android {
     compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
 }
 
-dependencies { implementation 'androidx.core:core:1.13.1' }
+dependencies {
+    implementation 'androidx.core:core:1.13.1'
+    playImplementation 'com.google.android.play:app-update:2.1.0'
+}
