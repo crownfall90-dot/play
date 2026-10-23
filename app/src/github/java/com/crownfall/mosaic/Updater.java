@@ -1,11 +1,11 @@
 package com.crownfall.mosaic;
 
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
 
-import androidx.core.content.FileProvider;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -100,6 +100,9 @@ class Updater {
                 File apk = new File(dir, "update.apk");
                 HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
                 c.setInstanceFollowRedirects(true);
+                c.setConnectTimeout(15000);
+                c.setReadTimeout(30000);
+                if (c.getResponseCode() != 200) throw new java.io.IOException("HTTP " + c.getResponseCode());
                 long total = c.getContentLengthLong();
                 try (InputStream in = c.getInputStream(); OutputStream out = new FileOutputStream(apk)) {
                     byte[] buf = new byte[64 * 1024];
@@ -111,6 +114,8 @@ class Updater {
                         int pct = total > 0 ? (int) (done * 100 / total) : 50;
                         if (pct != last) { last = pct; activity.js("window.onUpdateProgress && window.onUpdateProgress(" + pct + ")"); }
                     }
+                    // A cut-off download must never reach the installer.
+                    if (total > 0 && done != total) throw new java.io.IOException("short download " + done + "/" + total);
                 }
                 activity.runOnUiThread(() -> {
                     if (canInstall()) install(apk);
@@ -121,7 +126,8 @@ class Updater {
                     }
                 });
             } catch (Exception e) {
-                activity.js("window.onUpdateError && window.onUpdateError('Не получилось скачать обновление')");
+                activity.report(e);
+                activity.js("window.onUpdateError && window.onUpdateError('Не получилось скачать обновление, проверьте интернет')");
             }
         }).start();
     }
@@ -130,11 +136,37 @@ class Updater {
         return Build.VERSION.SDK_INT < Build.VERSION_CODES.O || activity.getPackageManager().canRequestPackageInstalls();
     }
 
+    /**
+     * Hands the APK to Android through a PackageInstaller session. Passing a content:// link to
+     * the installer instead fails on some phones (Realme/OPPO "Анализ не выполнен"), because their
+     * installer scans the file and cannot read it through that link.
+     */
     private void install(File apk) {
-        Uri uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".files", apk);
-        Intent i = new Intent(Intent.ACTION_VIEW);
-        i.setDataAndType(uri, "application/vnd.android.package-archive");
-        i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-        activity.startActivity(i);
+        new Thread(() -> {
+            try {
+                android.content.pm.PackageInstaller pi = activity.getPackageManager().getPackageInstaller();
+                android.content.pm.PackageInstaller.SessionParams params = new android.content.pm.PackageInstaller.SessionParams(
+                        android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+                params.setAppPackageName(activity.getPackageName());
+                params.setSize(apk.length());
+                int id = pi.createSession(params);
+                try (android.content.pm.PackageInstaller.Session session = pi.openSession(id)) {
+                    try (InputStream in = new java.io.FileInputStream(apk);
+                         OutputStream out = session.openWrite("base.apk", 0, apk.length())) {
+                        byte[] buf = new byte[64 * 1024];
+                        int n;
+                        while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                        session.fsync(out);
+                    }
+                    int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+                    PendingIntent done = PendingIntent.getBroadcast(activity, id,
+                            new Intent(activity, InstallResult.class).setPackage(activity.getPackageName()), flags);
+                    session.commit(done.getIntentSender());
+                }
+            } catch (Exception e) {
+                activity.report(e);
+                activity.js("window.onUpdateError && window.onUpdateError('Не получилось установить обновление')");
+            }
+        }).start();
     }
 }
