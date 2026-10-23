@@ -87,7 +87,7 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 .ocard .row2b{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pl.out{opacity:.45}
 html.lowgfx .tile .shd,html.lowgfx .tile .sd,html.lowgfx .bsh{display:none}
-html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
+html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .gift{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(242,184,75,.16),rgba(242,184,75,.04));border:1px solid rgba(242,184,75,.35)}
 .gift .gi{flex:1;min-width:0}.gift .gi b{display:block;font:700 14px var(--f-display)}.gift .gi small{color:var(--muted);font-size:12px}
 .gift .cta{height:44px;padding:0 16px}
@@ -172,7 +172,7 @@ html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 .mseg{display:flex;gap:3px;background:rgba(0,0,0,.22);border-radius:10px;padding:3px}
 .mseg button{border:0;background:transparent;color:var(--muted);font:600 12.5px var(--f-body);padding:6px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
 .mseg button[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink)}
-.world.nohint .slot{border-color:transparent;background:transparent;animation:none}
+.world.nohint .slot{border-color:transparent;background:transparent}
 .world.nohint .slot::after{display:none}
 .timer{position:absolute;left:10px;top:10px;z-index:4;font:800 14px var(--f-display);font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:5px 9px}
 .edgeglow{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--c,#f2b84b),inset 0 0 38px 6px var(--c,#f2b84b)}
@@ -218,30 +218,27 @@ html.lowgfx .tile.ghost,html.lowgfx .slot,html.lowgfx .gm{animation:none}
 .tile.shake{animation:shk .35s}
 @keyframes hov{50%{transform:translateZ(26px)}}
 @keyframes shk{25%{transform:translateZ(18px) translateX(-5px)}75%{transform:translateZ(18px) translateX(5px)}}
-.zone{position:absolute;inset:3px;border-radius:5px;transform:translateZ(.6px);pointer-events:none;box-shadow:inset 0 0 0 3px var(--zc),inset 0 0 18px var(--zc);opacity:.9}
-.zone.multi{box-shadow:inset 0 0 0 3px var(--zc),inset 0 0 0 6px rgba(255,255,255,.85),inset 0 0 18px var(--zc)}
 .tile.glow .face{filter:brightness(1.3) saturate(1.15);box-shadow:0 0 0 2px #ffe08a,0 0 22px rgba(255,214,120,.85)}
-.slot{position:absolute;width:88px;height:88px;box-sizing:border-box;border-radius:12px;transform:translateZ(1px);border:2.5px dashed rgba(242,184,75,.9);background:rgba(242,184,75,.16);cursor:pointer;animation:br 1.6s ease-in-out infinite}
+.slot{position:absolute;width:88px;height:88px;box-sizing:border-box;border-radius:12px;transform:translateZ(1px);border:2.5px dashed rgba(242,184,75,.95);background:rgba(242,184,75,.18);cursor:pointer}
 .slot::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);background:linear-gradient(var(--brass),var(--brass)) center/100% 3px no-repeat,linear-gradient(var(--brass),var(--brass)) center/3px 100% no-repeat;opacity:.9}
 .slot.sel{opacity:0}
-@keyframes br{50%{opacity:.55}}
-.bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1));pointer-events:none}
+.bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1));pointer-events:none}
 .bb.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
-@keyframes pop{from{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
+@keyframes pop{from{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
 .bsh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(15,30,8,.45),transparent);transform:translate(-50%,-50%) translateZ(.5px);pointer-events:none}
 .gm{pointer-events:auto;cursor:pointer;animation:gmb 1s ease-in-out infinite}
 .gm.hl{filter:drop-shadow(0 0 5px #ffd36b) brightness(1.2)}
-@keyframes gmb{50%{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) translateY(-6px)}}
+@keyframes gmb{50%{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) translateY(-6px)}}
 .puff{position:absolute;inset:-8px;border-radius:14px;border:3px solid rgba(255,240,200,.75);transform:translateZ(1px);animation:puff .55s ease-out forwards;pointer-events:none}
 @keyframes puff{to{transform:translateZ(1px) scale(1.3);opacity:0}}
 .fl{position:absolute;font:800 22px var(--f-display);color:var(--c);text-shadow:0 2px 0 rgba(0,0,0,.5),0 0 12px rgba(0,0,0,.4);white-space:nowrap;transform-origin:50% 100%;pointer-events:none;animation:rise 1.5s ease-out forwards}
-@keyframes rise{0%{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) translateY(0);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-100%) rotateX(calc(var(--tilt) * -1)) translateY(-50px);opacity:0}}
+@keyframes rise{0%{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) translateY(0);opacity:0}15%{opacity:1}100%{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) translateY(-50px);opacity:0}}
 .fog{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#2a3a63 0%,rgba(42,58,99,0) 26%),linear-gradient(0deg,rgba(16,23,41,.85) 0%,rgba(16,23,41,0) 12%)}
 .fabs{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:3}
 .fab{width:38px;height:38px;border-radius:12px;background:var(--glass);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;font:700 11px var(--f-display);}
 .toast{position:absolute;top:8px;left:50%;transform:translate(-50%,-8px);opacity:0;transition:.25s;z-index:5;background:var(--glass);border:1px solid var(--line);padding:7px 12px;border-radius:12px;font-size:12.5px;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis;pointer-events:none;}
 .toast.on{opacity:1;transform:translate(-50%,0)}
-.hint{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;background:var(--glass);border:1px solid var(--line);padding:8px 12px;border-radius:14px;font-size:12px;white-space:nowrap;transition:opacity .5s;pointer-events:none;z-index:3}
+.hint{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;gap:8px;align-items:center;width:max-content;max-width:calc(100% - 28px);background:var(--glass);border:1px solid var(--line);padding:8px 12px;border-radius:14px;font-size:12px;transition:opacity .5s;pointer-events:none;z-index:3}
 .hint.gone{opacity:0}
 .tray{position:relative;z-index:4;margin-top:-16px;background:linear-gradient(180deg,#1d2747,#131a31);border-top:1px solid var(--line);border-radius:22px 22px 0 0;padding:12px 14px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:10px;box-shadow:0 -12px 30px rgba(0,0,0,.35)}
 .status{font-size:12.5px;color:var(--muted);text-align:center;min-height:18px;text-wrap:balance} .status b{color:var(--ink)}
@@ -357,7 +354,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="rcard"><b>Очки</b><p>Когда объект достроен, очки получает его хозяин, даже если последнюю карту положил соперник, а фигурка возвращается.</p>
             <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
           <div class="rcard"><b>Золото</b><p>За место в партии с ботами или онлайн:</p><dl class="pts"><dt>1-е место</dt><dd>+15</dd><dt>2-е место</dt><dd>+10</dd><dt>3-е место</dt><dd>+5</dd><dt>4-е место</dt><dd>0</dd><dt>5-е место</dt><dd>−5</dd></dl><p>За одним телефоном золото не начисляется. Сдавшийся игрок золота не получает.</p></div>
-          <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Спорные объекты подсвечиваются белой рамкой.</p></div>
+          <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Дороги, города и крепости окрашиваются в цвет владельца; у спорных цвета чередуются.</p></div>
           <button class="cta wide" data-go="setup">Сыграть</button>
         </div>
       </section>
@@ -422,9 +419,10 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <button class="fab" id="zin" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
             <button class="fab" id="zout" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
             <button class="fab" id="ctr" aria-label="К центру поля"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
-            <button class="fab" id="view" aria-label="Сменить угол обзора">3D</button>
+            <button class="fab" id="turnL" aria-label="Повернуть поле"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 102.4-5.7"/><path d="M4 4v5h5"/></svg></button>
+            <button class="fab" id="view" aria-label="Сменить наклон камеры">3D</button>
           </div>
-          <div class="hint" id="hint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11V5a1.5 1.5 0 013 0v5m0-1a1.5 1.5 0 013 0v2m0-1a1.5 1.5 0 013 0v4a6 6 0 01-6 6h-1a6 6 0 01-5-2.7L4 14a1.5 1.5 0 012.5-1.6L9 15"/></svg>Водите пальцем по полю, щипок — масштаб</div>
+          <div class="hint" id="hint"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11V5a1.5 1.5 0 013 0v5m0-1a1.5 1.5 0 013 0v2m0-1a1.5 1.5 0 013 0v4a6 6 0 01-6 6h-1a6 6 0 01-5-2.7L4 14a1.5 1.5 0 012.5-1.6L9 15"/></svg>Палец — двигать поле, два пальца — масштаб, поворот и наклон</div>
           <div class="over" id="over" hidden></div>
         </div>
         <div class="tray">
@@ -691,10 +689,11 @@ function drawSprites() {
   PL0.forEach((p, i) => sprite('m' + i, 20, 22, meeple(p.col, 'rgba(0,0,0,.4)')));
   sprite('mg', 20, 22, meeple('rgba(255,255,255,.7)', '#f2b84b'));
 }
+const TILE_URL = {};
 function injectArt() {
   drawSprites();
   let css = '';
-  for (const id in TYPES) css += `.t-${id}{background-image:url(${drawTile(id)})}`;
+  for (const id in TYPES) { TILE_URL[id] = drawTile(id); css += `.t-${id}{background-image:url(${TILE_URL[id]})}`; }
   for (const k in SPR) css += `.s-${k}{background-image:url(${SPR[k].url})}`;
   const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 }
@@ -802,11 +801,11 @@ function tileEl(t, decor, delay) {
 function placeMeeple(t, g, p, anim) {
   const [x, y] = groupPos(t, g);
   const el = addSprite(t.el, 'm' + p, x, y, '', anim && !fast() ? 0 : null);
-  meeples.push({gid: gid(t, g), p, el, t, g});
+  meeples.push({gid: gid(t, g), p, el, t, g}); markOwn();
   players[p].meeples--;
 }
 function removeMeeple(m) {
-  meeples.splice(meeples.indexOf(m), 1); players[m.p].meeples++;
+  meeples.splice(meeples.indexOf(m), 1); players[m.p].meeples++; markOwn();
   const a = m.el.animate([{opacity: 1, translate: '0 0'}, {opacity: 0, translate: '0 -30px'}], {duration: RM ? 1 : 600, easing: 'ease-in'});
   a.onfinish = () => m.el.remove();
 }
@@ -817,14 +816,18 @@ function floatText(t, [x, y], txt, col) {
 }
 
 /* ---------------- camera & input ---------------- */
-const cam = {px: 0, py: 0, z: .92, tilt: 55};
-let camAnim = 0, lastTilt = null, inertia = 0;
+const cam = {px: 0, py: 0, z: .92, tilt: 55, rot: 0};
+let camAnim = 0, lastTilt = null, lastRot = null, inertia = 0;
 let camFrame = 0;
 // Finger moves arrive faster than the screen redraws; move the 3D scene once per frame.
 function applyCamSoon() { if (!camFrame) camFrame = requestAnimationFrame(() => { camFrame = 0; applyCam(); }); }
 function applyCam() {
-  world.style.transform = `rotateX(${cam.tilt}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
-  if (cam.tilt !== lastTilt) { world.style.setProperty('--tilt', cam.tilt + 'deg'); lastTilt = cam.tilt; }
+  world.style.transform = `rotateX(${cam.tilt}deg) rotateZ(${cam.rot}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
+  if (cam.tilt !== lastTilt || cam.rot !== lastRot) {
+    world.style.setProperty('--tilt', cam.tilt + 'deg'); world.style.setProperty('--rot', cam.rot + 'deg');
+    lastTilt = cam.tilt; lastRot = cam.rot;
+    tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg'); // the card in the tray turns with the board
+  }
 }
 let boundsCache = null;
 function bounds() { if (boundsCache && boundsCache.n === tiles.size) return boundsCache; boundsCache = calcBounds(); boundsCache.n = tiles.size; return boundsCache; }
@@ -856,7 +859,13 @@ function ensureVisible(x, y) {
   const hx = vw / 2 / cam.z / T - .9, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
   if (Math.abs(x + cam.px / T) > hx || Math.abs(y + cam.py / T) > hy) return tweenCam({px: -x * T, py: -y * T}, 650);
 }
-function panBy(dx, dy) { cam.px += dx / cam.z; cam.py += dy / (cam.z * Math.cos(cam.tilt * Math.PI / 180)); clampCam(); applyCamSoon(); }
+// A finger move on screen, turned back into board directions (the board may be rotated and tilted).
+function panBy(dx, dy) {
+  const r = cam.rot * Math.PI / 180, sy = dy / Math.cos(cam.tilt * Math.PI / 180);
+  cam.px += (dx * Math.cos(r) + sy * Math.sin(r)) / cam.z;
+  cam.py += (-dx * Math.sin(r) + sy * Math.cos(r)) / cam.z;
+  clampCam(); applyCamSoon();
+}
 const hint = $('#hint');
 let hintTimer = setTimeout(hideHint, 7000);
 function hideHint() { hint.classList.add('gone'); clearTimeout(hintTimer); }
@@ -879,10 +888,17 @@ board.addEventListener('pointermove', e => {
     if (moved) { const dx = nx - p.x, dy = ny - p.y, now = performance.now(), dt = Math.max(1, now - lastT); panBy(dx, dy); vel = {x: dx / dt, y: dy / dt}; lastT = now; }
   }
   p.x = nx; p.y = ny;
+  // Two fingers: spread to zoom, twist to turn the board, move up/down together to tilt it.
   if (pts.size === 2) {
     const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y);
-    if (pinch) { cam.z *= d / pinch; clampCam(); applyCamSoon(); }
-    pinch = d; hideHint();
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI, my = (a.y + b.y) / 2;
+    if (pinch) {
+      let da = ang - pinch.ang; if (da > 180) da -= 360; if (da < -180) da += 360;
+      cam.z *= d / pinch.d; cam.rot += da;
+      cam.tilt = Math.max(15, Math.min(72, cam.tilt - (my - pinch.my) * .3));
+      clampCam(); applyCamSoon();
+    }
+    pinch = {d, ang, my}; hideHint();
   }
 });
 const endPtr = e => {
@@ -905,31 +921,92 @@ function fling() {
 $('#zin').onclick = () => tweenCam({z: Math.min(1.8, cam.z * 1.25)}, 250);
 $('#zout').onclick = () => tweenCam({z: Math.max(.45, cam.z / 1.25)}, 250);
 $('#ctr').onclick = () => centerCam(true);
-$('#view').onclick = e => { const top = cam.tilt > 40; e.currentTarget.textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 500); };
+// Tilt presets: low (look along the board), regular 3D, top-down.
+const TILTS = [[66, 'Низко'], [55, '3D'], [22, '2D']];
+$('#view').onclick = e => {
+  const i = (TILTS.findIndex(t => Math.abs(t[0] - cam.tilt) < 4) + 1) % TILTS.length;
+  e.currentTarget.textContent = TILTS[i][1]; e.currentTarget.style.fontSize = TILTS[i][1].length > 2 ? '9px' : '';
+  tweenCam({tilt: TILTS[i][0]}, 500);
+};
+$('#turnL').onclick = () => tweenCam({rot: Math.round((cam.rot - 90) / 90) * 90}, 450);
 
 /* ---------------- hud ---------------- */
 const playersEl = $('#players'), statusEl = $('#status'), toastEl = $('#toast'), okBtn = $('#ok'), rotBtn = $('#rot');
 const prow = $('#prow'), mrow = $('#mrow'), tface = $('#tface'), ct = $('#ct'), cname = $('#cname');
-// Your objects (cities, roads, forts with your figures) glow in your colour; contested ones get a white ring.
-function updateZones() {
-  world.querySelectorAll('.zone').forEach(z => z.remove());
-  if (!wallet.zones || !players.length) return;
-  const who = net ? players.findIndex(p => p.owner === myId) : localHumans() === 1 ? players.findIndex((p, i) => isLocal(i)) : isLocal(turn) ? turn : -1;
-  if (who < 0) return;
-  const done = new Set();
-  for (const m of meeples) {
-    if (m.p !== who || done.has(m.gid)) continue;
-    const c = component(m.t, m.g); c.ids.forEach(i => done.add(i));
-    const multi = c.meeples.some(x => x.p !== who);
-    for (const t of c.tiles) {
-      if (t.el.querySelector('.zone')) continue;
-      const z = document.createElement('i'); z.className = 'zone' + (multi ? ' multi' : ''); z.style.setProperty('--zc', players[who].col);
-      t.el.append(z);
+// Who owns what: every road, city and fort with figures on it is painted in its owners' colours
+// along the object itself, from end to end, as an SVG layer on top of each tile's picture.
+// Contested objects alternate the colours of everyone who has figures on them.
+let ownDirty = true;
+const markOwn = () => { ownDirty = true; };
+function cityD(E, S) {
+  const city = [0,1,2,3].filter(d => E[d] === 'c'), k = city.length, C = S / 2;
+  const corner = [[0,0],[S,0],[S,S],[0,S]], mid = [[S/2,0],[S,S/2],[S/2,S],[0,S/2]];
+  const pt = p => p[0].toFixed(1) + ' ' + p[1].toFixed(1);
+  if (k === 4) return {fill: `M0 0H${S}V${S}H0Z`, wall: ''};
+  if (k === 1) {
+    const i = city[0], rot = ([x, y]) => { let dx = x - C, dy = y - C; for (let n = 0; n < i; n++) [dx, dy] = [-dy, dx]; return [C + dx, C + dy]; };
+    const A = rot([0, 0]), B = rot([S, 0]), K = rot([S / 2, S * .64]);
+    return {fill: `M${pt(A)}L${pt(B)}Q${pt(K)} ${pt(A)}Z`, wall: `M${pt(B)}Q${pt(K)} ${pt(A)}`};
+  }
+  const s0 = city.find(d => E[(d + 3) % 4] !== 'c');
+  let fill = `M${pt(corner[s0])}`, wall = '', i = s0, n = 0;
+  while (n < 4) {
+    if (E[i] === 'c') { fill += `L${pt(corner[(i + 1) % 4])}`; i = (i + 1) % 4; n++; continue; }
+    let L = 0; while (E[(i + L) % 4] !== 'c') L++;
+    const from = corner[i], to = corner[(i + L) % 4], p = L === 1 ? mid[i] : corner[(i + 1) % 4], f = L === 1 ? .88 : .86;
+    const K = [p[0] + (C - p[0]) * f, p[1] + (C - p[1]) * f];
+    fill += `Q${pt(K)} ${pt(to)}`; wall += `M${pt(from)}Q${pt(K)} ${pt(to)}`;
+    i = (i + L) % 4; n += L;
+  }
+  return {fill: fill + 'Z', wall};
+}
+function ownSvg(t, list) {
+  const mid = [[50,0],[100,50],[50,100],[0,50]];
+  let out = '';
+  // Several claimants: dashes of each colour in turn.
+  const strokes = (d, cols, w, extra = '') => cols.map((c, i) => `<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="${cols.length > 1 ? 'butt' : 'round'}"${cols.length > 1 ? ` stroke-dasharray="7 ${7 * (cols.length - 1)}" stroke-dashoffset="${-7 * i}"` : ''} ${extra}/>`).join('');
+  for (const it of list) {
+    const base = it.edges.map(d => (d - t.r + 4) % 4);
+    if (it.kind === 'r') {
+      const [a, b] = base.map(e => mid[e].join(' '));
+      const d = base.length === 2 ? `M${a}Q50 50 ${b}` : `M${a}L50 50`;
+      out += `<path d="${d}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="10" stroke-linecap="round"/>` + strokes(d, it.cols, 6.5);
+    } else if (it.kind === 'c') {
+      const g = cityD(TYPES[t.type].e, 100);
+      out += `<path d="${g.fill}" fill="${it.cols[0]}" fill-opacity="${it.cols.length > 1 ? .12 : .22}"/>`;
+      if (g.wall) out += `<path d="${g.wall}" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="7" stroke-linecap="round"/>` + strokes(g.wall, it.cols, 4.5);
+      else out += strokes('M3 3H97V97H3Z', it.cols, 4.5);
+    } else if (it.kind === 'f') {
+      const d = 'M50 20A30 30 0 1 1 49.9 20Z';
+      out += `<path d="${d}" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="7"/>` + strokes(d, it.cols, 4.5);
     }
+  }
+  return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${out}</svg>`);
+}
+function updateOwnership() {
+  if (!ownDirty) return;
+  ownDirty = false;
+  for (const t of tiles.values()) if (t.own) { t.el.querySelector('.face').style.backgroundImage = ''; t.own = false; }
+  if (!wallet.zones || !players.length) return;
+  const perTile = new Map(), done = new Set();
+  for (const m of meeples) {
+    if (done.has(m.gid)) continue;
+    const c = component(m.t, m.g); c.ids.forEach(i => done.add(i));
+    const cols = [...new Set(c.meeples.map(x => x.p))].map(p => players[p].col);
+    for (const id of c.ids) {
+      const [k, rest] = id.split('|'), t = tiles.get(k);
+      if (!t) continue;
+      if (!perTile.has(t)) perTile.set(t, []);
+      perTile.get(t).push({kind: rest[0], edges: rest.slice(1).split('').map(Number), cols});
+    }
+  }
+  for (const [t, list] of perTile) {
+    t.el.querySelector('.face').style.backgroundImage = `url("${ownSvg(t, list)}"), url(${TILE_URL[t.type]})`;
+    t.own = true;
   }
 }
 function renderPlayers(bump = []) {
-  updateZones();
+  updateOwnership();
   playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
@@ -938,7 +1015,7 @@ function toast(txt) { toastEl.textContent = txt; toastEl.classList.add('on'); cl
 function renderDeck() { $('#deckN').textContent = deck.length; }
 function renderTray() {
   if (!current) { tface.className = 'face'; cname.innerHTML = ''; return; }
-  tface.style.transition = 'none'; trayDeg = current.r * 90; tface.style.setProperty('--r', trayDeg + 'deg');
+  tface.style.transition = 'none'; trayDeg = current.r * 90; tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg');
   tface.className = 'face t-' + current.type; void tface.offsetWidth; tface.style.transition = '';
   const solo = isLocal(turn) && localHumans() === 1;
   ct.style.setProperty('--c', solo ? 'transparent' : players[turn].col);
@@ -948,17 +1025,20 @@ function renderTray() {
 function setRot(nr) {
   const delta = ((nr - current.r) + 4) % 4;
   trayDeg += delta * 90; ghostDeg += delta * 90; current.r = nr;
-  tface.style.setProperty('--r', trayDeg + 'deg');
+  tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg');
   if (ghost) ghost.querySelector('.face').style.setProperty('--r', ghostDeg + 'deg');
 }
-function clearSlots() { slotEls.forEach(s => s.remove()); slotEls = []; }
+// Hint frames are plain, unanimated 3D squares in empty cells: animating each of them
+// (or merging them into one big layer that standing houses and trees cut through)
+// made the board stutter once many frames were shown.
+function clearSlots() { slotEls.forEach(x => x.remove()); slotEls = []; }
 function renderSlots() {
   clearSlots();
   for (const c of emptyCells()) {
     if (!legalRots(current.type, c.x, c.y).length) continue;
-    const s = document.createElement('div'); s.className = 'slot'; s.dataset.x = c.x; s.dataset.y = c.y;
-    s.style.left = (c.x * T - T / 2) + 'px'; s.style.top = (c.y * T - T / 2) + 'px';
-    world.append(s); slotEls.push(s);
+    const el = document.createElement('div'); el.className = 'slot'; el.dataset.x = c.x; el.dataset.y = c.y;
+    el.style.left = (c.x * T - T / 2) + 'px'; el.style.top = (c.y * T - T / 2) + 'px';
+    world.append(el); slotEls.push(el);
   }
 }
 function placeGhost() {
@@ -1000,7 +1080,7 @@ async function dropAt(t) {
   ghost.classList.remove('ghost');
   await ghost.animate([{transform: 'translateZ(26px)'}, {transform: 'translateZ(0)'}], {duration: RM || fast() ? 1 : 260, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
   ghost.remove(); ghost = null;
-  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t);
+  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); markOwn();
   if (!fast()) beep('place');
   const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
   current = null; sel = null; renderDeck();
@@ -1224,7 +1304,7 @@ function newGame() {
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
   token++; turnTok++; stopTimer(); closeGameMenu();
-  queue = replay.slice(); applied = 0;
+  queue = replay.slice(); applied = 0; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
@@ -1443,7 +1523,7 @@ const PREFS = [
   {k: 'view', label: 'Вид поля', opts: [['3d', '3D'], ['top', 'Сверху']]},
   {k: 'speed', label: 'Скорость ботов', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
   {k: 'gfx', label: 'Графика', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
-  {k: 'zones', label: 'Подсветка своих объектов', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'zones', label: 'Цвет владельца на дорогах и городах', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'alert', label: 'Подсветка экрана в ваш ход', opts: [[true, 'Вкл'], [false, 'Выкл']]},
 ];
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
@@ -1465,7 +1545,7 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'sound') beep('turn');
   if (r.k === 'notify' && window.AndroidApp && AndroidApp.setUpdateNotifications) AndroidApp.setUpdateNotifications(wallet.notify);
   if (r.k === 'view') setView(wallet.view);
-  if (r.k === 'zones') updateZones();
+  if (r.k === 'zones') { markOwn(); updateOwnership(); }
   if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
 });
 $('#prefName').addEventListener('input', e => { setup.seats[0].name = e.target.value; saveSetup(); renderSetup(); });
