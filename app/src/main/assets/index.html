@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Исправлена установка обновлений на Realme, OPPO и других телефонах («Анализ не выполнен»)\n• Если обновление не встаёт, в окне есть кнопка «Скачать вручную»\n• Поле не тормозит от подсказок «+», поворот и наклон камеры, цвет владельца на дорогах и городах"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Счётчик игроков в сети на кнопке «Онлайн с друзьями»\n• Исправлена установка обновлений на Realme, OPPO и других телефонах; если не встаёт — кнопка «Скачать вручную»\n• Поле не тормозит от подсказок «+», поворот и наклон камеры, цвет владельца на дорогах и городах"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -92,6 +92,9 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 .mbtn span{font:700 14px var(--f-display)} .mbtn small{color:var(--muted);font-size:12px}
 .mbtn.primary{background:var(--brass);border-color:transparent;color:var(--brass-ink)} .mbtn.primary small{color:#5b3f0e}
 .mfoot{margin-top:auto;color:var(--muted);font-size:12px;text-align:center}
+.online{font:600 11px var(--f-body);font-style:normal;color:#7fe0a8;margin-left:6px;white-space:nowrap;vertical-align:2px}
+.online i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#3fc27a;margin-right:5px;box-shadow:0 0 0 3px rgba(63,194,122,.2)}
+.online b{font-variant-numeric:tabular-nums}
 .mrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
@@ -327,7 +330,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <p class="tag">Тяните карту из общей стопки и достраивайте города, дороги и крепости. Когда стопка закончится, побеждает тот, у кого больше очков.</p>
           <button class="mbtn primary" id="resume" hidden><span>Продолжить партию</span><small id="resumeInfo"></small></button>
           <button class="mbtn" id="playBtn" data-go="setup"><span>Играть</span><small>2–5 игроков: друзья с одного телефона и боты</small></button>
-          <button class="mbtn" data-go="lobby"><span>Онлайн с друзьями</span><small>Каждый со своего телефона, комната по коду</small></button>
+          <button class="mbtn" data-go="lobby"><span>Онлайн с друзьями <em class="online" id="onlineN" hidden><i></i><b>0</b> в сети</em></span><small>Каждый со своего телефона, комната по коду</small></button>
           <div class="mrow2"><button class="mbtn" data-go="shop"><span>Магазин</span><small>Фигурки и локации</small></button><button class="mbtn" data-go="rules"><span>Как играть</span><small>Правила за минуту</small></button></div>
           <div class="mfoot"><button class="linkbtn" data-go="settings">Настройки</button> · <span id="ver"></span></div>
         </div>
@@ -1710,14 +1713,14 @@ async function fbToken() {
   let j = null;
   if (fbAuth && fbAuth.refreshToken) {
     const r = await fetch('https://securetoken.googleapis.com/v1/token?key=' + FB.apiKey, {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(fbAuth.refreshToken)});
-    if (r.ok) { const t = await r.json(); j = {idToken: t.id_token, refreshToken: t.refresh_token, expiresIn: t.expires_in}; }
+    if (r.ok) { const t = await r.json(); j = {idToken: t.id_token, refreshToken: t.refresh_token, expiresIn: t.expires_in, localId: t.user_id}; }
   }
   if (!j) {
     const r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FB.apiKey, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{"returnSecureToken":true}'});
     if (!r.ok) throw new Error('auth ' + r.status);
     j = await r.json();
   }
-  fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, exp: Date.now() + (+j.expiresIn || 3600) * 1000};
+  fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000};
   try { localStorage.setItem('fbAuth', JSON.stringify(fbAuth)); } catch (_) {}
   return fbAuth.idToken;
 }
@@ -1749,6 +1752,39 @@ const FIRE = {
   },
 };
 const TRANSPORT = FB ? FIRE : NTFY;
+
+// Players online: every open game marks itself in /presence once a minute (and removes the mark
+// when it goes to the background); the menu counts marks from the last 2.5 minutes.
+// Rules for /presence are in docs/firebase-rules.json.
+async function presenceMark(on) {
+  if (!FB) return;
+  try {
+    const tok = await fbToken();
+    if (!fbAuth.uid) return;
+    const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
+    if (on) await fetch(url, {method: 'PUT', body: '{"t":{".sv":"timestamp"}}'});
+    else await fetch(url, {method: 'DELETE', keepalive: true});
+  } catch (_) {}
+}
+async function presenceCount() {
+  if (!FB) return;
+  try {
+    const tok = await fbToken();
+    const r = await fetch(`${FB.dbUrl}/presence.json?auth=${tok}&orderBy=%22t%22&startAt=${Date.now() - 150000}`);
+    if (!r.ok) return;
+    const n = Object.keys((await r.json()) || {}).length;
+    $('#onlineN').hidden = !n; $('#onlineN b').textContent = n;
+  } catch (_) {}
+}
+let presenceTimer = 0;
+function presenceTick() {
+  clearTimeout(presenceTimer);
+  if (document.hidden) return;
+  presenceMark(true).then(presenceCount);
+  presenceTimer = setTimeout(presenceTick, 60000);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(presenceTimer); presenceMark(false); } else presenceTick(); });
+if (FB) setTimeout(presenceTick, 1500);
 
 function netSend(msg) {
   return TRANSPORT.send(net.code, msg).catch(() => toast('Нет связи — проверьте интернет'));
@@ -1892,7 +1928,7 @@ function show(name) {
   if (name === 'lobby') renderLobby();
   if (name === 'shop') renderShop();
   if (name === 'settings') renderPrefs();
-  if (name === 'menu') { renderResume(); saveWallet(); }
+  if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); }
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-tab],[data-go]'); if (!b) return;
