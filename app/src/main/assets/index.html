@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Объёмные пазлы: каждая карта — толстая плитка с травой и слоями земли по краям, скошенными гранями и зазорами между картами\n• Обучение для новичков, задания, достижения и рейтинг\n• Звуки и музыка; онлайн-партия не зависает, если игрок ушёл"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Объёмные пазлы в 3D: толстые плитки с травой и землёй по краям; в виде 2D карты плоские, как раньше\n• Обучение для новичков, задания, достижения и рейтинг\n• Звуки и музыка; онлайн-партия не зависает, если игрок ушёл"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -348,6 +348,11 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .tile .sd.n{left:.6px;right:.6px;top:.6px;height:14px;transform-origin:top;transform:rotateX(-90deg);filter:brightness(1.15)}
 .tile .sd.e{top:.6px;bottom:.6px;left:calc(100% - .6px);width:14px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#8a6a40 3px,#6f5232 55%,#4a3520 100%);filter:brightness(.82)}
 .tile .sd.w{top:.6px;bottom:.6px;left:.6px;width:14px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#8a6a40 3px,#6f5232 55%,#4a3520 100%);filter:brightness(1.08)}
+/* 2D (top-down) view: plain flat cards, no walls or rims. */
+html.flat #world .tile .sd{display:none}
+html.flat #world .tile .face{inset:0;border-radius:2px;box-shadow:none}
+html.flat .ct{border-radius:4px;box-shadow:0 0 0 2px var(--c,transparent),0 16px 16px -6px rgba(0,0,0,.6)}
+html.flat .ct .face{border-radius:4px;box-shadow:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
 .tile .shd{position:absolute;inset:0;transform:translate3d(5px,8px,-9.5px);background:rgba(0,0,0,.35);border-radius:4px}
@@ -1015,6 +1020,7 @@ function applyCam() {
   if (cam.tilt !== lastTilt || cam.rot !== lastRot) {
     world.style.setProperty('--tilt', cam.tilt + 'deg'); world.style.setProperty('--rot', cam.rot + 'deg');
     lastTilt = cam.tilt; lastRot = cam.rot;
+    document.documentElement.classList.toggle('flat', cam.tilt < 35); // 2D view: flat pieces
     tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg'); // the card in the tray turns with the board
   }
 }
