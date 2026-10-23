@@ -18,16 +18,21 @@ jobs:
           distribution: temurin
           java-version: '17'
       - name: Build APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           ./scripts/wrap-web.sh
           CODE=$((100 + GITHUB_RUN_NUMBER))
           echo "CODE=$CODE" >> "$GITHUB_ENV"
           chmod +x gradlew
-          ./gradlew assembleRelease -PversionCode=$CODE --no-daemon
-          cp app/build/outputs/apk/release/app-release.apk "MosaicKingdom-1.0.$CODE.apk"
+          ./gradlew assembleGithubRelease bundlePlayRelease -PversionCode=$CODE --no-daemon
+          cp app/build/outputs/apk/github/release/app-github-release.apk "MosaicKingdom-1.0.$CODE.apk"
+          cp app/build/outputs/bundle/playRelease/app-play-release.aab "MosaicKingdom-1.0.$CODE-google-play.aab"
+      # The .apk updates GitHub installs; the .aab is uploaded to Google Play by hand.
       - name: Publish release (the app checks it on start)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v$CODE" "MosaicKingdom-1.0.$CODE.apk" \
+          gh release create "v$CODE" "MosaicKingdom-1.0.$CODE.apk" "MosaicKingdom-1.0.$CODE-google-play.aab" \
             --title "1.0.$CODE" --notes-file release-notes.md --latest

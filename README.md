@@ -20,3 +20,7 @@
 ./scripts/wrap-web.sh
 ./gradlew assembleRelease
 ```
+
+## Google Play
+
+Сборка `play` (AAB) — для магазина, обновляется через Google Play. Сборка `github` (APK) обновляет себя из GitHub Releases. Инструкция и тексты для магазина: [docs/google-play.md](docs/google-play.md).
