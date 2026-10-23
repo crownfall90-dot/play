@@ -300,7 +300,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <dt>Крепость</dt><dd>9, когда окружена 8 картами</dd>
         <dt>Река</dt><dd>украшает поле, очков не даёт</dd>
       </dl>
-      <p>Соперники ходят сами — так будет выглядеть онлайн-партия. Очки получает тот, у кого больше фишек на объекте.</p>
+      <p>Соперники ходят сами — так будет выглядеть онлайн-партия. Фишка бронирует город, дорогу или крепость за хозяином. Если соперник достроит ваш объект, он поможет вам: очки получите вы.</p>
     </aside>
   </main>
 </div>
@@ -314,10 +314,10 @@ const ARROW = ['↑','→','↓','←'];
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MEEPLE_D = 'M50 4C62 4 68 12 68 22C68 30 64 34 60 37L88 46C96 49 98 56 96 62C94 68 88 70 82 68L68 64L76 100C77 106 73 108 68 108L56 108L50 86L44 108L32 108C27 108 23 106 24 100L32 64L18 68C12 70 6 68 4 62C2 56 4 49 12 46L40 37C36 34 32 30 32 22C32 12 38 4 50 4Z';
 const PL0 = [
-  {name:'Вы',init:'Я',col:'#ef5350',score:12,stats:{c:8,r:4,f:0}},
-  {name:'Маша',init:'М',col:'#4c8dff',score:15,stats:{c:6,r:0,f:9}},
-  {name:'Дима',init:'Д',col:'#f7c948',score:9,stats:{c:4,r:5,f:0}},
-  {name:'Лёша',init:'Л',col:'#3fc27a',score:11,stats:{c:6,r:5,f:0}},
+  {name:'Вы',gen:'вашей',init:'Я',col:'#ef5350',score:12,stats:{c:8,r:4,f:0}},
+  {name:'Маша',gen:'Маши',init:'М',col:'#4c8dff',score:15,stats:{c:6,r:0,f:9}},
+  {name:'Дима',gen:'Димы',init:'Д',col:'#f7c948',score:9,stats:{c:4,r:5,f:0}},
+  {name:'Лёша',gen:'Лёши',init:'Л',col:'#3fc27a',score:11,stats:{c:6,r:5,f:0}},
 ];
 // edges N E S W: c city, r road, w river, f field
 const TYPES = {
@@ -804,20 +804,20 @@ async function afterPlace(t, p) {
   if (my !== token) return;
   if (choice) placeMeeple(t, choice, p, true);
   renderPlayers();
-  await scoreAfter(t);
+  await scoreAfter(t, p);
   if (my !== token) return;
   turn = (turn + 1) % 4;
   await wait(250);
   if (my === token) startTurn();
 }
-async function scoreAfter(t) {
+async function scoreAfter(t, p) {
   const evs = [], seen = new Set();
   const consider = (tt, g) => { if (seen.has(gid(tt, g))) return; const c = component(tt, g); c.ids.forEach(i => seen.add(i)); if (c.complete) evs.push(c); };
   groupsOf(t).forEach(g => g.kind !== 'f' && consider(t, g));
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); if (n && TYPES[n.type].fort) consider(n, {kind: 'f', edges: []}); }
-  for (const c of evs) await resolveFeature(c, false, t);
+  for (const c of evs) await resolveFeature(c, false, p);
 }
-async function resolveFeature(c, final, t) {
+async function resolveFeature(c, final, placer) {
   const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : c.tiles.length;
   c.tiles.forEach(x => x.el.classList.add('glow'));
   setTimeout(() => c.tiles.forEach(x => x.el.classList.remove('glow')), 1100);
@@ -828,7 +828,9 @@ async function resolveFeature(c, final, t) {
   const m0 = c.meeples.find(m => win.includes(m.p));
   floatText(m0.t, groupPos(m0.t, m0.g), '+' + pts, players[win[0]].col);
   win.forEach(i => { players[i].score += pts; players[i].stats[c.kind] += pts; });
-  toast(`${KIND[c.kind]}${final ? ' (не достроен)' : ''} · ${win.map(i => players[i].name).join(' и ')} +${pts}`);
+  const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
+  const help = !final && placer != null && !win.includes(placer) ? ` с ${placer === 0 ? 'вашей' : ''} помощью${placer === 0 ? '' : ' ' + players[placer].gen}` : '';
+  toast(`${KIND[c.kind]} ${final ? 'не достроен' : done}${help} · ${win.map(i => players[i].name).join(' и ')} +${pts}`);
   [...c.meeples].forEach(removeMeeple);
   renderPlayers(win);
   await wait(final ? 700 : 950);
