@@ -20,6 +20,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         updater = new Updater(this);
         UpdateNotifier.schedule(this);
+        PushService.subscribe(this, UpdateNotifier.prefs(this).getBoolean("notify", true));
         if (android.os.Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
                 && !UpdateNotifier.prefs(this).getBoolean("askedNotify", false)) {

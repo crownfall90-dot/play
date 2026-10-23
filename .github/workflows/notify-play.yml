@@ -1,0 +1,19 @@
+name: Notify Google Play players
+
+# Run by hand after a new version is live on Google Play (the Play review takes a while,
+# so this is not tied to the GitHub release).
+on:
+  workflow_dispatch:
+    inputs:
+      code:
+        description: Version code that is now on Google Play (e.g. 107)
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python3 scripts/fcm-send.py updates-play "${{ inputs.code }}" "1.0.${{ inputs.code }}" release-notes.md
