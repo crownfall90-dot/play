@@ -142,6 +142,16 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 #boot{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:radial-gradient(120% 60% at 50% 40%,#34477a 0%,#18213d 55%,#0f1528 100%);transition:opacity .35s}
 #boot.gone{opacity:0;pointer-events:none}#boot b{font:800 26px var(--f-display);color:var(--ink)}#boot b span{color:var(--brass)}
 .lbwait{display:flex;align-items:center;gap:14px}
+.saybtn{margin-left:auto}
+html.app .saybtn+.deck{margin-left:0}
+.saybox{position:absolute;top:calc(58px + var(--itg,0px));right:10px;left:10px;z-index:8;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;border-radius:18px;background:var(--glass);border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.4);animation:chestpop .25s ease-out}
+.saybox button{height:42px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font:600 12.5px var(--f-body);cursor:pointer;padding:0 6px}
+.saybox button.e{font-size:22px}
+.saybox button.w{grid-column:span 5}
+.saybox .w2{grid-column:span 5;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.bubble{position:fixed;z-index:30;transform:translate(-50%,0);background:#fff;color:#14182a;font:700 13px var(--f-body);padding:6px 10px;border-radius:12px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;animation:chestpop .3s cubic-bezier(.3,1.6,.5,1)}
+.bubble.e{font-size:24px;padding:2px 8px}
+.bubble::before{content:"";position:absolute;top:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top:0;border-bottom-color:#fff}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -497,9 +507,11 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="gtop">
           <button class="iconbtn" id="gameMenu" aria-label="Меню партии"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
           <div class="room"><b>Комната K7Q2</b><span><i></i>онлайн · 4 игрока</span></div>
+          <button class="iconbtn saybtn" id="sayBtn" hidden aria-label="Быстрые фразы"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4.5 4v-4H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></svg></button>
           <div class="deck"><span class="dstack"><i></i><i></i><i></i></span><span><b id="deckN">0</b><small>в стопке</small></span></div>
         </div>
         <div class="players" id="players"></div>
+        <div class="saybox" id="sayBox" hidden></div>
         <div class="board" id="board">
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
@@ -1098,7 +1110,7 @@ function updateOwnership() {
 }
 function renderPlayers(bump = []) {
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : net && p.missed >= 2 ? 'не на связи' : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -1191,18 +1203,21 @@ function askMeeple(t, opts, p) {
 mrow.addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b || !meepleResolve) return; const i = +b.dataset.i; meepleResolve(i < 0 ? null : meepleOpts[i]); });
 
 /* ---------------- turns ---------------- */
+let autoMove = false; // this move is played for a player who did not act in time
 async function afterPlace(t, p, forced) {
   const my = token;
   const opts = players[p].meeples > 0 ? claimable(t) : [];
   let choice = null;
   if (forced !== undefined) choice = forced;
   else if (opts.length) {
-    if (isLocal(p)) choice = await askMeeple(t, opts, p);
+    if (isLocal(p) && !autoMove) choice = await askMeeple(t, opts, p);
     else if (Math.random() < .55) { const cs = opts.filter(g => g.kind !== 'r'); choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : opts[(Math.random() * opts.length) | 0]; }
   }
   if (my !== token) return;
   if (forced === undefined) {
     const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed, m: choice ? groupsOf(t).findIndex(g => gid(t, g) === gid(t, choice)) : -1};
+    if (autoMove && net) { mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    autoMove = false;
     gameLog.moves.push(mv);
     if (net) netSend({t: 'move', g: net.gameId, ...mv}); else saveGame();
   }
@@ -1262,9 +1277,13 @@ function stopTimer() { clearInterval(timerId); $('#timer').hidden = true; }
 // Turn clock for people (bots are quick anyway). When it runs out the card goes to a random fitting spot.
 function startTimer() {
   stopTimer();
-  if (!gameRules.timer) return;
+  // Online a turn always has a clock, so one silent player can't hold up the table;
+  // someone who already missed two turns gets a few seconds before the bot moves for them.
+  const away = net && players[turn].missed >= 2;
+  const secs = away ? 4 : gameRules.timer || (net ? 60 : 0);
+  if (!secs) return;
   const el = $('#timer'), my = token, who = turn;
-  let end = Date.now() + gameRules.timer * 1000, last = Date.now();
+  let end = Date.now() + secs * 1000, last = Date.now();
   el.hidden = false;
   const tick = () => {
     if (my !== token || who !== turn || !['place', 'meeple', 'handover'].includes(phase)) return stopTimer();
@@ -1274,10 +1293,10 @@ function startTimer() {
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
     el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
     if (left > 0) return;
-    stopTimer(); toast('Время вышло');
+    stopTimer(); toast(away ? 'За вас сходил бот' : 'Время вышло');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
-    const moves = allMoves(current.type), m = moves[(Math.random() * moves.length) | 0];
-    selectSlot(m.x, m.y); setRot(m.r); okBtn.onclick();
+    const m = botPick(current.type);
+    autoMove = true; selectSlot(m.x, m.y); setRot(m.r); okBtn.onclick();
   };
   tick(); timerId = setInterval(tick, 250);
 }
@@ -1290,6 +1309,7 @@ function turnAlert() {
 function beginHumanTurn() {
   beep('turn'); turnAlert();
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer();
+  if (net && players[turn].missed >= 2) return setStatus('Вы пропустили ходы — за вас ходит бот <button class="chip" id="imHere">Я здесь</button>');
   setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
 // Several people on one phone: hide the board until the next player takes it.
@@ -1301,13 +1321,18 @@ function handOver() {
   over.hidden = false;
   $('#go').onclick = () => { over.hidden = true; beginHumanTurn(); };
 }
+// Bots like spots with many neighbours, with some randomness.
+function botPick(type) {
+  let best = null, bs = -1e9;
+  for (const m of allMoves(type)) { let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++; const s = n * 1.5 + Math.random() * 2.5; if (s > bs) { bs = s; best = m; } }
+  return best;
+}
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
   setStatus(`Ходит <b>${players[p].name}</b>…`);
   const k = wallet.speed === 'fast' ? .35 : 1;
   await wait(900 * k); if (my !== token || tt !== turnTok) return;
-  let best = null, bs = -1e9;
-  for (const m of allMoves(current.type)) { let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++; const s = n * 1.5 + Math.random() * 2.5; if (s > bs) { bs = s; best = m; } }
+  const best = botPick(current.type);
   await ensureVisible(best.x, best.y); if (my !== token || tt !== turnTok) return;
   sel = {x: best.x, y: best.y}; setRot(best.r); placeGhost();
   await wait(650 * k); if (my !== token || tt !== turnTok) return;
@@ -1394,7 +1419,8 @@ function newGame() {
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
-  token++; turnTok++; stopTimer(); closeGameMenu();
+  token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
+  $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
   queue = replay.slice(); applied = 0; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
@@ -1403,7 +1429,7 @@ function startGame(cfg, replay = []) {
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples, missed: 0}; });
   if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
   paintFigures();
   if (!net) saveGame();
@@ -1772,15 +1798,16 @@ function openSetup(mode) {
     if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
   });
   $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
-  colorEdit = -1; saveSetup(); renderSetup(); show('setup');
+  colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
 }
 const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
 document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 function renderRules() {
   const total = Object.entries(TYPES).reduce((a, [, t]) => a + (setup.rules.rivers || !t.e.includes('w') ? t.n : 0), 0);
-  const html = RULES.map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
-  document.querySelectorAll('[data-rules]').forEach(el => el.innerHTML = html);
+  // Online games always have a turn clock ("no limit" counts as 60 s there).
+  const html = on => RULES.map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
+  document.querySelectorAll('[data-rules]').forEach(el => el.innerHTML = html(el.id === 'lbRules' || onlineMode()));
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.mseg button'); if (!b || !b.parentNode.dataset.k) return;
@@ -1946,6 +1973,8 @@ function onNet(d) {
   if (m.t === 'move') return onMove(m);
   if (m.g !== net.gameId || !players[m.p] || phase === 'end') return;
   if (m.t === 'resign') return onResign(m.p);
+  if (m.t === 'here') { players[m.p].missed = 0; return renderPlayers(); }
+  if (m.t === 'say') return live && showSay(m.p, m.i);
   if (m.t === 'draw') return onDrawOffer(m);
   if (m.t === 'drawReply') return onDrawReply(m);
 }
@@ -1964,8 +1993,43 @@ function cancelTurn() {
 function waitRemote() {
   phase = 'remote'; okBtn.disabled = rotBtn.disabled = true;
   setStatus(net ? `Ходит <b>${players[turn].name}</b>…` : 'Восстанавливаем партию…');
-  pumpRemote();
+  pumpRemote(); startWatch();
 }
+/* An online turn never stalls. If the player whose turn it is (or the room creator, who runs
+   the bots) has gone, another phone plays a bot move in their name: the creator checks first,
+   the other people later, one after another, so two phones rarely do it at once (and the
+   second move for the same turn is ignored everywhere). Moves played this way carry auto:1;
+   after two of them in a row the player counts as away until they move again or say "here". */
+let watchId = 0;
+function startWatch() {
+  clearInterval(watchId);
+  if (!net || !net.gameId || phase === 'end') return;
+  const n = applied, who = turn, t0 = Date.now();
+  watchId = setInterval(() => {
+    if (!net || applied !== n || turn !== who || phase !== 'remote') return clearInterval(watchId);
+    if (queue.some(q => q.n === applied) || Date.now() - t0 < watchDelay(who)) return;
+    clearInterval(watchId); autoMoveFor(who);
+  }, 1000);
+}
+function watchDelay(who) {
+  const p = players[who];
+  const base = !p.human ? 12000 : p.missed >= 2 ? 9000 : ((gameRules.timer || 60) + 12) * 1000;
+  const watchers = players.map((x, i) => ({x, i})).filter(o => o.x.owner && o.i !== who && !o.x.resigned)
+    .sort((a, b) => (b.x.owner === net.hostId) - (a.x.owner === net.hostId) || a.i - b.i);
+  const rank = watchers.findIndex(o => o.x.owner === myId);
+  return rank < 0 ? Infinity : base + rank * 20000;
+}
+function autoMoveFor(who) {
+  if (!current) return;
+  const m = botPick(current.type); if (!m) return;
+  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: -1, auto: 1});
+}
+$('#status').addEventListener('click', e => {
+  if (!e.target.closest('#imHere') || !net) return;
+  const me = players.findIndex(isMe); if (me < 0) return;
+  players[me].missed = 0; netSend({t: 'here', g: net.gameId, p: me});
+  renderPlayers(); if (phase === 'place') beginHumanTurn();
+});
 async function pumpRemote() {
   if (phase !== 'remote' || !gameVisible) return;
   const i = queue.findIndex(q => q.n === applied);
@@ -1973,6 +2037,7 @@ async function pumpRemote() {
   const mv = queue.splice(i, 1)[0], my = token;
   if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toast('Партия разошлась между телефонами — начните новую'); return; }
   phase = 'busy'; applied++;
+  if (mv.auto) { if (++players[mv.p].missed === 2 && !fast()) toast(`${players[mv.p].name} не на связи — за него ходит бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
   if (my !== token) return;
   sel = {x: mv.x, y: mv.y}; setRot(mv.r); placeGhost();
@@ -2155,6 +2220,34 @@ $('#mBots').onclick = () => {
   while (seats.length < mm.want) seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: null});
   mm.startAt = Infinity; matchSay({t: 'close', code: net.code}); startOnline(seats);
 };
+
+/* Quick phrases online: a fixed set of emoji and short lines (no free text, so nothing to
+   moderate). They appear as a bubble under the sender's card for a few seconds. */
+const SAYS = ['👍', '😄', '😮', '😅', '🔥', 'Привет!', 'Хороший ход!', 'Ой!', 'Ну ты даёшь!', 'Удачи!', 'Спасибо за игру!'];
+let sayAt = 0;
+function renderSayBox() {
+  const em = SAYS.filter(x => !/[а-я]/i.test(x)), tx = SAYS.filter(x => /[а-я]/i.test(x));
+  $('#sayBox').innerHTML = em.map(x => `<button class="e" data-say="${SAYS.indexOf(x)}">${x}</button>`).join('') +
+    `<div class="w2">${tx.map(x => `<button data-say="${SAYS.indexOf(x)}">${x}</button>`).join('')}</div>`;
+}
+renderSayBox();
+$('#sayBtn').onclick = e => { e.stopPropagation(); $('#sayBox').hidden = !$('#sayBox').hidden; };
+document.addEventListener('pointerdown', e => { if (!e.target.closest('#sayBox,#sayBtn')) $('#sayBox').hidden = true; });
+$('#sayBox').addEventListener('click', e => {
+  const b = e.target.closest('[data-say]'); if (!b || !net) return;
+  $('#sayBox').hidden = true;
+  if (Date.now() - sayAt < 1500) return; sayAt = Date.now();
+  const me = players.findIndex(isMe); if (me < 0) return;
+  netSend({t: 'say', g: net.gameId, p: me, i: +b.dataset.say});
+});
+function showSay(p, i) {
+  const txt = SAYS[i], card = playersEl.children[p]; if (!txt || !card) return;
+  const r = card.getBoundingClientRect(), b = document.createElement('div');
+  b.className = 'bubble' + (/[а-я]/i.test(txt) ? '' : ' e'); b.textContent = txt;
+  b.style.left = Math.min(innerWidth - 60, Math.max(60, r.left + r.width / 2)) + 'px'; b.style.top = (r.bottom + 6) + 'px';
+  document.body.append(b); setTimeout(() => b.remove(), 2800);
+  if (!isMe(players[p])) beep('turn');
+}
 
 /* ---------------- screens ---------------- */
 function show(name) {
