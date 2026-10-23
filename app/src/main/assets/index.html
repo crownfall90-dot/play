@@ -1,12 +1,11 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<link rel="stylesheet" href="fonts/fonts.css">
+<script>window.RELEASE_NOTES = "• Новая партия: от 2 до 5 игроков, каждый — человек или бот. Люди играют с одного телефона по очереди\n• Настраиваемые правила: размер стопки, реки, число фигурок, время на ход, подсветка мест\n• Партия начинается с пустого стола: первая карта из стопки ложится в центр\n• Шрифты встроены, игра выглядит одинаково и без интернета\n• Игра не заходит под системные панели на новых телефонах, новая иконка\n• Экран «Что нового» после каждого обновления";</script>
 </head><body>
 <title>Мозаика Королевства</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;700;800&display=swap">
 <style>
 /* Layout: portrait phone prototype on a night "game table"; screen tabs above, notes beside on wide screens. In the app (html.app) the phone fills the whole screen. */
 :root{
@@ -96,6 +95,25 @@ html.app .screen{padding-top:env(safe-area-inset-top,0px)}
 .opt{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(255,255,255,.03)}
 .opt+.opt{border-top:1px solid var(--line)} .opt b{font-variant-numeric:tabular-nums}
 .sw{width:38px;height:22px;border-radius:11px;background:var(--brass);position:relative} .sw::after{content:"";position:absolute;right:3px;top:3px;width:16px;height:16px;border-radius:50%;background:#fff}
+
+#scr-setup{background:linear-gradient(180deg,#1d2848,#111829)}
+.seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:5px}
+.seg button{height:42px;border:0;border-radius:10px;background:transparent;font:800 17px var(--f-display);color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink)}
+.plist input{width:100%;min-width:0;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.2);color:var(--ink);font:600 15px var(--f-body);padding:2px 0}
+.plist input:focus{outline:none;border-bottom-color:var(--brass)}
+.kind{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--line);flex:0 0 auto}
+.kind button{border:0;background:transparent;color:var(--muted);font:600 12px var(--f-body);padding:7px 9px;cursor:pointer}
+.kind button[aria-pressed="true"]{background:rgba(242,184,75,.18);color:var(--brass)}
+.shint{margin:0;color:var(--muted);font-size:12.5px}
+.opt{flex-wrap:wrap;gap:8px}
+.mseg{display:flex;gap:3px;background:rgba(0,0,0,.22);border-radius:10px;padding:3px}
+.mseg button{border:0;background:transparent;color:var(--muted);font:600 12.5px var(--f-body);padding:6px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
+.mseg button[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink)}
+.world.nohint .slot{border-color:transparent;background:transparent;animation:none}
+.world.nohint .slot::after{display:none}
+.timer{position:absolute;left:10px;top:10px;z-index:4;font:800 14px var(--f-display);font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:5px 9px}
+.timer.low{color:#ff8a80;border-color:rgba(255,138,128,.5)}
 
 /* ---------- game ---------- */
 #scr-game{background:linear-gradient(180deg,var(--sky-top),var(--sky-bot) 75%)}
@@ -207,6 +225,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
     <div class="brand"><h1>Мозаика Королевства</h1><p>Макет Android-игры · вертикальный экран · поле в 3D</p></div>
     <nav class="tabs" role="tablist" aria-label="Экраны">
       <button role="tab" data-tab="menu" aria-selected="false">Меню</button>
+      <button role="tab" data-tab="setup" aria-selected="false">Состав</button>
       <button role="tab" data-tab="lobby" aria-selected="false">Комната</button>
       <button role="tab" data-tab="game" aria-selected="true">Игра</button>
       <button role="tab" data-tab="results" aria-selected="false">Итоги</button>
@@ -222,9 +241,23 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <h2 class="logo">Мозаика <span>Королевства</span></h2>
           <p class="tag">Тяните карту из общей стопки и достраивайте города, дороги и крепости. Когда стопка закончится, побеждает тот, у кого больше очков.</p>
           <button class="mbtn primary" data-go="lobby"><span>Играть онлайн</span><small>Комната по коду, 2–5 игроков</small></button>
-          <button class="mbtn" data-go="game"><span>За одним телефоном</span><small>Передавайте телефон по кругу</small></button>
-          <button class="mbtn" data-go="game"><span>Против ботов</span><small>Тренировка без интернета</small></button>
+          <button class="mbtn" data-go="setup"><span>За одним телефоном</span><small>2–5 игроков, телефон по кругу</small></button>
+          <button class="mbtn" data-go="setup"><span>Против ботов</span><small>Тренировка без интернета</small></button>
           <div class="mfoot"><i></i>3 друга сейчас в сети · <span id="ver"></span></div>
+        </div>
+      </section>
+
+      <section class="screen scroll" id="scr-setup" hidden>
+        <div class="lb">
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Новая партия</b></div>
+          <div class="h3">Сколько игроков</div>
+          <div class="seg" id="seg"><button>2</button><button>3</button><button>4</button><button>5</button></div>
+          <div class="h3">Кто играет</div>
+          <ul class="plist" id="slist"></ul>
+          <div class="h3">Правила партии</div>
+          <div class="opts" data-rules></div>
+          <p class="shint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
+          <button class="cta wide" id="start">Начать партию</button>
         </div>
       </section>
 
@@ -232,17 +265,12 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Комната друзей</b></div>
           <div class="codecard"><small>Код комнаты</small><div class="code"><span>K</span><span>7</span><span>Q</span><span>2</span></div>
-            <div class="row2"><button class="chip">Пригласить друзей</button><button class="chip">Скопировать ссылку</button></div></div>
+            <div class="row2"><button class="chip" id="invite">Пригласить друзей</button><button class="chip" id="copyLink">Скопировать код</button></div></div>
           <div class="h3">Игроки · 4 из 5</div>
           <ul class="plist" id="plist"></ul>
           <div class="h3">Правила партии</div>
-          <div class="opts">
-            <div class="opt"><span>Карт в стопке</span><b>58</b></div>
-            <div class="opt"><span>Реки</span><span class="sw"></span></div>
-            <div class="opt"><span>Время на ход</span><b>60 с</b></div>
-            <div class="opt"><span>Подсветка мест</span><span class="sw"></span></div>
-          </div>
-          <button class="cta wide" data-go="game">Начать игру</button>
+          <div class="opts" data-rules></div>
+          <button class="cta wide" id="lobbyStart">Начать игру</button>
         </div>
       </section>
 
@@ -257,6 +285,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
           <div class="toast" id="toast"></div>
+          <div class="timer" id="timer" hidden></div>
           <div class="fabs">
             <button class="fab" id="zin" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
             <button class="fab" id="zout" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
@@ -317,12 +346,26 @@ const DX = [0,1,0,-1], DY = [-1,0,1,0], V = [[0,-1],[1,0],[0,1],[-1,0]];
 const ARROW = ['↑','→','↓','←'];
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MEEPLE_D = 'M50 4C62 4 68 12 68 22C68 30 64 34 60 37L88 46C96 49 98 56 96 62C94 68 88 70 82 68L68 64L76 100C77 106 73 108 68 108L56 108L50 86L44 108L32 108C27 108 23 106 24 100L32 64L18 68C12 70 6 68 4 62C2 56 4 49 12 46L40 37C36 34 32 30 32 22C32 12 38 4 50 4Z';
+// Five seats: colours are fixed per seat, names and human/bot are chosen before the game.
 const PL0 = [
-  {name:'Вы',gen:'вашей',init:'Я',col:'#ef5350',score:12,stats:{c:8,r:4,f:0}},
-  {name:'Маша',gen:'Маши',init:'М',col:'#4c8dff',score:15,stats:{c:6,r:0,f:9}},
-  {name:'Дима',gen:'Димы',init:'Д',col:'#f7c948',score:9,stats:{c:4,r:5,f:0}},
-  {name:'Лёша',gen:'Лёши',init:'Л',col:'#3fc27a',score:11,stats:{c:6,r:5,f:0}},
+  {name:'Вы',col:'#ef5350',human:true},
+  {name:'Маша',col:'#4c8dff',human:false},
+  {name:'Дима',col:'#f7c948',human:false},
+  {name:'Лёша',col:'#3fc27a',human:false},
+  {name:'Катя',col:'#b06cf0',human:false},
 ];
+const setup = {n: 4, seats: PL0.map(p => ({name: p.name, human: p.human}))};
+try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
+const RULES = [
+  {k: 'deck', label: 'Карт в стопке', opts: [[30, '30'], [45, '45'], [0, 'Все']]},
+  {k: 'rivers', label: 'Реки', opts: [[true, 'Есть'], [false, 'Нет']]},
+  {k: 'meeples', label: 'Фигурок у игрока', opts: [[5, '5'], [7, '7'], [9, '9']]},
+  {k: 'timer', label: 'Время на ход', opts: [[0, 'Без'], [30, '30 с'], [60, '60 с']]},
+  {k: 'hints', label: 'Подсветка мест', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+];
+setup.rules = Object.assign({deck: 0, rivers: true, meeples: 7, timer: 0, hints: true}, setup.rules);
+const isHuman = i => players[i].human;
+const humanCount = () => players.filter(p => p.human).length;
 // edges N E S W: c city, r road, w river, f field
 const TYPES = {
   cap:{e:'cfff',n:5,name:'Край города'}, capRS:{e:'crfr',n:4,name:'Город и дорога'},
@@ -709,7 +752,7 @@ $('#view').onclick = e => { const top = cam.tilt > 40; e.currentTarget.textConte
 const playersEl = $('#players'), statusEl = $('#status'), toastEl = $('#toast'), okBtn = $('#ok'), rotBtn = $('#rot');
 const prow = $('#prow'), mrow = $('#mrow'), tface = $('#tface'), ct = $('#ct'), cname = $('#cname');
 function renderPlayers(bump = []) {
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}" style="--c:${p.col}"><span class="tg">${i === 0 ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: 7}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}" style="--c:${p.col}"><span class="tg">${p.human ? 'ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: setup.rules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -719,8 +762,9 @@ function renderTray() {
   if (!current) { tface.className = 'face'; cname.innerHTML = ''; return; }
   tface.style.transition = 'none'; trayDeg = current.r * 90; tface.style.setProperty('--r', trayDeg + 'deg');
   tface.className = 'face t-' + current.type; void tface.offsetWidth; tface.style.transition = '';
-  ct.style.setProperty('--c', turn === 0 ? 'transparent' : players[turn].col);
-  cname.innerHTML = `<b>${TYPES[current.type].name}</b><small>${turn === 0 ? 'Ваша карта' : 'Карта игрока ' + players[turn].name}</small>`;
+  const solo = isHuman(turn) && humanCount() === 1;
+  ct.style.setProperty('--c', solo ? 'transparent' : players[turn].col);
+  cname.innerHTML = `<b>${TYPES[current.type].name}</b><small>${solo ? 'Ваша карта' : 'Карта: ' + players[turn].name}</small>`;
   if (!RM) ct.animate([{transform: 'rotateX(26deg) translateY(26px) scale(.7)', opacity: 0}, {transform: 'rotateX(26deg)', opacity: 1}], {duration: 320, easing: 'cubic-bezier(.3,1.4,.5,1)'});
 }
 function setRot(nr) {
@@ -763,7 +807,7 @@ okBtn.onclick = async () => {
   if (phase !== 'place' || !sel) return;
   phase = 'busy'; okBtn.disabled = rotBtn.disabled = true; clearSlots();
   const t = {x: sel.x, y: sel.y, type: current.type, r: current.r, seed: (Math.random() * 1e9) | 0};
-  const my = token; await dropAt(t); if (my !== token) return; afterPlace(t, 0);
+  const my = token; await dropAt(t); if (my !== token) return; afterPlace(t, turn);
 };
 function tap(x, y) {
   const el = document.elementFromPoint(x, y); if (!el) return;
@@ -783,12 +827,12 @@ async function dropAt(t) {
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
-function askMeeple(t, opts) {
+function askMeeple(t, opts, p) {
   meepleOpts = opts; phase = 'meeple';
   const gms = opts.map((g, i) => { const [x, y] = groupPos(t, g); const b = addSprite(t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
-  mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleSvg(players[0].col)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+  mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleSvg(players[p].col)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
   prow.hidden = true; mrow.hidden = false;
-  setStatus(`Поставить фишку? Осталось <b>${players[0].meeples}</b>. Очки придут, когда объект достроят`);
+  setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   return new Promise(res => {
     meepleResolve = g => { meepleResolve = null; gms.forEach(b => { b.previousSibling.remove(); b.remove(); }); mrow.hidden = true; prow.hidden = false; res(g); };
     mrow.onpointerover = e => { const b = e.target.closest('.chip'); gms.forEach((m, i) => m.classList.toggle('hl', b && +b.dataset.i === i)); };
@@ -802,7 +846,7 @@ async function afterPlace(t, p) {
   const opts = players[p].meeples > 0 ? claimable(t) : [];
   let choice = null;
   if (opts.length) {
-    if (p === 0) choice = await askMeeple(t, opts);
+    if (isHuman(p)) choice = await askMeeple(t, opts, p);
     else if (Math.random() < .55) { const cs = opts.filter(g => g.kind !== 'r'); choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : opts[(Math.random() * opts.length) | 0]; }
   }
   if (my !== token) return;
@@ -810,7 +854,7 @@ async function afterPlace(t, p) {
   renderPlayers();
   await scoreAfter(t, p);
   if (my !== token) return;
-  turn = (turn + 1) % 4;
+  turn = (turn + 1) % players.length;
   await wait(250);
   if (my === token) startTurn();
 }
@@ -825,7 +869,7 @@ async function resolveFeature(c, final, placer) {
   const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : c.tiles.length;
   c.tiles.forEach(x => x.el.classList.add('glow'));
   setTimeout(() => c.tiles.forEach(x => x.el.classList.remove('glow')), 1100);
-  const cnt = [0,0,0,0]; c.meeples.forEach(m => cnt[m.p]++);
+  const cnt = players.map(() => 0); c.meeples.forEach(m => cnt[m.p]++);
   const mx = Math.max(...cnt);
   if (!mx) { toast(`${KIND[c.kind]} ${{c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind]} · фишек нет, очков нет`); await wait(600); return; }
   const win = cnt.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
@@ -833,7 +877,7 @@ async function resolveFeature(c, final, placer) {
   floatText(m0.t, groupPos(m0.t, m0.g), '+' + pts, players[win[0]].col);
   win.forEach(i => { players[i].score += pts; players[i].stats[c.kind] += pts; });
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
-  const help = !final && placer != null && !win.includes(placer) ? ` с ${placer === 0 ? 'вашей' : ''} помощью${placer === 0 ? '' : ' ' + players[placer].gen}` : '';
+  const help = !final && placer != null && !win.includes(placer) ? ` · помог${players[placer].human && humanCount() === 1 ? 'ли вы' : ': ' + players[placer].name}` : '';
   toast(`${KIND[c.kind]} ${final ? 'не достроен' : done}${help} · ${win.map(i => players[i].name).join(' и ')} +${pts}`);
   [...c.meeples].forEach(removeMeeple);
   renderPlayers(win);
@@ -841,13 +885,50 @@ async function resolveFeature(c, final, placer) {
 }
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
-  pendingStart = false; current = null; sel = null;
+  pendingStart = false; current = null; sel = null; stopTimer();
   while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
   renderDeck();
   if (!current) return endGame();
   renderTray(); renderPlayers();
-  if (turn === 0) { phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; setStatus('<b>Ваш ход.</b> Тапните по подсвеченному месту'); }
+  if (isHuman(turn)) {
+    if (humanCount() > 1) return handOver();
+    beginHumanTurn();
+  }
   else { phase = 'ai'; okBtn.disabled = rotBtn.disabled = true; aiTurn(); }
+}
+let timerId = 0;
+function stopTimer() { clearInterval(timerId); $('#timer').hidden = true; }
+// Turn clock for people (bots are quick anyway). When it runs out the card goes to a random fitting spot.
+function startTimer() {
+  stopTimer();
+  if (!setup.rules.timer) return;
+  const el = $('#timer'), end = Date.now() + setup.rules.timer * 1000, my = token, who = turn;
+  el.hidden = false;
+  const tick = () => {
+    if (my !== token || who !== turn || !['place', 'meeple', 'handover'].includes(phase)) return stopTimer();
+    if (phase === 'handover') return;
+    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
+    if (left > 0) return;
+    stopTimer(); toast('Время вышло');
+    if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
+    const moves = allMoves(current.type), m = moves[(Math.random() * moves.length) | 0];
+    selectSlot(m.x, m.y); setRot(m.r); okBtn.onclick();
+  };
+  tick(); timerId = setInterval(tick, 250);
+}
+function beginHumanTurn() {
+  phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer();
+  setStatus(humanCount() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
+}
+// Several people on one phone: hide the board until the next player takes it.
+function handOver() {
+  phase = 'handover'; okBtn.disabled = rotBtn.disabled = true;
+  setStatus(`Ход: <b>${players[turn].name}</b>`);
+  const over = $('#over'), p = players[turn];
+  over.innerHTML = `<div class="ocard"><span class="av" style="--c:${p.col};width:44px;height:44px;margin:0 auto;font-size:18px">${p.init}</span><h3>Ход: ${p.name}</h3><p>Передайте телефон этому игроку</p><button class="cta wide" id="go">Начать ход</button></div>`;
+  over.hidden = false;
+  $('#go').onclick = () => { over.hidden = true; beginHumanTurn(); };
 }
 async function aiTurn() {
   const p = turn, my = token;
@@ -877,11 +958,12 @@ async function endGame() {
   renderResults(true);
   const order = ranked(), top = order[0];
   const over = $('#over');
-  over.innerHTML = `<div class="ocard"><h3>${top.i === 0 ? 'Вы победили!' : 'Побеждает ' + top.name}</h3><p>${top.score} очков · стопка закончилась</p><button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
+  over.innerHTML = `<div class="ocard"><h3>${winTitle(top, true)}</h3><p>${top.score} очков · стопка закончилась</p><button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
   $('#again2').onclick = () => newGame();
   setStatus('Партия окончена');
 }
+const winTitle = (p, final) => p.human && humanCount() === 1 ? (final ? 'Вы победили!' : 'Вы лидируете') : `${final ? 'Побеждает' : 'Лидирует'} ${p.name}`;
 const ranked = () => players.map((p, i) => ({...p, i})).sort((a, b) => b.score - a.score);
 
 /* ---------------- setup ---------------- */
@@ -909,21 +991,30 @@ function buildBoard() {
 function newGame() {
   token++;
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
+  // The menu shows a small built-up kingdom; the game itself starts from an empty table.
+  buildBoard(); buildMini();
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; turn = 0; phase = 'idle';
-  players = PL0.map(p => ({...p, stats: {...p.stats}, meeples: 7}));
-  const R = buildBoard();
-  for (const t of tiles.values()) { t.el = tileEl(t, true, null); world.append(t.el); }
-  const all = [...tiles.values()];
-  for (const p of [1, 0, 2, 3, 1, 3]) {
-    for (let tries = 0; tries < 30; tries++) {
-      const t = all[(R() * all.length) | 0], gs = claimable(t).filter(g => !component(t, g).complete);
-      if (gs.length) { placeMeeple(t, gs[(R() * gs.length) | 0], p, false); break; }
-    }
+  const rules = setup.rules;
+  players = setup.seats.slice(0, setup.n).map((s, i) => ({name: s.name.trim() || 'Игрок ' + (i + 1), init: (s.name.trim() || 'И')[0].toUpperCase(), col: PL0[i].col, human: s.human, score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples}));
+  world.classList.toggle('nohint', !rules.hints);
+  playersEl.style.gridTemplateColumns = `repeat(${players.length},1fr)`;
+  if (window.AndroidApp) {
+    const h = humanCount(), b = players.length - h;
+    $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Друзья и боты' : 'Партия с ботами') : 'За одним телефоном'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
   }
+  deck = [];
+  for (const id in TYPES) if (rules.rivers || !TYPES[id].e.includes('w')) for (let i = 0; i < TYPES[id].n; i++) deck.push(id);
+  for (let i = deck.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [deck[i], deck[j]] = [deck[j], deck[i]]; }
+  if (rules.deck) deck = deck.slice(0, rules.deck);
+  // First card from the top of the stack goes in the middle of the table.
+  const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: (Math.random() * 1e9) | 0};
+  tiles = new Map([[key(0, 0), first]]);
+  first.el = tileEl(first, true, .05); world.append(first.el);
   $('#over').hidden = true;
-  centerCam(false); clampCam(); applyCam();
-  renderPlayers(); renderResults(false); buildMini();
+  Object.assign(cam, {px: 0, py: 0, z: 1.05}); applyCam();
+  renderPlayers(); renderResults(false);
+  toast(`Первая карта из стопки: ${TYPES[first.type].name}`);
   startTurn();
 }
 function buildMini() {
@@ -933,12 +1024,42 @@ function buildMini() {
 function renderResults(final) {
   const o = ranked();
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
-  $('#rt').textContent = o[0].i === 0 ? (final ? 'Вы победили!' : 'Вы лидируете') : `${final ? 'Побеждает' : 'Лидирует'} ${o[0].name}`;
-  const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]];
+  $('#rt').textContent = winTitle(o[0], final);
+  const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
   $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleSvg(p.col)}<b>${p.name}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
   $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.score}</td></tr>`).join('');
 }
-$('#plist').innerHTML = PL0.map((p, i) => `<li><span class="av" style="--c:${p.col}">${p.init}</span><span class="who"><b>${p.name}</b><small>${i === 0 ? 'Создатель комнаты' : 'В сети'}</small></span><span class="pill">Готов${i === 1 ? 'а' : ''}</span></li>`).join('') + '<li class="empty"><span class="av" style="--c:#2a3352;color:var(--muted)">+</span><span class="who"><b>Свободное место</b><small>Отправьте код другу</small></span><span class="pill wait">Ждём</span></li>';
+$('#plist').innerHTML = PL0.slice(0, 4).map((p, i) => `<li><span class="av" style="--c:${p.col}">${p.name[0]}</span><span class="who"><b>${p.name}</b><small>${i === 0 ? 'Создатель комнаты' : 'В сети'}</small></span><span class="pill">Готов${i === 1 ? 'а' : ''}</span></li>`).join('') + '<li class="empty"><span class="av" style="--c:#2a3352;color:var(--muted)">+</span><span class="who"><b>Свободное место</b><small>Отправьте код другу</small></span><span class="pill wait">Ждём</span></li>';
+
+/* ---------------- setup ---------------- */
+function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
+function renderSetup() {
+  document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === setup.n));
+  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li><span class="av" style="--c:${PL0[i].col}">${i + 1}</span><span class="who"><input id="pn${i}" value="${s.name.replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"></span><span class="kind" data-i="${i}"><button data-h="1" aria-pressed="${s.human}">Человек</button><button data-h="0" aria-pressed="${!s.human}">Бот</button></span></li>`).join('');
+  const ok = setup.seats.slice(0, setup.n).some(s => s.human);
+  $('#start').disabled = !ok; $('#start').textContent = ok ? 'Начать партию' : 'Нужен хотя бы один человек';
+}
+$('#seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; setup.n = +b.textContent; saveSetup(); renderSetup(); };
+$('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
+$('#slist').addEventListener('click', e => { const b = e.target.closest('.kind button'); if (!b) return; setup.seats[+b.parentNode.dataset.i].human = b.dataset.h === '1'; saveSetup(); renderSetup(); });
+$('#start').onclick = () => { newGame(); show('game'); };
+function renderRules() {
+  const total = Object.entries(TYPES).reduce((a, [, t]) => a + (setup.rules.rivers || !t.e.includes('w') ? t.n : 0), 0);
+  const html = RULES.map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
+  document.querySelectorAll('[data-rules]').forEach(el => el.innerHTML = html);
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.mseg button'); if (!b) return;
+  const r = RULES.find(x => x.k === b.parentNode.dataset.k);
+  setup.rules[r.k] = r.opts[+b.dataset.i][0]; saveSetup(); renderRules();
+});
+renderRules();
+$('#lobbyStart').onclick = () => { newGame(); show('game'); };
+const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny('Код комнаты: K7Q2'); } };
+function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on'; d.style.position = 'fixed'; d.style.top = '40px'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 1800); }
+$('#copyLink').onclick = () => copyText('K7Q2', 'Код K7Q2 скопирован');
+$('#invite').onclick = () => copyText('Заходи в «Мозаику Королевства»: комната K7Q2', 'Приглашение скопировано — отправьте его другу');
+renderSetup();
 
 /* ---------------- screens ---------------- */
 function show(name) {
@@ -956,8 +1077,28 @@ $('#again').onclick = () => { newGame(); show('game'); };
 
 /* ---------------- app shell (Android) ---------------- */
 const isApp = !!window.AndroidApp;
-if (isApp) { document.documentElement.classList.add('app'); $('#ver').textContent = 'версия ' + AndroidApp.versionName(); }
-else $('#ver').textContent = 'макет';
+if (isApp) {
+  document.documentElement.classList.add('app');
+  // The app ships only the bot game for now, so it doesn't advertise online play as working.
+  const btns = document.querySelectorAll('#scr-menu .mbtn');
+  btns[0].dataset.go = 'setup'; btns[0].innerHTML = '<span>Играть</span><small>2–5 игроков: друзья с одного телефона и боты</small>';
+  btns[1].disabled = true; btns[1].removeAttribute('data-go'); btns[1].style.opacity = .5;
+  btns[1].innerHTML = '<span>Онлайн с друзьями</span><small>Скоро: комнаты по коду</small>';
+  btns[2].remove();
+  $('.mfoot').textContent = 'Версия ' + AndroidApp.versionName();
+  showWhatsNew(AndroidApp.versionName());
+} else $('#ver').textContent = 'макет';
+// After an update (from Google Play or GitHub) show what changed, once per version.
+function showWhatsNew(ver) {
+  let last = null;
+  try { last = localStorage.getItem('seenVersion'); localStorage.setItem('seenVersion', ver); } catch (_) { return; }
+  if (!last || last === ver || !window.RELEASE_NOTES) return;
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><h3>Что нового в версии ${ver}</h3><div class="notes-list"></div><button class="cta wide">Играть</button></div>`;
+  box.querySelector('.notes-list').textContent = window.RELEASE_NOTES;
+  box.querySelector('.cta').onclick = () => box.remove();
+  document.body.append(box);
+}
 // Called by the Android shell when GitHub has a newer release.
 window.onUpdateAvailable = info => {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
