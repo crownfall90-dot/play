@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Прогресс: уровень и опыт, статистика, ежедневные задания и достижения с наградами золотом — кнопка с кубком в меню\n• Рейтинг онлайн-игроков: кубки за места в онлайн-партиях\n• Верх экрана партии больше не уходит под вырез камеры\n• Звуки и музыка; онлайн-партия не зависает, если игрок ушёл"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Обучение: первая партия с подсказками по шагам — выбрать место, повернуть, поставить, фишка. Награда 30 золота\n• Пройти обучение можно в любой момент: «Как играть» → «Пройти обучение»\n• Прогресс: уровни, ежедневные задания, достижения и рейтинг — кнопка с кубком в меню"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -196,6 +196,17 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .lead span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lead b{font:800 14px var(--f-display);font-variant-numeric:tabular-nums}
 .topbtn.hasdot::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
 .topbtn{position:relative}
+.coach{position:absolute;left:12px;right:12px;top:calc(124px + var(--it,0px));z-index:9;padding:14px 14px 12px;border-radius:18px;background:linear-gradient(160deg,#283a6b,#1b2547);border:1px solid rgba(242,184,75,.5);box-shadow:0 14px 34px rgba(0,0,0,.45);animation:chestpop .3s ease-out}
+.coach .ch{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.coach .ch i{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--brass);color:var(--brass-ink);font:800 14px var(--f-display);font-style:normal;flex:0 0 auto}
+.coach .ch b{font:700 15px var(--f-display)}
+.coach p{margin:0;color:#d5dcef;font-size:13.5px;line-height:1.45}
+.coach .cf{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+.coach .dots{display:flex;gap:5px}.coach .dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.2)}.coach .dots i.on{background:var(--brass)}
+.coach .cta{height:38px;padding:0 16px;font-size:12px}
+.coach .skip{border:0;background:none;color:var(--muted);font:600 12px var(--f-body);cursor:pointer;padding:6px}
+.tutpulse{animation:tutp 1.2s ease-in-out infinite!important;position:relative;z-index:3}
+@keyframes tutp{0%,100%{box-shadow:0 0 0 0 rgba(242,184,75,.75)}50%{box-shadow:0 0 0 8px rgba(242,184,75,0)}}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -494,7 +505,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
           <div class="rcard"><b>Золото</b><p>За место в партии с ботами или онлайн:</p><dl class="pts"><dt>1-е место</dt><dd>+15</dd><dt>2-е место</dt><dd>+10</dd><dt>3-е место</dt><dd>+5</dd><dt>4-е место</dt><dd>0</dd><dt>5-е место</dt><dd>−5</dd></dl><p>За одним телефоном золото не начисляется. Сдавшийся игрок золота не получает.</p></div>
           <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Дороги, города и крепости окрашиваются в цвет владельца; у спорных цвета чередуются.</p></div>
-          <button class="cta wide" data-mode="bots">Сыграть</button>
+          <button class="cta wide" id="tutBtn">Пройти обучение</button>
+          <button class="ghostbtn" data-mode="bots">Сыграть с ботами</button>
         </div>
       </section>
 
@@ -567,6 +579,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         </div>
         <div class="players" id="players"></div>
         <div class="saybox" id="sayBox" hidden></div>
+        <div class="coach" id="coach" hidden></div>
         <div class="board" id="board">
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
@@ -1204,6 +1217,7 @@ function placeGhost() {
   ghost.style.left = (sel.x * T - T / 2) + 'px'; ghost.style.top = (sel.y * T - T / 2) + 'px';
 }
 function selectSlot(x, y) {
+  setTimeout(() => tutEvent('select'));
   const rots = legalRots(current.type, x, y); if (!rots.length) return;
   sel = {x, y};
   setRot(rots.includes(current.r) ? current.r : rots[0]);
@@ -1213,7 +1227,7 @@ function selectSlot(x, y) {
 }
 function rotate() {
   if (phase !== 'place' || !current) return;
-  beep('rotate');
+  beep('rotate'); tutEvent('rotate');
   if (!sel) return setRot((current.r + 1) % 4);
   const rots = legalRots(current.type, sel.x, sel.y);
   if (rots.length < 2) { toast('Другие повороты не сходятся с соседями'); if (ghost) { ghost.classList.remove('shake'); void ghost.offsetWidth; ghost.classList.add('shake'); setTimeout(() => ghost && ghost.classList.remove('shake'), 360); } return; }
@@ -1223,6 +1237,7 @@ rotBtn.onclick = rotate;
 okBtn.onclick = async () => {
   if (phase !== 'place' || !sel) return;
   phase = 'busy'; okBtn.disabled = rotBtn.disabled = true; clearSlots();
+  tutEvent('placed');
   const t = {x: sel.x, y: sel.y, type: current.type, r: current.r, seed: (Math.random() * 1e9) | 0};
   const my = token; await dropAt(t); if (my !== token) return; afterPlace(t, turn);
 };
@@ -1246,13 +1261,13 @@ async function dropAt(t) {
 }
 let meepleResolve = null, meepleOpts = [];
 function askMeeple(t, opts, p) {
-  meepleOpts = opts; phase = 'meeple';
+  meepleOpts = opts; phase = 'meeple'; tutEvent('meeple');
   const gms = opts.map((g, i) => { const [x, y] = groupPos(t, g); const b = addSprite(t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
   mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
   prow.hidden = true; mrow.hidden = false;
   setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   return new Promise(res => {
-    meepleResolve = g => { meepleResolve = null; gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(g); };
+    meepleResolve = g => { meepleResolve = null; setTimeout(() => tutEvent('meepleDone')); gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(g); };
     mrow.onpointerover = e => { const b = e.target.closest('.chip'); gms.forEach((m, i) => m.classList.toggle('hl', b && +b.dataset.i === i)); };
   });
 }
@@ -1395,7 +1410,7 @@ async function aiTurn() {
   await wait(650 * k); if (my !== token || tt !== turnTok) return;
   const t = {x: best.x, y: best.y, type: current.type, r: current.r, seed: (Math.random() * 1e9) | 0};
   await dropAt(t); if (my !== token) return;
-  afterPlace(t, p);
+  afterPlace(t, p); tutEvent('bot');
 }
 // reason: undefined — the deck ran out; 'draw' — everyone agreed to a draw; 'resign' — only one person is left.
 async function endGame(reason) {
@@ -1479,6 +1494,7 @@ function newGame() {
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
+  tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
   queue = replay.slice(); applied = 0; markOwn();
   gameLog = {cfg, moves: replay.slice()};
@@ -2514,6 +2530,70 @@ async function renderTop() {
 }
 questsToday(); progressDot();
 
+/* ---------------- tutorial ----------------
+   A first game against one bot with a coach card that waits for each action:
+   pick a spot, turn the card, place it, (maybe) place a figure, watch the bot, then a few tips. */
+const TUT = [
+  {t: 'Добро пожаловать!', p: 'Вы с ботом по очереди тянете карты из общей стопки и строите королевство. Первая карта уже лежит в центре стола.', btn: 'Начнём'},
+  {t: 'Выберите место', p: 'Внизу — ваша карта. Тапните по любой рамке «+» на поле: туда карту можно положить.', wait: 'select', hl: '#board'},
+  {t: 'Поверните карту', p: 'Края карты должны совпадать с соседями: дорога к дороге, город к городу. Поверните её кнопкой ↻ или тапом по самой карте.', wait: 'rotate', btn: 'Уже подходит', hl: '#rot'},
+  {t: 'Поставьте карту', p: 'Нажмите «Поставить» — карта ляжет на поле.', wait: 'placed', hl: '#ok'},
+  {t: 'Фишка', p: 'Можно поставить свою фишку на город, дорогу или крепость этой карты — объект станет вашим. Выберите кнопку внизу или «Без фишки».', wait: 'meepleDone', hl: '#mrow', only: 'meeple'},
+  {t: 'Ход соперника', p: 'Теперь ходит бот. Когда кто-то замыкает город или дорогу, очки получает владелец фишки на нём.', wait: 'bot'},
+  {t: 'Очки', p: 'Достроенный город — 2 очка за каждую карту, дорога — 1 очко, крепость, окружённая со всех сторон, — 9 очков. Фишка возвращается к вам.', btn: 'Понятно'},
+  {t: 'Управление полем', p: 'Двигайте поле пальцем, двумя пальцами — приближайте, поворачивайте и наклоняйте. Кнопки справа: масштаб, к центру, поворот и вид 3D/2D.', btn: 'Дальше', hl: '.fabs'},
+  {t: 'Готово! +30 золота', p: 'Доиграйте партию: когда стопка закончится, побеждает тот, у кого больше очков. Удачи!', btn: 'Играть', done: true},
+];
+let tut = null;
+function startTutorial() {
+  if (net) leaveRoom();
+  const rules = {deck: 30, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'};
+  startGame({seats: [{name: clean(setup.seats[0].name) || 'Вы', human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0});
+  tut = {i: 0}; show('game'); tutShow();
+}
+function tutShow() {
+  document.querySelectorAll('.tutpulse').forEach(e => e.classList.remove('tutpulse'));
+  const c = $('#coach');
+  if (!tut) { c.hidden = true; return; }
+  const s = TUT[tut.i];
+  c.innerHTML = `<div class="ch"><i>${tut.i + 1}</i><b>${s.t}</b></div><p>${s.p}</p><div class="cf"><span class="dots">${TUT.map((_, j) => `<i${j === tut.i ? ' class="on"' : ''}></i>`).join('')}</span><span>${s.done ? '' : '<button class="skip" id="tutSkip">Пропустить</button>'}${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}</span></div>`;
+  c.hidden = false; c.style.top = (playersEl.offsetTop + playersEl.offsetHeight + 8) + 'px'; // just under the score cards
+  if (s.hl && s.hl !== '#board') { const h = $(s.hl); if (h) h.classList.add('tutpulse'); }
+}
+function tutNext() {
+  if (!tut) return;
+  const s = TUT[tut.i];
+  if (s.done) { tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); return tutShow(); }
+  tut.i++;
+  // The figure step only when this card offers a figure.
+  if (TUT[tut.i].only === 'meeple' && !tut.meeple) tut.i++;
+  tutShow();
+}
+// Game code reports what the player did; the coach moves on when it is the awaited action.
+function tutEvent(ev) {
+  if (!tut) return;
+  const at = TUT[tut.i];
+  // The card offers a figure: step back to the figure tip (tutNext skipped it at "placed").
+  if (ev === 'meeple') { tut.meeple = true; if (at.wait === 'bot') { tut.i = TUT.findIndex(x => x.only === 'meeple'); tutShow(); } return; }
+  // Placed straight away without turning: jump to the "place" step and pass it.
+  if (ev === 'placed' && (at.wait === 'select' || at.wait === 'rotate')) tut.i = TUT.findIndex(x => x.wait === 'placed');
+  if (TUT[tut.i].wait === ev) tutNext();
+}
+$('#coach').addEventListener('click', e => {
+  if (e.target.closest('#tutNext')) tutNext();
+  if (e.target.closest('#tutSkip')) { tut = null; wallet.tut = true; saveWallet(); tutShow(); }
+});
+$('#tutBtn').onclick = startTutorial;
+// First start: offer the tutorial once.
+function offerTutorial() {
+  if (wallet.tut || wallet.tutAsked || loadSave()) return;
+  wallet.tutAsked = true; saveWallet();
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><h3>Впервые в Пазлграде?</h3><p>Короткое обучение — пара минут, и вы знаете всё. Награда — 30 золота.</p><button class="cta wide" data-t="go">Пройти обучение</button><button class="ghostbtn" data-t="no">Я уже умею играть</button></div>`;
+  document.body.append(box);
+  box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); };
+}
+
 /* ---------------- screens ---------------- */
 function show(name) {
   document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
@@ -2598,6 +2678,7 @@ window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs();
+if (isApp) setTimeout(offerTutorial, 1600);
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
 // Loaders show real tiles of the village being laid one by one.
