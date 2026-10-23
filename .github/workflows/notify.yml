@@ -1,0 +1,24 @@
+name: Send update push
+
+# Run by hand: after a version goes live on Google Play (its review takes a while, so this is
+# not tied to the GitHub release), or to repeat a push for GitHub-build players.
+on:
+  workflow_dispatch:
+    inputs:
+      store:
+        description: Which players to notify
+        type: choice
+        options: [play, github]
+        default: play
+      code:
+        description: Version code that is now available (e.g. 107)
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python3 scripts/fcm-send.py "updates-${{ inputs.store }}" "${{ inputs.code }}" "1.0.${{ inputs.code }}" release-notes.md
