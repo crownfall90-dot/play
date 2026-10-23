@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Звуки: стук карты о стол, поворот, фишка, перезвон за достроенный объект, фанфары за победу\n• Спокойная музыка в меню и потише во время партии; звуки и музыку можно выключить отдельно в настройках\n• Онлайн-партия не зависает: если игрок ушёл, за него ходит бот; быстрые фразы и эмодзи"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Прогресс: уровень и опыт, статистика, ежедневные задания и достижения с наградами золотом — кнопка с кубком в меню\n• Рейтинг онлайн-игроков: кубки за места в онлайн-партиях\n• Верх экрана партии больше не уходит под вырез камеры\n• Звуки и музыка; онлайн-партия не зависает, если игрок ушёл"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -72,7 +72,9 @@ html.app .scr{border-radius:0}
 /* Full-screen app: --it… are the camera-cutout insets from Android; the game and main menu use
    the whole height (their top buttons sit in the corners, clear of a central camera hole). */
 html.app .screen{padding-top:var(--it,0px);padding-left:var(--il,0px);padding-right:var(--ir,0px)}
-html.app #scr-game,html.app #scr-menu{padding-top:var(--itg,0px)}
+html.app #scr-menu{padding-top:var(--itg,0px)}
+/* The game bar has things in the middle too, so it always starts below any camera cutout. */
+html.app #scr-game{padding-top:var(--it,0px)}
 html.app .gtop{padding-top:6px}
 html.app .room{flex:0 1 auto;max-width:42%}
 html.app .deck{margin-left:auto}
@@ -159,8 +161,8 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 #boot.gone{opacity:0;pointer-events:none}#boot b{font:800 26px var(--f-display);color:var(--ink)}#boot b span{color:var(--brass)}
 .lbwait{display:flex;align-items:center;gap:14px}
 .saybtn{margin-left:auto}
-html.app .saybtn+.deck{margin-left:0}
-.saybox{position:absolute;top:calc(58px + var(--itg,0px));right:10px;left:10px;z-index:8;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;border-radius:18px;background:var(--glass);border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.4);animation:chestpop .25s ease-out}
+html.app .saybtn:not([hidden])+.deck{margin-left:0}
+.saybox{position:absolute;top:calc(58px + var(--it,0px));right:10px;left:10px;z-index:8;display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px;border-radius:18px;background:var(--glass);border:1px solid var(--line);box-shadow:0 12px 30px rgba(0,0,0,.4);animation:chestpop .25s ease-out}
 .saybox button{height:42px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font:600 12.5px var(--f-body);cursor:pointer;padding:0 6px}
 .saybox button.e{font-size:22px}
 .saybox button.w{grid-column:span 5}
@@ -168,11 +170,37 @@ html.app .saybtn+.deck{margin-left:0}
 .bubble{position:fixed;z-index:30;transform:translate(-50%,0);background:#fff;color:#14182a;font:700 13px var(--f-body);padding:6px 10px;border-radius:12px;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;animation:chestpop .3s cubic-bezier(.3,1.6,.5,1)}
 .bubble.e{font-size:24px;padding:2px 8px}
 .bubble::before{content:"";position:absolute;top:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top:0;border-bottom-color:#fff}
+.profile{display:flex;align-items:center;gap:14px;padding:14px;border-radius:18px;background:linear-gradient(135deg,rgba(242,184,75,.16),rgba(255,255,255,.03));border:1px solid rgba(242,184,75,.3)}
+.lvl{position:relative;width:58px;height:58px;flex:0 0 auto;display:grid;place-items:center}
+.lvl svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.lvl b{font:800 20px var(--f-display)}.lvl small{position:absolute;bottom:-4px;font:700 9px var(--f-body);background:var(--brass);color:var(--brass-ink);padding:1px 6px;border-radius:6px}
+.profile .pi{flex:1;min-width:0}.profile .pi b{display:block;font:700 16px var(--f-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.profile .pi small{color:var(--muted);font-size:12px}
+.xpbar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin:6px 0 4px;overflow:hidden}.xpbar i{display:block;height:100%;background:var(--brass);border-radius:3px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center}
+.stats b{display:block;font:800 18px var(--f-display);font-variant-numeric:tabular-nums}.stats small{color:var(--muted);font-size:11px}
+#ptabs{grid-template-columns:repeat(3,1fr)}
+#ptabs button{font:700 12px var(--f-display);padding:0 2px}
+.quest{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.quest .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(255,255,255,.06);flex:0 0 auto}
+.quest .qt{flex:1;min-width:0}.quest .qt b{display:block;font:600 13.5px var(--f-body)}.quest .qt small{color:var(--muted);font-size:11.5px;display:flex;align-items:center;gap:4px}
+.quest .qt small .coin{width:11px;height:11px}
+.quest .xpbar{margin:6px 0 2px}
+.quest .cta{height:38px;padding:0 14px;font-size:12px;flex:0 0 auto}
+.quest.done{border-color:rgba(242,184,75,.45);background:rgba(242,184,75,.08)}
+.quest.got{opacity:.5}.quest.lock .qi{filter:grayscale(1);opacity:.6}
+.qnote{color:var(--muted);font-size:12px;text-align:center;margin:2px 0}
+.lead{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.03)}
+.lead.me{background:rgba(242,184,75,.14);border:1px solid rgba(242,184,75,.4)}
+.lead i{font:800 13px var(--f-display);width:26px;text-align:center;font-style:normal;color:var(--muted)}
+.lead span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lead b{font:800 14px var(--f-display);font-variant-numeric:tabular-nums}
+.topbtn.hasdot::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
+.topbtn{position:relative}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
 .goldchip b{font:800 14px var(--f-display);font-variant-numeric:tabular-nums}
-.goldchip.static{position:static;margin-left:auto;cursor:default}
+.goldchip.static{position:relative;top:auto;right:auto;margin-left:auto;cursor:default}
 .gearbtn{position:absolute;top:10px;left:14px;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
 .ocard .ghostbtn.danger{color:#ff8a80;border-color:rgba(255,138,128,.35)}
 .ocard .row2b{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -397,6 +425,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
       <section class="screen" id="scr-menu" hidden>
         <div class="mtop">
           <div class="mside"><button class="topbtn" data-go="settings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button>
+            <button class="topbtn" data-go="progress" id="progBtn" aria-label="Задания и достижения"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 01-8 0z"/><path d="M8 6H5a3 3 0 003 4M16 6h3a3 3 0 01-3 4M12 13v4M8.5 20h7M9.5 17h5"/></svg></button>
             <button class="topbtn" data-go="rules" aria-label="Как играть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button></div>
           <button class="goldchip shopchip" data-go="shop" aria-label="Магазин, золото"><span class="sbag"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg></span><i class="coin"></i><b class="goldN">0</b></button>
         </div>
@@ -442,6 +471,16 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           </div>
           <button class="cta wide" id="checkUpd">Проверить обновления</button>
           <p class="shint">Puzzlegrad. Без рекламы и покупок. Политика конфиденциальности: github.com/crownfall90-dot/play</p>
+        </div>
+      </section>
+
+      <section class="screen scroll" id="scr-progress" hidden>
+        <div class="lb">
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Прогресс</b><span class="goldchip static"><i class="coin"></i><b class="goldN">0</b></span></div>
+          <div class="profile" id="profile"></div>
+          <div class="stats" id="stats"></div>
+          <div class="seg ptabs" id="ptabs"><button data-pt="quests" aria-pressed="true">Задания</button><button data-pt="ach" aria-pressed="false">Достижения</button><button data-pt="top" aria-pressed="false">Рейтинг</button></div>
+          <div class="col" id="ptab"></div>
         </div>
       </section>
 
@@ -1265,6 +1304,7 @@ async function resolveFeature(c, final, placer) {
   const each = win.length > 1 && gameRules.tie === 'split' ? Math.floor(pts / win.length) : pts;
   win.forEach(i => { const m = c.meeples.find(x => x.p === i); floatText(m.t, groupPos(m.t, m.g), '+' + each, players[i].col); });
   win.forEach(i => { players[i].score += each; players[i].stats[c.kind] += each; });
+  if (!final && !fast()) win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each}); });
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
   const help = !final && placer != null && !win.includes(placer) ? ` · помог${isMe(players[placer]) ? 'ли вы' : ': ' + players[placer].name}` : '';
@@ -1538,13 +1578,14 @@ function payout(reason) {
     if (wallet.paid.includes(key)) return null;
     wallet.paid = [key, ...wallet.paid].slice(0, 30);
   } else if (localHumans() > 1 || players.every(p => p.human)) return null;
-  if (reason === 'draw') { saveWallet(); return {delta: 0, text: 'Ничья — золото не меняется'}; }
+  if (reason === 'draw') { saveWallet(); gameDone(-1, players[meIdx].score); return {delta: 0, text: 'Ничья — золото не меняется'}; }
   const place = ranked().findIndex(p => p.i === meIdx), tied = ranked().findIndex(p => !p.resigned && p.score === players[meIdx].score);
   let delta = PLACE_GOLD[Math.max(0, reason === 'resign' ? place : tied)];
   let doubled = false;
   if (delta > 0 && wallet.boosts.double > 0) { wallet.boosts.double--; delta *= 2; doubled = true; }
   wallet.gold = Math.max(0, wallet.gold + delta); saveWallet();
   if (delta > 0) beep('coin');
+  gameDone(Math.max(0, reason === 'resign' ? place : tied), players[meIdx].score);
   const where = ['1-е', '2-е', '3-е', '4-е', '5-е'][Math.max(0, tied)];
   return {delta, text: `${where} место: ${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} золота${doubled ? ' (двойное!)' : ''}`};
 }
@@ -2351,6 +2392,128 @@ function showSay(p, i) {
   if (!isMe(players[p])) beep('turn');
 }
 
+/* ---------------- progress: level, daily quests, achievements, rating ----------------
+   Counted games are the ones that pay gold: you alone against bots, or online. */
+const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
+const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0}, wallet.prog);
+PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
+wallet.prog = PROG;
+const xpNeed = l => 50 + 50 * l;
+const QUESTS = [
+  {id: 'c3', ic: '🏰', t: 'Достройте 3 города', k: 'c', n: 3, g: 15},
+  {id: 'r3', ic: '🛤️', t: 'Достройте 3 дороги', k: 'r', n: 3, g: 10},
+  {id: 'f1', ic: '⛪', t: 'Окружите крепость', k: 'f', n: 1, g: 15},
+  {id: 'w1', ic: '🏆', t: 'Победите в партии', k: 'win', n: 1, g: 20},
+  {id: 'g2', ic: '🎲', t: 'Сыграйте 2 партии', k: 'games', n: 2, g: 10},
+  {id: 's30', ic: '⭐', t: 'Наберите 30 очков за одну партию', k: 's30', n: 1, g: 15},
+  {id: 'o1', ic: '🌍', t: 'Сыграйте онлайн', k: 'online', n: 1, g: 20},
+  {id: 'p50', ic: '💎', t: 'Заработайте 50 очков за день', k: 'pts', n: 50, g: 15},
+];
+const ACH = [
+  {id: 'w1', ic: '🥇', t: 'Первая победа', d: 'Победите в партии', ok: s => s.wins >= 1, g: 20},
+  {id: 'w10', ic: '🏅', t: 'Опытный правитель', d: '10 побед', ok: s => s.wins >= 10, g: 50},
+  {id: 'w50', ic: '👑', t: 'Король Пазлграда', d: '50 побед', ok: s => s.wins >= 50, g: 150},
+  {id: 'g25', ic: '🎲', t: 'Завсегдатай', d: 'Сыграйте 25 партий', ok: s => s.games >= 25, g: 40},
+  {id: 'c10', ic: '🏰', t: 'Градостроитель', d: 'Достройте 10 городов', ok: s => s.c >= 10, g: 30},
+  {id: 'c50', ic: '🏙️', t: 'Архитектор', d: 'Достройте 50 городов', ok: s => s.c >= 50, g: 80},
+  {id: 'r20', ic: '🛤️', t: 'Дорожный мастер', d: 'Достройте 20 дорог', ok: s => s.r >= 20, g: 30},
+  {id: 'f5', ic: '⛪', t: 'Хранитель крепостей', d: 'Окружите 5 крепостей', ok: s => s.f >= 5, g: 30},
+  {id: 'b50', ic: '⭐', t: 'Полсотни', d: '50 очков за одну партию', ok: s => s.best >= 50, g: 40},
+  {id: 'b80', ic: '🌟', t: 'Рекордсмен', d: '80 очков за одну партию', ok: s => s.best >= 80, g: 80},
+  {id: 'o1', ic: '🌍', t: 'Покоритель сети', d: 'Победите в онлайн-партии', ok: s => s.owins >= 1, g: 40},
+  {id: 'l5', ic: '🎖️', t: 'Пятый уровень', d: 'Достигните 5 уровня', ok: () => PROG.lvl >= 5, g: 50},
+  {id: 'l10', ic: '💠', t: 'Десятый уровень', d: 'Достигните 10 уровня', ok: () => PROG.lvl >= 10, g: 100},
+];
+// Three quests a day, the same for the whole day.
+function questsToday() {
+  if (PROG.day === today()) return;
+  let h = 0; for (const ch of today()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const pool = QUESTS.slice(), pick = [];
+  while (pick.length < 3) { h = (h * 1103515245 + 12345) >>> 0; pick.push(pool.splice(h % pool.length, 1)[0].id); }
+  PROG.day = today(); PROG.q = pick.map(id => ({id, n: 0, got: false}));
+}
+function progress(d) {
+  questsToday();
+  for (const [k, v] of Object.entries(d)) {
+    if (k in PROG.st && k !== 'best') PROG.st[k] += v;
+    PROG.q.forEach(q => { const Q = QUESTS.find(x => x.id === q.id); if (Q.k === k && !q.got) q.n = Math.min(Q.n, q.n + v); });
+  }
+  saveWallet(); progressDot();
+}
+// place: 0 = first … ; -1 = draw.
+function gameDone(place, score) {
+  const win = place === 0;
+  PROG.st.best = Math.max(PROG.st.best, score);
+  progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= 30 ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
+  const xp = score + 5 + (win ? 25 : 0);
+  PROG.xp += xp; let up = 0;
+  while (PROG.xp >= xpNeed(PROG.lvl)) { PROG.xp -= xpNeed(PROG.lvl); PROG.lvl++; up++; wallet.gold += 20; }
+  if (net) { PROG.cups += place < 0 ? 10 : [30, 15, 5, 0, 0][place]; syncRating(); }
+  saveWallet(); progressDot();
+  setTimeout(() => toastAny(up ? `Новый уровень ${PROG.lvl}! +${20 * up} золота` : `+${xp} опыта`), 1200);
+  const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st));
+  if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
+}
+const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got'); };
+function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); }
+let ptab = 'quests';
+function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
+function renderProgress() {
+  questsToday();
+  const need = xpNeed(PROG.lvl), name = clean(setup.seats[0].name) || 'Игрок';
+  $('#profile').innerHTML = `<div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><b>${name}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков</small></div>`;
+  const st = PROG.st;
+  $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
+  document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
+  const el = $('#ptab');
+  if (ptab === 'quests') {
+    el.innerHTML = PROG.q.map(q => {
+      const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
+      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="cta" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
+    }).join('') + '<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p>';
+  } else if (ptab === 'ach') {
+    el.innerHTML = ACH.map(a => {
+      const ok = a.ok(PROG.st), got = PROG.ach[a.id] === 'got';
+      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="cta" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+    }).join('');
+  } else renderTop();
+}
+$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; renderProgress(); };
+$('#ptab').addEventListener('click', e => {
+  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
+  if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
+  else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
+  else return;
+  beep('coin'); saveWallet(); progressDot(); renderProgress();
+});
+/* Rating: cups from online games (1st +30, 2nd +15, 3rd +5, draw +10) in /leaders, top 50.
+   The database rules let a player raise their own score by at most 30 a minute, so a big
+   backlog goes up in steps. */
+async function syncRating() {
+  if (!FB || PROG.up >= PROG.cups) return;
+  try {
+    const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
+    const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: clean(setup.seats[0].name) || 'Игрок', r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
+    if (r.ok) { PROG.up = target; saveWallet(); if (PROG.up < PROG.cups) setTimeout(syncRating, 61000); }
+  } catch (_) {}
+}
+async function renderTop() {
+  const el = $('#ptab');
+  if (!FB) { el.innerHTML = '<p class="qnote">Рейтинг доступен в приложении</p>'; return; }
+  el.innerHTML = '<div class="lbwait" style="justify-content:center">' + document.querySelector('#lbWait .pz').outerHTML + '</div>';
+  try {
+    const tok = await fbToken();
+    const r = await fetch(`${FB.dbUrl}/leaders.json?auth=${tok}&orderBy=%22r%22&limitToLast=50`);
+    if (ptab !== 'top') return;
+    if (!r.ok) { el.innerHTML = '<p class="qnote">Рейтинг скоро заработает — обновляем сервер</p>'; return; }
+    const rows = Object.entries((await r.json()) || {}).map(([uid, v]) => ({uid, ...v})).filter(x => x.r > 0).sort((a, b) => b.r - a.r);
+    el.innerHTML = (rows.length ? rows.map((x, i) => `<div class="lead${x.uid === fbAuth.uid ? ' me' : ''}"><i>${['🥇', '🥈', '🥉'][i] || i + 1}</i><span>${clean(x.n) || 'Игрок'}</span><b>🏆 ${x.r}</b></div>`).join('') : '<p class="qnote">Пока никого — выиграйте онлайн-партию первым!</p>') +
+      '<p class="qnote">Кубки дают за онлайн-партии: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
+    syncRating();
+  } catch (_) { el.innerHTML = '<p class="qnote">Нет связи — проверьте интернет</p>'; }
+}
+questsToday(); progressDot();
+
 /* ---------------- screens ---------------- */
 function show(name) {
   document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
@@ -2363,7 +2526,8 @@ function show(name) {
   if (name === 'lobby') renderLobby();
   if (name === 'shop') renderShop();
   if (name === 'settings') renderPrefs();
-  if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); }
+  if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
+  if (name === 'progress') renderProgress();
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-tab],[data-go]'); if (!b) return;
