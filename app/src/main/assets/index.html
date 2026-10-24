@@ -333,7 +333,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .codecard small{color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-size:10.5px;font-weight:600}
 .code{display:flex;gap:8px}
 .tapcopy{text-transform:none!important;letter-spacing:0!important;font-size:12px!important}
-.code.sm{cursor:pointer;-webkit-tap-highlight-color:transparent}.code.sm:active{transform:scale(.97)}
+.code.tap,.code.sm{cursor:pointer;-webkit-tap-highlight-color:transparent}.code.tap:active,.code.sm:active{transform:scale(.97)}
 .code span{width:46px;height:56px;border-radius:12px;background:#0f1528;display:grid;place-items:center;font:800 26px var(--f-display);color:var(--brass);box-shadow:inset 0 -4px 0 rgba(255,255,255,.05)}
 .row2{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .code.sm{gap:6px}.code.sm span{width:38px;height:46px;font-size:22px}
@@ -699,7 +699,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <p class="shint">Каждый играет со своего телефона, нужен интернет. Если приложение закрылось, войдите по тому же коду — партия продолжится.</p>
           </div>
           <div class="col" id="lbRoom" hidden>
-            <div class="codecard"><small>Код комнаты</small><div class="code" id="codeShow"></div>
+            <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите на код, чтобы скопировать</small>
               <div class="row2"><button class="chip" id="invite">Пригласить друзей</button><button class="chip" id="copyLink">Скопировать код</button></div></div>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
@@ -2618,7 +2618,8 @@ document.addEventListener('click', e => {
 renderRules();
 function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on ftoast'; d.style.position = 'fixed'; d.style.top = 'auto'; d.style.bottom = 'calc(28px + var(--ib, 0px))'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); }
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
-$('#copyLink').onclick = () => track('share', {content_type: 'room'}) || copyText(`Заходи в Puzzlegrad: ${SITE_URL}?room=${net.code} (или «С друзьями» → код ${net.code})`, 'Приглашение скопировано — отправьте его друзьям');
+$('#copyLink').onclick = () => track('share', {content_type: 'room'}) || copyText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
+$('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
 $('#invite').onclick = () => { if (!FB) return $('#copyLink').click(); friendsBack = 'lobby'; show('friends'); };
 
 /* ---------------- online ----------------
