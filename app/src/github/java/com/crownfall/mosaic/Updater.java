@@ -84,11 +84,11 @@ class Updater {
                 info = latest();
             } catch (Exception e) {
                 // No internet or GitHub refused: play on; say so only when the player asked.
-                if (manual) activity.js("window.onCheckFailed && window.onCheckFailed()");
+                activity.js(manual ? "window.onCheckFailed && window.onCheckFailed()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
                 return;
             }
             if (info != null) activity.js("window.onUpdateAvailable && window.onUpdateAvailable(" + info + ", " + manual + ")");
-            else if (manual) activity.js("window.onNoUpdate && window.onNoUpdate()");
+            else activity.js(manual ? "window.onNoUpdate && window.onNoUpdate()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
         }).start();
     }
 

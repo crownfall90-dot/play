@@ -158,7 +158,7 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 .pz i:nth-child(7){animation-name:pz8}
 @keyframes pz8{0%,66.7%{opacity:0;transform:translateZ(80px)}75.0%{opacity:1;transform:translateZ(0)}82%{opacity:1;transform:translateZ(0)}93%,100%{opacity:0;transform:translateZ(-6px)}}
 #boot{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:radial-gradient(120% 60% at 50% 40%,#34477a 0%,#18213d 55%,#0f1528 100%);transition:opacity .35s}
-#boot.gone{opacity:0;pointer-events:none}#boot small{color:var(--muted);font-size:13px;margin-top:-14px;animation:blink 1.4s ease-in-out infinite}#boot .pz{width:200px;height:200px}#boot b{font:800 26px var(--f-display);color:var(--ink)}#boot b span{color:var(--brass)}
+#boot.gone{opacity:0;pointer-events:none}#boot.withupd{justify-content:flex-start;padding-top:calc(9vh + var(--it,0px));gap:18px}#boot.withupd .pz{width:150px;height:150px}#boot.withupd small{display:none}#boot small{color:var(--muted);font-size:13px;margin-top:-14px;animation:blink 1.4s ease-in-out infinite}#boot .pz{width:200px;height:200px}#boot b{font:800 26px var(--f-display);color:var(--ink)}#boot b span{color:var(--brass)}
 .lbwait{display:flex;align-items:center;gap:14px}
 .saybtn{margin-left:auto}
 html.app .saybtn:not([hidden])+.deck{margin-left:0}
@@ -3510,7 +3510,7 @@ $('#devBtn').onclick = devPanel;
 const NOTIF_EVERY = 2 * 864e5;
 const notifOff = () => !!window.AndroidApp && AndroidApp.notificationsAllowed && (!wallet.notify || !AndroidApp.notificationsAllowed());
 function notifNudge() {
-  if (!notifOff() || tut || document.querySelector('body > .over')) return;
+  if (!notifOff() || tut || !boot.gone || document.querySelector('body > .over')) return;
   const now = Date.now();
   if (now - (wallet.notifAt || 0) < NOTIF_EVERY) return;
   wallet.notifAt = now; saveWallet();
@@ -3730,7 +3730,7 @@ function show(name) {
   if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
   if (name === 'progress') renderProgress();
   if (name === 'friends') openFriends();
-  if (name === 'menu') { friendsDot(); setTimeout(notifNudge, 1200); }
+  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => setTimeout(notifNudge, 1200)); }
   clearTimeout(presenceSoon); presenceSoon = setTimeout(() => presenceMark(true), 1500);
 }
 document.addEventListener('click', e => {
@@ -3821,8 +3821,20 @@ function showWhatsNew(ver) {
 // to the app, on an update push while the game is open, and every 15 minutes while it stays open.
 let updBox = null;
 const updLater = {};
+// Start-up: in the Android app the splash waits for the update check (at most 6 s), so a new
+// version is offered right there, before the game opens; "Later" continues into the game.
+var boot = {checked: !window.AndroidApp, min: false, update: false, gone: false};
+var bootDone, bootReady = new Promise(r => { bootDone = r; });
+function bootHide() {
+  if (boot.gone || !boot.min || !boot.checked || boot.update) return;
+  boot.gone = true;
+  const el = $('#boot'); if (el) { el.classList.add('gone'); setTimeout(() => el.remove(), 400); }
+  bootDone();
+}
+window.onUpdateChecked = () => { boot.checked = true; bootHide(); };
 window.onUpdateAvailable = (info, manual) => {
   if (updBox && document.body.contains(updBox)) return;
+  boot.checked = true;
   // "Later" quiets this version for half an hour unless the player asked to check.
   if (!manual && updLater[info.version] && Date.now() - updLater[info.version] < 30 * 60 * 1000) return;
   const box = updBox = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
@@ -3830,7 +3842,13 @@ window.onUpdateAvailable = (info, manual) => {
   box.querySelector('.notes-list').textContent = info.notes || 'Исправления и улучшения';
   if (players.length && phase !== 'end' && phase !== 'idle') box.querySelector('p').textContent = (net ? 'После обновления вернитесь в комнату по коду. ' : 'Партия сохранится. ') + 'Что нового:';
   document.body.append(box);
-  box.querySelector('#later').onclick = () => { updLater[info.version] = Date.now(); box.remove(); };
+  // Offered on the splash: the dialog sits above it and "Later" opens the game.
+  if (!boot.gone) {
+    boot.update = true; box.style.zIndex = 101; box.style.background = 'linear-gradient(transparent 35%,rgba(8,12,24,.75))'; box.style.backdropFilter = 'none'; box.style.alignItems = 'flex-end'; box.style.paddingBottom = 'calc(24px + var(--ib,0px))';
+    const s = document.querySelector('#boot small'); if (s) s.textContent = 'Доступна новая версия';
+    const bt = $('#boot'); if (bt) bt.classList.add('withupd');
+  }
+  box.querySelector('#later').onclick = () => { updLater[info.version] = Date.now(); box.remove(); if (boot.update) { boot.update = false; bootHide(); } };
   box.querySelector('#upd').onclick = e => { e.currentTarget.disabled = true; e.currentTarget.textContent = 'Скачиваем…'; box.querySelector('.prog').hidden = false; AndroidApp.startUpdate(info.url); };
   window.onUpdateProgress = pct => { const i = box.querySelector('.prog i'); if (i) i.style.width = pct + '%'; };
   // If installing fails, the release page in the browser is the way out.
@@ -3871,7 +3889,7 @@ window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs();
-if (isApp) setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 3800);
+if (isApp) bootReady.then(() => setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 300));
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
 /* Loaders lay real pieces one by one, and they fit like in a game: road to road, river to river,
@@ -3914,13 +3932,17 @@ const loaderReady = Promise.all(Object.keys(TYPES).map(k => new Promise(res => {
 window.__ready = true;
 // In the app the loader stays a moment as a splash, long enough to see a few tiles land.
 // On app start the splash lays one full fitting 3x3 (restarted once the real pieces are in).
-{ const boot = $('#boot'); if (boot) {
-  const hide = () => { boot.classList.add('gone'); setTimeout(() => boot.remove(), 400); };
-  if (!isApp) hide();
+{ const el = $('#boot'); if (el) {
+  if (!isApp) { boot.min = boot.checked = true; bootHide(); }
   else loaderReady.then(() => {
-    const pieces = boot.querySelectorAll('.pz i');
+    const pieces = el.querySelectorAll('.pz i');
     pieces.forEach(i => { i.style.animation = 'none'; void i.offsetWidth; i.style.animation = ''; });
-    setTimeout(hide, 3000);
+    setTimeout(() => {
+      boot.min = true; bootHide();
+      if (!boot.gone && !boot.update) { const s = el.querySelector('small'); if (s) s.textContent = 'Проверяем обновления…'; }
+    }, 3000);
+    // An older app shell, or no answer at all: do not hold the game.
+    setTimeout(() => { boot.checked = true; bootHide(); }, 6000);
   });
 } }
 show(isApp ? 'menu' : 'game');

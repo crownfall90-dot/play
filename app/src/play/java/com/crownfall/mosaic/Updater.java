@@ -25,11 +25,12 @@ class Updater {
             if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
                     && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
                 if (manual || System.currentTimeMillis() - lastOffer > 30 * 60 * 1000L) start(info);
-            } else if (manual) {
-                activity.js("window.onNoUpdate && window.onNoUpdate()");
+                else activity.js("window.onUpdateChecked && window.onUpdateChecked(false)");
+            } else {
+                activity.js(manual ? "window.onNoUpdate && window.onNoUpdate()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
             }
         }).addOnFailureListener(e -> {
-            if (manual) activity.js("window.onNoUpdate && window.onNoUpdate()");
+            activity.js(manual ? "window.onNoUpdate && window.onNoUpdate()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
         });
     }
 
