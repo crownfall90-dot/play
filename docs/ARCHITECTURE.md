@@ -36,6 +36,7 @@ flowchart LR
 | `app/src/main/java/.../UpdateNotifier.java` | Фоновая проверка версии и уведомление |
 | `.github/workflows/android.yml` | Сборка APK/AAB, релиз `vNNN` (`versionCode = 100 + номер запуска`), пуш игрокам |
 | `.github/workflows/notify.yml` | Ручная отправка пуша о версии |
+| `.github/workflows/news.yml` | Пуш-новость всем игрокам (тема `news`; проверка — `news-test`). Запускается из скрытой «Панели владельца»: 7 нажатий на «Версия» в настройках, токен GitHub хранится только на телефоне владельца |
 | `scripts/fcm-send.py` | Отправка пуша FCM (секрет `FIREBASE_SERVICE_ACCOUNT`) |
 | `docs/firebase-rules.json` | Правила базы — публикуются вручную в консоли Firebase |
 | `release-notes.md` | «Что нового» — показывается в игре после обновления |

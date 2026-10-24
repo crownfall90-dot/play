@@ -2,6 +2,7 @@
 """Sends a data push to an FCM topic (HTTP v1 API) using a Firebase service-account key.
 
 Usage: FIREBASE_SERVICE_ACCOUNT='<json>' scripts/fcm-send.py TOPIC CODE VERSION NOTES_FILE
+       FIREBASE_SERVICE_ACCOUNT='<json>' NEWS_TOPIC=news NEWS_TITLE=… NEWS_BODY=… scripts/fcm-send.py --news
 Only the Python standard library and the openssl command are needed (both exist on GitHub runners).
 """
 import base64, json, os, subprocess, sys, tempfile, time, urllib.parse, urllib.request
@@ -30,11 +31,17 @@ def access_token(sa: dict) -> str:
 
 
 def main():
-    topic, code, version, notes_file = sys.argv[1:5]
     sa = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
-    notes = open(notes_file, encoding='utf-8').read().strip()[:1500]
-    msg = {'message': {'topic': topic, 'android': {'priority': 'high'},
-                       'data': {'code': str(code), 'version': version, 'notes': notes}}}
+    if sys.argv[1:2] == ['--news']:
+        # The owner's announcement (texts come in the environment, never through the shell).
+        topic = os.environ['NEWS_TOPIC']
+        assert topic in ('news', 'news-test'), topic
+        data = {'type': 'news', 'title': os.environ['NEWS_TITLE'].strip()[:80], 'body': os.environ['NEWS_BODY'].strip()[:600]}
+    else:
+        topic, code, version, notes_file = sys.argv[1:5]
+        notes = open(notes_file, encoding='utf-8').read().strip()[:1500]
+        data = {'code': str(code), 'version': version, 'notes': notes}
+    msg = {'message': {'topic': topic, 'android': {'priority': 'high'}, 'data': data}}
     req = urllib.request.Request(f"https://fcm.googleapis.com/v1/projects/{sa['project_id']}/messages:send",
                                  json.dumps(msg).encode(), {'Authorization': 'Bearer ' + access_token(sa),
                                                             'Content-Type': 'application/json'})
