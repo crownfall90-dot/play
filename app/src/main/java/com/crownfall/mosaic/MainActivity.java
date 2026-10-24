@@ -96,8 +96,21 @@ public class MainActivity extends Activity {
     private String insetsJs = "";
 
     /** Camera cutout sizes in CSS pixels → --it/--ib/--il/--ir; --itg is the top gap for the game screen. */
+    /**
+     * The game is laid out for a phone of about 6.1 inches; a bigger or smaller phone scales the whole page
+     * so buttons and text keep the same physical size. Limited to 0.85–1.2 (tablets are not stretched further).
+     */
+    float uiScale() {
+        android.util.DisplayMetrics m = getResources().getDisplayMetrics();
+        if (m.xdpi <= 0 || m.ydpi <= 0) return 1f;
+        double w = m.widthPixels / (double) m.xdpi, h = m.heightPixels / (double) m.ydpi;
+        double inches = Math.sqrt(w * w + h * h);
+        return (float) Math.max(0.85, Math.min(1.2, inches / 6.1));
+    }
+
     private void sendInsets(WindowInsets insets) {
-        float d = getResources().getDisplayMetrics().density;
+        // The page is zoomed by uiScale(), so one CSS pixel is uiScale dp: insets are converted to that.
+        float d = getResources().getDisplayMetrics().density * uiScale();
         int top = 0, bottom = 0, left = 0, right = 0;
         boolean cornerCut = false;
         if (Build.VERSION.SDK_INT >= 28 && insets.getDisplayCutout() != null) {
@@ -281,6 +294,9 @@ public class MainActivity extends Activity {
     private class Bridge {
         @JavascriptInterface
         public String versionName() { return BuildConfig.VERSION_NAME; }
+
+        @JavascriptInterface
+        public float uiScale() { return MainActivity.this.uiScale(); }
 
         @JavascriptInterface
         public String store() { return BuildConfig.FLAVOR; }
