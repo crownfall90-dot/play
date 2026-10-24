@@ -6,6 +6,8 @@
 - `app/` — Android-оболочка (WebView) с автообновлением.
 - `scripts/wrap-web.sh` — копирует игру в `app/src/main/assets/index.html`.
 
+Карта проекта — [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), планы — [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Как выходят обновления
 
 1. Меняете игру, пишете список изменений в `release-notes.md`.
