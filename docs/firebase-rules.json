@@ -37,6 +37,31 @@
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['w', 't']) && newData.child('w').isString() && newData.child('w').val().length < 20000"
       }
+    },
+    "friends": {
+      "$uid": {
+        ".read": "auth != null",
+        "$fid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['n', 't']) && newData.child('n').isString() && newData.child('n').val().length <= 12"
+        }
+      }
+    },
+    "inbox": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        "$key": {
+          ".write": "auth != null && (auth.uid === $uid || $key === auth.uid + '_f' || $key === auth.uid + '_r')",
+          ".validate": "!newData.exists() || auth.uid === $uid || (newData.hasChildren(['k', 'n', 't']) && newData.child('n').isString() && newData.child('n').val().length <= 12 && newData.child('t').val() === now)"
+        }
+      }
+    },
+    "fcodes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid",
+        ".validate": "$code.length === 6"
+      }
     }
   }
 }
