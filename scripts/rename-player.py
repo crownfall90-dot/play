@@ -28,7 +28,8 @@ def main():
     w, s = json.loads(prof.get('w', '{}')), json.loads(prof.get('s', '{}'))
     print(f'{uid[:6]}…: wallet.name {w.get("name")!r}, seat.name {s.get("name")!r} → {name!r}')
     if not apply: return print('dry run')
-    w['name'], s['name'] = name, name
+    import time
+    w['name'], s['name'], w['nameAt'] = name, name, int(time.time() * 1000)
     call('PATCH', f'profiles/{uid}', {'w': json.dumps(w, ensure_ascii=False), 's': json.dumps(s, ensure_ascii=False), 't': {'.sv': 'timestamp'}})
     if call('GET', f'presence/{uid}'): call('PATCH', f'presence/{uid}', {'n': name})
     if call('GET', f'leaders/{uid}'): call('PATCH', f'leaders/{uid}', {'n': name})
