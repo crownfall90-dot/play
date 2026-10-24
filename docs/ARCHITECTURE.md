@@ -1,0 +1,92 @@
+# Puzzlegrad — карта проекта
+
+Короткая карта: что где лежит, как части связаны и куда смотреть, когда что-то меняешь.
+
+## Как устроено в целом
+
+```mermaid
+flowchart LR
+  subgraph Phone[Android-приложение]
+    A[MainActivity<br/>WebView, полный экран, вырез камеры] --> W[assets/index.html<br/>вся игра]
+    A --> U[Updater<br/>GitHub или Google Play]
+    P[PushService<br/>FCM] --> A
+    N[UpdateNotifier<br/>проверка раз в 12 ч] --> A
+  end
+  W -- REST + SSE --> DB[(Firebase Realtime Database)]
+  W -- REST --> AU[Firebase Auth<br/>аноним / почта]
+  CI[GitHub Actions] -->|APK + AAB, релиз vNNN| GH[(GitHub Releases)]
+  CI -->|push «вышла версия»| FCM[(FCM)] --> P
+  U --> GH
+```
+
+* **Вся игра — один файл** `web/game.html` (HTML + CSS + JS, без сборщиков). Скрипт `scripts/wrap-web.sh` заворачивает его в `app/src/main/assets/index.html` (шрифты, заметки к версии, конфиг Firebase).
+* **Android-часть тонкая**: WebView, обновления, пуши, отчёты о сбоях (Crashlytics). Логика игры в Java не дублируется.
+* **Сервера своего нет**: онлайн, рейтинг, присутствие и профили — Firebase Realtime Database через REST, вход — Firebase Auth через REST.
+
+## Файлы
+
+| Путь | Что внутри |
+|---|---|
+| `web/game.html` | Игра целиком: экраны, графика, правила, боты, онлайн, прогресс, обучение |
+| `scripts/wrap-web.sh` | Сборка `assets/index.html` из `web/game.html` (запускать после каждой правки) |
+| `app/src/main/java/.../MainActivity.java` | WebView, полный экран, вырез камеры → CSS-переменные `--it/--ib/--il/--ir/--itg`, мост `AndroidApp` |
+| `app/src/github/.../Updater.java`, `InstallResult.java` | Самообновление из GitHub Releases через PackageInstaller |
+| `app/src/play/.../Updater.java` | Обновление через Google Play (In-App Updates) |
+| `app/src/main/java/.../PushService.java` | FCM: тема `updates-github` / `updates-play` |
+| `app/src/main/java/.../UpdateNotifier.java` | Фоновая проверка версии и уведомление |
+| `.github/workflows/android.yml` | Сборка APK/AAB, релиз `vNNN` (`versionCode = 100 + номер запуска`), пуш игрокам |
+| `.github/workflows/notify.yml` | Ручная отправка пуша о версии |
+| `scripts/fcm-send.py` | Отправка пуша FCM (секрет `FIREBASE_SERVICE_ACCOUNT`) |
+| `docs/firebase-rules.json` | Правила базы — публикуются вручную в консоли Firebase |
+| `release-notes.md` | «Что нового» — показывается в игре после обновления |
+| `docs/google-play.md`, `docs/privacy-policy.md`, `store/` | Всё для публикации в Google Play |
+
+## Разделы `web/game.html`
+
+Файл поделён комментариями `/* ---------------- раздел ---------------- */`. Искать по ним.
+
+| Раздел | Главное |
+|---|---|
+| **art** | `TYPES` (все карты: края `c` город, `r` дорога, `f` поле, `w` река, `b` большой мост), редкие карты (генерируются), `drawTile` (рисунок карты на canvas), `drawSprites` (домики, деревья, крепость, шахта…) |
+| **rules** | `fits` (подходит ли карта), `groupsOf` / `component` (объекты), `claimable` (куда можно фишку) |
+| **dom: world** | `tileEl` (объёмная плитка), `walls` (стенки и водопады), `addDecor` (объекты на карте) |
+| **camera & input** | `cam`, `applyCam`, жесты: палец — сдвиг, два пальца — масштаб/поворот/наклон; класс `flat` в 2D |
+| **hud** | Карточки игроков, лоток с картой, подсветка владельца (`updateOwnership`), флажки (`markDone`) |
+| **turns** | `startTurn`, `afterPlace`, `scoreAfter`, `resolveFeature` (очки, `roadPoints` — мост), таймер, 10 с на фишку, бот (`botPick`, `aiTurn`), `endGame`, золото (`payout`) |
+| **setup** | Экран настроек, режимы `MODES` (Быстрая/Классика/Большая), `deckList` / `makeDeck`, правила `RULES` |
+| **gold, figures, shop** | Кошелёк `wallet` (localStorage), фигурки, подарок дня, покупка с подтверждением |
+| **saved game** | Офлайн-партия сохраняется как «настройки + список ходов» и восстанавливается повтором |
+| **sound** | Звуки и музыка синтезируются Web Audio (`SFX`, `musicStart`) |
+| **settings / game menu** | Настройки, пауза, сдаться, ничья |
+| **online** | Комната = журнал сообщений в `/rooms/{код}/msgs`. Сообщения: `host`, `hello`, `lobby`, `start`, `move`, `here`, `say`, `resign`, `draw`. Все телефоны повторяют одни и те же ходы → одинаковая партия. Сторож (`startWatch`) ходит ботом за пропавшего |
+| **quick match** | Поиск: объявления `seek`/`close` в комнате `QMATCH`, совпадение по режиму и числу игроков, рейтинговые правила `ratedRules` |
+| **progress** | Уровень/опыт, задания дня, достижения, рейтинг `/leaders` (кубки только за рейтинговые партии) |
+| **tutorial** | Партия по сценарию: `TUT`, `TUT_DECK`, `TUT_BOT`, шаги ждут действия (`tutEvent`) |
+| **account** | Профиль: никнейм, смена имени (500 золота), вход по почте, облачное сохранение `/profiles/{uid}` |
+| **screens / app shell** | `show(name)`, кнопка «Назад» Android, обновления, заставка |
+
+## Данные
+
+| Где | Что |
+|---|---|
+| `localStorage.wallet` | Золото, фигурки, настройки, имя профиля, прогресс (`prog`), флаги обучения |
+| `localStorage.setup` | Последние настройки партии и места игроков |
+| `localStorage.savedGame` | Офлайн-партия для «Продолжить» |
+| `localStorage.lastGame` | Онлайн-партия для возврата после перезапуска (3 часа) |
+| `localStorage.fbAuth` | Токены Firebase (+ почта, если профиль защищён) |
+| `/rooms/{код}/msgs` | Журнал онлайн-комнаты (только добавление) |
+| `/presence/{uid}` | «В сети»: время, имя, занятие |
+| `/leaders/{uid}` | Рейтинг: имя, кубки (не больше +30 в минуту) |
+| `/profiles/{uid}` | Облачная копия кошелька — для входа после переустановки |
+
+## Частые задачи
+
+* **Новая карта** → добавить в `TYPES` (края по часовой: N, E, S, W; `n` — сколько в колоде). Рисунок построится сам; особый вид — ветка в `drawTile` по `id`, объекты — в `addDecor`.
+* **Новый режим** → запись в `MODES` (`set` — какие правила он выставляет), при необходимости правка `deckList`.
+* **Новое сообщение онлайн** → отправить `netSend({t: '…', g: net.gameId, …})`, обработать в `onNet`. Всё, что меняет партию, должно приходить одинаково на все телефоны.
+* **Новые данные в базе** → правило в `docs/firebase-rules.json` и опубликовать его в консоли Firebase.
+* **Выпустить версию** → правка `web/game.html` → `sh scripts/wrap-web.sh` → обновить `release-notes.md` → PR в `main`. CI сам соберёт, опубликует релиз и разошлёт пуш.
+
+## Проверка перед выпуском
+
+Тесты — сценарии Playwright (Chromium), запускаются на `app/src/main/assets/index.html`: полная партия с ботами, онлайн-комната на настоящем Firebase, быстрый поиск, обучение, бездействие, замер кадров при прокрутке поля (замедление CPU ×4). Тестовым клиентам отключать `/presence`, чтобы они не попадали в счётчик «в сети».

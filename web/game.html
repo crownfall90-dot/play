@@ -233,6 +233,7 @@ html.tutoring #mrow .skip{display:none}
 .pod.me b{color:var(--brass)}
 .lead .av{flex:0 0 28px;width:28px;height:28px;font-size:12px}.lead.myrank{margin-top:6px;border-style:dashed}
 .mact .cta.alt{background:#3fc27a;color:#0d2a17}
+.acc .field{margin-top:8px}.accErr{min-height:16px;margin:6px 0 0!important;color:#ff8a80;font-size:12.5px}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -528,8 +529,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="ltop"><button class="iconbtn" id="settingsBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Настройки</b></div>
           <div class="h3">Игра</div>
           <div class="opts" id="prefs"></div>
-          <div class="h3">Ваше имя</div>
-          <input class="field" id="prefName" maxlength="12" autocomplete="off">
+          <div class="h3">Профиль</div>
+          <div class="opts" id="acct"></div>
           <div class="h3">О приложении</div>
           <div class="opts">
             <div class="opt"><span>Версия</span><b id="verFull">—</b></div>
@@ -2013,7 +2014,7 @@ const wallet = (() => {
   v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
   return v;
 })();
-function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); }
+function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); if (typeof cloudSaveSoon === 'function') cloudSaveSoon(); }
 // Daily gift in the shop: a chest once a day with gold, a one-game boost or, rarely, a figure.
 const giftReady = () => wallet.dailyBox !== today();
 function dailyBonus() {
@@ -2288,7 +2289,7 @@ const applyGfx = () => document.documentElement.classList.toggle('lowgfx', walle
 applyGfx();
 function renderPrefs() {
   $('#prefs').innerHTML = PREFS.filter(r => !r.app || window.AndroidApp).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span></div>`).join('');
-  if (document.activeElement !== $('#prefName')) $('#prefName').value = profileName();
+  renderAccount();
   $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : 'веб-макет';
   $('#checkUpd').hidden = !window.AndroidApp;
 }
@@ -2304,7 +2305,7 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'zones') { markOwn(); updateOwnership(); }
   if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
 });
-$('#prefName').addEventListener('change', e => { if (!setProfileName(e.target.value)) e.target.value = profileName(); else toastAny('Имя профиля изменено'); renderSetup(); });
+
 $('#checkUpd').onclick = () => { $('#checkUpd').textContent = 'Проверяем…'; AndroidApp.checkUpdates(); setTimeout(() => $('#checkUpd').textContent = 'Проверить обновления', 4000); };
 window.onNoUpdate = () => { $('#checkUpd').textContent = 'Проверить обновления'; toastAny('У вас последняя версия'); };
 function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
@@ -2519,12 +2520,13 @@ async function fbToken() {
     const r = await fetch('https://securetoken.googleapis.com/v1/token?key=' + FB.apiKey, {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(fbAuth.refreshToken)});
     if (r.ok) { const t = await r.json(); j = {idToken: t.id_token, refreshToken: t.refresh_token, expiresIn: t.expires_in, localId: t.user_id}; }
   }
+  if (!j && fbAuth && fbAuth.email) throw new Error('auth expired'); // a signed-in profile: log in again, do not start a new one
   if (!j) {
     const r = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=' + FB.apiKey, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{"returnSecureToken":true}'});
     if (!r.ok) throw new Error('auth ' + r.status);
     j = await r.json();
   }
-  fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000};
+  fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000, email: fbAuth && fbAuth.email};
   try { localStorage.setItem('fbAuth', JSON.stringify(fbAuth)); } catch (_) {}
   return fbAuth.idToken;
 }
@@ -3036,8 +3038,8 @@ $('#ptab').addEventListener('click', e => {
 /* Rating: cups from online games (1st +30, 2nd +15, 3rd +5, draw +10) in /leaders, top 50.
    The database rules let a player raise their own score by at most 30 a minute, so a big
    backlog goes up in steps. */
-async function syncRating() {
-  if (!FB || PROG.up >= PROG.cups) return;
+async function syncRating(force) {
+  if (!FB || (PROG.up >= PROG.cups && !force)) return;
   try {
     const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
     const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
@@ -3132,12 +3134,13 @@ function askProfile() {
   const sw = () => PALETTE.map(c => `<button class="sw${c.col === wallet.color ? ' on' : ''}" style="--c:${c.col}" data-pc="${c.col}" aria-label="${c.name}"></button>`).join('');
   box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
     <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><div class="swatches" id="profCols">${sw()}</div>
-    <button class="cta wide" id="profOk" disabled>Готово</button></div>`;
+    <button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
   box.querySelector('#profCols').onclick = e => { const b = e.target.closest('[data-pc]'); if (!b) return; wallet.color = setup.seats[0].col = b.dataset.pc; av.style.setProperty('--c', wallet.color); box.querySelector('#profCols').innerHTML = sw(); };
-  ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); };
+  ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); };
+  box.querySelector('#profLogin').onclick = () => { box.remove(); accountDialog('login'); };
   setTimeout(() => inp.focus(), 200);
 }
 // First start: offer the tutorial once.
@@ -3145,9 +3148,9 @@ function offerTutorial() {
   if (wallet.tut || wallet.tutAsked || loadSave()) return askProfile();
   wallet.tutAsked = true; saveWallet();
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>Впервые в Пазлграде?</h3><p>Короткое обучение — пара минут, и вы знаете всё. Награда — 30 золота.</p><button class="cta wide" data-t="go">Пройти обучение</button><button class="ghostbtn" data-t="no">Я уже умею играть</button></div>`;
+  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🏰</div><h3>Добро пожаловать в Puzzlegrad!</h3><p>Новичок? Короткое обучение, затем вы придумаете никнейм — так создаётся профиль</p><button class="cta wide" data-t="go">Начать · обучение</button>${FB ? '<button class="ghostbtn" data-t="login">У меня есть профиль — войти</button>' : ''}<button class="linkbtn" data-t="no">Пропустить обучение</button></div>`;
   document.body.append(box);
-  box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); else askProfile(); };
+  box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); else if (b.dataset.t === 'login') accountDialog('login'); else askProfile(); };
 }
 
 /* "Who is online": tap the green "N в сети" badge for the list of players with the game open. */
@@ -3162,6 +3165,88 @@ function showOnline(e) {
   presenceCount();
 }
 document.querySelectorAll('.onlineN').forEach(b => b.addEventListener('click', showOnline));
+
+/* ---------------- account: keep the profile across reinstalls ----------------
+   The anonymous Firebase account gets an e-mail and password ("protect the profile"); the whole
+   wallet (gold, figures, progress, name, rating) is then saved to /profiles/{uid}. On a new phone
+   or after a reinstall, signing in with the same e-mail brings it back. Rules: docs/firebase-rules.json. */
+const RENAME_PRICE = 500;
+const AUTH_ERR = {EMAIL_EXISTS: 'Эта почта уже занята — войдите в профиль', EMAIL_NOT_FOUND: 'Нет профиля с такой почтой', INVALID_PASSWORD: 'Неверный пароль', INVALID_LOGIN_CREDENTIALS: 'Неверная почта или пароль', INVALID_EMAIL: 'Проверьте почту', WEAK_PASSWORD: 'Пароль — не короче 6 символов', MISSING_PASSWORD: 'Введите пароль', OPERATION_NOT_ALLOWED: 'Вход по почте ещё не включён на сервере', TOO_MANY_ATTEMPTS_TRY_LATER: 'Слишком много попыток — попробуйте позже', CREDENTIAL_TOO_OLD_LOGIN_AGAIN: 'Войдите заново'};
+const authMsg = j => { const c = String((j && j.error && j.error.message) || '').split(' ')[0]; return AUTH_ERR[c] || 'Не получилось — проверьте интернет'; };
+async function idt(method, body) {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${method}?key=${FB.apiKey}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw j; return j;
+}
+function keepAuth(j, email) {
+  fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000, email};
+  try { localStorage.setItem('fbAuth', JSON.stringify(fbAuth)); } catch (_) {}
+}
+let cloudTimer = 0;
+function cloudSaveSoon() { if (!FB || !fbAuth || !fbAuth.email) return; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudSave, 2500); }
+async function cloudSave() {
+  try { const tok = await fbToken(); await fetch(`${FB.dbUrl}/profiles/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({w: JSON.stringify(wallet), s: JSON.stringify(setup.seats[0]), t: {'.sv': 'timestamp'}})}); } catch (_) {}
+}
+async function cloudLoad() {
+  const tok = await fbToken(), r = await fetch(`${FB.dbUrl}/profiles/${fbAuth.uid}.json?auth=${tok}`);
+  const d = r.ok ? await r.json() : null; if (!d || !d.w) return false;
+  const w = JSON.parse(d.w); for (const k of Object.keys(wallet)) delete wallet[k]; Object.assign(wallet, w);
+  Object.assign(PROG, w.prog || {}); wallet.prog = PROG;
+  if (d.s) { const s0 = JSON.parse(d.s); setup.seats[0].name = s0.name; setup.seats[0].col = s0.col; }
+  try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} saveSetup();
+  return true;
+}
+// mode: 'link' — protect this profile with an e-mail; 'login' — sign in to an existing one.
+function accountDialog(mode) {
+  if (!FB) return toastAny('Профили доступны в приложении');
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  const link = mode === 'link';
+  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">${link ? '🛡️' : '🔑'}</div><h3>${link ? 'Сохраните профиль' : 'Вход в профиль'}</h3><p>${link ? 'Почта и пароль вернут золото, фигурки и прогресс после переустановки или на новом телефоне' : 'Почта и пароль, которыми вы сохранили профиль'}</p>
+    <input class="field" id="accMail" type="email" placeholder="Почта" autocomplete="email"><input class="field" id="accPass" type="password" placeholder="Пароль (от 6 символов)" autocomplete="${link ? 'new-password' : 'current-password'}">
+    <p class="accErr" id="accErr"></p><button class="cta wide" id="accGo">${link ? 'Сохранить профиль' : 'Войти'}</button>${link ? '' : '<button class="linkbtn" id="accReset">Забыли пароль?</button>'}<button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
+  document.body.append(box);
+  const err = t => box.querySelector('#accErr').textContent = t, mail = () => box.querySelector('#accMail').value.trim(), pass = () => box.querySelector('#accPass').value;
+  box.querySelector('#accNo').onclick = () => { box.remove(); if (!link && !wallet.name) askProfile(); };
+  const rs = box.querySelector('#accReset');
+  if (rs) rs.onclick = async () => { if (!mail()) return err('Введите почту'); try { await idt('sendOobCode', {requestType: 'PASSWORD_RESET', email: mail()}); err('Письмо для смены пароля отправлено'); } catch (j) { err(authMsg(j)); } };
+  box.querySelector('#accGo').onclick = async () => {
+    const go = box.querySelector('#accGo'); go.disabled = true; err('');
+    try {
+      if (link) {
+        await fbToken();
+        const j = await idt('update', {idToken: fbAuth.idToken, email: mail(), password: pass(), returnSecureToken: true});
+        keepAuth(j, mail()); await cloudSave(); box.remove(); toastAny('Профиль сохранён'); renderAccount();
+      } else {
+        const j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true});
+        keepAuth(j, mail());
+        const ok = await cloudLoad(); box.remove();
+        wallet.tut = wallet.tutAsked = true; saveWallet();
+        toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
+        renderAccount(); renderSetup(); renderShop && renderShop(); progressDot(); show('menu'); presenceMark(true); syncRating();
+        if (!wallet.name) askProfile();
+      }
+    } catch (j) { err(authMsg(j)); go.disabled = false; }
+  };
+}
+function renameDialog() {
+  if (wallet.gold < RENAME_PRICE) return toastAny(`Смена имени стоит ${RENAME_PRICE} золота — не хватает ${RENAME_PRICE - wallet.gold}`);
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard acc"><h3>Новое имя</h3><p>Стоимость: <b><i class="coin" style="display:inline-block;vertical-align:-3px"></i> ${RENAME_PRICE}</b> · останется ${wallet.gold - RENAME_PRICE}</p><input class="field" id="newName" maxlength="12" placeholder="${profileName()}"><button class="cta wide" id="rnGo" disabled>Сменить имя</button><button class="ghostbtn" id="rnNo">Отмена</button></div>`;
+  document.body.append(box);
+  const inp = box.querySelector('#newName'), go = box.querySelector('#rnGo');
+  inp.oninput = () => { const n = clean(inp.value); go.disabled = n.length < 2 || n === profileName(); };
+  box.querySelector('#rnNo').onclick = () => box.remove();
+  go.onclick = () => { if (wallet.gold < RENAME_PRICE) return; wallet.gold -= RENAME_PRICE; setProfileName(inp.value); beep('coin'); box.remove(); toastAny(`Теперь вы — ${profileName()}`); renderAccount(); syncRating(true); };
+  setTimeout(() => inp.focus(), 200);
+}
+function renderAccount() {
+  const el = $('#acct'); if (!el) return;
+  const linked = fbAuth && fbAuth.email;
+  el.innerHTML = `<div class="opt"><span class="profline" style="border:0;background:none;padding:0"><span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b></span><button class="chip" id="rnBtn">Сменить · <i class="coin" style="display:inline-block;width:11px;height:11px;vertical-align:-1px"></i> ${RENAME_PRICE}</button></div>` +
+    (FB ? `<div class="opt"><span>${linked ? `Сохранён: <b>${clean(fbAuth.email.split('@')[0])}…</b>` : 'Профиль не защищён'}</span><span>${linked ? '' : '<button class="chip" id="acLink">Сохранить</button>'}<button class="chip" id="acLogin">${linked ? 'Другой профиль' : 'Войти'}</button></span></div>` : '');
+  $('#rnBtn').onclick = renameDialog;
+  if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
+  if ($('#acLogin')) $('#acLogin').onclick = () => accountDialog('login');
+}
 
 /* ---------------- screens ---------------- */
 function show(name) {
