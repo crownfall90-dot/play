@@ -3191,12 +3191,15 @@ function renderProgress() {
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   const el = $('#ptab');
   if (ptab === 'quests') {
-    el.innerHTML = PROG.q.map(q => {
+    // Rewards ready to claim go first, then the ones in progress, claimed ones last.
+    const rank = (done, got) => got ? 2 : done ? 0 : 1;
+    el.innerHTML = [...PROG.q].sort((a, b) => rank(a.n >= QUESTS.find(x => x.id === a.id).n, a.got) - rank(b.n >= QUESTS.find(x => x.id === b.id).n, b.got)).map(q => {
       const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
       return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="cta" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
     }).join('') + '<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p>';
   } else if (ptab === 'ach') {
-    el.innerHTML = ACH.map(a => {
+    const rank = (ok, got) => got ? 2 : ok ? 0 : 1;
+    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st), PROG.ach[b.id] === 'got')).map(a => {
       const ok = a.ok(PROG.st), got = PROG.ach[a.id] === 'got';
       return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="cta" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
     }).join('');
