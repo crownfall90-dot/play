@@ -2737,7 +2737,7 @@ async function presenceMark(on) {
     const tok = await fbToken();
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
-    const vs = versionSeen(), dev = {p: installKind(), v: vs.v, u: vs.t};
+    const vs = versionSeen(), di = devInfo(), dev = {p: installKind(), v: vs.v, u: vs.t, ...(di.m ? {m: di.m, i: di.i} : {})};
     if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0, ...dev})});
     else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off', ...dev})});
   } catch (_) {}
@@ -2745,6 +2745,13 @@ async function presenceMark(on) {
 // For the owner's stats: where this copy came from (github = APK, play, web) and when this device
 // last moved to a new version, so each device counts once however many files it downloaded.
 const installKind = () => isAndroid ? (AndroidApp.store ? AndroidApp.store() : 'github') : isWeb ? 'web' : 'mock';
+// This phone's model and screen diagonal (app only), sent with the presence record for the owner's statistics.
+let devInfoCache = null;
+function devInfo() {
+  if (devInfoCache) return devInfoCache;
+  try { devInfoCache = isAndroid && AndroidApp.deviceInfo ? JSON.parse(AndroidApp.deviceInfo()) : {}; } catch (_) { devInfoCache = {}; }
+  return devInfoCache;
+}
 function versionSeen() {
   // Kept outside the profile: it belongs to this device, not to the account.
   const v = isAndroid ? AndroidApp.versionName() : String(window.WEB_VERSION || '');

@@ -101,11 +101,26 @@ public class MainActivity extends Activity {
      * so buttons and text keep the same physical size. Limited to 0.85–1.2 (tablets are not stretched further).
      */
     float uiScale() {
+        return (float) Math.max(0.85, Math.min(1.2, screenInches() / 6.1));
+    }
+
+    /**
+     * Screen diagonal in inches. A phone model whose diagonal is known exactly (KNOWN_INCHES, keyed by
+     * "manufacturer model") uses that value; any other phone uses the size the panel reports (pixels / dpi).
+     */
+    double screenInches() {
+        Double known = KNOWN_INCHES.get((Build.MANUFACTURER + " " + Build.MODEL).toLowerCase(java.util.Locale.ROOT).trim());
+        if (known != null) return known;
         android.util.DisplayMetrics m = getResources().getDisplayMetrics();
-        if (m.xdpi <= 0 || m.ydpi <= 0) return 1f;
+        if (m.xdpi <= 0 || m.ydpi <= 0) return 6.1;
         double w = m.widthPixels / (double) m.xdpi, h = m.heightPixels / (double) m.ydpi;
-        double inches = Math.sqrt(w * w + h * h);
-        return (float) Math.max(0.85, Math.min(1.2, inches / 6.1));
+        return Math.sqrt(w * w + h * h);
+    }
+
+    /** Diagonals of phone models measured or published exactly, by "manufacturer model" (lower case). */
+    private static final java.util.Map<String, Double> KNOWN_INCHES = new java.util.HashMap<>();
+    static {
+        // KNOWN_INCHES.put("realme rmx0000", 6.7); // add a model here once its exact diagonal is known
     }
 
     private void sendInsets(WindowInsets insets) {
@@ -300,6 +315,19 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String store() { return BuildConfig.FLAVOR; }
+
+        /** This phone, for the owner's statistics: model and screen diagonal. */
+        @JavascriptInterface
+        public String deviceInfo() {
+            org.json.JSONObject o = new org.json.JSONObject();
+            try {
+                o.put("m", (Build.MANUFACTURER + " " + Build.MODEL).trim());
+                o.put("i", Math.round(screenInches() * 10) / 10.0);
+            } catch (Exception e) {
+                report(e);
+            }
+            return o.toString();
+        }
 
         @JavascriptInterface
         public void startUpdate(String url) { updater.download(url); }
