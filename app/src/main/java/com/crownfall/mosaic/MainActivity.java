@@ -355,6 +355,21 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** Owner panel: the token and the panel switch survive a cleared page storage. */
+        @JavascriptInterface
+        public String getPref(String key) {
+            if (!"devToken".equals(key) && !"devPanel".equals(key)) return "";
+            return getSharedPreferences("owner", MODE_PRIVATE).getString(key, "");
+        }
+
+        @JavascriptInterface
+        public void setPref(String key, String value) {
+            if (!"devToken".equals(key) && !"devPanel".equals(key)) return;
+            android.content.SharedPreferences.Editor e = getSharedPreferences("owner", MODE_PRIVATE).edit();
+            if (value == null || value.isEmpty()) e.remove(key); else e.putString(key, value);
+            e.apply();
+        }
+
         /** Owner panel: this phone also gets test announcements. */
         @JavascriptInterface
         public void newsTest(boolean on) {
