@@ -338,6 +338,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .ferr{margin:0;text-align:center;font-size:13px;color:#f3c7a0;display:flex;flex-direction:column;align-items:center;gap:8px}.ferr[hidden]{display:none}
 .froom{display:flex;align-items:center;gap:10px}.froom span{flex:1}.froom .chip{height:34px;flex:0 0 auto;background:rgba(63,194,122,.18);border-color:rgba(63,194,122,.5);color:#9be9bd}
 .froom{margin:0;padding:10px 12px;border-radius:12px;background:rgba(63,194,122,.12);border:1px solid rgba(63,194,122,.35);font-size:13px;color:#bfeccf}
+.acmail{font-weight:700;font-size:14px;word-break:break-all;line-height:1.25}
 .qcard{max-width:360px;max-height:86vh;overflow:auto}.qcard .flist{width:100%;max-height:34vh;overflow:auto;text-align:left}.qcard p{margin:0;color:var(--muted);font-size:13.5px}
 .fnum{position:absolute;bottom:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#3fc27a;border:2.5px solid #141b33;box-sizing:border-box;font-size:0;box-shadow:0 0 8px rgba(63,194,122,.8)}
 .h3{font:700 12px var(--f-display);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 -4px}
@@ -4083,7 +4084,7 @@ function renderAccount() {
   const el = $('#acct'); if (!el) return;
   const linked = fbAuth && fbAuth.email;
   el.innerHTML = `<div class="opt"><span class="profline" style="border:0;background:none;padding:0"><span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b></span><button class="chip" id="rnBtn">Сменить · <i class="coin" style="display:inline-block;width:11px;height:11px;vertical-align:-1px"></i> ${RENAME_PRICE}</button></div>` +
-    (FB ? `<div class="opt"><span>${linked ? `Сохранён: <b>${clean(fbAuth.email.split('@')[0])}…</b>` : 'Профиль не защищён'}</span><span>${linked ? '<button class="chip" id="acLogout">Выйти</button>' : '<button class="chip" id="acLink">Сохранить</button><button class="chip" id="acLogin">Войти</button>'}</span></div>` : '');
+    (FB ? `<div class="opt"><span>${linked ? `<b class="acmail">${String(fbAuth.email).replace(/[<>&"]/g, '')}</b>` : 'Профиль не защищён'}</span><span>${linked ? '<button class="chip" id="acLogout">Выйти</button>' : '<button class="chip" id="acLink">Сохранить</button><button class="chip" id="acLogin">Войти</button>'}</span></div>` : '');
   $('#rnBtn').onclick = renameDialog;
   if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
   if ($('#acLogin')) $('#acLogin').onclick = () => accountDialog('login');
