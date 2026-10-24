@@ -232,7 +232,6 @@ html.tutoring #mrow .skip{display:none}
 .olist ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;text-align:left}
 .olist .lead i{color:#3fc27a;font-size:12px;width:16px}.olist .lead small{color:var(--muted);font-size:11.5px;white-space:nowrap}
 .onlineN{cursor:pointer}
-.opt.mdesc{padding-top:0;margin-top:-6px;background:rgba(255,255,255,.03)}.opt.mdesc small{color:var(--brass);font-size:12px}
 .tutcard{display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;border-radius:18px;border:0;cursor:pointer;text-align:left;color:var(--brass-ink);background:linear-gradient(160deg,#ffd77a,#e09a32);box-shadow:0 8px 22px rgba(242,184,75,.3)}
 .tutcard>span:first-child{font-size:32px}.tutcard b{display:block;font:800 16px var(--f-display)}.tutcard small{font-size:12px;color:#5b3f0e}
 .goal{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line)}.goal span{font-size:30px}.goal p{margin:0;font-size:13.5px;color:#d5dcef}.goal b{color:var(--brass)}
@@ -276,11 +275,9 @@ html.tutoring #mrow .skip{display:none}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
 .goldchip b{font:800 14px var(--f-display);font-variant-numeric:tabular-nums}
 .goldchip.static{position:relative;top:auto;right:auto;margin-left:auto;cursor:default}
-.gearbtn{position:absolute;top:10px;left:14px;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
 .ocard .ghostbtn.danger{color:#ff8a80;border-color:rgba(255,138,128,.35)}
 .ocard .row2b{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .pl.out{opacity:.45}
-html.lowgfx .tile .shd,html.lowgfx .bsh{display:none}
 html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .gift{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(242,184,75,.16),rgba(242,184,75,.04));border:1px solid rgba(242,184,75,.35)}
 .gift .gi{flex:1;min-width:0}.gift .gi b{display:block;font:700 14px var(--f-display)}.gift .gi small{color:var(--muted);font-size:12px}
@@ -314,9 +311,6 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .loc .badge{position:absolute;top:8px;left:8px;font:700 10px var(--f-body);letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:7px;background:var(--brass);color:var(--brass-ink)}
 .loc.locked svg{filter:saturate(.5) brightness(.7)}
 .loc.locked .badge{background:rgba(10,14,26,.8);color:var(--ink);display:flex;gap:5px;align-items:center}
-.rules .rcard{border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:12px 14px}
-.rules .rcard b{font:700 14px var(--f-display)}
-.rules .rcard p{margin:6px 0 0;color:var(--muted)}
 .rules dl.pts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 0}.rules dt{font-weight:600}.rules dd{margin:0;color:var(--muted)}
 .goldres{display:flex;align-items:center;justify-content:center;gap:8px;font:700 15px var(--f-display);padding:10px;border-radius:14px;background:rgba(242,184,75,.1);border:1px solid rgba(242,184,75,.3)}
 .goldres.neg{background:rgba(239,83,80,.1);border-color:rgba(239,83,80,.3)}
@@ -464,10 +458,8 @@ html.flat .ct .face{border-radius:4px;box-shadow:none}
 html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
-.tile .shd{position:absolute;inset:0;transform:translate3d(5px,8px,-9.5px);background:rgba(0,0,0,.35);border-radius:4px}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
 .tile.ghost .face{box-shadow:0 0 0 2.5px var(--brass),0 0 26px rgba(242,184,75,.65)}
-.tile.ghost .shd{transform:translate3d(10px,16px,-28px);opacity:.6}
 .tile.shake{animation:shk .35s}
 @keyframes hov{50%{transform:translateZ(26px)}}
 @keyframes shk{25%{transform:translateZ(18px) translateX(-5px)}75%{transform:translateZ(18px) translateX(5px)}}
@@ -478,7 +470,6 @@ html.lowgfx .tile .sd.s{display:block}
 .bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1));pointer-events:none}
 .bb.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
 @keyframes pop{from{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
-.bsh{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(15,30,8,.45),transparent);transform:translate(-50%,-50%) translateZ(.5px);pointer-events:none}
 .gm{pointer-events:auto;cursor:pointer;animation:gmb 1s ease-in-out infinite}
 .gm.hl{filter:drop-shadow(0 0 5px #ffd36b) brightness(1.2)}
 @keyframes gmb{50%{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) translateY(-6px)}}
@@ -857,7 +848,6 @@ const RULES = [
 setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, setup.rules);
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
 if (![40, 60, 0].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck;
-const isHuman = i => players[i].human;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
 const isLocal = i => net ? players[i].owner === myId : players[i].human;
@@ -2553,7 +2543,7 @@ function profileName() {
 }
 // Every player gets a hidden player number once (/playerNo/{uid}), in the order they first went
 // online; a player without a nickname is shown as nickname<number>. Players from before numbers
-// existed were numbered by scripts/assign-numbers.py in the order they joined.
+// existed were numbered once, in the order they joined.
 async function ensureGuestName() {
   if (!FB || wallet.no) return;
   try {
@@ -3891,7 +3881,6 @@ const authErr = (j, link) => {
   try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError('auth ' + (link ? 'link' : 'login') + ': ' + String(j.error.message).slice(0, 300)); } catch (_) {}
   return [link ? 'Не удалось сохранить профиль. Попробуйте позже — золото и прогресс никуда не денутся' : 'Не удалось войти. Попробуйте чуть позже', ''];
 };
-const authMsg = j => authErr(j)[0];
 // Common slips in the mail domain → the likely intended one.
 const MAIL_FIX = {'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.cm': 'gmail.com', 'gmail.ru': 'gmail.com', 'gamil.com': 'gmail.com', 'gnail.com': 'gmail.com',
   'mail.ri': 'mail.ru', 'mail.r': 'mail.ru', 'mial.ru': 'mail.ru', 'yandex.ry': 'yandex.ru', 'yandex.com.ru': 'yandex.ru', 'yandeks.ru': 'yandex.ru', 'yndex.ru': 'yandex.ru', 'ya.ry': 'ya.ru', 'rambler.ry': 'rambler.ru', 'icloud.con': 'icloud.com', 'outlok.com': 'outlook.com', 'hotmail.con': 'hotmail.com'};

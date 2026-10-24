@@ -6,9 +6,8 @@ renewed so every device signed in to it picks the name up on its next sync.
 Usage: FIREBASE_SERVICE_ACCOUNT='<json>' scripts/rename-player.py UID_PREFIX NEW_NAME [--apply]
 """
 import json, os, sys, urllib.request
-import importlib.util
-spec = importlib.util.spec_from_file_location('an', os.path.join(os.path.dirname(__file__), 'assign-numbers.py'))
-an = importlib.util.module_from_spec(spec); spec.loader.exec_module(an)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fbadmin as an
 
 
 def main():
