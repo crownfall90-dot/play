@@ -3253,16 +3253,25 @@ function socialReset() {
 // My friend code, made once per account.
 // fcodeErr: 'rules' — the database rules for friends are not published yet; 'net' — no connection.
 let fcodeErr = '';
+// The code is permanent: /fcodeOf/{uid} remembers it on the server, so a phone that lost its save
+// (or never finished saving) gets the same code back instead of a second one.
 async function friendCode() {
   fcodeErr = '';
   try {
     await fbToken();
-    if (wallet.fcode && wallet.fcodeUid === myUid()) return wallet.fcode;
+    const keep = c => { wallet.fcode = c; wallet.fcodeUid = myUid(); saveWallet(); return c; };
+    const remember = c => fbPut('fcodeOf/' + myUid(), c).then(() => { wallet.fcodeKept = myUid(); saveWallet(); }).catch(() => {});
+    if (wallet.fcode && wallet.fcodeUid === myUid()) {
+      if (wallet.fcodeKept !== myUid()) remember(wallet.fcode); // codes made before /fcodeOf existed
+      return wallet.fcode;
+    }
+    const mine = await fbGet('fcodeOf/' + myUid()).catch(e => { if (e.message === 'rules') return null; throw e; });
+    if (mine) { wallet.fcodeKept = myUid(); return keep(mine); }
     const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     for (let i = 0; i < 4; i++) {
       const c = Array.from({length: 6}, () => A[(Math.random() * A.length) | 0]).join('');
       if (await fbGet('fcodes/' + c)) continue; // taken by someone else
-      await fbPut('fcodes/' + c, myUid()); wallet.fcode = c; wallet.fcodeUid = myUid(); saveWallet(); return c;
+      await fbPut('fcodes/' + c, myUid()); keep(c); await remember(c); return c;
     }
   } catch (e) { fcodeErr = e.message === 'rules' ? 'rules' : 'net'; }
   if (!fcodeErr) fcodeErr = 'net';
