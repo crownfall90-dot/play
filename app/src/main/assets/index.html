@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Подключена анонимная статистика (Firebase Analytics): помогает понять, что нравится игрокам, и сделать игру лучше."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Панель владельца: статистика игры — устройства, профили, активность, скачивания."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -341,6 +341,9 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .frow .av{position:relative}.frow.on .av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;background:#3fc27a;border:2px solid #141b33}
 .frow .chip{height:34px;padding:0 11px;flex:0 0 auto}.frow .chip.go{background:rgba(63,194,122,.18);border-color:rgba(63,194,122,.5);color:#9be9bd}.frow .chip.x{color:var(--muted);padding:0 10px}
 #fCodeIn::placeholder{font:600 15px var(--f-body);letter-spacing:.02em;text-transform:none}
+.ocard.stats{max-width:380px}#stBody{background:none;border:0;padding:0;display:flex;flex-direction:column;gap:8px}.stgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center}
+.stt{padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.stt b{font:800 22px var(--f-display);color:var(--brass);font-variant-numeric:tabular-nums}.stt small{font-size:11.5px;color:var(--muted);line-height:1.25}
 .ocard.dev textarea.field{height:auto;padding:12px 14px;resize:none;font:500 15px var(--f-body)}
 .ocard.dev .field{margin:4px 0}.devtest{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);text-align:left;margin:4px 0}
 .devtest input{width:18px;height:18px;accent-color:var(--brass)}
@@ -3526,6 +3529,7 @@ function devPanel() {
       : `<p>Пуш уходит через GitHub. Нужен ваш токен: GitHub → Settings → Developer settings → Fine-grained tokens → репозиторий ${DEV_REPO}, разрешение «Actions: Read and write». Токен хранится только на этом телефоне.</p>
       <input class="field" id="devTok" type="password" placeholder="github_pat_…" autocomplete="off">
       <button class="cta wide" id="devSave">Сохранить</button><p class="shint" id="devState"></p>`}
+      <button class="ghostbtn" id="devStats">📊 Статистика игры</button>
       <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
     if (tok) devStatus(box.querySelector('#devState'));
   };
@@ -3539,6 +3543,7 @@ function devPanel() {
   box.addEventListener('click', async e => {
     const id = e.target.id, st = box.querySelector('#devState');
     if (id === 'devClose' || e.target === box) return box.remove();
+    if (id === 'devStats') return statsDialog();
     if (id === 'devForget') { devSet('devToken', ''); return draw(); }
     if (id === 'devSave') {
       const t = box.querySelector('#devTok').value.trim(); if (!t) return;
@@ -3571,6 +3576,38 @@ function devPanel() {
   });
 }
 $('#devBtn').onclick = devPanel;
+/* Owner panel → statistics: devices that opened the game (/presence, one record per install or
+   browser), saved profiles among them, activity by last visit, rating and APK downloads. The
+   full picture (retention, countries, events) is in Firebase → Analytics. */
+async function statsDialog() {
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard stats"><h3>📊 Статистика</h3><div id="stBody"><p class="shint">Считаем…</p></div>
+    <a class="ghostbtn manual" href="https://console.firebase.google.com/project/puzzlegrad/analytics" target="_blank" rel="noopener">Подробно — Firebase Analytics</a>
+    <button class="cta wide" id="stClose">Закрыть</button></div>`;
+  document.body.append(box);
+  box.onclick = e => { if (e.target === box || e.target.id === 'stClose') box.remove(); };
+  const out = box.querySelector('#stBody');
+  if (!FB) { out.innerHTML = '<p class="shint">Нужен интернет</p>'; return; }
+  try {
+    const [pres, lead, rel] = await Promise.all([
+      fbGet('presence').catch(() => null), fbGet('leaders').catch(() => null),
+      (devGet('devToken') ? gh('/releases?per_page=100') : fetch(`https://api.github.com/repos/${DEV_REPO}/releases?per_page=100`)).then(r => r.ok ? r.json() : []).catch(() => []),
+    ]);
+    const rels = Array.isArray(rel) ? rel : []; // GitHub may answer with a limit message instead of the list
+    const now = Date.now(), P = Object.values(pres || {}), D = 864e5;
+    const ago = v => now - (v.t || 0);
+    const online = P.filter(v => v.s !== 'off' && ago(v) < 150000);
+    const n = f => P.filter(f).length;
+    const apk = rels.reduce((sum, r) => sum + (r.assets || []).filter(a => /\.apk$/.test(a.name)).reduce((x, a) => x + a.download_count, 0), 0);
+    const tile = (num, label) => `<div class="stt"><b>${num}</b><small>${label}</small></div>`;
+    const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
+    out.innerHTML = `<div class="stgrid">${tile(P.length, 'устройств заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
+      ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(n(v => ago(v) < 30 * D), 'за месяц')}${tile(lead ? Object.keys(lead).length : 0, 'в рейтинге')}
+      ${tile(apk, 'скачиваний APK')}${tile(rels.length || '—', 'версий вышло')}</div>
+      <p class="shint">«Устройства» — каждый телефон или браузер, где открывали игру (с версии 1.0.13x). «С профилем» считается после обновления игроков до новых версий. Скачивания APK включают обновления</p>`;
+  } catch (_) { out.innerHTML = '<p class="shint">Не получилось загрузить — проверьте интернет</p>'; }
+}
+
 /* Notifications are off (in Android or in the game's settings): offer to turn them on the first
    time the main menu shows, then every 2 days. */
 const NOTIF_EVERY = 2 * 864e5;
