@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Проверка обновлений больше не «засыпает»: новая версия находится сразу, даже через VPN.\n- Если проверить обновления не получилось, игра так и скажет, а не «у вас последняя версия».\n- Веб-версия: кнопка «Установить игру» переехала в настройки и не закрывает главный экран."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Пароль можно показать кнопкой 👁.\n- Понятные подсказки при вводе почты и пароля: что именно не так и как исправить, проверка опечаток в почте (например, gmial.com → gmail.com)."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -265,7 +265,12 @@ html.tutoring #mrow .skip{display:none}
 .pod.me b{color:var(--brass)}
 .lead .av{flex:0 0 28px;width:28px;height:28px;font-size:12px}.lead.myrank{margin-top:6px;border-style:dashed}
 .mact .cta.alt{background:#3fc27a;color:#0d2a17}
-.acc .field{margin-top:8px}.accErr{min-height:16px;margin:6px 0 0!important;color:#ff8a80;font-size:12.5px}
+.acc .field{margin-top:8px}.ocard .accErr,.accErr{min-height:16px;margin:6px 0 0!important;color:#ff8a80;font-size:12.5px;line-height:1.4}
+.acc .field.bad{border-color:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.18)}
+.pwrap{position:relative}.pwrap .field{padding-right:52px}
+.peye{position:absolute;right:6px;top:calc(50% + 4px);transform:translateY(-50%);width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
+.peye[aria-pressed="true"]{color:var(--brass)}
+.phint{margin:2px 0 0!important;min-height:0;font-size:12px;color:var(--muted);text-align:left}.phint:empty{display:none}.phint.ok{color:#7fe0a8}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -3562,8 +3567,42 @@ $('#friendsBtn').onclick = () => { friendsBack = 'menu'; show('friends'); };
    wallet (gold, figures, progress, name, rating) is then saved to /profiles/{uid}. On a new phone
    or after a reinstall, signing in with the same e-mail brings it back. Rules: docs/firebase-rules.json. */
 const RENAME_PRICE = 500;
-const AUTH_ERR = {EMAIL_EXISTS: 'Эта почта уже занята — войдите в профиль', EMAIL_NOT_FOUND: 'Нет профиля с такой почтой', INVALID_PASSWORD: 'Неверный пароль', INVALID_LOGIN_CREDENTIALS: 'Неверная почта или пароль', INVALID_EMAIL: 'Проверьте почту', WEAK_PASSWORD: 'Пароль — не короче 6 символов', MISSING_PASSWORD: 'Введите пароль', OPERATION_NOT_ALLOWED: 'Вход по почте ещё не включён на сервере', TOO_MANY_ATTEMPTS_TRY_LATER: 'Слишком много попыток — попробуйте позже', CREDENTIAL_TOO_OLD_LOGIN_AGAIN: 'Войдите заново'};
-const authMsg = j => { const c = String((j && j.error && j.error.message) || '').split(' ')[0]; return AUTH_ERR[c] || 'Не получилось — проверьте интернет'; };
+// Server answers → [text, field to mark]. 'mail' / 'pass' put a red frame on that field.
+const AUTH_ERR = {
+  EMAIL_EXISTS: ['Эта почта уже привязана к другому профилю. Войдите в него или укажите другую почту', 'mail'],
+  EMAIL_NOT_FOUND: ['Профиля с такой почтой нет. Проверьте почту или сначала сохраните профиль', 'mail'],
+  INVALID_PASSWORD: ['Неверный пароль. Проверьте раскладку и Caps Lock или нажмите «Забыли пароль?»', 'pass'],
+  INVALID_LOGIN_CREDENTIALS: ['Почта или пароль не подходят. Проверьте оба поля — нажмите 👁, чтобы увидеть пароль', 'both'],
+  INVALID_EMAIL: ['Почта записана с ошибкой. Пример: name@mail.ru', 'mail'],
+  MISSING_EMAIL: ['Введите почту', 'mail'],
+  WEAK_PASSWORD: ['Пароль слишком простой — нужно хотя бы 6 символов', 'pass'],
+  MISSING_PASSWORD: ['Введите пароль', 'pass'],
+  USER_DISABLED: ['Этот профиль отключён. Напишите в поддержку', 'mail'],
+  OPERATION_NOT_ALLOWED: ['Вход по почте ещё не включён на сервере', ''],
+  TOO_MANY_ATTEMPTS_TRY_LATER: ['Слишком много попыток подряд. Подождите несколько минут или смените пароль через «Забыли пароль?»', ''],
+  CREDENTIAL_TOO_OLD_LOGIN_AGAIN: ['Для этого нужно войти заново', ''],
+};
+const authErr = j => {
+  if (!j || !j.error) return ['Нет связи с сервером — проверьте интернет', ''];
+  const c = String(j.error.message || '').split(' ')[0];
+  return AUTH_ERR[c] || ['Не получилось. Попробуйте ещё раз', ''];
+};
+const authMsg = j => authErr(j)[0];
+// Common slips in the mail domain → the likely intended one.
+const MAIL_FIX = {'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'gmail.con': 'gmail.com', 'gmail.cm': 'gmail.com', 'gmail.ru': 'gmail.com', 'gamil.com': 'gmail.com', 'gnail.com': 'gmail.com',
+  'mail.ri': 'mail.ru', 'mail.r': 'mail.ru', 'mial.ru': 'mail.ru', 'yandex.ry': 'yandex.ru', 'yandex.com.ru': 'yandex.ru', 'yandeks.ru': 'yandex.ru', 'yndex.ru': 'yandex.ru', 'ya.ry': 'ya.ru', 'rambler.ry': 'rambler.ru', 'icloud.con': 'icloud.com', 'outlok.com': 'outlook.com', 'hotmail.con': 'hotmail.com'};
+// Checks before asking the server: [text, field] or null.
+function checkAuthInput(mail, pass, link) {
+  if (!mail) return ['Введите почту', 'mail'];
+  if (/\s/.test(mail)) return ['В почте не должно быть пробелов', 'mail'];
+  if (!/^[^@]+@[^@]+\.[^@.]{2,}$/.test(mail)) return [mail.includes('@') ? 'После @ нужен адрес почты целиком, например name@mail.ru' : 'В почте не хватает «@». Пример: name@mail.ru', 'mail'];
+  const dom = mail.split('@')[1].toLowerCase();
+  if (MAIL_FIX[dom]) return [`Возможно, опечатка: ${mail.split('@')[0]}@${MAIL_FIX[dom]}?`, 'mail', 'typo', mail.split('@')[0] + '@' + MAIL_FIX[dom]];
+  if (!pass) return ['Введите пароль', 'pass'];
+  if (link && pass.length < 6) return [`Пароль слишком короткий: ${pass.length} из 6 символов`, 'pass'];
+  if (link && pass !== pass.trim()) return ['В начале или в конце пароля пробел — уберите его, чтобы потом не ошибиться', 'pass'];
+  return null;
+}
 async function idt(method, body) {
   const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${method}?key=${FB.apiKey}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   const j = await r.json().catch(() => ({})); if (!r.ok) throw j; return j;
@@ -3587,20 +3626,72 @@ async function cloudLoad() {
   return true;
 }
 // mode: 'link' — protect this profile with an e-mail; 'login' — sign in to an existing one.
-function accountDialog(mode) {
+const EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_SHUT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+function accountDialog(mode, prefill) {
   if (!FB) return toastAny('Профили доступны в приложении');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const link = mode === 'link';
   box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">${link ? '🛡️' : '🔑'}</div><h3>${link ? 'Сохраните профиль' : 'Вход в профиль'}</h3><p>${link ? 'Почта и пароль вернут золото, фигурки и прогресс после переустановки или на новом телефоне' : 'Почта и пароль, которыми вы сохранили профиль'}</p>
-    <input class="field" id="accMail" type="email" placeholder="Почта" autocomplete="email"><input class="field" id="accPass" type="password" placeholder="Пароль (от 6 символов)" autocomplete="${link ? 'new-password' : 'current-password'}">
-    <p class="accErr" id="accErr"></p><button class="cta wide" id="accGo">${link ? 'Сохранить профиль' : 'Войти'}</button>${link ? '' : '<button class="linkbtn" id="accReset">Забыли пароль?</button>'}<button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
+    <input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${(prefill || '').replace(/"/g, '')}">
+    <div class="pwrap"><input class="field" id="accPass" type="password" placeholder="${link ? 'Придумайте пароль (от 6 символов)' : 'Пароль'}" autocomplete="${link ? 'new-password' : 'current-password'}" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>
+    <p class="phint" id="accHint">${link ? 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне' : ''}</p>
+    <p class="accErr" id="accErr" role="alert"></p><button class="cta wide" id="accGo">${link ? 'Сохранить профиль' : 'Войти'}</button>${link ? '' : '<button class="linkbtn" id="accReset">Забыли пароль?</button>'}<button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
   document.body.append(box);
-  const err = t => box.querySelector('#accErr').textContent = t, mail = () => box.querySelector('#accMail').value.trim(), pass = () => box.querySelector('#accPass').value;
+  const mailEl = box.querySelector('#accMail'), passEl = box.querySelector('#accPass'), eye = box.querySelector('#accEye'), hint = box.querySelector('#accHint');
+  const mail = () => mailEl.value.trim(), pass = () => passEl.value;
+  // Error text plus a red frame on the field it is about ('both' marks both).
+  const err = (t, field) => {
+    box.querySelector('#accErr').textContent = t || '';
+    mailEl.classList.toggle('bad', field === 'mail' || field === 'both');
+    passEl.classList.toggle('bad', field === 'pass' || field === 'both');
+    if (field === 'mail') mailEl.focus(); else if (field === 'pass') passEl.focus();
+  };
+  const showErr = j => { const [t, f] = authErr(j); err(t, f); if (link && j && j.error && /^EMAIL_EXISTS/.test(j.error.message)) offerLogin(); };
+  // "This mail already has a profile": one tap switches to signing in with it.
+  const offerLogin = () => {
+    const b = document.createElement('button'); b.className = 'linkbtn'; b.textContent = 'Войти с этой почтой';
+    b.onclick = () => { const m = mail(); box.remove(); accountDialog('login', m); };
+    box.querySelector('#accErr').append(document.createElement('br'), b);
+  };
+  eye.innerHTML = EYE_OPEN;
+  eye.onclick = () => {
+    const show = passEl.type === 'password';
+    passEl.type = show ? 'text' : 'password'; eye.innerHTML = show ? EYE_SHUT : EYE_OPEN;
+    eye.setAttribute('aria-pressed', show); eye.setAttribute('aria-label', show ? 'Скрыть пароль' : 'Показать пароль');
+    passEl.focus();
+  };
+  let typoWarned = '';
+  mailEl.oninput = () => { mailEl.classList.remove('bad'); typoWarned = ''; if (box.querySelector('#accErr').textContent) err(''); };
+  passEl.oninput = () => {
+    passEl.classList.remove('bad'); if (box.querySelector('#accErr').textContent) err('');
+    if (link) { const n = pass().length; hint.textContent = n && n < 6 ? `Ещё ${6 - n} ${6 - n === 1 ? 'символ' : 'символа'} — нужно хотя бы 6` : n ? '✓ Подходит. Запомните пароль' : 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне'; hint.classList.toggle('ok', n >= 6); }
+  };
+  passEl.onkeydown = e => { if (e.getModifierState && e.getModifierState('CapsLock')) hint.textContent = '⚠ Включён Caps Lock'; };
+  if (prefill) setTimeout(() => passEl.focus(), 200);
   box.querySelector('#accNo').onclick = () => { box.remove(); if (!link && !wallet.name) askProfile(); };
   const rs = box.querySelector('#accReset');
-  if (rs) rs.onclick = async () => { if (!mail()) return err('Введите почту'); try { await idt('sendOobCode', {requestType: 'PASSWORD_RESET', email: mail()}); err('Письмо для смены пароля отправлено'); } catch (j) { err(authMsg(j)); } };
+  if (rs) rs.onclick = async () => {
+    const bad = checkAuthInput(mail(), 'x', false); if (bad && bad[1] === 'mail' && !bad[2]) return err(bad[0] === 'Введите почту' ? 'Введите почту, на неё придёт письмо для смены пароля' : bad[0], 'mail');
+    try { await idt('sendOobCode', {requestType: 'PASSWORD_RESET', email: mail()}); err(''); box.querySelector('#accErr').textContent = `Письмо для смены пароля отправлено на ${mail()}. Проверьте и папку «Спам»`; }
+    catch (j) { showErr(j); }
+  };
   box.querySelector('#accGo').onclick = async () => {
-    const go = box.querySelector('#accGo'); go.disabled = true; err('');
+    const go = box.querySelector('#accGo');
+    const bad = checkAuthInput(mail(), pass(), link);
+    if (bad && !(bad[2] === 'typo' && typoWarned === mail())) {
+      err(bad[0], bad[1]);
+      if (bad[2] === 'typo') {
+        typoWarned = mail();
+        const fix = document.createElement('button'); fix.className = 'linkbtn'; fix.textContent = 'Исправить';
+        fix.onclick = () => { mailEl.value = bad[3]; err(''); go.click(); };
+        const keep = document.createElement('button'); keep.className = 'linkbtn'; keep.textContent = 'Всё верно';
+        keep.onclick = () => go.click();
+        box.querySelector('#accErr').append(document.createElement('br'), fix, ' · ', keep);
+      }
+      return;
+    }
+    go.disabled = true; err('');
     try {
       if (link) {
         await fbToken();
@@ -3616,7 +3707,7 @@ function accountDialog(mode) {
         renderAccount(); renderSetup(); renderShop && renderShop(); progressDot(); show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
         if (!wallet.name) askProfile();
       }
-    } catch (j) { err(authMsg(j)); go.disabled = false; }
+    } catch (j) { showErr(j); go.disabled = false; }
   };
 }
 function renameDialog() {
