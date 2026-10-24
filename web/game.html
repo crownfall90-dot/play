@@ -4083,10 +4083,21 @@ function renderAccount() {
   const el = $('#acct'); if (!el) return;
   const linked = fbAuth && fbAuth.email;
   el.innerHTML = `<div class="opt"><span class="profline" style="border:0;background:none;padding:0"><span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b></span><button class="chip" id="rnBtn">Сменить · <i class="coin" style="display:inline-block;width:11px;height:11px;vertical-align:-1px"></i> ${RENAME_PRICE}</button></div>` +
-    (FB ? `<div class="opt"><span>${linked ? `Сохранён: <b>${clean(fbAuth.email.split('@')[0])}…</b>` : 'Профиль не защищён'}</span><span>${linked ? '' : '<button class="chip" id="acLink">Сохранить</button>'}<button class="chip" id="acLogin">${linked ? 'Другой профиль' : 'Войти'}</button></span></div>` : '');
+    (FB ? `<div class="opt"><span>${linked ? `Сохранён: <b>${clean(fbAuth.email.split('@')[0])}…</b>` : 'Профиль не защищён'}</span><span>${linked ? '<button class="chip" id="acLogout">Выйти</button>' : '<button class="chip" id="acLink">Сохранить</button><button class="chip" id="acLogin">Войти</button>'}</span></div>` : '');
   $('#rnBtn').onclick = renameDialog;
   if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
   if ($('#acLogin')) $('#acLogin').onclick = () => accountDialog('login');
+  if ($('#acLogout')) $('#acLogout').onclick = () => confirmBox('Выйти из аккаунта?<br><small style="font-weight:500;color:var(--muted)">Прогресс сохранится в аккаунте. На этом устройстве начнётся новая игра, а войти можно будет в любой аккаунт</small>', 'Выйти', signOut);
+}
+// Leave the account: push what is not saved yet, forget this profile on the device and start over as a guest.
+async function signOut() {
+  toastAny('Выходим…');
+  try { await Promise.race([cloudSync(true), new Promise(r => setTimeout(r, 5000))]); } catch (_) {}
+  try { await presenceMark(false); } catch (_) {}
+  clearTimeout(cloudTimer);
+  ['wallet', 'walletBase', 'fbAuth', 'setup', 'lastGame', 'savedGame', 'verSeen'].forEach(k => { try { localStorage.removeItem(k); } catch (_) {} });
+  track('logout');
+  location.reload();
 }
 
 /* ---------------- screens ---------------- */
