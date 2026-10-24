@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Новое обучение: настоящая первая партия по шагам — мигает то, куда нажать, короткие подсказки, до самого конца\n• Правила «Как играть» — картинками, без длинного текста\n• Онлайн на рейтинг: выбираете только режим, правила у всех одинаковые; соперники подбираются с тем же режимом\n• В остальных играх правила спрятаны под «Свои правила»"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Профиль: после обучения придумайте никнейм — он виден в играх, рейтинге и профиле; сменить можно в настройках\n• Рейтинг стал красивее: пьедестал топ-3, места до 10 и ваше место\n• Время хода вышло — карта ставится сама, и есть 10 секунд на фишку. Пропустили ход — вы выходите из партии, за вас играет бот; вернуться можно кнопкой или после перезапуска\n• Онлайн: соперники подбираются по режиму и числу игроков; можно присоединиться к партии на другое число игроков"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -235,6 +235,20 @@ html.tutoring #mrow .skip{display:none}
 .mcard:disabled{opacity:.6;cursor:default}.mcard[aria-pressed="true"]:disabled{opacity:1}
 .morebtn{display:flex;justify-content:space-between;align-items:center;width:100%;margin-top:10px;padding:12px 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);font:600 13px var(--f-body);cursor:pointer}
 [data-rules]>.opts{margin-top:8px}
+.profline{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line)}.profline .av{width:30px;height:30px;font-size:14px}.profline b{font:700 15px var(--f-display)}.profline small{margin-left:auto;color:var(--muted);font-size:11px}
+.prof .pav{width:64px;height:64px;margin:0 auto 4px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#10131c;font:800 28px var(--f-display);box-shadow:inset 0 -4px 0 rgba(0,0,0,.2)}.prof .field{text-align:center;font-size:17px}.prof .swatches{justify-content:center;padding:6px 0}
+.podium{display:grid;grid-template-columns:1fr 1.1fr 1fr;align-items:end;gap:8px;margin:4px 0 6px}
+.pod{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;min-width:0}
+.pod .av{width:42px;height:42px;font-size:18px}.pod.p1 .av{width:54px;height:54px;font-size:22px;box-shadow:0 0 0 3px #f2c94c}
+.pod b{font:700 12.5px var(--f-display);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pod small{color:var(--brass);font-size:12px;font-weight:700}
+.pod .ped{width:100%;border-radius:12px 12px 4px 4px;display:grid;place-items:center;margin-top:4px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));border:1px solid var(--line)}
+.pod .ped i{font:800 22px var(--f-display);font-style:normal}
+.pod.p1 .ped{height:78px;background:linear-gradient(180deg,#f6d36a,#c9952e)}.pod.p1 .ped i{color:#3a2604}
+.pod.p2 .ped{height:58px;background:linear-gradient(180deg,#dfe4ee,#9aa3b5)}.pod.p2 .ped i{color:#2a2f3a}
+.pod.p3 .ped{height:44px;background:linear-gradient(180deg,#e6a46b,#a8642f)}.pod.p3 .ped i{color:#3a1d06}
+.pod.me b{color:var(--brass)}
+.lead .av{flex:0 0 28px;width:28px;height:28px;font-size:12px}.lead.myrank{margin-top:6px;border-style:dashed}
+.mact .cta.alt{background:#3fc27a;color:#0d2a17}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -590,7 +604,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="col" id="seatsBox"><div class="h3">Кто играет</div>
             <ul class="plist" id="slist"></ul></div>
           <div class="col" id="meBox" hidden><div class="h3">Ваше имя</div>
-            <input class="field" id="setupName" maxlength="12" autocomplete="off">
+            <div class="profline" id="setupName"></div>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="setupColor"></div></div>
           <div class="h3">Правила партии</div>
@@ -608,7 +622,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <p class="shint" id="mSub">Обычно это занимает меньше минуты</p>
           <div class="mclock" id="mClock">0:00</div>
           <ul class="mseats" id="mSeats"></ul>
-          <div class="mact"><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
+          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
         </div>
       </section>
 
@@ -616,8 +630,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="lb">
           <div class="ltop"><button class="iconbtn" id="lobbyBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Онлайн с друзьями</b></div>
           <div class="col" id="lbJoin">
-            <div class="h3">Ваше имя</div>
-            <input class="field" id="myName" maxlength="12" autocomplete="off">
+            <input class="field" id="myName" hidden>
             <button class="cta wide" id="create">Создать комнату</button>
             <div class="h3">Или войдите по коду</div>
             <div class="joinrow"><input class="field codein" id="codeIn" maxlength="5" placeholder="K7Q2X" autocomplete="off" autocapitalize="characters"><button class="cta" id="join">Войти</button></div>
@@ -1524,9 +1537,28 @@ function updateOwnership() {
     t.own = true;
   }
 }
+// Out of the game after a skipped turn: a bot plays for you until you come back.
+function checkKicked() {
+  const me = players.findIndex(isMe), box = document.getElementById('kickBox');
+  const out = me >= 0 && players[me].missed >= 1 && phase !== 'end' && gameVisible && !tut;
+  if (!out) { if (box) box.remove(); return; }
+  if (box) return;
+  const b = document.createElement('div'); b.className = 'over'; b.id = 'kickBox'; b.style.position = 'fixed';
+  b.innerHTML = `<div class="ocard"><div style="font-size:42px">💤</div><h3>Из-за бездействия вы вышли из партии</h3><p>Пока вас нет, за вас играет бот</p><button class="cta wide" id="kickBack">Вернуться в партию</button><button class="ghostbtn" data-go="menu">В меню</button></div>`;
+  document.body.append(b);
+  b.querySelector('#kickBack').onclick = () => imBack();
+  b.querySelector('[data-go]').addEventListener('click', () => b.remove());
+}
+function imBack() {
+  const me = players.findIndex(isMe); if (me < 0) return;
+  players[me].missed = 0; if (net) netSend({t: 'here', g: net.gameId, p: me});
+  const b = document.getElementById('kickBox'); if (b) b.remove();
+  renderPlayers(); if (phase === 'place' && turn === me) { stopTimer(); beginHumanTurn(); }
+}
 function renderPlayers(bump = []) {
+  setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : net && p.missed >= 2 ? 'не на связи' : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -1594,7 +1626,7 @@ okBtn.onclick = async () => {
 };
 function tap(x, y) {
   const el = document.elementFromPoint(x, y); if (!el) return;
-  const gm = el.closest('.gm'); if (gm && meepleResolve) { meepleResolve(meepleOpts[+gm.dataset.i]); return; }
+  const gm = el.closest('.gm'); if (gm && meepleResolve) { meepleActed = true; meepleResolve(meepleOpts[+gm.dataset.i]); return; }
   if (phase !== 'place') return;
   if (el.closest('.tile.ghost')) return rotate();
   const s = el.closest('.slot'); if (s) selectSlot(+s.dataset.x, +s.dataset.y);
@@ -1622,24 +1654,45 @@ function askMeeple(t, opts, p) {
     mrow.onpointerover = e => { const b = e.target.closest('.chip'); gms.forEach((m, i) => m.classList.toggle('hl', b && +b.dataset.i === i)); };
   });
 }
-mrow.addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b || !meepleResolve) return; const i = +b.dataset.i; if (tut && i < 0) return; meepleResolve(i < 0 ? null : meepleOpts[i]); });
+mrow.addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b || !meepleResolve) return; meepleActed = true; const i = +b.dataset.i; if (tut && i < 0) return; meepleResolve(i < 0 ? null : meepleOpts[i]); });
 
 /* ---------------- turns ---------------- */
-let autoMove = false; // this move is played for a player who did not act in time
+let meepleActed = false;
+// A short clock for the figure after the turn's card was put down automatically.
+function meepleClock(secs) {
+  stopTimer();
+  const el = $('#timer'), end = Date.now() + secs * 1000, my = token; el.hidden = false;
+  timerId = setInterval(() => {
+    if (my !== token || phase !== 'meeple') return stopTimer();
+    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.add('low');
+    if (!left) { stopTimer(); if (meepleResolve) meepleResolve(null); }
+  }, 250);
+}
+let autoMove = false, autoAway = false; // autoAway: the bot was already playing for this player // this move is played for a player who did not act in time
 async function afterPlace(t, p, forced) {
   const my = token;
   const opts = players[p].meeples > 0 ? claimable(t) : [];
   let choice = null;
   if (forced !== undefined) choice = forced;
   else if (opts.length) {
-    if (isLocal(p) && !autoMove) choice = await askMeeple(t, opts, p);
+    if (isLocal(p) && !(autoMove && autoAway)) {
+      // Time ran out: the card was put down for you; 10 more seconds to place a figure.
+      if (autoMove) { toast('Время вышло: карта на поле. 10 секунд на фишку'); meepleClock(10); }
+      meepleActed = false;
+      choice = await askMeeple(t, opts, p);
+      stopTimer();
+      if (autoMove && meepleActed) autoMove = false; // the player was there after all
+    }
     else if (tut) choice = null; // the tutorial bot never claims anything
     else if (Math.random() < .55) { const cs = opts.filter(g => g.kind !== 'r'); choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : opts[(Math.random() * opts.length) | 0]; }
   }
   if (my !== token) return;
   if (forced === undefined) {
     const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed, m: choice ? groupsOf(t).findIndex(g => gid(t, g) === gid(t, choice)) : -1};
-    if (autoMove && net) { mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    // A bot move counts as a skipped turn, unless the player came back while it was being made.
+    if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    autoAway = false;
     autoMove = false;
     gameLog.moves.push(mv);
     if (net) netSend({t: 'move', g: net.gameId, ...mv}); else saveGame();
@@ -1711,8 +1764,8 @@ function startTimer() {
   stopTimer();
   // Online a turn always has a clock, so one silent player can't hold up the table;
   // someone who already missed two turns gets a few seconds before the bot moves for them.
-  const away = net && players[turn].missed >= 2;
-  const secs = away ? 4 : gameRules.timer || (net ? 60 : 0);
+  const away = players[turn].missed >= 1;
+  const secs = away ? 2 : gameRules.timer || (net ? 60 : 0);
   if (!secs) return;
   const el = $('#timer'), my = token, who = turn;
   let end = Date.now() + secs * 1000, last = Date.now();
@@ -1725,10 +1778,10 @@ function startTimer() {
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
     el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
     if (left > 0) return;
-    stopTimer(); toast(away ? 'За вас сходил бот' : 'Время вышло');
+    stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
     const m = botPick(current.type);
-    autoMove = true; selectSlot(m.x, m.y); setRot(m.r); okBtn.onclick();
+    autoMove = true; autoAway = away; selectSlot(m.x, m.y); setRot(m.r); okBtn.onclick();
   };
   tick(); timerId = setInterval(tick, 250);
 }
@@ -1741,7 +1794,7 @@ function turnAlert() {
 function beginHumanTurn() {
   beep('turn'); turnAlert();
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer();
-  if (net && players[turn].missed >= 2) return setStatus('Вы пропустили ходы — за вас ходит бот <button class="chip" id="imHere">Я здесь</button>');
+  if (players[turn].missed >= 1) return setStatus('За вас ходит бот <button class="chip" id="imHere">Вернуться</button>');
   setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
 // Several people on one phone: hide the board until the next player takes it.
@@ -1775,6 +1828,7 @@ async function aiTurn() {
 }
 // reason: undefined — the deck ran out; 'draw' — everyone agreed to a draw; 'resign' — only one person is left.
 async function endGame(reason) {
+  if (net) try { localStorage.removeItem('lastGame'); } catch (_) {}
   setTimeout(() => tutEvent('end'), 1800);
   if (phase === 'end') return;
   if (reason) { token++; turnTok++; stopTimer(); if (ghost) { ghost.remove(); ghost = null; } if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; } }
@@ -2118,12 +2172,22 @@ function confirmBuy(k) {
 function saveGame() { try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {} }
 function clearSave() { try { localStorage.removeItem('savedGame'); } catch (_) {} renderResume(); }
 function loadSave() { try { return JSON.parse(localStorage.getItem('savedGame')); } catch (_) { return null; } }
+// An online game this phone took part in during the last 3 hours, if it may still be going.
+function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
 function renderResume() {
-  const sv = loadSave(), b = $('#resume');
-  b.hidden = !sv || !sv.moves || !sv.cfg;
-  if (!b.hidden) $('#resumeInfo').textContent = `${sv.cfg.seats.length} ${sv.cfg.seats.length < 5 ? 'игрока' : 'игроков'} · сделано ходов: ${sv.moves.length}`;
+  const sv = loadSave(), b = $('#resume'), lg = !net && lastOnline();
+  const off = sv && sv.moves && sv.cfg;
+  b.hidden = !off && !lg;
+  b.querySelector('.rtx b').textContent = off ? 'Продолжить партию' : 'Вернуться в онлайн-партию';
+  if (off) $('#resumeInfo').textContent = `${sv.cfg.seats.length} ${sv.cfg.seats.length < 5 ? 'игрока' : 'игроков'} · сделано ходов: ${sv.moves.length}`;
+  else if (lg) $('#resumeInfo').textContent = 'Пока вас не было, за вас играл бот';
 }
-$('#resume').onclick = () => { const sv = loadSave(); if (!sv) return renderResume(); if (net) leaveRoom(); startGame(sv.cfg, sv.moves); show('game'); };
+$('#resume').onclick = () => {
+  const sv = loadSave();
+  if (sv && sv.moves && sv.cfg) { if (net) leaveRoom(); startGame(sv.cfg, sv.moves); return show('game'); }
+  const lg = lastOnline(); if (!lg) return renderResume();
+  connect(lg.code, false); show('lobby');
+};
 
 /* ---------------- sound ---------------- */
 let actx = null;
@@ -2240,7 +2304,7 @@ const applyGfx = () => document.documentElement.classList.toggle('lowgfx', walle
 applyGfx();
 function renderPrefs() {
   $('#prefs').innerHTML = PREFS.filter(r => !r.app || window.AndroidApp).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span></div>`).join('');
-  $('#prefName').value = clean(setup.seats[0].name);
+  if (document.activeElement !== $('#prefName')) $('#prefName').value = profileName();
   $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : 'веб-макет';
   $('#checkUpd').hidden = !window.AndroidApp;
 }
@@ -2256,7 +2320,7 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'zones') { markOwn(); updateOwnership(); }
   if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
 });
-$('#prefName').addEventListener('input', e => { setup.seats[0].name = e.target.value; saveSetup(); renderSetup(); });
+$('#prefName').addEventListener('change', e => { if (!setProfileName(e.target.value)) e.target.value = profileName(); else toastAny('Имя профиля изменено'); renderSetup(); });
 $('#checkUpd').onclick = () => { $('#checkUpd').textContent = 'Проверяем…'; AndroidApp.checkUpdates(); setTimeout(() => $('#checkUpd').textContent = 'Проверить обновления', 4000); };
 window.onNoUpdate = () => { $('#checkUpd').textContent = 'Проверить обновления'; toastAny('У вас последняя версия'); };
 function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
@@ -2334,6 +2398,15 @@ function onDrawReply(m) {
 }
 
 /* ---------------- setup ---------------- */
+/* Profile: the nickname chosen after the tutorial. Shown in the profile, in every game, in the
+   rating and the online list; changed only in Settings. Seat 1 at this phone always uses it. */
+function profileName() { return clean(wallet.name) || clean(setup.seats[0].name) || 'Игрок'; }
+function setProfileName(n) {
+  n = clean(n); if (!n) return false;
+  wallet.name = n; setup.seats[0].name = n; saveWallet(); saveSetup();
+  if (typeof presenceMark === 'function') presenceMark(true);
+  return true;
+}
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
 function renderSetup() {
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
@@ -2341,13 +2414,12 @@ function renderSetup() {
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
   $('#segHint').hidden = !on; $('#segHint').textContent = m.seg || '';
   if (on) {
-    if (document.activeElement !== $('#setupName')) $('#setupName').value = clean(setup.seats[0].name) === 'Вы' ? '' : setup.seats[0].name;
-    $('#setupName').placeholder = 'Как вас зовут';
+    $('#setupName').innerHTML = `<span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b><small>изменить — в настройках</small>`;
     $('#setupColor').innerHTML = swatches(wallet.color, []);
     $('#start').disabled = false; $('#start').textContent = m.go;
     return;
   }
-  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${s.name.replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"></span><span class="kind" data-i="${i}"><button data-h="1" aria-pressed="${s.human}">Человек</button><button data-h="0" aria-pressed="${!s.human}">Бот</button></span>${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
+  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span><span class="kind" data-i="${i}"><button data-h="1" aria-pressed="${s.human}">Человек</button><button data-h="0" aria-pressed="${!s.human}">Бот</button></span>${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
   const ok = setup.seats.slice(0, setup.n).some(s => s.human);
   $('#start').disabled = !ok; $('#start').textContent = ok ? m.go : 'Нужен хотя бы один человек';
 }
@@ -2366,7 +2438,7 @@ $('#start').onclick = () => {
   if (setupMode === 'friends') return createRoom();
   newGame(); show('game');
 };
-$('#setupName').addEventListener('input', e => { setup.seats[0].name = e.target.value; $('#myName').value = e.target.value; saveSetup(); });
+
 $('#setupColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = setup.seats[0].col = sw.dataset.sw; saveWallet(); saveSetup(); renderSetup();
@@ -2435,7 +2507,7 @@ $('#invite').onclick = () => copyText(`Заходи в Puzzlegrad: Онлайн 
    the same start + move messages, so all boards stay identical, and a player who closed
    the app can rejoin with the same code. The log lives in Firebase Realtime Database when
    the app is built with a Firebase config, otherwise on the public ntfy.sh relay. */
-const myName = () => clean($('#myName').value) || clean(setup.seats[0].name) || 'Игрок';
+const myName = () => profileName();
 const LIMIT_MSG = 'Сервер онлайн-игры исчерпал лимит для вашей сети на сегодня. Попробуйте с мобильного интернета или завтра';
 
 // ntfy.sh: free, no setup, 250 messages a day per IP address.
@@ -2510,7 +2582,7 @@ async function presenceMark(on) {
     const tok = await fbToken();
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
-    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: clean(setup.seats[0].name) || 'Игрок', s: presenceState()})});
+    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState()})});
     else await fetch(url, {method: 'DELETE', keepalive: true});
   } catch (_) {}
 }
@@ -2586,6 +2658,7 @@ function onNet(d) {
     net.gameId = d.id;
     startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
+    else try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now()})); } catch (_) {} // to come back after a restart
     return show('game');
   }
   if (m.t === 'move') return onMove(m);
@@ -2631,7 +2704,7 @@ function startWatch() {
 }
 function watchDelay(who) {
   const p = players[who];
-  const base = !p.human ? 12000 : p.missed >= 2 ? 9000 : ((gameRules.timer || 60) + 12) * 1000;
+  const base = !p.human ? 12000 : p.missed >= 1 ? 9000 : ((gameRules.timer || 60) + 12) * 1000;
   const watchers = players.map((x, i) => ({x, i})).filter(o => o.x.owner && o.i !== who && !o.x.resigned)
     .sort((a, b) => (b.x.owner === net.hostId) - (a.x.owner === net.hostId) || a.i - b.i);
   const rank = watchers.findIndex(o => o.x.owner === myId);
@@ -2640,13 +2713,13 @@ function watchDelay(who) {
 function autoMoveFor(who) {
   if (!current) return;
   const m = botPick(current.type); if (!m) return;
-  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: -1, auto: 1});
+  const t = {x: m.x, y: m.y, type: current.type, r: m.r};
+  const opts = players[who].meeples > 0 ? claimable(t) : [], g = opts.length && Math.random() < .55 ? opts[(Math.random() * opts.length) | 0] : null;
+  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: g ? groupsOf(t).findIndex(q => gid(t, q) === gid(t, g)) : -1, auto: 1});
 }
 $('#status').addEventListener('click', e => {
-  if (!e.target.closest('#imHere') || !net) return;
-  const me = players.findIndex(isMe); if (me < 0) return;
-  players[me].missed = 0; netSend({t: 'here', g: net.gameId, p: me});
-  renderPlayers(); if (phase === 'place') beginHumanTurn();
+  if (!e.target.closest('#imHere')) return;
+  imBack();
 });
 async function pumpRemote() {
   if (phase !== 'remote' || !gameVisible) return;
@@ -2655,7 +2728,7 @@ async function pumpRemote() {
   const mv = queue.splice(i, 1)[0], my = token;
   if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toast('Партия разошлась между телефонами — начните новую'); return; }
   phase = 'busy'; applied++;
-  if (mv.auto) { if (++players[mv.p].missed === 2 && !fast()) toast(`${players[mv.p].name} не на связи — за него ходит бот`); } else players[mv.p].missed = 0;
+  if (mv.auto) { if (++players[mv.p].missed === 1 && !fast()) toast(`${players[mv.p].name} пропустил ход — за него играет бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
   if (my !== token) return;
   sel = {x: mv.x, y: mv.y}; setRot(mv.r); placeGhost();
@@ -2667,7 +2740,7 @@ async function pumpRemote() {
 function renderLobby() {
   if (mm) matchRender();
   $('#lbJoin').hidden = !!net; $('#lbRoom').hidden = !net;
-  if (!net) { if (!$('#myName').value) $('#myName').value = clean(setup.seats[0].name) || ''; return; }
+  if (!net) return;
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
   renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
@@ -2736,7 +2809,7 @@ function quickMatch() {
   stopMatch(true);
   leaveRoom();
   // want: the table size this player chose; only rooms of the same size match.
-  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0};
+  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0};
   const me = mm;
   me.timers.push(setInterval(() => matchTick(me), 1000));
   (async () => {
@@ -2748,6 +2821,8 @@ function quickMatch() {
       let m; try { m = JSON.parse(v.m); } catch (_) { return; }
       if (!/^[A-Z0-9]{5}$/.test(m.code || '')) return;
       if (m.t === 'close') me.closed.add(m.code);
+      // rooms of the same mode for another table size: offered as an alternative
+      if (m.t === 'seek' && m.id !== myId && m.want !== me.want && (m.mode || 'classic') === me.mode) me.other.set(m.code, {ts: v.ts || 0, n: +m.n || 1, want: +m.want});
       if (m.t === 'seek' && m.id !== myId && m.want === me.want && (m.mode || 'classic') === me.mode) { const o = me.seeks.get(m.code); if (!o || (v.ts || 0) >= o.ts) me.seeks.set(m.code, {ts: v.ts || 0, n: +m.n || 1}); }
     };
     const put = e => {
@@ -2824,6 +2899,10 @@ function matchRender() {
   if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
   while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
   const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
+  // Nobody for our size yet, but a room of the same mode waits for another number of players.
+  const alt = !full && seats.length <= 1 && Date.now() - mm.t0 > 4000 ? [...mm.other].filter(([c, o]) => !mm.closed.has(c) && !mm.skip.has(c) && Date.now() - o.ts < SEEK_FRESH && o.n < o.want).sort((a, b) => b[1].n - a[1].n)[0] : null;
+  $('#mOther').hidden = !alt;
+  if (alt) { $('#mOther').textContent = `Есть партия на ${alt[1].want} — присоединиться (${alt[1].n} из ${alt[1].want})`; $('#mOther').dataset.code = alt[0]; $('#mOther').dataset.want = alt[1].want; }
 }
 // keepRoom: the game is starting, so stay in the room; otherwise leave it (and close it if ours).
 function stopMatch(keepRoom) {
@@ -2835,6 +2914,12 @@ function stopMatch(keepRoom) {
 }
 $('#playOnline').onclick = () => openSetup('online');
 $('#mCancel').onclick = $('#mBack').onclick = () => show('menu');
+$('#mOther').onclick = () => {
+  const b = $('#mOther'); if (!mm || !b.dataset.code) return;
+  if (net && net.host && !net.gameId) matchSay({t: 'close', code: net.code});
+  mm.want = +b.dataset.want; mm.startAt = 0; b.hidden = true;
+  connect(b.dataset.code, false, true); matchRender();
+};
 $('#mBots').onclick = () => {
   const seats = net && net.quick && net.lobby ? net.lobby.seats.slice() : [];
   if (!net || !net.host || seats.length < 2) return openSetup('bots');
@@ -2938,7 +3023,7 @@ let ptab = 'quests';
 function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
 function renderProgress() {
   questsToday();
-  const need = xpNeed(PROG.lvl), name = clean(setup.seats[0].name) || 'Игрок';
+  const need = xpNeed(PROG.lvl), name = profileName();
   $('#profile').innerHTML = `<div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><b>${name}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков</small></div>`;
   const st = PROG.st;
   $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
@@ -2971,7 +3056,7 @@ async function syncRating() {
   if (!FB || PROG.up >= PROG.cups) return;
   try {
     const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
-    const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: clean(setup.seats[0].name) || 'Игрок', r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
+    const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
     if (r.ok) { PROG.up = target; saveWallet(); if (PROG.up < PROG.cups) setTimeout(syncRating, 61000); }
   } catch (_) {}
 }
@@ -2985,8 +3070,14 @@ async function renderTop() {
     if (ptab !== 'top') return;
     if (!r.ok) { el.innerHTML = '<p class="qnote">Рейтинг скоро заработает — обновляем сервер</p>'; return; }
     const rows = Object.entries((await r.json()) || {}).map(([uid, v]) => ({uid, ...v})).filter(x => x.r > 0).sort((a, b) => b.r - a.r);
-    el.innerHTML = (rows.length ? rows.map((x, i) => `<div class="lead${x.uid === fbAuth.uid ? ' me' : ''}"><i>${['🥇', '🥈', '🥉'][i] || i + 1}</i><span>${clean(x.n) || 'Игрок'}</span><b>🏆 ${x.r}</b></div>`).join('') : '<p class="qnote">Пока никого — выиграйте онлайн-партию первым!</p>') +
-      '<p class="qnote">Кубки дают за онлайн-партии: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
+    const me = fbAuth.uid, mine = rows.findIndex(x => x.uid === me);
+    const av = (x, i) => `<span class="av" style="--c:${PALETTE[i % PALETTE.length].col}">${(clean(x.n) || '?')[0].toUpperCase()}</span>`;
+    const podium = [1, 0, 2].map(i => rows[i] ? `<div class="pod p${i + 1}${rows[i].uid === me ? ' me' : ''}">${av(rows[i], i)}<b>${clean(rows[i].n) || 'Игрок'}</b><small>🏆 ${rows[i].r}</small><div class="ped"><i>${i + 1}</i></div></div>` : '<div class="pod empty"></div>').join('');
+    const list = rows.slice(3, 10).map((x, k) => `<div class="lead${x.uid === me ? ' me' : ''}"><i>${k + 4}</i>${av(x, k + 3)}<span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><b>🏆 ${x.r}</b></div>`).join('');
+    const myRow = mine >= 10 ? `<div class="lead me myrank"><i>${mine + 1}</i>${av(rows[mine], mine)}<span>Вы</span><b>🏆 ${rows[mine].r}</b></div>`
+      : mine < 0 ? `<div class="lead me myrank"><i>—</i><span>Вы пока не в рейтинге</span><b>🏆 ${PROG.cups}</b></div>` : '';
+    el.innerHTML = rows.length ? `<div class="podium">${podium}</div>${list}${myRow}` : '<p class="qnote">Пока никого — выиграйте рейтинговую партию первым!</p>';
+    el.innerHTML += '<p class="qnote">Кубки — за онлайн-партии на рейтинг: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
     syncRating();
   } catch (_) { el.innerHTML = '<p class="qnote">Нет связи — проверьте интернет</p>'; }
 }
@@ -3021,7 +3112,7 @@ let tut = null;
 function startTutorial() {
   if (net) leaveRoom();
   const rules = {mode: 'fast', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'};
-  startGame({seats: [{name: clean(setup.seats[0].name) || 'Вы', human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules, deck: TUT_DECK.slice(), seed: 7, noIntro: true});
+  startGame({seats: [{name: profileName(), human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules, deck: TUT_DECK.slice(), seed: 7, noIntro: true});
   tut = {i: 0, bot: TUT_BOT.slice()}; show('game'); hideHint(); tutShow();
 }
 const tutStep = () => tut && TUT[tut.i];
@@ -3043,21 +3134,36 @@ function tutShow() {
 }
 function tutNext() {
   if (!tut) return;
-  if (TUT[tut.i].done) { tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); return tutShow(); }
+  if (TUT[tut.i].done) { tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); tutShow(); return setTimeout(askProfile, 400); }
   tut.i++; tutShow();
 }
 // Game code reports what the player did; the coach moves on only on the awaited action.
 function tutEvent(ev) { const s = tutStep(); if (s && s.wait === ev) tutNext(); }
 $('#coach').addEventListener('click', e => { if (e.target.closest('#tutNext')) tutNext(); });
 $('#tutBtn').onclick = startTutorial;
+// Profile: pick a nickname (and a colour) once, after the tutorial or on skipping it.
+function askProfile() {
+  if (wallet.name || document.getElementById('profBox')) return;
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'profBox'; box.style.position = 'fixed';
+  const sw = () => PALETTE.map(c => `<button class="sw${c.col === wallet.color ? ' on' : ''}" style="--c:${c.col}" data-pc="${c.col}" aria-label="${c.name}"></button>`).join('');
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
+    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><div class="swatches" id="profCols">${sw()}</div>
+    <button class="cta wide" id="profOk" disabled>Готово</button></div>`;
+  document.body.append(box);
+  const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
+  inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
+  box.querySelector('#profCols').onclick = e => { const b = e.target.closest('[data-pc]'); if (!b) return; wallet.color = setup.seats[0].col = b.dataset.pc; av.style.setProperty('--c', wallet.color); box.querySelector('#profCols').innerHTML = sw(); };
+  ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); };
+  setTimeout(() => inp.focus(), 200);
+}
 // First start: offer the tutorial once.
 function offerTutorial() {
-  if (wallet.tut || wallet.tutAsked || loadSave()) return;
+  if (wallet.tut || wallet.tutAsked || loadSave()) return askProfile();
   wallet.tutAsked = true; saveWallet();
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><h3>Впервые в Пазлграде?</h3><p>Короткое обучение — пара минут, и вы знаете всё. Награда — 30 золота.</p><button class="cta wide" data-t="go">Пройти обучение</button><button class="ghostbtn" data-t="no">Я уже умею играть</button></div>`;
   document.body.append(box);
-  box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); };
+  box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); else askProfile(); };
 }
 
 /* "Who is online": tap the green "N в сети" badge for the list of players with the game open. */
