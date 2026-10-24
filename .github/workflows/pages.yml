@@ -1,11 +1,18 @@
 name: Web version
 
-# Publishes the web version (iPhone, Android browsers, computers) to GitHub Pages on every push to
-# main. One-time setup: Settings → Pages → Source: "GitHub Actions".
+# Publishes the web version (iPhone, Android browsers, computers) to GitHub Pages when run by hand.
+# One-time setup: Settings → Pages → Source: "GitHub Actions".
 on:
   # Releases are cut only on request (workflow_dispatch): changes accumulate in release-notes.md
   # and go out together when the owner says so. Merging to main does not release.
+  # rollback: build an earlier version (a tag such as v170) again as a NEW release with a higher
+  # version code, so installed copies update to it. Old releases stay on the Releases page.
   workflow_dispatch:
+    inputs:
+      rollback:
+        description: Вернуть версию (тег, например v170) — пусто = обычный выпуск
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -24,6 +31,15 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.rollback }}
+      - name: Rollback notes
+        if: inputs.rollback != ''
+        env:
+          ROLLBACK: ${{ inputs.rollback }}
+        run: |
+          v="${ROLLBACK#v}"
+          printf -- '- Возврат к версии 1.0.%s: предыдущая версия игры, если в новой что-то работает не так\n' "$v" > release-notes.md
       - run: sh scripts/wrap-web.sh web "${{ github.run_number }}"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
