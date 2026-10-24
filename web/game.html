@@ -2681,7 +2681,7 @@ let presenceTimer = 0;
 function presenceTick() {
   clearTimeout(presenceTimer);
   if (document.hidden) return;
-  presenceMark(true).then(presenceCount).then(inboxPoll); // the inbox also has a live stream; this covers a dropped one
+  presenceMark(true).then(presenceCount).then(inboxPoll).then(() => typeof cloudPeek === 'function' && cloudPeek()); // the inbox also has a live stream; this covers a dropped one
   presenceTimer = setTimeout(presenceTick, 60000);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(presenceTimer); presenceMark(false); } else presenceTick(); });
@@ -3642,20 +3642,109 @@ function keepAuth(j, email) {
   fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000, email};
   try { localStorage.setItem('fbAuth', JSON.stringify(fbAuth)); } catch (_) {}
 }
-let cloudTimer = 0;
-function cloudSaveSoon() { if (!FB || !fbAuth || !fbAuth.email) return; clearTimeout(cloudTimer); cloudTimer = setTimeout(cloudSave, 2500); }
-async function cloudSave() {
-  try { const tok = await fbToken(); await fetch(`${FB.dbUrl}/profiles/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({w: JSON.stringify(wallet), s: JSON.stringify(setup.seats[0]), t: {'.sv': 'timestamp'}})}); } catch (_) {}
+/* ---------------- profile sync: the same profile on several devices ----------------
+   The app, the web version and other phones signed in to one profile share /profiles/{uid}.
+   Every change is merged with the cloud copy against the copy this device last synced
+   ("base"): what only one side changed is taken from it; counters both sides changed (gold,
+   xp, stats) add both changes; lists (figures) are joined. Writes use the database ETag, so
+   two devices saving at once cannot overwrite each other. Pulls happen on start, on return
+   to the app and once a minute (only when the cloud copy is newer). */
+const LOCAL_ONLY = ['notifAt', 'notifThanked', 'installHinted', 'gfx', 'tutAsked', 'linkAsked', 'fcodeKept', 'devPanel'];
+const syncable = w => { const o = JSON.parse(JSON.stringify(w)); LOCAL_ONLY.forEach(k => delete o[k]); return o; };
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+// Signed in with an e-mail (the saved sign-in is read from storage if nothing used it yet).
+const linkedNow = () => { if (!fbAuth) try { fbAuth = JSON.parse(localStorage.getItem('fbAuth')); } catch (_) {} return !!(FB && fbAuth && fbAuth.email); };
+const loadBase = () => { try { return JSON.parse(localStorage.getItem('walletBase')); } catch (_) { return null; } };
+const saveBase = (w, t) => { try { localStorage.setItem('walletBase', JSON.stringify({w: syncable(w), t, uid: fbAuth && fbAuth.uid})); } catch (_) {} };
+function mergeVal(k, l, c, b) {
+  if (c === undefined || same(c, b)) return l;
+  if (l === undefined || same(l, b)) return c;
+  if (k === 'streak') return (c.last || '') > (l.last || '') ? c : l; // a day claimed on both: one claim
+  if (typeof l === 'number' && typeof c === 'number') return typeof b === 'number' ? c + (l - b) : Math.max(l, c);
+  if (Array.isArray(l) && Array.isArray(c)) return l.concat(c).every(x => typeof x !== 'object') ? [...new Set([...c, ...l])] : l;
+  if (l && c && typeof l === 'object' && typeof c === 'object') {
+    const o = {};
+    for (const key of new Set([...Object.keys(c), ...Object.keys(l)])) o[key] = mergeVal(key, l[key], c[key], b && typeof b === 'object' ? b[key] : undefined);
+    return o;
+  }
+  return l; // a plain value both changed (a setting): this device wins
 }
+function applyCloudWallet(w) {
+  const keep = {}; LOCAL_ONLY.forEach(k => { if (k in wallet) keep[k] = wallet[k]; });
+  for (const k of Object.keys(wallet)) delete wallet[k];
+  Object.assign(wallet, w, keep);
+  for (const k of Object.keys(PROG)) delete PROG[k];
+  Object.assign(PROG, w.prog || {}); wallet.prog = PROG;
+  if (wallet.name) setup.seats[0].name = wallet.name;
+  if (wallet.color) setup.seats[0].col = wallet.color;
+  try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} saveSetup();
+}
+// Everything on screen that shows profile data.
+function refreshProfileUI() {
+  document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
+  try { renderAccount(); dailyBonus(); progressDot(); renderResume(); } catch (_) {}
+  if (!$('#scr-shop').hidden) renderShop();
+  if (!$('#scr-progress').hidden) renderProgress();
+  if (!$('#scr-settings').hidden) renderPrefs();
+  if (!$('#scr-setup').hidden) renderSetup();
+}
+let syncing = null, syncAgain = false, cloudTimer = 0;
+function cloudSync(push) {
+  if (!linkedNow()) return Promise.resolve();
+  if (syncing) { syncAgain = syncAgain || push || 'pull'; return syncing; }
+  syncing = (async () => {
+    try {
+      const tok = await fbToken(), url = `${FB.dbUrl}/profiles/${fbAuth.uid}.json?auth=${tok}`;
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const r = await fetch(url, {headers: {'X-Firebase-ETag': 'true'}}); if (!r.ok) return;
+        const etag = r.headers.get('ETag'), d = await r.json();
+        let base = loadBase(); if (base && base.uid !== fbAuth.uid) base = null;
+        const mine = syncable(wallet);
+        let next = mine;
+        if (d && d.w && (!base || base.t !== d.t)) { // the cloud changed since this device last synced
+          next = mergeVal('', mine, syncable(JSON.parse(d.w)), base ? base.w : undefined);
+          if (!same(next, mine)) { applyCloudWallet(next); refreshProfileUI(); }
+        }
+        if (d && d.w && same(next, syncable(JSON.parse(d.w)))) { saveBase(wallet, d.t); return; }
+        if (!push && d && d.w && base && base.t === d.t && same(next, base.w)) return; // nothing new anywhere
+        const w = await fetch(url, {method: 'PUT', headers: etag ? {'if-match': etag} : {}, body: JSON.stringify({w: JSON.stringify(wallet), s: JSON.stringify(setup.seats[0]), t: {'.sv': 'timestamp'}})});
+        if (w.status === 412) continue; // another device saved in between: merge again
+        if (w.ok) { const saved = await w.json().catch(() => null); saveBase(wallet, saved && saved.t); }
+        return;
+      }
+    } catch (_) {} finally {
+      syncing = null;
+      if (syncAgain) { const p = syncAgain === true; syncAgain = false; cloudSync(p); }
+    }
+  })();
+  return syncing;
+}
+function cloudSaveSoon() { if (!linkedNow()) return; clearTimeout(cloudTimer); cloudTimer = setTimeout(() => cloudSync(true), 2500); }
+const cloudSave = () => cloudSync(true);
+// Once a minute: pull only when the cloud copy is newer than ours (its time stamp is tiny to read).
+async function cloudPeek() {
+  if (!linkedNow() || syncing) return;
+  try {
+    const tok = await fbToken(), r = await fetch(`${FB.dbUrl}/profiles/${fbAuth.uid}/t.json?auth=${tok}`);
+    const t = r.ok ? await r.json() : null, base = loadBase();
+    if (t && (!base || base.t !== t)) cloudSync(false);
+  } catch (_) {}
+}
+// Signing in on this device: the cloud profile replaces what is here.
 async function cloudLoad() {
   const tok = await fbToken(), r = await fetch(`${FB.dbUrl}/profiles/${fbAuth.uid}.json?auth=${tok}`);
   const d = r.ok ? await r.json() : null; if (!d || !d.w) return false;
   const w = JSON.parse(d.w); for (const k of Object.keys(wallet)) delete wallet[k]; Object.assign(wallet, w);
+  for (const k of Object.keys(PROG)) delete PROG[k];
   Object.assign(PROG, w.prog || {}); wallet.prog = PROG;
   if (d.s) { const s0 = JSON.parse(d.s); setup.seats[0].name = s0.name; setup.seats[0].col = s0.col; }
   try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} saveSetup();
+  saveBase(wallet, d.t);
   return true;
 }
+// First sync of this start; the daily streak waits for it (at most 4 s) so it is not claimed twice.
+var syncStart = Promise.race([new Promise(r => setTimeout(r, 4000)), new Promise(r => setTimeout(() => cloudSync(false).then(r, r), 800))]);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) cloudSync(false); });
 // mode: 'link' — protect this profile with an e-mail; 'login' — sign in to an existing one.
 const EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
 const EYE_SHUT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
@@ -3777,7 +3866,7 @@ function show(name) {
   if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
   if (name === 'progress') renderProgress();
   if (name === 'friends') openFriends();
-  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => { setTimeout(streakCheck, 700); setTimeout(notifNudge, 1600); }); }
+  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => { (typeof syncStart === 'undefined' ? Promise.resolve() : syncStart).then(() => setTimeout(streakCheck, 300)); setTimeout(notifNudge, 1600); }); }
   clearTimeout(presenceSoon); presenceSoon = setTimeout(() => presenceMark(true), 1500);
 }
 document.addEventListener('click', e => {
