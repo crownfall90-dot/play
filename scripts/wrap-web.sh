@@ -1,9 +1,21 @@
 #!/bin/sh
 # Wraps web/game.html (artifact fragment) into a full document for the Android app:
 # swaps Google Fonts for the bundled copies in assets/fonts and embeds release-notes.md.
+#   sh scripts/wrap-web.sh          → app/src/main/assets/index.html (Android)
+#   sh scripts/wrap-web.sh web [N]  → build/web/ (the site for iPhone, Android browsers and computers;
+#                                     N is the build number shown as the version)
 set -e
 cd "$(dirname "$0")/.."
-out=app/src/main/assets/index.html
+target=${1:-android}
+if [ "$target" = web ]; then
+  site=build/web; out=$site/index.html; webver="веб ${2:-dev}"
+  rm -rf "$site"; mkdir -p "$site"
+  cp -r app/src/main/assets/fonts "$site/fonts"; cp -r web/icons "$site/icons"; cp web/manifest.webmanifest "$site/"
+  sed "s/__VERSION__/$(echo "${2:-dev}" | tr -cd 'A-Za-z0-9.-')/" web/sw.js > "$site/sw.js"
+  touch "$site/.nojekyll"
+else
+  out=app/src/main/assets/index.html
+fi
 mkdir -p "$(dirname "$out")"
 # Firebase web config from app/google-services.json, if the project has one.
 firebase=$(python3 - <<'PY'
@@ -23,6 +35,29 @@ notes=$(python3 -c 'import json; print(json.dumps(open("release-notes.md", encod
   printf '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8">\n'
   printf '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">\n'
   printf '<link rel="stylesheet" href="fonts/fonts.css">\n'
+  if [ "$target" = web ]; then
+    cat <<'HEAD'
+<meta name="theme-color" content="#101729">
+<meta name="description" content="Puzzlegrad — стройте города, дороги и крепости из общей стопки. Играйте онлайн, с друзьями и с ботами.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Puzzlegrad">
+<meta property="og:title" content="Puzzlegrad"><meta property="og:description" content="Стройте города, дороги и крепости — играйте с друзьями онлайн"><meta property="og:image" content="icons/icon-512.png">
+<script>
+(function () {
+  setTimeout(function () {
+    if (window.__ready) return;
+    document.body.innerHTML = '<div style="font:16px sans-serif;color:#eef1f8;background:#101729;position:fixed;inset:0;padding:32px;line-height:1.5"><h2 style="margin:0 0 12px">Не удалось запустить игру</h2><p>Обновите браузер (Safari, Chrome) до последней версии и откройте страницу снова.</p></div>';
+  }, 10000);
+})();
+</script>
+HEAD
+    printf '<script>window.WEBAPP = true; window.WEB_VERSION = "%s";</script>\n' "$webver"
+  else
   cat <<'BOOT'
 <script>
 /* If the game cannot start (usually an outdated Android System WebView), say how to fix it instead of a blank screen. */
@@ -38,6 +73,7 @@ notes=$(python3 -c 'import json; print(json.dumps(open("release-notes.md", encod
 })();
 </script>
 BOOT
+  fi
   printf '<script>window.RELEASE_NOTES = %s; window.FIREBASE = %s;</script>\n' "$notes" "$firebase"
   printf '</head><body>\n'
   grep -v -e 'fonts.googleapis.com' -e 'fonts.gstatic.com' web/game.html

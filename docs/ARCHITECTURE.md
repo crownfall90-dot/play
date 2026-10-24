@@ -28,7 +28,9 @@ flowchart LR
 | Путь | Что внутри |
 |---|---|
 | `web/game.html` | Игра целиком: экраны, графика, правила, боты, онлайн, прогресс, обучение |
-| `scripts/wrap-web.sh` | Сборка `assets/index.html` из `web/game.html` (запускать после каждой правки) |
+| `scripts/wrap-web.sh` | Сборка `assets/index.html` из `web/game.html` (запускать после каждой правки); `wrap-web.sh web N` — сайт в `build/web/` |
+| `web/manifest.webmanifest`, `web/sw.js`, `web/icons/` | Веб-версия: установка на экран «Домой», офлайн-кэш, иконки |
+| `.github/workflows/pages.yml` | Публикация веб-версии на GitHub Pages при каждом push в `main` |
 | `app/src/main/java/.../MainActivity.java` | WebView, полный экран, вырез камеры → CSS-переменные `--it/--ib/--il/--ir/--itg`, мост `AndroidApp` |
 | `app/src/github/.../Updater.java`, `InstallResult.java` | Самообновление из GitHub Releases через PackageInstaller |
 | `app/src/play/.../Updater.java` | Обновление через Google Play (In-App Updates) |
@@ -65,7 +67,8 @@ flowchart LR
 | **tutorial** | Партия по сценарию: `TUT`, `TUT_DECK`, `TUT_BOT`, шаги ждут действия (`tutEvent`) |
 | **friends** | Только для сохранённых профилей (`registered()`: никнейм + вход по почте; правила требуют почту в токене и запись в `/profiles` у обоих). Код друга `/fcodes`, заявки и приглашения в комнату через `/inbox/{uid}` (живой поток + опрос раз в минуту), список `/friends/{uid}`, в сети / не в сети по `/presence` |
 | **account** | Профиль: никнейм, смена имени (500 золота), вход по почте, облачное сохранение `/profiles/{uid}` |
-| **screens / app shell** | `show(name)`, кнопка «Назад» Android, обновления, заставка |
+| **screens / app shell** | `show(name)`, кнопка «Назад» Android, обновления, заставка. `isAndroid` / `isWeb` / `isApp` |
+| **web build** | `SITE_URL`, установка (`installDialog`, `beforeinstallprompt`), «назад» браузера через history, ссылки `?room=` и `?friend=`, service worker |
 
 ## Данные
 
