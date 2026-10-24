@@ -27,19 +27,38 @@ class Updater {
         this.activity = activity;
     }
 
-    /** Latest GitHub release newer than this build, or null. Tags look like v123 where 123 is the versionCode. */
-    private static JSONObject latest() throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(
-                "https://api.github.com/repos/" + BuildConfig.UPDATE_REPO + "/releases/latest").openConnection();
-        c.setRequestProperty("Accept", "application/vnd.github+json");
+    private static String get(String url, String accept) throws Exception {
+        HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
+        c.setInstanceFollowRedirects(true);
+        if (accept != null) c.setRequestProperty("Accept", accept);
         c.setConnectTimeout(8000);
         c.setReadTimeout(8000);
-        if (c.getResponseCode() != 200) return null;
-        String body;
+        if (c.getResponseCode() != 200) throw new java.io.IOException("HTTP " + c.getResponseCode() + " " + url);
         try (Scanner sc = new Scanner(c.getInputStream(), "UTF-8").useDelimiter("\\A")) {
-            body = sc.hasNext() ? sc.next() : "";
+            return sc.hasNext() ? sc.next() : "";
         }
-        JSONObject rel = new JSONObject(body);
+    }
+
+    /**
+     * Latest release newer than this build, or null when this build is the newest; throws when it
+     * cannot be checked. First the latest.json file attached to every release (a plain download,
+     * no limits); the GitHub API is only a fallback, because without a login it allows just 60
+     * requests an hour per address, and players behind one VPN or mobile network share that.
+     */
+    private static JSONObject latest() throws Exception {
+        try {
+            JSONObject f = new JSONObject(get("https://github.com/" + BuildConfig.UPDATE_REPO + "/releases/latest/download/latest.json", null));
+            if (f.getInt("code") <= BuildConfig.VERSION_CODE) return null;
+            JSONObject info = new JSONObject();
+            info.put("code", f.getInt("code"));
+            info.put("version", f.optString("version", "1.0." + f.getInt("code")));
+            info.put("notes", f.optString("notes", ""));
+            info.put("url", f.getString("url"));
+            return info;
+        } catch (Exception ignored) {
+            // An older release without latest.json, or the download failed: ask the API.
+        }
+        JSONObject rel = new JSONObject(get("https://api.github.com/repos/" + BuildConfig.UPDATE_REPO + "/releases/latest", "application/vnd.github+json"));
         int code = Integer.parseInt(rel.getString("tag_name").replaceAll("[^0-9]", ""));
         if (code <= BuildConfig.VERSION_CODE) return null;
         String url = null;
@@ -60,11 +79,13 @@ class Updater {
     /** On launch (and from Settings): offer the newer version in the game. */
     void check(boolean manual) {
         new Thread(() -> {
-            JSONObject info = null;
+            JSONObject info;
             try {
                 info = latest();
-            } catch (Exception ignored) {
-                // No internet: play offline.
+            } catch (Exception e) {
+                // No internet or GitHub refused: play on; say so only when the player asked.
+                if (manual) activity.js("window.onCheckFailed && window.onCheckFailed()");
+                return;
             }
             if (info != null) activity.js("window.onUpdateAvailable && window.onUpdateAvailable(" + info + ", " + manual + ")");
             else if (manual) activity.js("window.onNoUpdate && window.onNoUpdate()");

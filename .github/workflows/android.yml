@@ -36,7 +36,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "v$CODE" "Puzzlegrad-1.0.$CODE.apk" "Puzzlegrad-1.0.$CODE-google-play.aab" \
+          # latest.json: what the app reads to find updates (a plain file download has no rate limit).
+          python3 -c 'import json,os,sys; c=int(os.environ["CODE"]); r=os.environ["GITHUB_REPOSITORY"]; json.dump({"code": c, "version": "1.0.%d" % c, "notes": open("release-notes.md", encoding="utf-8").read().strip(), "url": "https://github.com/%s/releases/download/v%d/Puzzlegrad-1.0.%d.apk" % (r, c, c)}, open("latest.json", "w", encoding="utf-8"), ensure_ascii=False)'
+          gh release create "v$CODE" "Puzzlegrad-1.0.$CODE.apk" "Puzzlegrad-1.0.$CODE-google-play.aab" latest.json \
             --title "1.0.$CODE" --notes-file release-notes.md --latest
       # Push "new version" to GitHub-build players; skipped until the FIREBASE_SERVICE_ACCOUNT secret exists.
       - name: Notify players
