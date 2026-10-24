@@ -523,7 +523,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="rcard"><b>Ход</b><p>Вы получаете верхнюю карту стопки. Тапните по жёлтой рамке на поле, поверните карту и нажмите «Поставить». Края карты должны совпадать с соседями: дорога к дороге, город к городу, река к реке.</p></div>
           <div class="rcard"><b>Фигурка</b><p>После хода можно поставить одну свою фигурку на только что положенную карту: на город, на дорогу или на крепость — только в одно место. Объект становится вашим. Занятый объект забрать нельзя.</p></div>
           <div class="rcard"><b>Очки</b><p>Когда объект достроен, очки получает его хозяин, даже если последнюю карту положил соперник, а фигурка возвращается.</p>
-            <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Большой мост</dt><dd>+3 очка дороге за каждую половину</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
+            <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Большой мост</dt><dd>если обе половины собраны, остальные карты дороги считаются по 2 очка, половины моста — по 1</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
           <div class="rcard"><b>Золото</b><p>За место в партии с ботами или онлайн:</p><dl class="pts"><dt>1-е место</dt><dd>+15</dd><dt>2-е место</dt><dd>+10</dd><dt>3-е место</dt><dd>+5</dd><dt>4-е место</dt><dd>0</dd><dt>5-е место</dt><dd>−5</dd></dl><p>За одним телефоном золото не начисляется. Сдавшийся игрок золота не получает.</p></div>
           <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Дороги, города и крепости окрашиваются в цвет владельца; у спорных цвета чередуются.</p></div>
           <button class="cta wide" id="tutBtn">Пройти обучение</button>
@@ -1591,9 +1591,15 @@ async function scoreAfter(t, p) {
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); if (n && TYPES[n.type].fort) consider(n, {kind: 'f', edges: []}); }
   for (const c of evs) await resolveFeature(c, false, p);
 }
+// A road with a whole big bridge on it (two halves joined bridge to bridge): every other piece of
+// the road counts double, each bridge half 1. Otherwise 1 per piece.
+function roadPoints(c) {
+  const halves = c.tiles.filter(t => TYPES[t.type].bridge);
+  const whole = halves.some(t => { const d = [0, 1, 2, 3].find(k => edgeAt(t, k) === 'b'), n = at(t.x + DX[d], t.y + DY[d]); return n && edgeAt(n, (d + 2) % 4) === 'b'; });
+  return whole ? (c.tiles.length - halves.length) * 2 + halves.length : c.tiles.length;
+}
 async function resolveFeature(c, final, placer) {
-  // A road over a big bridge is worth 3 more for each half of the bridge on it.
-  const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : c.tiles.length + 3 * c.tiles.filter(t => TYPES[t.type].bridge).length;
+  const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : roadPoints(c);
   c.tiles.forEach(x => x.el.classList.add('glow'));
   setTimeout(() => c.tiles.forEach(x => x.el.classList.remove('glow')), 1100);
   const cnt = players.map(() => 0); c.meeples.forEach(m => cnt[m.p]++);
