@@ -594,7 +594,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="ltop"><button class="iconbtn" id="fBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Друзья</b></div>
           <p class="froom" id="fRoom" hidden></p>
           <div class="ocard fgate" id="fGate" hidden></div>
-          <div class="codecard" id="fMine"><small>Ваш код друга</small><div class="code sm" id="fcode"></div><p class="ferr" id="fErr" hidden>…<button class="chip" id="fRetry">Повторить</button></p><button class="chip" id="fCopy">Скопировать и отправить</button></div>
+          <div class="codecard" id="fMine"><small>Ваш код друга</small><div class="code sm" id="fcode"></div><p class="ferr" id="fErr" hidden>…<button class="chip" id="fRetry">Повторить</button></p><button class="chip" id="fCopy">🔗 Скопировать ссылку-приглашение</button></div>
           <div class="joinrow" id="fJoinRow"><input class="field codein" id="fCodeIn" maxlength="6" placeholder="Код друга" autocomplete="off" autocapitalize="characters"><button class="cta" id="fAdd">Добавить</button></div>
           <div class="col" id="flist"></div>
         </div>
@@ -3317,6 +3317,35 @@ function socialReset() {
   if (inboxEs) { inboxEs.close(); inboxEs = null; }
   if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); }
   friendsDot(); if (!$('#scr-friends').hidden) openFriends();
+  // An invite opened before the profile was saved is shown now.
+  if (registered() && wallet.pendingFriend) { const c = wallet.pendingFriend; delete wallet.pendingFriend; saveWallet(); setTimeout(() => friendInvite(c), 700); }
+}
+// An invite link ?friend=CODE: a card "X invites you to be friends" with an Accept button.
+async function friendInvite(code) {
+  if (!FB) return;
+  if (!registered()) {
+    wallet.pendingFriend = code; saveWallet(); friendsBack = 'menu'; show('friends');
+    return toastAny('Сохраните профиль — и сможете принять приглашение в друзья');
+  }
+  let uid = null, name = '';
+  try {
+    uid = await fbGet('fcodes/' + code);
+    if (uid) { const p = await fbGet('presence/' + uid).catch(() => null); name = clean(p && p.n); }
+    await loadFriends().catch(() => {});
+  } catch (e) { return toastAny(e.message === 'rules' ? 'Друзья пока недоступны: сервер ещё не обновлён' : 'Нет связи — откройте ссылку ещё раз'); }
+  if (!uid) return toastAny('Приглашение не найдено — попросите друга прислать ссылку заново');
+  if (uid === myUid()) return toastAny('Это ваша ссылка — отправьте её другу');
+  if (friends.some(f => f.uid === uid && f.mutual)) { friendsBack = 'menu'; show('friends'); return toastAny(`${name || 'Игрок'} уже у вас в друзьях`); }
+  document.querySelectorAll('.over.finv').forEach(x => x.remove());
+  const box = document.createElement('div'); box.className = 'over finv'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🤝</div><h3>${name || 'Игрок'} приглашает вас в друзья</h3><p>Вы увидите, когда друг в сети, и сможете звать друг друга в комнату одной кнопкой</p><button class="cta wide" data-a="ok">Принять</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
+  document.body.append(box);
+  box.onclick = async e => {
+    const b = e.target.closest('[data-a]'); if (!b) return; box.remove();
+    if (b.dataset.a !== 'ok') return;
+    friendsBack = 'menu'; show('friends');
+    await addFriend(uid, name, code);
+  };
 }
 // My friend code, made once per account.
 // fcodeErr: 'rules' — the database rules for friends are not published yet; 'net' — no connection.
@@ -3354,7 +3383,7 @@ async function loadFriends() {
   friends.sort((a, b) => b.on - a.on || b.mutual - a.mutual || ((b.p && b.p.t) || 0) - ((a.p && a.p.t) || 0));
 }
 const isFriend = uid => friends.some(f => f.uid === uid);
-async function addFriend(uid, name) {
+async function addFriend(uid, name, via) {
   const me = myUid();
   if (!uid || uid === me) return toastAny('Это ваш код');
   if (friends.length >= FRIEND_MAX) return toastAny('Друзей уже ' + FRIEND_MAX);
@@ -3362,8 +3391,9 @@ async function addFriend(uid, name) {
   try {
     const p = await fbGet('presence/' + uid).catch(() => null), n = clean(name) || clean(p && p.n) || 'Игрок';
     await fbPut(`friends/${me}/${uid}`, {n, t: {'.sv': 'timestamp'}});
-    await fbPut(`inbox/${uid}/${me}_f`, {k: 'f', n: profileName(), t: {'.sv': 'timestamp'}});
-    toastAny(`Заявка отправлена: ${n}`); beep('tap'); track('friend_request');
+    // "v" is the invite code from a link: the inviter's game accepts such a request by itself.
+    await fbPut(`inbox/${uid}/${me}_f`, {k: 'f', n: profileName(), t: {'.sv': 'timestamp'}, ...(via ? {v: via} : {})});
+    toastAny(via ? `Приглашение принято: ${n}` : `Заявка отправлена: ${n}`); beep('tap'); track(via ? 'friend_invite_accept' : 'friend_request');
     await loadFriends(); renderFriends();
   } catch (e) {
     fbDel(`friends/${me}/${uid}`);
@@ -3414,7 +3444,7 @@ function onInbox(all) {
     if (v.k === 'ok') { if (!inboxShown.has(k + v.t)) { inboxShown.add(k + v.t); toastAny(`${clean(v.n)} принял(а) заявку в друзья`); loadFriends().then(renderFriends); } fbDel(`inbox/${me}/${k}`); continue; }
     if (v.k === 'r' && Date.now() - (v.t || 0) > INVITE_TTL) { fbDel(`inbox/${me}/${k}`); continue; }
     // A request from someone I already asked: we are friends now.
-    if (v.k === 'f' && isFriend(from)) { inbox[k] = v; acceptFriend(from); continue; }
+    if (v.k === 'f' && (isFriend(from) || (v.v && wallet.fcode && v.v === wallet.fcode))) { inbox[k] = v; acceptFriend(from); continue; }
     inbox[k] = v;
     if (!inboxShown.has(k + v.t)) { inboxShown.add(k + v.t); popInbox(k, v); }
   }
@@ -3649,7 +3679,7 @@ $('#fGate').addEventListener('click', e => {
   if (id === 'fgName') askProfile(); else if (id === 'fgLink') accountDialog('link'); else if (id === 'fgLogin') accountDialog('login');
 });
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
-$('#fCopy').onclick = () => wallet.fcode && copyText(`Добавь меня в друзья в Puzzlegrad: код ${wallet.fcode} — ${SITE_URL}?friend=${wallet.fcode}`, 'Код скопирован — отправьте его другу');
+$('#fCopy').onclick = () => wallet.fcode && copyText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\n(мой код друга: ${wallet.fcode})`, 'Ссылка-приглашение скопирована — отправьте её другу');
 function confirmBox(text, yes, ok) {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><h3>${text}</h3><button class="cta wide" data-a="y">${yes}</button><button class="ghostbtn" data-a="n">Отмена</button></div>`;
@@ -4000,13 +4030,37 @@ function installDialog() {
 }
 $('#installBtn').onclick = installDialog;
 renderInstall();
-// Links from invites: ?room=CODE opens that room, ?friend=CODE fills in the friend's code.
+// Invite links: ?room=CODE opens that room, ?friend=CODE shows the "invites you to be friends"
+// card. The same links work in the Android app (it is opened by the link) and in the browser.
+const linkCode = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+function routeLink({room, friend}) {
+  if (room && room.length === 5) { track('open_link', {kind: 'room'}); connect(room, false); show('lobby'); }
+  else if (friend && friend.length === 6) { track('open_link', {kind: 'friend'}); friendInvite(friend); }
+}
+function parseLink(href) {
+  try {
+    const u = new URL(href);
+    if (u.protocol === 'puzzlegrad:') { const code = linkCode(u.pathname.replace(/^\/+/, '')); return u.hostname === 'room' ? {room: code} : u.hostname === 'friend' ? {friend: code} : null; }
+    return {room: linkCode(u.searchParams.get('room')), friend: linkCode(u.searchParams.get('friend'))};
+  } catch (_) { return null; }
+}
+// The Android shell calls this when the game is opened (or already open) with a link.
+window.onDeepLink = href => { const l = parseLink(href); if (l) bootReady.then(() => setTimeout(() => routeLink(l), 400)); };
+const APK_URL = 'https://github.com/crownfall90-dot/play/releases/latest';
 function openLink() {
-  const q = new URLSearchParams(location.search), room = (q.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), fr = (q.get('friend') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-  if (!room && !fr) return;
+  const l = parseLink(location.href); if (!l || !(l.room || l.friend)) return;
   try { history.replaceState(history.state, '', location.pathname); } catch (_) {}
-  if (room.length === 5) { connect(room, false); show('lobby'); }
-  else if (fr.length === 6) { friendsBack = 'menu'; show('friends'); $('#fCodeIn').value = fr; toastAny('Нажмите «Добавить», чтобы отправить заявку'); }
+  // In an Android browser: first offer to open the game app, the browser stays an option.
+  if (/Android/i.test(navigator.userAgent) && !standalone()) {
+    const qs = l.friend ? 'friend=' + l.friend : 'room=' + l.room, what = l.friend ? 'Приглашение в друзья' : 'Приглашение в комнату';
+    const intent = `intent://${location.host}${location.pathname}?${qs}#Intent;scheme=https;package=com.crownfall.mosaic;S.browser_fallback_url=${encodeURIComponent(APK_URL)};end`;
+    const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+    box.innerHTML = `<div class="ocard"><div style="font-size:44px">${l.friend ? '🤝' : '🎲'}</div><h3>${what}</h3><p>Откройте игру в приложении или продолжите прямо в браузере</p><a class="cta wide" id="lkApp" href="${intent}" style="text-decoration:none;display:grid;place-items:center">Открыть в приложении</a><button class="ghostbtn" id="lkWeb">Продолжить в браузере</button><a class="linkbtn" href="${APK_URL}" target="_blank" rel="noopener">Скачать приложение</a></div>`;
+    document.body.append(box);
+    box.querySelector('#lkWeb').onclick = () => { box.remove(); routeLink(l); };
+    return;
+  }
+  routeLink(l);
 }
 // On the first visit from a phone (not installed yet) show how to install, once.
 function firstInstallHint() {

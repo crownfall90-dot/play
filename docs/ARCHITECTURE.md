@@ -68,6 +68,7 @@ flowchart LR
 | **friends** | Только для сохранённых профилей (`registered()`: никнейм + вход по почте; правила требуют почту в токене и запись в `/profiles` у обоих). Код друга `/fcodes`, заявки и приглашения в комнату через `/inbox/{uid}` (живой поток + опрос раз в минуту), список `/friends/{uid}`, в сети / не в сети по `/presence` |
 | **account** | Профиль: никнейм, смена имени (500 золота), вход по почте, облачное сохранение `/profiles/{uid}` |
 | **screens / app shell** | `show(name)`, кнопка «Назад» Android, обновления, заставка. `isAndroid` / `isWeb` / `isApp` |
+| **invite links** | `https://…/play/?friend=КОД` и `?room=КОД` (и `puzzlegrad://friend/КОД`): приложение открывается по ссылке (intent-filter в манифесте, `onNewIntent` → `window.onDeepLink`), в браузере Android сначала предлагается «Открыть в приложении». Карточка «X приглашает вас в друзья» (`friendInvite`); принятая заявка несёт `v` = код приглашения, и игра пригласившего принимает её сама. Для автоматического открытия без вопроса нужен свой домен + `assetlinks.json` |
 | **web build** | `SITE_URL`, установка (`installDialog`, `beforeinstallprompt`), «назад» браузера через history, ссылки `?room=` и `?friend=`, service worker |
 
 ## Данные

@@ -33,6 +33,8 @@ public class MainActivity extends Activity {
     private WebView web;
     private Updater updater;
     private boolean pageReady;
+    /** An invite link the game was opened with; handed to the page once it has loaded. */
+    private String pendingLink;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,6 +71,26 @@ public class MainActivity extends Activity {
         setContentView(root);
         hideSystemBars();
         createWebView();
+        grabLink(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        grabLink(intent);
+        if (pageReady) deliverLink();
+    }
+
+    private void grabLink(Intent intent) {
+        if (intent != null && Intent.ACTION_VIEW.equals(intent.getAction()) && intent.getData() != null) pendingLink = intent.getData().toString();
+    }
+
+    private void deliverLink() {
+        if (pendingLink == null) return;
+        String link = pendingLink;
+        pendingLink = null;
+        js("window.onDeepLink && window.onDeepLink(" + org.json.JSONObject.quote(link) + ")");
     }
 
     private String insetsJs = "";
@@ -161,6 +183,7 @@ public class MainActivity extends Activity {
             public void onPageFinished(WebView view, String url) {
                 pageReady = true;
                 if (!insetsJs.isEmpty()) view.evaluateJavascript(insetsJs, null);
+                deliverLink();
                 checkSoon();
             }
 
