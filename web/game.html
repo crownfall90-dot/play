@@ -3223,7 +3223,7 @@ function showSay(p, i) {
 /* ---------------- progress: level, daily quests, achievements, rating ----------------
    Counted games are the ones that pay gold: you alone against bots, or online. */
 const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
-const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0}, wallet.prog);
+const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false}, wallet.prog);
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
 const xpNeed = l => 50 + 50 * l;
@@ -3284,12 +3284,12 @@ function gameDone(place, score) {
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
 }
-const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got') || (PROG.cups > 0 && PROG.cups > (PROG.cupsSeen || 0)); };
+const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
 function ptabsDot() {
   questsToday();
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
   const aDot = ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got');
-  const tDot = PROG.cups > 0 && PROG.cups > (PROG.cupsSeen || 0);
+  const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
     b.classList.toggle('hasdot', pt === 'quests' ? qDot : pt === 'ach' ? aDot : tDot);
@@ -3322,7 +3322,7 @@ function renderProgress() {
     }).join('');
   } else renderTop();
 }
-$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.cups > (PROG.cupsSeen || 0)) { PROG.cupsSeen = PROG.cups; saveWallet(); progressDot(); } renderProgress(); };
+$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
@@ -3338,7 +3338,18 @@ async function syncRating(force) {
   try {
     const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
     const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
-    if (r.ok) { PROG.up = target; saveWallet(); progressDot(); if (PROG.up < PROG.cups) setTimeout(syncRating, 61000); }
+    if (r.ok) {
+      PROG.up = target; saveWallet(); progressDot();
+      if (PROG.up < PROG.cups) setTimeout(syncRating, 61000);
+      try {
+        const tr = await fetch(`${FB.dbUrl}/leaders.json?auth=${tok}&orderBy=%22r%22&limitToLast=10`);
+        if (tr.ok) {
+          const top10uids = Object.keys((await tr.json()) || {});
+          PROG.inTop10 = top10uids.includes(fbAuth.uid);
+          saveWallet(); progressDot();
+        }
+      } catch (_) {}
+    }
   } catch (_) {}
 }
 async function renderTop() {
@@ -3359,6 +3370,7 @@ async function renderTop() {
       : mine < 0 ? `<div class="lead me myrank"><i>—</i><span>Вы пока не в рейтинге</span><b>🏆 ${PROG.cups}</b></div>` : '';
     el.innerHTML = rows.length ? `<div class="podium">${podium}</div>${list}${myRow}` : '<p class="qnote">Пока никого — выиграйте рейтинговую партию первым!</p>';
     el.innerHTML += '<p class="qnote">Кубки — за онлайн-партии на рейтинг: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
+    PROG.inTop10 = mine >= 0 && mine < 10; saveWallet(); progressDot();
     syncRating();
   } catch (_) { el.innerHTML = '<p class="qnote">Нет связи — проверьте интернет</p>'; }
 }
