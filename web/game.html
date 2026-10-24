@@ -199,6 +199,7 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .olist ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;text-align:left}
 .olist .lead i{color:#3fc27a;font-size:12px;width:16px}.olist .lead small{color:var(--muted);font-size:11.5px;white-space:nowrap}
 .onlineN{cursor:pointer}
+.opt.mdesc{padding-top:0;margin-top:-6px;background:rgba(255,255,255,.03)}.opt.mdesc small{color:var(--brass);font-size:12px}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -688,15 +689,24 @@ const validCol = c => PALETTE.some(x => x.col === c);
 const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human, col: p.col}))};
 try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
 setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
+// Game modes are presets of the rules below; any rule can still be changed after picking one.
+const MODES = {
+  fast: {label: 'Быстрая', desc: '40 карт · 5 фишек · 10–15 минут', set: {deck: 40, meeples: 5}},
+  classic: {label: 'Классика', desc: 'Вся колода · 7 фишек · золотая середина', set: {deck: 0, meeples: 7}},
+  epic: {label: 'Большая', desc: 'Двойная колода · 9 фишек · огромное королевство', set: {deck: 0, meeples: 9}},
+};
 const RULES = [
-  {k: 'deck', label: 'Карт в стопке', opts: [[30, '30'], [45, '45'], [0, 'Все']]},
+  {k: 'mode', label: 'Режим', opts: Object.entries(MODES).map(([k, m]) => [k, m.label])},
+  {k: 'deck', label: 'Карт в стопке', opts: [[40, '40'], [60, '60'], [0, 'Все']]},
   {k: 'rivers', label: 'Реки', opts: [[true, 'Есть'], [false, 'Нет']]},
   {k: 'meeples', label: 'Фигурок у игрока', opts: [[5, '5'], [7, '7'], [9, '9']]},
   {k: 'timer', label: 'Время на ход', opts: [[0, 'Без'], [30, '30 с'], [60, '60 с']]},
   {k: 'hints', label: 'Подсветка мест', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'tie', label: 'Спорный объект: очки', opts: [['all', 'Каждому'], ['split', 'Поровну']]},
 ];
-setup.rules = Object.assign({deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, setup.rules);
+setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, setup.rules);
+if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
+if (![40, 60, 0].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck;
 const isHuman = i => players[i].human;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
@@ -722,13 +732,15 @@ const TYPES = {
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
   rEnd:{e:'rfff',n:1,end:'barrier',name:'Тупик'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
 };
-/* Rare pieces: one for every edge combination the regular set lacks, so whatever surrounds an
-   empty spot, some piece in the game fits it (a big-bridge edge counts as a road for fitting). */
-const normEdge = k => k === 'b' ? 'r' : k;
+/* Rare pieces: one for every combination of town, road and field edges the regular set lacks,
+   so towns and roads can nearly always be finished. Odd river mixes (three or four rivers, a river
+   running into a town from several sides) stay impossible on purpose: blocking a spot is part of
+   the game. A big-bridge edge only fits the other half of the bridge. */
+const normEdge = k => k;
 (() => {
   const rots = s => [0, 1, 2, 3].map(r => [0, 1, 2, 3].map(d => s[(d - r + 4) % 4]).join(''));
   const have = new Set(); for (const id in TYPES) rots([...TYPES[id].e].map(normEdge).join('')).forEach(x => have.add(x));
-  const K = 'crfw';
+  const K = 'crf';
   for (const a of K) for (const b of K) for (const c of K) for (const d of K) {
     const e = a + b + c + d; if (have.has(e)) continue;
     rots(e).forEach(x => have.add(x));
@@ -1760,9 +1772,18 @@ function buildBoard() {
   for (let i = deck.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [deck[i], deck[j]] = [deck[j], deck[i]]; }
   return R;
 }
+function deckList(rules) {
+  const d = [], k = rules.mode === 'epic' ? 2 : 1;
+  for (const id in TYPES) {
+    const t = TYPES[id];
+    if (!rules.rivers && t.e.includes('w')) continue;
+    if (rules.mode === 'fast' && t.rare) continue;
+    for (let i = 0; i < t.n * (t.rare ? 1 : k); i++) d.push(id);
+  }
+  return d;
+}
 function makeDeck(rules) {
-  const d = [];
-  for (const id in TYPES) if (rules.rivers || !TYPES[id].e.includes('w')) for (let i = 0; i < TYPES[id].n; i++) d.push(id);
+  const d = deckList(rules);
   for (let i = d.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [d[i], d[j]] = [d[j], d[i]]; }
   return rules.deck ? d.slice(0, rules.deck) : d;
 }
@@ -2317,15 +2338,17 @@ function openSetup(mode) {
 const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
 document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 function renderRules() {
-  const total = Object.entries(TYPES).reduce((a, [, t]) => a + (setup.rules.rivers || !t.e.includes('w') ? t.n : 0), 0);
+  const total = deckList(setup.rules).length, mode = MODES[setup.rules.mode] || MODES.classic;
   // Online games always have a turn clock ("no limit" counts as 60 s there).
   const html = on => RULES.map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
-  document.querySelectorAll('[data-rules]').forEach(el => el.innerHTML = html(el.id === 'lbRules' || onlineMode()));
+  document.querySelectorAll('[data-rules]').forEach(el => el.innerHTML = html(el.id === 'lbRules' || onlineMode()).replace('</div>', `</div><div class="opt mdesc"><small>${mode.desc}</small></div>`));
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('.mseg button'); if (!b || !b.parentNode.dataset.k) return;
   const r = RULES.find(x => x.k === b.parentNode.dataset.k);
-  setup.rules[r.k] = r.opts[+b.dataset.i][0]; saveSetup(); renderRules();
+  setup.rules[r.k] = r.opts[+b.dataset.i][0];
+  if (r.k === 'mode') Object.assign(setup.rules, MODES[setup.rules.mode].set);
+  saveSetup(); renderRules();
   if (net && net.host && net.lobby && !net.gameId) publishLobby(net.lobby.seats);
 });
 renderRules();
