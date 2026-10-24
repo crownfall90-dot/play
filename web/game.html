@@ -1948,10 +1948,10 @@ function makeDeck(rules) {
 function newGame() {
   if (net) leaveRoom();
   let firstHuman = true;
-  const seats = setup.seats.slice(0, setup.n).map(s => {
+  const seats = setup.seats.slice(0, setup.n).map((s, i) => {
     const fig = s.human ? (firstHuman ? wallet.fig : 'classic') : randomFig();
     if (s.human) firstHuman = false;
-    return {name: s.name, human: s.human, fig, col: s.col};
+    return {name: i ? s.name : profileName(), human: s.human, fig, col: s.col};
   });
   // An "extra figure" gift gives you one more figure in a game against bots.
   let bonus = -1;
@@ -2479,7 +2479,25 @@ function onDrawReply(m) {
 /* ---------------- setup ---------------- */
 /* Profile: the nickname chosen after the tutorial. Shown in the profile, in every game, in the
    rating and the online list; changed only in Settings. Seat 1 at this phone always uses it. */
-function profileName() { return clean(wallet.name) || clean(setup.seats[0].name) || 'Игрок'; }
+// The nickname the player chose; until then a numbered guest name (nickname1, nickname2…) handed
+// out once per device by the shared counter /guestN, never the placeholder «Вы».
+function profileName() {
+  const old = clean(setup.seats[0].name);
+  return clean(wallet.name) || clean(wallet.guest) || (old && old !== 'Вы' && old !== 'Игрок' ? old : '') || 'nickname';
+}
+async function ensureGuestName() {
+  if (!FB || clean(wallet.name) || wallet.guest) return;
+  try {
+    const tok = await fbToken(), url = `${FB.dbUrl}/guestN.json?auth=${tok}`;
+    for (let i = 0; i < 5 && !wallet.guest; i++) {
+      const r = await fetch(url, {headers: {'X-Firebase-ETag': 'true'}}); if (!r.ok) return;
+      const n = ((await r.json()) | 0) + 1;
+      const w = await fetch(url, {method: 'PUT', headers: {'if-match': r.headers.get('ETag')}, body: String(n)});
+      if (w.ok) { wallet.guest = 'nickname' + n; saveWallet(); renderSetup(); if (typeof presenceMark === 'function') presenceMark(true); }
+      else if (w.status !== 412) return; // another device took this number: try the next one
+    }
+  } catch (_) {}
+}
 function setProfileName(n) {
   n = clean(n); if (!n) return false;
   wallet.name = n; setup.seats[0].name = n; saveWallet(); saveSetup();
@@ -2692,7 +2710,7 @@ function presenceTick() {
   presenceTimer = setTimeout(presenceTick, 60000);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(presenceTimer); presenceMark(false); } else presenceTick(); });
-if (FB) setTimeout(presenceTick, 1500);
+if (FB) setTimeout(() => ensureGuestName().then(presenceTick), 1500);
 
 function netSend(msg) {
   return TRANSPORT.send(net.code, msg).catch(() => toast('Нет связи — проверьте интернет'));

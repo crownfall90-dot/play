@@ -69,6 +69,11 @@
         ".write": "auth != null && auth.uid === $uid && !data.exists() && auth.token.email != null && root.child('profiles').child(auth.uid).exists()",
         ".validate": "newData.isString() && root.child('fcodes').child(newData.val()).val() === $uid"
       }
+    },
+    "guestN": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() : 0) + 1"
     }
   }
 }
