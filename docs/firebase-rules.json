@@ -42,8 +42,8 @@
       "$uid": {
         ".read": "auth != null",
         "$fid": {
-          ".write": "auth != null && auth.uid === $uid",
-          ".validate": "newData.hasChildren(['n', 't']) && newData.child('n').isString() && newData.child('n').val().length <= 12"
+          ".write": "auth != null && auth.uid === $uid && (!newData.exists() || (auth.token.email != null && root.child('profiles').child(auth.uid).exists() && root.child('profiles').child($fid).exists()))",
+          ".validate": "!newData.exists() || (newData.hasChildren(['n', 't']) && newData.child('n').isString() && newData.child('n').val().length <= 12)"
         }
       }
     },
@@ -51,7 +51,7 @@
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         "$key": {
-          ".write": "auth != null && (auth.uid === $uid || $key === auth.uid + '_f' || $key === auth.uid + '_r')",
+          ".write": "auth != null && (auth.uid === $uid || (($key === auth.uid + '_f' || $key === auth.uid + '_r') && auth.token.email != null && root.child('profiles').child(auth.uid).exists() && root.child('profiles').child($uid).exists()))",
           ".validate": "!newData.exists() || auth.uid === $uid || (newData.hasChildren(['k', 'n', 't']) && newData.child('n').isString() && newData.child('n').val().length <= 12 && newData.child('t').val() === now)"
         }
       }
@@ -59,7 +59,7 @@
     "fcodes": {
       "$code": {
         ".read": "auth != null",
-        ".write": "auth != null && !data.exists() && newData.val() === auth.uid",
+        ".write": "auth != null && !data.exists() && newData.val() === auth.uid && auth.token.email != null && root.child('profiles').child(auth.uid).exists()",
         ".validate": "$code.length === 6"
       }
     }
