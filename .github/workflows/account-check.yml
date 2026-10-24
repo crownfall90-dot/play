@@ -1,0 +1,20 @@
+name: Account check
+
+# Read-only: which account holds which nickname (e-mails are masked in the log).
+on:
+  workflow_dispatch:
+    inputs:
+      nicknames:
+        description: Ники через пробел
+        type: string
+        default: lancaster kaka
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          NICKS: ${{ inputs.nicknames }}
+        run: python3 scripts/account-check.py $NICKS
