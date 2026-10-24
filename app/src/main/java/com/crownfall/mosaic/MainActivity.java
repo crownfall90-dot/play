@@ -96,12 +96,15 @@ public class MainActivity extends Activity {
     private String insetsJs = "";
 
     /** Camera cutout sizes in CSS pixels → --it/--ib/--il/--ir; --itg is the top gap for the game screen. */
+    /** The reference phone the layout was tuned on: realme GT3 240W, 6.74 inches. It is shown at scale 1. */
+    private static final double REFERENCE_INCHES = 6.74;
+
     /**
-     * The game is laid out for a phone of about 6.1 inches; a bigger or smaller phone scales the whole page
-     * so buttons and text keep the same physical size. Limited to 0.85–1.2 (tablets are not stretched further).
+     * Every other phone scales the whole page by its screen size relative to the reference phone, so buttons and
+     * text keep the same physical size. Limited to 0.85–1.2 (tablets are not stretched further).
      */
     float uiScale() {
-        return (float) Math.max(0.85, Math.min(1.2, screenInches() / 6.1));
+        return (float) Math.max(0.85, Math.min(1.2, screenInches() / REFERENCE_INCHES));
     }
 
     /**

@@ -5,10 +5,8 @@ in /profiles, /presence and /leaders, and the account's sign-in methods. E-mails
 Usage: FIREBASE_SERVICE_ACCOUNT='<json>' scripts/account-check.py nick1 nick2 ...
 """
 import json, os, sys, urllib.request
-sys.path.insert(0, os.path.dirname(__file__))
-import importlib.util
-spec = importlib.util.spec_from_file_location('an', os.path.join(os.path.dirname(__file__), 'assign-numbers.py'))
-an = importlib.util.module_from_spec(spec); spec.loader.exec_module(an)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fbadmin as an
 
 mask = lambda e: (e[:1] + '***@' + e.split('@')[-1]) if e else '-'
 

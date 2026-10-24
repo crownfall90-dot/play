@@ -7,9 +7,8 @@ Usage: FIREBASE_SERVICE_ACCOUNT='<json>' scripts/delete-player.py UID_PREFIX|tes
 With `tests` it removes every guest whose version is one only the project's test runs write.
 """
 import json, os, sys, urllib.request
-import importlib.util
-spec = importlib.util.spec_from_file_location('an', os.path.join(os.path.dirname(__file__), 'assign-numbers.py'))
-an = importlib.util.module_from_spec(spec); spec.loader.exec_module(an)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import fbadmin as an
 
 
 # Version strings that only the test runs of this project ever wrote to /presence (real builds report 1.0.N
