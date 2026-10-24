@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Реки петляют, по берегам камыш и камни; у дорог колеи и обочины; в деревнях мостовые и разные крыши; тополя\n• Новые пазлы: тупик у валунов, вход в шахту, тупик со шлагбаумом, поле с валунами, излучина реки с дорогой\n• Перед партией колода перемешивается и первая карта ложится в центр; каждый ход карта летит из стопки\n• Достроенные объекты остаются в цвете владельца и отмечаются его флажками\n• Покупка фигурки в магазине — с подтверждением"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Большой каменный мост из двух пазлов: половинки собираются в один мост над озером\n• Маленькие деревянные мосты через реку стали красивее\n• Анимация загрузки собирает пазлы по правилам: дорога к дороге, река к реке, город к городу\n• Петляющие реки, новые пазлы, анимация колоды, флажки владельца, подтверждение покупки"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -730,7 +730,7 @@ const TYPES = {
   r3:{e:'frrr',n:3,name:'Развилка'}, r4:{e:'rrrr',n:1,name:'Перекрёсток'},
   fort:{e:'ffff',n:3,fort:true,name:'Крепость'}, fortR:{e:'ffrf',n:2,fort:true,name:'Крепость с дорогой'},
   wS:{e:'wfwf',n:2,name:'Река'}, wC:{e:'wwff',n:2,name:'Излучина реки'},
-  wBr:{e:'wrwr',n:1,name:'Мост через реку'}, wCity:{e:'wcwf',n:1,name:'Город у реки'},
+  wBr:{e:'wrwr',n:2,name:'Мост через реку'}, brHalf:{e:'fbfr',n:4,bridge:true,name:'Половина большого моста'}, wCity:{e:'wcwf',n:1,name:'Город у реки'},
   wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
   rEnd:{e:'rfff',n:1,end:'barrier',name:'Тупик'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
@@ -810,7 +810,7 @@ function drawTile(id) {
     const A = mid[a], ia = [-V[a][0], -V[a][1]];
     if (b == null) { const M = [C[0] + (R() - .5) * 16, C[1] + (R() - .5) * 16]; return [[A, [A[0] + ia[0] * S * .22 + ia[1] * S * .12, A[1] + ia[1] * S * .22 - ia[0] * S * .12], [M[0] - ia[0] * 10, M[1] - ia[1] * 10], M]]; }
     const B = mid[b], ib = [-V[b][0], -V[b][1]];
-    const M = [C[0] + (R() - .5) * S * .24, C[1] + (R() - .5) * S * .24];
+    const M = id === 'wBr' ? [C[0], C[1]] : [C[0] + (R() - .5) * S * .24, C[1] + (R() - .5) * S * .24];
     let tx = B[0] - A[0] + (ib[0] - ia[0]) * 0, ty = B[1] - A[1]; const L = Math.hypot(tx, ty) || 1; tx = tx / L * S * .2; ty = ty / L * S * .2;
     return [[A, [A[0] + ia[0] * S * .26, A[1] + ia[1] * S * .26], [M[0] - tx, M[1] - ty], M], [M, [M[0] + tx, M[1] + ty], [B[0] + ib[0] * S * .26, B[1] + ib[1] * S * .26], B]];
   };
@@ -843,17 +843,36 @@ function drawTile(id) {
   const r = idx('r');
   if (r.length === 2) { strip(r[0], r[1], ROAD); pebbles(r[0], r[1]); } else r.forEach(d => { strip(d, null, ROAD); pebbles(d, null); });
   if (def.end) { g.beginPath(); g.ellipse(C[0], C[1], 22, 18, 0, 0, 7); g.fillStyle = '#c7a874'; g.fill(); g.beginPath(); g.ellipse(C[0], C[1], 17, 13, 0, 0, 7); g.fillStyle = '#d9bf88'; g.fill(); }
-  else if (r.length >= 3 || (r.length === 1 && !def.fort)) {
+  else if (r.length >= 3 || (r.length === 1 && !def.fort && !def.bridge)) {
     g.beginPath(); g.arc(C[0], C[1], 15, 0, 7); g.fillStyle = '#7a603b'; g.fill();
     g.beginPath(); g.arc(C[0], C[1], 12, 0, 7); g.fillStyle = '#d9bf88'; g.fill();
     g.beginPath(); g.arc(C[0], C[1], 5, 0, 7); g.fillStyle = '#5a6e7c'; g.fill(); g.strokeStyle = '#8b8478'; g.lineWidth = 2.5; g.stroke();
   }
   if (def.rocks) for (let k = 0; k < 10; k++) { g.fillStyle = 'rgba(110,100,85,.35)'; g.beginPath(); g.ellipse(30 + R() * 132, 30 + R() * 132, 3 + R() * 4, 2 + R() * 2, R() * 3, 0, 7); g.fill(); }
   if (id === 'wBr') {
-    g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(C[0] - 30, C[1] - 12, 60, 28);
-    g.fillStyle = '#a8743f'; g.fillRect(C[0] - 30, C[1] - 15, 60, 30);
-    g.fillStyle = '#7e532a'; for (let x = C[0] - 28; x < C[0] + 30; x += 6) g.fillRect(x, C[1] - 15, 1.5, 30);
-    g.fillStyle = '#5d3c1d'; g.fillRect(C[0] - 32, C[1] - 17, 64, 4); g.fillRect(C[0] - 32, C[1] + 13, 64, 4);
+    // small humpbacked wooden bridge: shadow on the water, planks, side beams, posts and rails
+    g.fillStyle = 'rgba(0,30,60,.35)'; g.beginPath(); g.ellipse(C[0] + 3, C[1] + 5, 32, 17, 0, 0, 7); g.fill();
+    const pl = g.createLinearGradient(0, C[1] - 15, 0, C[1] + 15); pl.addColorStop(0, '#c08a4d'); pl.addColorStop(.5, '#a8743f'); pl.addColorStop(1, '#8a5a2e');
+    g.fillStyle = pl; g.fillRect(C[0] - 32, C[1] - 14, 64, 28);
+    g.fillStyle = 'rgba(60,35,15,.55)'; for (let x = C[0] - 30; x < C[0] + 32; x += 5.5) g.fillRect(x, C[1] - 14, 1.2, 28);
+    g.fillStyle = 'rgba(255,230,190,.25)'; g.fillRect(C[0] - 32, C[1] - 14, 64, 4);
+    for (const y of [C[1] - 17, C[1] + 13]) { g.fillStyle = '#5d3c1d'; g.fillRect(C[0] - 34, y, 68, 4); g.fillStyle = '#7e532a'; g.fillRect(C[0] - 34, y, 68, 1.5); for (let x = C[0] - 33; x <= C[0] + 30; x += 15.5) { g.fillStyle = '#4a2f17'; g.fillRect(x, y - 3, 4, 7); } }
+  }
+  if (id === 'brHalf') {
+    // one half of a big stone bridge over a wide water: the other half is the same piece turned round
+    const lake = new Path2D(); lake.moveTo(S, S * .14); lake.bezierCurveTo(S * .6, S * .12, S * .38, S * .3, S * .4, S * .5); lake.bezierCurveTo(S * .38, S * .7, S * .6, S * .88, S, S * .86); lake.closePath();
+    g.save(); g.fillStyle = '#cdbf86'; g.lineWidth = 12; g.strokeStyle = '#cdbf86'; g.stroke(lake); g.fill(lake); g.restore();
+    const wg = g.createLinearGradient(S * .4, 0, S, 0); wg.addColorStop(0, '#4a9fe3'); wg.addColorStop(1, '#2a6fb4'); g.fillStyle = wg; g.fill(lake);
+    g.save(); g.clip(lake); g.strokeStyle = 'rgba(225,245,255,.5)'; g.lineWidth = 1.2; for (let k = 0; k < 9; k++) { const x = S * .5 + R() * S * .48, y = S * .2 + R() * S * .6; g.beginPath(); g.arc(x, y, 4 + R() * 3, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); } g.restore();
+    g.strokeStyle = '#3f7d2c'; g.lineWidth = 1.4; for (let k = 0; k < 8; k++) { const t = R(), x = S * .42 + Math.sin(t * 3.14) * -4, y = S * (.25 + t * .5); g.beginPath(); g.moveTo(x - 8, y + 3); g.lineTo(x - 9 - R() * 2, y - 5); g.stroke(); }
+    // arches: dark half-moons under both parapets, then the deck, paving and parapets with copings
+    g.fillStyle = 'rgba(0,25,55,.45)'; for (const x of [S * .62, S * .9]) for (const sy of [-1, 1]) { g.beginPath(); g.ellipse(x, C[1] + sy * 22, 13, 9, 0, 0, 7); g.fill(); }
+    const dk = g.createLinearGradient(0, C[1] - 18, 0, C[1] + 18); dk.addColorStop(0, '#d6ccb6'); dk.addColorStop(.5, '#c2b69c'); dk.addColorStop(1, '#a89b80');
+    g.fillStyle = dk; g.fillRect(S * .36, C[1] - 18, S * .64, 36);
+    g.strokeStyle = 'rgba(80,70,55,.35)'; g.lineWidth = .8; for (let x = S * .36 + 6; x < S; x += 9) { g.beginPath(); g.moveTo(x, C[1] - 12); g.lineTo(x, C[1] + 12); g.stroke(); }
+    g.beginPath(); g.moveTo(S * .36, C[1]); g.lineTo(S, C[1]); g.stroke();
+    for (const y of [C[1] - 21, C[1] + 15]) { g.fillStyle = '#8f8470'; g.fillRect(S * .34, y, S * .66, 6); g.fillStyle = '#e4dbc6'; g.fillRect(S * .34, y, S * .66, 2); for (let x = S * .34; x < S; x += 12) { g.fillStyle = 'rgba(60,50,40,.35)'; g.fillRect(x, y, 1, 6); } }
+    g.fillStyle = '#7d725f'; g.fillRect(S * .33, C[1] - 23, 6, 46);
   }
   const cp = cityPaths(E);
   if (cp) {
@@ -1083,7 +1102,7 @@ const legalRots = (type, x, y) => [0,1,2,3].filter(r => fits(type, r, x, y));
 function allMoves(type) { const out = []; for (const c of emptyCells()) for (const r of legalRots(type, c.x, c.y)) out.push({x: c.x, y: c.y, r}); return out; }
 function groupsOf(t) {
   const by = {c: [], r: []};
-  for (let d = 0; d < 4; d++) { const k = edgeAt(t, d); if (by[k]) by[k].push(d); }
+  for (let d = 0; d < 4; d++) { const k = edgeAt(t, d); if (by[k === 'b' ? 'r' : k]) by[k === 'b' ? 'r' : k].push(d); }
   const gs = [];
   if (by.c.length) gs.push({kind: 'c', edges: by.c});
   if (by.r.length === 2) gs.push({kind: 'r', edges: by.r}); else by.r.forEach(d => gs.push({kind: 'r', edges: [d]}));
@@ -1158,7 +1177,7 @@ function addDecor(el, t, delay) {
   if (end) { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
   if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
   for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
-    if (E[a] === 'c' || E[b] === 'c' || lowGfx()) continue;
+    if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
     if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.33 + R()*.06) + (R() - .5) * .06, sy * (.33 + R()*.06)]); }
   }
   items.sort((p, q) => p[2] - q[2]);
@@ -3003,8 +3022,43 @@ dailyBonus(); renderResume(); renderPrefs();
 if (isApp) setTimeout(offerTutorial, 1600);
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
-// Loaders show real tiles of the village being laid one by one.
-{ const kinds = Object.keys(TILE_URL); document.querySelectorAll('.pz i').forEach((el, i) => { el.style.backgroundImage = `url(${TILE_URL[kinds[(i * 7 + 3) % kinds.length]]})`; }); }
+/* Loaders lay real pieces one by one, and they fit like in a game: road to road, river to river,
+   town to town. Each cycle shows a new 3x3 layout found by a small backtracking search. */
+const loaderImgs = {};
+function loaderLayout() {
+  const bag = Object.keys(TYPES).filter(k => !TYPES[k].e.includes('b') && TYPES[k].e !== 'ffff').flatMap(k => Array(TYPES[k].n).fill(k));
+  const grid = [], side = (c, d) => TYPES[c.type].e[(d - c.r + 4) % 4];
+  const fitsAt = (i, type, r) => { const e = d => TYPES[type].e[(d - r + 4) % 4];
+    return !(i % 3 && side(grid[i - 1], 1) !== e(3)) && !(i >= 3 && side(grid[i - 3], 2) !== e(0)); };
+  const solve = i => {
+    if (i === 9) return true;
+    for (let k = 0; k < 80; k++) {
+      const type = bag[(Math.random() * bag.length) | 0], r = (Math.random() * 4) | 0;
+      if (!fitsAt(i, type, r)) continue;
+      grid[i] = {type, r};
+      if (solve(i + 1)) return true;
+    }
+    return false;
+  };
+  return solve(0) ? grid : null;
+}
+function pieceUrl({type, r}) {
+  const img = loaderImgs[type]; if (!img || !img.complete) return TILE_URL[type];
+  const c = document.createElement('canvas'); c.width = c.height = 96; const g = c.getContext('2d');
+  g.translate(48, 48); g.rotate(r * Math.PI / 2); g.drawImage(img, -48, -48, 96, 96);
+  return c.toDataURL('image/jpeg', .85);
+}
+function relayLoader(pz) {
+  const grid = loaderLayout(); if (!grid) return;
+  pz.querySelectorAll('i').forEach((el, i) => { el.style.backgroundImage = `url(${pieceUrl(grid[i])})`; });
+}
+Promise.all(Object.keys(TYPES).map(k => new Promise(res => { const im = new Image(); im.onload = im.onerror = res; im.src = TILE_URL[k]; loaderImgs[k] = im; }))).then(() => {
+  document.querySelectorAll('.pz').forEach(pz => {
+    relayLoader(pz);
+    // all pieces are hidden at the end of a cycle: swap in a new layout then
+    pz.querySelector('i').addEventListener('animationiteration', () => relayLoader(pz));
+  });
+});
 window.__ready = true;
 // In the app the loader stays a moment as a splash, long enough to see a few tiles land.
 { const boot = $('#boot'); if (boot) setTimeout(() => { boot.classList.add('gone'); setTimeout(() => boot.remove(), 400); }, isApp ? 1400 : 0); }
