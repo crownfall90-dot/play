@@ -3562,14 +3562,17 @@ const AUTH_ERR = {
   WEAK_PASSWORD: ['Пароль слишком простой — нужно хотя бы 6 символов', 'pass'],
   MISSING_PASSWORD: ['Введите пароль', 'pass'],
   USER_DISABLED: ['Этот профиль отключён. Напишите в поддержку', 'mail'],
-  OPERATION_NOT_ALLOWED: ['Вход по почте ещё не включён на сервере', ''],
   TOO_MANY_ATTEMPTS_TRY_LATER: ['Слишком много попыток подряд. Подождите несколько минут или смените пароль через «Забыли пароль?»', ''],
   CREDENTIAL_TOO_OLD_LOGIN_AGAIN: ['Для этого нужно войти заново', ''],
 };
-const authErr = j => {
+// Server-side setup problems (sign-in method off, e-mail change blocked…) are not the player's
+// fault: they get a calm message, and the exact answer goes to the crash reports for the owner.
+const authErr = (j, link) => {
   if (!j || !j.error) return ['Нет связи с сервером — проверьте интернет', ''];
   const c = String(j.error.message || '').split(' ')[0];
-  return AUTH_ERR[c] || ['Не получилось. Попробуйте ещё раз', ''];
+  if (AUTH_ERR[c]) return AUTH_ERR[c];
+  try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError('auth ' + (link ? 'link' : 'login') + ': ' + String(j.error.message).slice(0, 300)); } catch (_) {}
+  return [link ? 'Не удалось сохранить профиль. Попробуйте позже — золото и прогресс никуда не денутся' : 'Не удалось войти. Попробуйте чуть позже', ''];
 };
 const authMsg = j => authErr(j)[0];
 // Common slips in the mail domain → the likely intended one.
@@ -3631,7 +3634,7 @@ function accountDialog(mode, prefill) {
     passEl.classList.toggle('bad', field === 'pass' || field === 'both');
     if (field === 'mail') mailEl.focus(); else if (field === 'pass') passEl.focus();
   };
-  const showErr = j => { const [t, f] = authErr(j); err(t, f); if (link && j && j.error && /^EMAIL_EXISTS/.test(j.error.message)) offerLogin(); };
+  const showErr = j => { const [t, f] = authErr(j, link); err(t, f); if (link && j && j.error && /^EMAIL_EXISTS/.test(j.error.message)) offerLogin(); };
   // "This mail already has a profile": one tap switches to signing in with it.
   const offerLogin = () => {
     const b = document.createElement('button'); b.className = 'linkbtn'; b.textContent = 'Войти с этой почтой';
