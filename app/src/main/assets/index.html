@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Большой каменный мост из двух пазлов: половинки собираются в один мост над озером\n• Маленькие деревянные мосты через реку стали красивее\n• Анимация загрузки собирает пазлы по правилам: дорога к дороге, река к реке, город к городу\n• Петляющие реки, новые пазлы, анимация колоды, флажки владельца, подтверждение покупки"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Нажмите «N в сети» на кнопке «Играть онлайн» — откроется список игроков: кто в меню, кто ищет соперников, кто играет\n• 48 новых редких пазлов: теперь для любого места на поле, как бы ни лежали соседи, в игре есть подходящая карта\n• Большой мост из двух пазлов; анимация загрузки собирает пазлы по правилам"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -212,6 +212,9 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .shuffle .cback{position:absolute;left:-36px;top:-36px;width:72px;height:72px}
 .flycard{position:fixed;width:22px;height:22px;z-index:40;pointer-events:none;transform-origin:0 0}
 .flycard .cback{border-width:1.5px;border-radius:3px}
+.olist ul{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;text-align:left}
+.olist .lead i{color:#3fc27a;font-size:12px;width:16px}.olist .lead small{color:var(--muted);font-size:11.5px;white-space:nowrap}
+.onlineN{cursor:pointer}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -735,6 +738,25 @@ const TYPES = {
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
   rEnd:{e:'rfff',n:1,end:'barrier',name:'Тупик'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
 };
+/* Rare pieces: one for every edge combination the regular set lacks, so whatever surrounds an
+   empty spot, some piece in the game fits it (a big-bridge edge counts as a road for fitting). */
+const normEdge = k => k === 'b' ? 'r' : k;
+(() => {
+  const rots = s => [0, 1, 2, 3].map(r => [0, 1, 2, 3].map(d => s[(d - r + 4) % 4]).join(''));
+  const have = new Set(); for (const id in TYPES) rots([...TYPES[id].e].map(normEdge).join('')).forEach(x => have.add(x));
+  const K = 'crfw';
+  for (const a of K) for (const b of K) for (const c of K) for (const d of K) {
+    const e = a + b + c + d; if (have.has(e)) continue;
+    rots(e).forEach(x => have.add(x));
+    TYPES['x' + e] = {e, n: 1, rare: true, name: rareName(e)};
+  }
+})();
+function rareName(e) {
+  const n = k => [...e].filter(x => x === k).length, parts = [];
+  if (n('c')) parts.push('город'); if (n('w')) parts.push(n('w') >= 3 ? 'слияние рек' : 'река'); if (n('r')) parts.push(n('r') >= 3 ? 'развилка' : 'дорога');
+  const t = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' и ' + parts[parts.length - 1] : parts[0] || 'поле';
+  return t[0].toUpperCase() + t.slice(1);
+}
 const KIND = {c:'Город',r:'Дорога',f:'Крепость'};
 
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
@@ -1094,7 +1116,7 @@ const edgeAt = (t, d) => TYPES[t.type].e[(d - t.r + 4) % 4];
 function fits(type, r, x, y) {
   if (at(x, y)) return false;
   let n = 0;
-  for (let d = 0; d < 4; d++) { const nb = at(x + DX[d], y + DY[d]); if (!nb) continue; n++; if (edgeAt(nb, (d + 2) % 4) !== TYPES[type].e[(d - r + 4) % 4]) return false; }
+  for (let d = 0; d < 4; d++) { const nb = at(x + DX[d], y + DY[d]); if (!nb) continue; n++; if (normEdge(edgeAt(nb, (d + 2) % 4)) !== normEdge(TYPES[type].e[(d - r + 4) % 4])) return false; }
   return n > 0;
 }
 function emptyCells() { const m = new Map(); for (const t of tiles.values()) for (let d = 0; d < 4; d++) { const x = t.x + DX[d], y = t.y + DY[d]; if (!at(x, y)) m.set(key(x, y), {x, y}); } return [...m.values()]; }
@@ -2402,17 +2424,27 @@ async function presenceMark(on) {
     const tok = await fbToken();
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
-    if (on) await fetch(url, {method: 'PUT', body: '{"t":{".sv":"timestamp"}}'});
+    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: clean(setup.seats[0].name) || 'Игрок', s: presenceState()})});
     else await fetch(url, {method: 'DELETE', keepalive: true});
   } catch (_) {}
 }
+// What this player is doing, shown in the "who is online" list.
+function presenceState() {
+  if (mm) return 'search';
+  if (gameVisible && phase !== 'end' && players.length) return net ? 'online' : 'bots';
+  return 'menu';
+}
+const STATE_TEXT = {search: 'ищет соперников', online: 'играет онлайн', bots: 'играет с ботами', menu: 'в меню'};
+let presenceList = [], presenceSoon = 0;
 async function presenceCount() {
   if (!FB) return;
   try {
     const tok = await fbToken();
     const r = await fetch(`${FB.dbUrl}/presence.json?auth=${tok}&orderBy=%22t%22&startAt=${Date.now() - 150000}`);
     if (!r.ok) return;
-    const n = Object.keys((await r.json()) || {}).length;
+    const all = (await r.json()) || {};
+    presenceList = Object.entries(all).map(([uid, v]) => ({uid, ...v})).sort((a, b) => (b.uid === (fbAuth && fbAuth.uid)) - (a.uid === (fbAuth && fbAuth.uid)) || b.t - a.t);
+    const n = presenceList.length;
     document.querySelectorAll('.onlineN').forEach(e => { e.hidden = !n; e.querySelector('b').textContent = n; });
   } catch (_) {}
 }
@@ -2935,6 +2967,19 @@ function offerTutorial() {
   box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); };
 }
 
+/* "Who is online": tap the green "N в сети" badge for the list of players with the game open. */
+function showOnline(e) {
+  e.stopPropagation(); e.preventDefault();
+  const me = fbAuth && fbAuth.uid;
+  const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small></li>`).join('');
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard olist"><h3>Сейчас в игре: ${presenceList.length}</h3><ul>${rows || '<li class="qnote">Никого</li>'}</ul><p class="shint">Список обновляется раз в минуту. Считаются все, у кого открыта игра, включая вас</p><button class="cta wide">Закрыть</button></div>`;
+  document.body.append(box);
+  box.onclick = ev => { if (ev.target === box || ev.target.closest('.cta')) box.remove(); };
+  presenceCount();
+}
+document.querySelectorAll('.onlineN').forEach(b => b.addEventListener('click', showOnline));
+
 /* ---------------- screens ---------------- */
 function show(name) {
   document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
@@ -2949,6 +2994,7 @@ function show(name) {
   if (name === 'settings') renderPrefs();
   if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
   if (name === 'progress') renderProgress();
+  clearTimeout(presenceSoon); presenceSoon = setTimeout(() => presenceMark(true), 1500);
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-tab],[data-go]'); if (!b) return;
@@ -3026,7 +3072,7 @@ if (!isApp) newGame(); else { buildBoard(); buildMini(); }
    town to town. Each cycle shows a new 3x3 layout found by a small backtracking search. */
 const loaderImgs = {};
 function loaderLayout() {
-  const bag = Object.keys(TYPES).filter(k => !TYPES[k].e.includes('b') && TYPES[k].e !== 'ffff').flatMap(k => Array(TYPES[k].n).fill(k));
+  const bag = Object.keys(TYPES).filter(k => !TYPES[k].e.includes('b') && TYPES[k].e !== 'ffff' && !TYPES[k].rare).flatMap(k => Array(TYPES[k].n).fill(k));
   const grid = [], side = (c, d) => TYPES[c.type].e[(d - c.r + 4) % 4];
   const fitsAt = (i, type, r) => { const e = d => TYPES[type].e[(d - r + 4) % 4];
     return !(i % 3 && side(grid[i - 1], 1) !== e(3)) && !(i >= 3 && side(grid[i - 3], 2) !== e(0)); };
