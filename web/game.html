@@ -301,6 +301,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .ocard.dev .field{margin:4px 0}.devtest{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);text-align:left;margin:4px 0}
 .devtest input{width:18px;height:18px;accent-color:var(--brass)}
 .chip.addf{height:30px;padding:0 10px;margin-left:4px;flex:0 0 auto}
+.fgate{position:static;margin:0;max-width:none;width:100%;box-sizing:border-box}.fgate[hidden],#fMine[hidden],#fJoinRow[hidden]{display:none}
 .ferr{margin:0;text-align:center;font-size:13px;color:#f3c7a0;display:flex;flex-direction:column;align-items:center;gap:8px}.ferr[hidden]{display:none}
 .froom{display:flex;align-items:center;gap:10px}.froom span{flex:1}.froom .chip{height:34px;flex:0 0 auto;background:rgba(63,194,122,.18);border-color:rgba(63,194,122,.5);color:#9be9bd}
 .froom{margin:0;padding:10px 12px;border-radius:12px;background:rgba(63,194,122,.12);border:1px solid rgba(63,194,122,.35);font-size:13px;color:#bfeccf}
@@ -560,8 +561,9 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="lb">
           <div class="ltop"><button class="iconbtn" id="fBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Друзья</b></div>
           <p class="froom" id="fRoom" hidden></p>
-          <div class="codecard"><small>Ваш код друга</small><div class="code sm" id="fcode"></div><p class="ferr" id="fErr" hidden>…<button class="chip" id="fRetry">Повторить</button></p><button class="chip" id="fCopy">Скопировать и отправить</button></div>
-          <div class="joinrow"><input class="field codein" id="fCodeIn" maxlength="6" placeholder="Код друга" autocomplete="off" autocapitalize="characters"><button class="cta" id="fAdd">Добавить</button></div>
+          <div class="ocard fgate" id="fGate" hidden></div>
+          <div class="codecard" id="fMine"><small>Ваш код друга</small><div class="code sm" id="fcode"></div><p class="ferr" id="fErr" hidden>…<button class="chip" id="fRetry">Повторить</button></p><button class="chip" id="fCopy">Скопировать и отправить</button></div>
+          <div class="joinrow" id="fJoinRow"><input class="field codein" id="fCodeIn" maxlength="6" placeholder="Код друга" autocomplete="off" autocapitalize="characters"><button class="cta" id="fAdd">Добавить</button></div>
           <div class="col" id="flist"></div>
         </div>
       </section>
@@ -2162,7 +2164,7 @@ $('#figgrid').addEventListener('click', e => {
 });
 function pickFig(k) {
   wallet.fig = k; saveWallet(); renderShop();
-  if (net) netSend({t: 'hello', id: myId, uid: myUid(), name: myName(), fig: k, col: wallet.color});
+  if (net) netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: k, col: wallet.color});
 }
 // Buying spends gold, so it asks first: the figure, its price and what is left afterwards.
 function confirmBuy(k) {
@@ -2592,7 +2594,7 @@ async function presenceMark(on) {
     const tok = await fbToken();
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
-    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState()})});
+    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0})});
     else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off'})});
   } catch (_) {}
 }
@@ -2637,7 +2639,7 @@ function connect(code, asHost, quick) {
   net.close = TRANSPORT.listen(code, {
     open() {
       if (opened || net !== me) return; opened = true;
-      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color}));
+      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color}));
       if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { if (me.quick) return matchSkip(code); toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
     },
     error() { if (!opened && net === me) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); if (me.quick) stopMatch(); } },
@@ -2657,7 +2659,7 @@ function onNet(d) {
   if (m.t === 'hello' && net.host && live) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
     const s = seats.find(x => x.owner === m.id);
-    const uid = typeof m.uid === 'string' ? m.uid.slice(0, 64) : null;
+    const uid = typeof m.uid === 'string' && m.reg ? m.uid.slice(0, 64) : null; // only saved profiles can be added as friends
     if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig || s.col !== m.col || s.uid !== uid) { s.name = clean(m.name); s.fig = m.fig; s.col = m.col; s.uid = uid; publishLobby(seats); } }
     else if (seats.length < roomMax()) { seats.push({owner: m.id, uid, name: clean(m.name), fig: m.fig, col: m.col}); publishLobby(seats); }
     return;
@@ -2756,7 +2758,7 @@ function renderLobby() {
   renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && FB ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= roomMax();
   $('#lobbyStart').hidden = !net.host || (!!net.gameId && phase !== 'end'); $('#lobbyStart').disabled = seats.length < 2;
   $('#lobbyStart').textContent = seats.length < 2 ? 'Нужно хотя бы 2 игрока' : 'Начать игру';
@@ -2781,7 +2783,7 @@ function renderMyColor() {
 $('#myColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = sw.dataset.sw; saveWallet(); renderMyColor();
-  if (net) netSend({t: 'hello', id: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color});
+  if (net) netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
 });
 $('#create').onclick = () => openSetup('friends');
 const newCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); };
@@ -3183,7 +3185,7 @@ function offerTutorial() {
 function showOnline(e) {
   e.stopPropagation(); e.preventDefault();
   const me = fbAuth && fbAuth.uid;
-  const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small>${x.uid !== me && !isFriend(x.uid) ? `<button class="chip addf" data-addf="${x.uid}" aria-label="В друзья">＋</button>` : ''}</li>`).join('');
+  const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small>${x.uid !== me && x.r && registered() && !isFriend(x.uid) ? `<button class="chip addf" data-addf="${x.uid}" aria-label="В друзья">＋</button>` : ''}</li>`).join('');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard olist"><h3>Сейчас в игре: ${presenceList.length}</h3><ul>${rows || '<li class="qnote">Никого</li>'}</ul><p class="shint">Список обновляется раз в минуту. Считаются все, у кого открыта игра, включая вас</p><button class="cta wide">Закрыть</button></div>`;
   document.body.append(box);
@@ -3213,6 +3215,16 @@ function agoText(t) {
   const m = Math.round((Date.now() - t) / 60000);
   if (m < 1) return 'был(а) в сети только что';
   return 'был(а) в сети ' + (m < 60 ? m + ' мин назад' : m < 1440 ? Math.round(m / 60) + ' ч назад' : Math.round(m / 1440) + ' дн назад');
+}
+// Friends are only for finished profiles: a nickname and an e-mail account (or another sign-in
+// later). The database rules check the same: an account with an e-mail and a saved /profiles entry.
+function registered() { return !!(fbAuth && fbAuth.email && wallet.name); }
+// After signing in to another account: drop the old friends and listen to the new inbox.
+function socialReset() {
+  friends = []; inbox = {}; fcodeErr = '';
+  if (inboxEs) { inboxEs.close(); inboxEs = null; }
+  if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); }
+  friendsDot(); if (!$('#scr-friends').hidden) openFriends();
 }
 // My friend code, made once per account.
 // fcodeErr: 'rules' — the database rules for friends are not published yet; 'net' — no connection.
@@ -3245,13 +3257,17 @@ async function addFriend(uid, name) {
   const me = myUid();
   if (!uid || uid === me) return toastAny('Это ваш код');
   if (friends.length >= FRIEND_MAX) return toastAny('Друзей уже ' + FRIEND_MAX);
+  if (!registered()) return show('friends');
   try {
     const p = await fbGet('presence/' + uid).catch(() => null), n = clean(name) || clean(p && p.n) || 'Игрок';
     await fbPut(`friends/${me}/${uid}`, {n, t: {'.sv': 'timestamp'}});
     await fbPut(`inbox/${uid}/${me}_f`, {k: 'f', n: profileName(), t: {'.sv': 'timestamp'}});
     toastAny(`Заявка отправлена: ${n}`); beep('tap');
     await loadFriends(); renderFriends();
-  } catch (_) { toastAny('Не получилось — проверьте интернет'); }
+  } catch (e) {
+    fbDel(`friends/${me}/${uid}`);
+    toastAny(/401/.test(e.message) ? 'Этот игрок ещё не сохранил профиль — дружить можно только с сохранёнными' : 'Не получилось — проверьте интернет');
+  }
 }
 async function addByCode(code) {
   code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -3313,7 +3329,7 @@ function popInbox(k, v) {
   box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; box.remove(); if (b.dataset.a === 'go') joinInvite(k); };
   document.body.append(box); beep('turn');
 }
-async function inboxPoll() { if (!FB) return; try { await fbToken(); onInbox(await fbGet('inbox/' + myUid())); } catch (_) {} }
+async function inboxPoll() { if (!FB || !registered()) return; try { await fbToken(); onInbox(await fbGet('inbox/' + myUid())); } catch (_) {} }
 async function inboxListen() {
   if (!FB || inboxEs) return;
   try {
@@ -3333,7 +3349,14 @@ function friendsDot() {
 const fRow = (f, btn, sub) => `<li class="lead frow${f.on ? ' on' : ''}"><span class="av" style="--c:${f.c || (f.on ? '#3fc27a' : '#5b6684')}">${(f.n || '?')[0]}</span><span class="fwho"><b>${f.n}</b><small>${sub}</small></span>${btn}</li>`;
 function renderFriends() {
   const box = $('#flist'); if (!box || $('#scr-friends').hidden) return;
-  if (!FB) { box.innerHTML = '<p class="shint">Друзья доступны в приложении с интернетом</p>'; return; }
+  const gate = !FB || !registered();
+  $('#fGate').hidden = !gate; $('#fMine').hidden = gate; $('#fJoinRow').hidden = gate;
+  if (!FB) { $('#fGate').innerHTML = '<p>Друзья доступны в приложении с интернетом</p>'; box.innerHTML = ''; return; }
+  if (gate) {
+    const step = !wallet.name ? ['Придумайте никнейм', 'fgName'] : ['Сохраните профиль', 'fgLink'];
+    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и вход по почте с паролем. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button><button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>`;
+    box.innerHTML = ''; return;
+  }
   const has = wallet.fcode && wallet.fcodeUid === myUid();
   $('#fcode').innerHTML = has ? [...wallet.fcode].map(c => `<span>${c}</span>`).join('') : fcodeErr ? '' : '<span>…</span>';
   $('#fErr').hidden = has || !fcodeErr; $('#fCopy').hidden = !has;
@@ -3354,7 +3377,7 @@ function renderFriends() {
 let friendsTimer = 0;
 async function openFriends() {
   renderFriends(); clearTimeout(friendsTimer);
-  if (!FB) return;
+  if (!FB || !registered()) return;
   try { await friendCode(); } catch (_) {}
   await Promise.all([loadFriends().catch(() => {}), inboxPoll()]);
   renderFriends(); friendsDot();
@@ -3459,6 +3482,10 @@ function devPanel() {
 }
 $('#devBtn').onclick = devPanel;
 $('#fAdd').onclick = () => addByCode($('#fCodeIn').value);
+$('#fGate').addEventListener('click', e => {
+  const id = e.target.id;
+  if (id === 'fgName') askProfile(); else if (id === 'fgLink') accountDialog('link'); else if (id === 'fgLogin') accountDialog('login');
+});
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
 $('#fCopy').onclick = () => wallet.fcode && copyText(`Добавь меня в друзья в Puzzlegrad: код ${wallet.fcode}`, 'Код скопирован — отправьте его другу');
 function confirmBox(text, yes, ok) {
@@ -3467,7 +3494,7 @@ function confirmBox(text, yes, ok) {
   document.body.append(box);
   box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b && e.target !== box) return; box.remove(); if (b && b.dataset.a === 'y') ok(); };
 }
-if (FB) setTimeout(() => { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); }, 2500);
+if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 $('#friendsBtn').onclick = () => { friendsBack = 'menu'; show('friends'); };
 
@@ -3519,14 +3546,15 @@ function accountDialog(mode) {
       if (link) {
         await fbToken();
         const j = await idt('update', {idToken: fbAuth.idToken, email: mail(), password: pass(), returnSecureToken: true});
-        keepAuth(j, mail()); await cloudSave(); box.remove(); toastAny('Профиль сохранён'); renderAccount();
+        keepAuth(j, mail()); await cloudSave(); box.remove(); toastAny('Профиль сохранён'); renderAccount(); presenceMark(true); socialReset();
       } else {
         const j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true});
         keepAuth(j, mail());
         const ok = await cloudLoad(); box.remove();
         wallet.tut = wallet.tutAsked = true; saveWallet();
         toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
-        renderAccount(); renderSetup(); renderShop && renderShop(); progressDot(); show('menu'); presenceMark(true); syncRating();
+        const toFriends = !$('#scr-friends').hidden;
+        renderAccount(); renderSetup(); renderShop && renderShop(); progressDot(); show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
         if (!wallet.name) askProfile();
       }
     } catch (j) { err(authMsg(j)); go.disabled = false; }
