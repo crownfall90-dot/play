@@ -3481,15 +3481,14 @@ function devPanel() {
   });
 }
 $('#devBtn').onclick = devPanel;
-/* Notifications are off (in Android or in the game's settings): once a week, on the main menu,
-   offer to turn them on. The first offer comes a day after the first start. */
-const NOTIF_EVERY = 7 * 864e5;
+/* Notifications are off (in Android or in the game's settings): offer to turn them on the first
+   time the main menu shows, then every 2 days. */
+const NOTIF_EVERY = 2 * 864e5;
 const notifOff = () => !!window.AndroidApp && AndroidApp.notificationsAllowed && (!wallet.notify || !AndroidApp.notificationsAllowed());
 function notifNudge() {
   if (!notifOff() || tut || document.querySelector('body > .over')) return;
   const now = Date.now();
-  if (!wallet.notifAt) { wallet.notifAt = now - NOTIF_EVERY + 864e5; saveWallet(); return; }
-  if (now - wallet.notifAt < NOTIF_EVERY) return;
+  if (now - (wallet.notifAt || 0) < NOTIF_EVERY) return;
   wallet.notifAt = now; saveWallet();
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><div style="font-size:44px">🔔</div><h3>Включите уведомления</h3><p>Вы узнаете о приглашениях в игру, новых версиях, турнирах и подарках. Без спама — только важное</p><button class="cta wide" data-n="on">Включить</button><button class="ghostbtn" data-n="no">Не сейчас</button></div>`;
