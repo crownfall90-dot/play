@@ -277,6 +277,25 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void logError(String message) { report(new RuntimeException("JS: " + message)); }
 
+        /** Firebase Analytics event from the game: name and flat JSON params (strings and numbers). */
+        @JavascriptInterface
+        public void logEvent(String name, String json) {
+            try {
+                if (FirebaseApp.getApps(MainActivity.this).isEmpty()) return;
+                android.os.Bundle b = new android.os.Bundle();
+                org.json.JSONObject o = new org.json.JSONObject(json == null || json.isEmpty() ? "{}" : json);
+                for (java.util.Iterator<String> it = o.keys(); it.hasNext(); ) {
+                    String k = it.next();
+                    Object v = o.get(k);
+                    if (v instanceof Number) b.putDouble(k, ((Number) v).doubleValue());
+                    else b.putString(k, String.valueOf(v));
+                }
+                com.google.firebase.analytics.FirebaseAnalytics.getInstance(MainActivity.this).logEvent(name, b);
+            } catch (Exception e) {
+                report(e);
+            }
+        }
+
         /** Whether Android lets the game show notifications (the system switch, not the in-game one). */
         @JavascriptInterface
         public boolean notificationsAllowed() {
