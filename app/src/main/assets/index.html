@@ -3791,6 +3791,7 @@ const saveBase = (w, t) => { try { localStorage.setItem('walletBase', JSON.strin
 function mergeVal(k, l, c, b) {
   if (c === undefined || same(c, b)) return l;
   if (l === undefined || same(l, b)) return c;
+  if (k === 'name') return c; // the nickname belongs to the account: if both sides changed it, the saved one wins
   if (k === 'streak') return (c.last || '') > (l.last || '') ? c : l; // a day claimed on both: one claim
   if (typeof l === 'number' && typeof c === 'number') return typeof b === 'number' ? c + (l - b) : Math.max(l, c);
   if (Array.isArray(l) && Array.isArray(c)) return l.concat(c).every(x => typeof x !== 'object') ? [...new Set([...c, ...l])] : l;
