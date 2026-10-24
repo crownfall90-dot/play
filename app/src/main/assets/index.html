@@ -398,6 +398,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .edgeglow{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--c,#f2b84b),inset 0 0 38px 6px var(--c,#f2b84b)}
 .edgeglow.on{animation:edge 2.4s ease-in-out}
 @keyframes edge{0%,100%{opacity:0}15%,45%,75%{opacity:1}30%,60%{opacity:.35}}
+.timer{display:flex;align-items:center;gap:6px}.timer i{width:9px;height:9px;border-radius:50%;background:var(--c,#fff);flex:0 0 auto}
 .timer.low{color:#ff8a80;border-color:rgba(255,138,128,.5)}
 
 /* ---------- game ---------- */
@@ -1831,14 +1832,14 @@ function startTimer() {
   if (!secs) return;
   const el = $('#timer'), my = token, who = turn;
   let end = Date.now() + secs * 1000, last = Date.now();
-  el.hidden = false;
+  el.hidden = false; el.style.setProperty('--c', players[turn].col);
   const tick = () => {
     if (my !== token || who !== turn || !['place', 'meeple', 'handover'].includes(phase)) return stopTimer();
     const now = Date.now();
     if (phase === 'handover' || (paused && !net)) { end += now - last; last = now; return; }
     last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
+    el.innerHTML = `<i></i>${net || localHumans() > 1 ? players[who].name.slice(0, 10) + ' ' : ''}0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
     if (left > 0) return;
     stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
@@ -2818,7 +2819,22 @@ function cancelTurn() {
 function waitRemote() {
   phase = 'remote'; okBtn.disabled = rotBtn.disabled = true;
   setStatus(net ? `Ходит <b>${players[turn].name}</b>…` : 'Восстанавливаем партию…');
-  pumpRemote(); startWatch();
+  pumpRemote(); startWatch(); watchClock();
+}
+// Everyone at the table sees the clock of the player whose turn it is (this phone only shows it here;
+// the player's own phone plays the card when it runs out, or another phone does after a while).
+function watchClock() {
+  stopTimer();
+  const pl = players[turn]; if (!net || !pl || !pl.human || pl.resigned) return;
+  const secs = pl.missed >= 1 ? 2 : gameRules.timer || 60;
+  const el = $('#timer'), my = token, who = turn, end = Date.now() + secs * 1000;
+  el.hidden = false; el.style.setProperty('--c', pl.col);
+  const tick = () => {
+    if (my !== token || who !== turn || phase !== 'remote') return stopTimer();
+    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    el.innerHTML = `<i></i>${pl.name.slice(0, 10)} 0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
+  };
+  tick(); timerId = setInterval(tick, 250);
 }
 /* An online turn never stalls. If the player whose turn it is (or the room creator, who runs
    the bots) has gone, another phone plays a bot move in their name: the creator checks first,
