@@ -1,9 +1,8 @@
 name: Android APK
 
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['docs/**', 'README.md']
+  # Releases are cut only on request (workflow_dispatch): changes accumulate in release-notes.md
+  # and go out together when the owner says so. Merging to main does not release.
   workflow_dispatch:
 
 permissions:
@@ -37,6 +36,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # The notes are everything accumulated since the last release; an empty file means nothing to release.
+          test -s release-notes.md || { echo "release-notes.md is empty: add the player-facing changes first"; exit 1; }
           # Reminder: release-notes.md is what the push and the "what's new" card show.
           curl -fsSL "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/latest.json" -o prev.json 2>/dev/null || echo '{}' > prev.json
           python3 -c 'import json; p=json.load(open("prev.json")).get("notes","").strip(); n=open("release-notes.md", encoding="utf-8").read().strip(); print("::warning::release-notes.md is the same as in the previous release - update it") if p and p == n else None'

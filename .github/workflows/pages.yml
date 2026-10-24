@@ -3,9 +3,8 @@ name: Web version
 # Publishes the web version (iPhone, Android browsers, computers) to GitHub Pages on every push to
 # main. One-time setup: Settings → Pages → Source: "GitHub Actions".
 on:
-  push:
-    branches: [main]
-    paths-ignore: ['docs/**', 'README.md']
+  # Releases are cut only on request (workflow_dispatch): changes accumulate in release-notes.md
+  # and go out together when the owner says so. Merging to main does not release.
   workflow_dispatch:
 
 permissions:
