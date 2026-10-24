@@ -2685,9 +2685,20 @@ async function presenceMark(on) {
     const tok = await fbToken();
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
-    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0})});
-    else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off'})});
+    const vs = versionSeen(), dev = {p: installKind(), v: vs.v, u: vs.t};
+    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0, ...dev})});
+    else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off', ...dev})});
   } catch (_) {}
+}
+// For the owner's stats: where this copy came from (github = APK, play, web) and when this device
+// last moved to a new version, so each device counts once however many files it downloaded.
+const installKind = () => isAndroid ? (AndroidApp.store ? AndroidApp.store() : 'github') : isWeb ? 'web' : 'mock';
+function versionSeen() {
+  // Kept outside the profile: it belongs to this device, not to the account.
+  const v = isAndroid ? AndroidApp.versionName() : String(window.WEB_VERSION || '');
+  let seen = null; try { seen = JSON.parse(localStorage.getItem('verSeen')); } catch (_) {}
+  if (!seen || seen.v !== v) { seen = {v, t: Date.now()}; try { localStorage.setItem('verSeen', JSON.stringify(seen)); } catch (_) {} }
+  return seen;
 }
 // What this player is doing, shown in the "who is online" list.
 function presenceState() {
@@ -3640,13 +3651,13 @@ async function statsDialog() {
     const ago = v => now - (v.t || 0);
     const online = P.filter(v => v.s !== 'off' && ago(v) < 150000);
     const n = f => P.filter(f).length;
-    const apk = rels.reduce((sum, r) => sum + (r.assets || []).filter(a => /\.apk$/.test(a.name)).reduce((x, a) => x + a.download_count, 0), 0);
+    const app = v => v.p === 'github' || v.p === 'play';
     const tile = (num, label) => `<div class="stt"><b>${num}</b><small>${label}</small></div>`;
     const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
     out.innerHTML = `<div class="stgrid">${tile(P.length, 'игроков заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
       ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(n(v => ago(v) < 30 * D), 'за месяц')}${tile(lead ? Object.keys(lead).length : 0, 'в рейтинге')}
-      ${tile(relOk ? apk : '—', 'скачиваний APK')}${tile(rels.length || '—', 'версий вышло')}</div>
-      <p class="shint">Игрок — телефон или браузер, где открывали игру и у которого есть имя. «С профилем» считается после обновления игроков до новых версий. Скачивания APK — сколько раз скачали файл приложения с GitHub, включая обновления; игру через веб-версию или из Google Play сюда не считаем</p>`;
+      ${tile(n(app), 'с приложением')}${tile(n(v => app(v) && now - (v.u || 0) < D), 'обновились за сутки')}${tile(n(v => v.p === 'web'), 'в веб-версии')}${tile(relOk ? rels.length : '—', 'версий вышло')}</div>
+      <p class="shint">Игрок — телефон или браузер, где открывали игру и у которого есть имя. «С профилем» считается после обновления игроков до новых версий. «С приложением» — устройства, где стоит APK (или версия из Google Play): одно устройство считается один раз, сколько бы обновлений оно ни скачало. «Обновились за сутки» — сколько из них за последние 24 часа перешли на новую версию. Эти три плитки начнут заполняться, когда игроки откроют новую версию</p>`;
   } catch (_) { out.innerHTML = '<p class="shint">Не получилось загрузить — проверьте интернет</p>'; }
 }
 

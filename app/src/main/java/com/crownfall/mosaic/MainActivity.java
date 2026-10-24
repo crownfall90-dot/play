@@ -283,6 +283,9 @@ public class MainActivity extends Activity {
         public String versionName() { return BuildConfig.VERSION_NAME; }
 
         @JavascriptInterface
+        public String store() { return BuildConfig.FLAVOR; }
+
+        @JavascriptInterface
         public void startUpdate(String url) { updater.download(url); }
 
         @JavascriptInterface
