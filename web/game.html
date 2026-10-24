@@ -491,6 +491,27 @@ html.lowgfx .tile .sd.s{display:block}
 .mrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .chip{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.07);font:600 13px var(--f-body);cursor:pointer}
 .chip svg{width:14px;height:15px} .chip.skip{color:var(--muted)}
+.ocard.fin{max-width:340px;position:relative;overflow:hidden}
+.ocard.fin>*{flex-shrink:0}
+.medal{font-size:54px;line-height:1;animation:medal .7s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes medal{0%{transform:scale(.2) rotate(-25deg);opacity:0}100%{transform:none;opacity:1}}
+.standings{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:5px;text-align:left}
+.standings li{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:11px;background:rgba(255,255,255,.05);font-size:14px;animation:rise .45s both;animation-delay:var(--d,0ms)}
+.standings li.me{background:rgba(242,184,75,.16);box-shadow:inset 0 0 0 1px rgba(242,184,75,.45)}
+.standings .n{width:16px;color:var(--muted);font:800 12px var(--f-display)}.standings i{width:10px;height:10px;border-radius:50%;background:var(--c);flex:0 0 auto}
+.standings b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.standings .v{font:800 15px var(--f-display);font-variant-numeric:tabular-nums}
+@keyframes rise{0%{transform:translateY(10px);opacity:0}100%{transform:none;opacity:1}}
+.rchips{display:flex;gap:7px;justify-content:center;flex-wrap:wrap}
+.rchip{flex:1 1 0;min-width:92px;padding:9px 6px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid var(--line);display:flex;flex-direction:column;gap:2px;animation:pop .5s cubic-bezier(.2,1.5,.4,1) both;animation-delay:calc(450ms + var(--i,0) * 150ms)}
+.rchip b{font:800 17px var(--f-display);display:flex;align-items:center;justify-content:center;gap:5px;font-variant-numeric:tabular-nums}.rchip small{color:var(--muted);font-size:10.5px;line-height:1.25}
+.rchip.cup{background:rgba(242,184,75,.14);border-color:rgba(242,184,75,.5)}.rchip.cup b{color:#ffd470;font-size:20px}.rchip.cup.zero b{color:var(--muted)}
+.rchip.gold.neg b{color:#ff8a80}.rchip.xp b{color:#9bd0ff}.rchip.dim{opacity:.7}.rchip.dim b{color:var(--muted)}
+@keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:none;opacity:1}}
+.lvlup{padding:9px;border-radius:12px;background:rgba(63,194,122,.14);border:1px solid rgba(63,194,122,.4);color:#bfeccf;font:700 14px var(--f-display);animation:pop .5s .9s both}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}.confetti span{position:absolute;top:-12px;width:7px;height:12px;background:var(--cc);border-radius:2px;animation:fall 2.6s linear var(--dl) both}
+@keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(420px) rotate(560deg);opacity:0}}
+.sumline{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.sumline span{padding:8px 2px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);font-size:10.5px;display:flex;flex-direction:column;gap:2px}.sumline b{color:var(--ink);font:800 16px var(--f-display)}
 .over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,14,26,.6);z-index:8;padding:20px}
 .ocard{width:100%;max-width:320px;border-radius:22px;background:linear-gradient(170deg,#2b3a66,#161e38);border:1px solid var(--line);padding:22px 18px 18px;display:flex;flex-direction:column;gap:12px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .ocard h3{font:800 20px var(--f-display);margin:0;text-wrap:balance}
@@ -745,7 +766,9 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div><small class="k" id="rk"></small><h2 id="rt"></h2></div>
           <div class="podium" id="podium"></div>
           <div class="goldres" id="goldres" hidden></div>
-          <table class="bd"><thead><tr><th>Игрок</th><th>Города</th><th>Дороги</th><th>Крепости</th><th>Всего</th></tr></thead><tbody id="bd"></tbody></table>
+          <div id="rres" hidden></div>
+          <table class="bd"><thead><tr><th>Игрок</th><th>Города</th><th>Дороги</th><th>Крепости</th><th>Ходов</th><th>Всего</th></tr></thead><tbody id="bd"></tbody></table>
+          <div class="sumline" id="sumline"></div>
           <div class="ract"><button class="cta wide" id="again">Ещё партию</button><button class="ghostbtn" data-go="menu">В меню</button></div>
         </div>
       </section>
@@ -1747,6 +1770,7 @@ async function afterPlace(t, p, forced) {
     gameLog.moves.push(mv);
     if (net) netSend({t: 'move', g: net.gameId, ...mv}); else saveGame();
   }
+  players[p].stats.t++; if (choice) players[p].stats.m++;
   if (choice) { placeMeeple(t, choice, p, true); if (!fast()) beep('meeple'); }
   renderPlayers();
   await scoreAfter(t, p);
@@ -1905,7 +1929,12 @@ async function endGame(reason) {
   const over = $('#over');
   const title = reason === 'draw' ? 'Ничья' : winTitle(top, true);
   const sub = reason === 'draw' ? 'Все игроки согласились на ничью' : reason === 'resign' ? 'Соперники сдались' : `${top.score} очков · стопка закончилась`;
-  over.innerHTML = `<div class="ocard"><h3>${title}</h3><p>${sub}</p>${gold ? `<div class="goldres${gold.delta < 0 ? ' neg' : ''}"><i class="coin"></i>${gold.text}</div>` : ''}<button class="cta wide" data-go="results">Итоги партии</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
+  lastGold = gold;
+  const myPlace = meIdx >= 0 ? order.findIndex(x => x.i === meIdx) : -1, won = reason !== 'draw' && myPlace === 0;
+  const medal = reason === 'draw' ? '🤝' : myPlace < 0 ? '🏁' : ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][myPlace];
+  const rows = order.slice(0, 5).map((p, k) => `<li class="${p.i === meIdx ? 'me' : ''}" style="--c:${p.col};--d:${k * 90}ms"><span class="n">${k + 1}</span><i></i><b>${p.name}</b><span class="v">${p.score}</span></li>`).join('');
+  const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
+  over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}<button class="cta wide" data-go="results">Подробные итоги</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
   $('#again2').onclick = () => net ? show('lobby') : newGame();
   setStatus('Партия окончена');
@@ -1981,7 +2010,7 @@ function startGame(cfg, replay = []) {
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; doneFeats = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples, missed: 0}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
   if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
   paintFigures();
   if (!net) saveGame();
@@ -2052,15 +2081,30 @@ function buildMini() {
   const inMini = (x, y) => Math.abs(x) <= 1 && Math.abs(y - .5) <= 1.5 && tiles.has(key(x, y));
   for (const t of tiles.values()) if (inMini(t.x, t.y)) { const el = tileEl(t, true, null); mini.append(el); walls({...t, el}, inMini); }
 }
+let lastGold = null;
+// What the match gave: cups (rated online games), gold, experience, a new level.
+function rewardChips(g) {
+  if (!g) return '';
+  const rw = g.rw || {}, sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
+  const chips = [];
+  if (rw.rated) chips.push(`<div class="rchip cup${rw.cups ? '' : ' zero'}" style="--i:0"><b>🏆 ${sign(rw.cups)}</b><small>кубков · всего ${PROG.cups}</small></div>`);
+  else if (net && !net.quick) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>комната с друзьями — без кубков</small></div>`);
+  chips.push(`<div class="rchip gold${g.delta < 0 ? ' neg' : ''}" style="--i:1"><b><i class="coin"></i> ${sign(g.delta)}</b><small>золота · всего ${wallet.gold}</small></div>`);
+  if (rw.xp) chips.push(`<div class="rchip xp" style="--i:2"><b>⭐ +${rw.xp}</b><small>опыта · уровень ${rw.lvl}</small></div>`);
+  return `<div class="rchips">${chips.join('')}</div>${rw.up ? `<div class="lvlup">🎉 Новый уровень ${rw.lvl}! +${20 * rw.up} золота</div>` : ''}`;
+}
 function renderResults(final, gold) {
   const o = ranked();
-  $('#goldres').hidden = !gold;
-  if (gold) { $('#goldres').className = 'goldres' + (gold.delta < 0 ? ' neg' : ''); $('#goldres').innerHTML = `<i class="coin"></i>${gold.text} · всего ${wallet.gold}`; }
+  if (!gold && final) gold = lastGold;
+  $('#goldres').hidden = true;
+  $('#rres').hidden = !gold; if (gold) $('#rres').innerHTML = rewardChips(gold);
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
   $('#rt').textContent = winTitle(o[0], final);
   const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
   $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${p.name}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
-  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.score}</td></tr>`).join('');
+  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
+  const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
+  $('#sumline').innerHTML = `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
 }
 
 /* ---------------- gold, figures, shop ----------------
@@ -2147,16 +2191,16 @@ function payout(reason) {
     if (wallet.paid.includes(key)) return null;
     wallet.paid = [key, ...wallet.paid].slice(0, 30);
   } else if (localHumans() > 1 || players.every(p => p.human)) return null;
-  if (reason === 'draw') { saveWallet(); gameDone(-1, players[meIdx].score); return {delta: 0, text: 'Ничья — золото не меняется'}; }
+  if (reason === 'draw') { saveWallet(); const rw = gameDone(-1, players[meIdx].score); return {delta: 0, text: 'Ничья — золото не меняется', rw}; }
   const place = ranked().findIndex(p => p.i === meIdx), tied = ranked().findIndex(p => !p.resigned && p.score === players[meIdx].score);
   let delta = PLACE_GOLD[Math.max(0, reason === 'resign' ? place : tied)];
   let doubled = false;
   if (delta > 0 && wallet.boosts.double > 0) { wallet.boosts.double--; delta *= 2; doubled = true; }
   wallet.gold = Math.max(0, wallet.gold + delta); saveWallet();
   if (delta > 0) beep('coin');
-  gameDone(Math.max(0, reason === 'resign' ? place : tied), players[meIdx].score);
+  const rw = gameDone(Math.max(0, reason === 'resign' ? place : tied), players[meIdx].score);
   const where = ['1-е', '2-е', '3-е', '4-е', '5-е'][Math.max(0, tied)];
-  return {delta, text: `${where} место: ${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} золота${doubled ? ' (двойное!)' : ''}`};
+  return {delta, text: `${where} место: ${delta > 0 ? '+' : delta < 0 ? '−' : ''}${Math.abs(delta)} золота${doubled ? ' (двойное!)' : ''}`, rw};
 }
 
 // Figures: the classic meeple in the player's colour plus an outfit.
@@ -3156,11 +3200,13 @@ function gameDone(place, score) {
   const xp = score + 5 + (win ? 25 : 0);
   PROG.xp += xp; let up = 0;
   while (PROG.xp >= xpNeed(PROG.lvl)) { PROG.xp -= xpNeed(PROG.lvl); PROG.lvl++; up++; wallet.gold += 20; }
-  if (net && net.quick) { PROG.cups += place < 0 ? 10 : [30, 15, 5, 0, 0][place]; syncRating(); } // cups: rated games only
+  const cups = net && net.quick ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
+  if (net && net.quick) { PROG.cups += cups; syncRating(); } // cups: rated games only
   saveWallet(); progressDot();
   setTimeout(() => toastAny(up ? `Новый уровень ${PROG.lvl}! +${20 * up} золота` : `+${xp} опыта`), 1200);
   const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st));
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
+  return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
 }
 const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got'); };
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); }
