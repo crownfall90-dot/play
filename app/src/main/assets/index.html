@@ -2574,7 +2574,7 @@ async function ensureGuestName() {
 }
 function setProfileName(n) {
   n = clean(n); if (!n) return false;
-  wallet.name = n; setup.seats[0].name = n; saveWallet(); saveSetup();
+  wallet.name = n; wallet.nameAt = Date.now(); setup.seats[0].name = n; saveWallet(); saveSetup();
   if (typeof presenceMark === 'function') presenceMark(true);
   return true;
 }
@@ -3952,12 +3952,16 @@ function cloudSync(push) {
         const mine = syncable(wallet);
         let next = mine;
         if (d && d.w && (!base || base.t !== d.t)) { // the cloud changed since this device last synced
-          next = mergeVal('', mine, syncable(JSON.parse(d.w)), base ? base.w : undefined);
+          const cw = syncable(JSON.parse(d.w));
+          next = mergeVal('', mine, cw, base ? base.w : undefined);
+          // The nickname belongs to the account: only a rename typed on a device later than the saved one
+          // can change it; a stale copy of the profile on another phone cannot bring an old name back.
+          if (cw.name) { const mineWins = (mine.nameAt || 0) > (cw.nameAt || 0); next.name = mineWins ? mine.name : cw.name; next.nameAt = Math.max(mine.nameAt || 0, cw.nameAt || 0) || undefined; }
           if (!same(next, mine)) { applyCloudWallet(next); refreshProfileUI(); }
         }
         if (d && d.w && same(next, syncable(JSON.parse(d.w)))) { saveBase(wallet, d.t); return; }
         if (!push && d && d.w && base && base.t === d.t && same(next, base.w)) return; // nothing new anywhere
-        const w = await fetch(url, {method: 'PUT', headers: etag ? {'if-match': etag} : {}, body: JSON.stringify({w: JSON.stringify(wallet), s: JSON.stringify(setup.seats[0]), t: {'.sv': 'timestamp'}})});
+        const w = await fetch(url, {method: 'PUT', headers: etag ? {'if-match': etag} : {}, body: JSON.stringify({w: JSON.stringify(wallet), s: JSON.stringify(setup.seats[0]), t: {'.sv': 'timestamp'}, by: {c: myId, v: appCode(), p: installKind()}})});
         if (w.status === 412) continue; // another device saved in between: merge again
         if (w.ok) { const saved = await w.json().catch(() => null); saveBase(wallet, saved && saved.t); }
         return;
