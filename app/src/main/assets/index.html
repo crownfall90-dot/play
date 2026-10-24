@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Игрок без своего никнейма теперь называется nickname1, nickname2… вместо «Вы». Свой никнейм, когда вы его придумаете, заменит гостевое имя."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- У каждого игрока теперь свой постоянный номер; игроки без никнейма называются по нему (nickname5, nickname6…)."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -2501,15 +2501,22 @@ function profileName() {
   const old = clean(setup.seats[0].name);
   return clean(wallet.name) || clean(wallet.guest) || (old && old !== 'Вы' && old !== 'Игрок' ? old : '') || 'nickname';
 }
+// Every player gets a hidden player number once (/playerNo/{uid}), in the order they first went
+// online; a player without a nickname is shown as nickname<number>. Players from before numbers
+// existed were numbered by scripts/assign-numbers.py in the order they joined.
 async function ensureGuestName() {
-  if (!FB || clean(wallet.name) || wallet.guest) return;
+  if (!FB || wallet.no) return;
   try {
-    const tok = await fbToken(), url = `${FB.dbUrl}/guestN.json?auth=${tok}`;
-    for (let i = 0; i < 5 && !wallet.guest; i++) {
+    const tok = await fbToken(), me = fbAuth && fbAuth.uid;
+    const mine = await fetch(`${FB.dbUrl}/playerNo/${me}.json?auth=${tok}`).then(r => r.ok ? r.json() : null).catch(() => null);
+    const take = n => { wallet.no = n; if (!clean(wallet.name)) wallet.guest = 'nickname' + n; saveWallet(); renderSetup(); if (typeof presenceMark === 'function') presenceMark(true); };
+    if (mine) return take(mine);
+    const url = `${FB.dbUrl}/guestN.json?auth=${tok}`;
+    for (let i = 0; i < 5 && !wallet.no; i++) {
       const r = await fetch(url, {headers: {'X-Firebase-ETag': 'true'}}); if (!r.ok) return;
       const n = ((await r.json()) | 0) + 1;
       const w = await fetch(url, {method: 'PUT', headers: {'if-match': r.headers.get('ETag')}, body: String(n)});
-      if (w.ok) { wallet.guest = 'nickname' + n; saveWallet(); renderSetup(); if (typeof presenceMark === 'function') presenceMark(true); }
+      if (w.ok) { await fetch(`${FB.dbUrl}/playerNo/${me}.json?auth=${tok}`, {method: 'PUT', body: String(n)}).catch(() => {}); take(n); }
       else if (w.status !== 412) return; // another device took this number: try the next one
     }
   } catch (_) {}
