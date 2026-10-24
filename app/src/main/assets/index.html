@@ -2451,7 +2451,7 @@ function renderPrefs() {
   $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : window.WEB_VERSION || 'веб-макет';
   $('#checkUpd').hidden = !window.AndroidApp;
   try { renderInstall(); } catch (_) {} // the web shell may not be set up yet on the first call
-  $('#devBtn').hidden = !devGet('devPanel');
+  devGet('devToken'); $('#devBtn').hidden = !devGet('devPanel');
 }
 $('#prefs').addEventListener('click', e => {
   const b = e.target.closest('.mseg button'); if (!b) return;
@@ -3682,6 +3682,8 @@ const DEV_REPO = 'crownfall90-dot/play', DEV_WF = 'news.yml';
 const DEV_NATIVE = ['devToken', 'devPanel'];
 const devGet = k => {
   let v = ''; try { v = localStorage.getItem(k) || ''; } catch (_) {}
+  // A value saved before the native copy existed: copy it over once.
+  if (v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref && AndroidApp.setPref) { try { if (!AndroidApp.getPref(k)) AndroidApp.setPref(k, v); } catch (_) {} }
   if (!v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref) {
     try { v = AndroidApp.getPref(k) || ''; if (v) localStorage.setItem(k, v); } catch (_) {}
   }
