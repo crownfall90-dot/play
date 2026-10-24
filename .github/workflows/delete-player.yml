@@ -1,0 +1,23 @@
+name: Delete guest player
+
+# Removes one anonymous (guest) account and its game data. Accounts with an e-mail are refused.
+on:
+  workflow_dispatch:
+    inputs:
+      uid:
+        description: Начало uid из «Account check»
+        type: string
+      apply:
+        description: Удалить (иначе только показать)
+        type: boolean
+        default: false
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          UID_PREFIX: ${{ inputs.uid }}
+        run: python3 scripts/delete-player.py "$UID_PREFIX" ${{ inputs.apply && '--apply' || '' }}
