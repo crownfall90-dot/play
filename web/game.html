@@ -3661,8 +3661,20 @@ $('#scr-friends').addEventListener('click', e => {
    GitHub API with the owner's own token (fine-grained, this repository, Actions: read and write),
    kept only on this phone. Nobody without that token can send; the Firebase key stays in GitHub. */
 const DEV_REPO = 'crownfall90-dot/play', DEV_WF = 'news.yml';
-const devGet = k => { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } };
-const devSet = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (_) {} };
+// The owner's token and panel switch are also kept natively in the Android app (private preferences,
+// part of the phone's backup), so clearing the page's storage or signing out does not lose them.
+const DEV_NATIVE = ['devToken', 'devPanel'];
+const devGet = k => {
+  let v = ''; try { v = localStorage.getItem(k) || ''; } catch (_) {}
+  if (!v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref) {
+    try { v = AndroidApp.getPref(k) || ''; if (v) localStorage.setItem(k, v); } catch (_) {}
+  }
+  return v;
+};
+const devSet = (k, v) => {
+  try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (_) {}
+  if (DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.setPref) try { AndroidApp.setPref(k, v || ''); } catch (_) {}
+};
 let devTaps = 0, devTapAt = 0;
 $('#verFull').closest('.opt').addEventListener('click', () => {
   if (Date.now() - devTapAt > 1500) devTaps = 0;
@@ -3718,8 +3730,12 @@ function devPanel() {
     if (id === 'devSave') {
       const t = box.querySelector('#devTok').value.trim(); if (!t) return;
       devSet('devToken', t); st.textContent = 'Проверяем…';
-      const r = await gh('').catch(() => null);
-      if (!r || !r.ok) { devSet('devToken', ''); st.textContent = r ? 'GitHub не принял токен (' + r.status + ')' : 'Нет связи с GitHub'; return; }
+      // Checked on what the panel really uses (Actions). Only a rejected token (401) is dropped;
+      // no connection or a missing permission keeps it, so it is never thrown away by accident.
+      const r = await gh(`/actions/workflows/${DEV_WF}`).catch(() => null);
+      if (r && r.status === 401) { devSet('devToken', ''); st.textContent = 'GitHub не принял токен — проверьте, что скопировали его целиком'; return; }
+      if (!r) { st.textContent = 'Нет связи с GitHub — токен сохранён, проверим позже'; return; }
+      if (!r.ok) { st.textContent = `Токен сохранён, но у GitHub ответ ${r.status}: проверьте права Actions (чтение и запись)`; return; }
       return draw();
     }
     if (id !== 'devSend') return;
