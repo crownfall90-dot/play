@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Интерфейс подстраивается под размер экрана: на любом телефоне кнопки и текст примерно одного размера\n- В магазине убрана подсказка про золото за места\n- Экран настроек полностью переделан: карточка профиля, группы, переключатели и понятные подписи\n- Единый стиль на всех экранах: карточки, заголовки, списки и переключатели оформлены одинаково"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Фишка вернулась после постройки — ставьте её на любое свободное место на поле\n- Кружок на кнопке прогресса: показывает, когда есть незабранные награды или новые кубки в рейтинге\n- Раздел поддержки в настройках: написать разработчику (баги, идеи, пожелания)"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -215,7 +215,8 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .stats div{padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center}
 .stats b{display:block;font:800 18px var(--f-display);font-variant-numeric:tabular-nums}.stats small{color:var(--muted);font-size:11px}
 #ptabs{grid-template-columns:repeat(3,1fr)}
-#ptabs button{font:700 12px var(--f-display);padding:0 2px}
+#ptabs button{font:700 12px var(--f-display);padding:0 2px;position:relative}
+#ptabs button.hasdot::after{content:"";position:absolute;top:4px;right:6px;width:7px;height:7px;border-radius:50%;background:#ef5350;border:1.5px solid #141b33}
 .quest{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
 .quest .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(255,255,255,.06);flex:0 0 auto}
 .quest .qt{flex:1;min-width:0}.quest .qt b{display:block;font:600 13.5px var(--f-body)}.quest .qt small{color:var(--muted);font-size:11.5px;display:flex;align-items:center;gap:4px}
@@ -518,7 +519,7 @@ html.lowgfx .tile .sd.s{display:block}
 .cta.wide{width:100%}
 .mrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .chip{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.07);font:600 13px var(--f-body);cursor:pointer}
-.chip svg{width:14px;height:15px} .chip.skip{color:var(--muted)}
+.chip svg{width:14px;height:15px} .chip.skip{color:var(--muted)} .chip.sel{background:rgba(76,141,255,.2);border-color:rgba(76,141,255,.6);color:#a8c8ff}
 .ocard.fin{max-width:340px;position:relative;overflow:hidden}
 .ocard.fin>*{flex-shrink:0}
 .medal{font-size:54px;line-height:1;animation:medal .7s cubic-bezier(.2,1.6,.4,1) both}
@@ -642,6 +643,10 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <button class="instcard" id="installBtn" hidden><span class="iic"><img src="icons/icon-192.png" alt=""></span><span class="itx"><b>Установите игру</b><small>Иконка на экране, весь экран, работает без интернета</small></span><span class="igo">Как?</span></button>
           <div class="sgroup prof" id="acct"></div>
           <div id="prefs"></div>
+          <div class="h3">Поддержка</div>
+          <div class="sgroup">
+            <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Пожелания, идеи, баги — всё пойдёт в дело</small></span><span class="sgo">›</span></button>
+          </div>
           <div class="h3">О приложении</div>
           <div class="sgroup">
             <div class="srow"><span class="sic">ℹ️</span><span class="stx"><b>Версия</b></span><b class="sval" id="verFull">—</b></div>
@@ -1334,7 +1339,8 @@ function groupPos(t, g) {
   if (g.edges.length === 2) { const b = V[g.edges[1]]; return [(a[0]*.4225 + b[0]*.1225) * .5, (a[1]*.4225 + b[1]*.1225) * .5]; }
   return [a[0] * .3, a[1] * .3];
 }
-const claimable = t => groupsOf(t).filter(g => component(t, g).meeples.length === 0);
+const claimable = t => groupsOf(t).filter(g => { const c = component(t, g); return c.meeples.length === 0 && !c.complete; });
+const claimableAll = () => { const r = []; for (const t of tiles.values()) for (const g of claimable(t)) r.push({t, g}); return r; };
 const label = g => g.kind === 'r' && g.edges.length === 1 ? 'Дорога ' + ARROW[g.edges[0]] : KIND[g.kind];
 
 /* ---------------- dom: world ---------------- */
@@ -1753,14 +1759,20 @@ async function dropAt(t) {
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
-function askMeeple(t, opts, p) {
+function askMeeple(mainTile, opts, p) {
   meepleOpts = opts; phase = 'meeple'; tutEvent('meeple');
-  const gms = opts.map((g, i) => { const [x, y] = groupPos(t, g); const b = addSprite(t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
-  mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+  const anyMode = mainTile == null;
+  const gms = opts.map((o, i) => { const [x, y] = groupPos(o.t, o.g); const b = addSprite(o.t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
+  if (anyMode) {
+    mrow.innerHTML = '<button class="chip skip" data-i="-1">Без фишки</button>';
+    setStatus(`Фишка вернулась! Нажмите на место на поле или «Без фишки». Осталось <b>${players[p].meeples}</b>`);
+  } else {
+    mrow.innerHTML = opts.map((o, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(o.g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+    setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
+  }
   prow.hidden = true; mrow.hidden = false;
-  setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   return new Promise(res => {
-    meepleResolve = g => { meepleResolve = null; setTimeout(() => tutEvent('meepleDone')); gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(g); };
+    meepleResolve = o => { meepleResolve = null; setTimeout(() => tutEvent('meepleDone')); gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(o); };
     mrow.onpointerover = e => { const b = e.target.closest('.chip'); gms.forEach((m, i) => m.classList.toggle('hl', b && +b.dataset.i === i)); };
   });
 }
@@ -1782,24 +1794,45 @@ function meepleClock(secs) {
 let autoMove = false, autoAway = false; // autoAway: the bot was already playing for this player // this move is played for a player who did not act in time
 async function afterPlace(t, p, forced) {
   const my = token;
-  const opts = players[p].meeples > 0 ? claimable(t) : [];
-  let choice = null;
-  if (forced !== undefined) choice = forced;
-  else if (opts.length) {
+  // Score completed groups FIRST — so we can detect if this player's meeple returned.
+  const meeplesBefore = players[p].meeples;
+  await scoreAfter(t, p);
+  if (my !== token) return;
+  const meepleReturned = players[p].meeples > meeplesBefore;
+
+  // opts: {t, g} pairs — anywhere on board if a meeple returned, otherwise only placed tile.
+  const anyMode = meepleReturned && players[p].meeples > 0;
+  const opts = players[p].meeples > 0
+    ? (anyMode ? claimableAll() : claimable(t).map(g => ({t, g})))
+    : [];
+  let choice = null; // {t, g} or null
+  if (forced !== undefined) {
+    choice = forced; // already {t, g} or null from caller
+  } else if (opts.length) {
     if (isLocal(p) && !(autoMove && autoAway)) {
       // Time ran out: the card was put down for you; 10 more seconds to place a figure.
       if (autoMove) { toast('Время вышло: карта на поле. 10 секунд на фишку'); meepleClock(10); }
       meepleActed = false;
-      choice = await askMeeple(t, opts, p);
+      choice = await askMeeple(anyMode ? null : t, opts, p);
       stopTimer();
       if (autoMove && meepleActed) autoMove = false; // the player was there after all
     }
     else if (tut) choice = null; // the tutorial bot never claims anything
-    else if (Math.random() < .55) { const cs = opts.filter(g => g.kind !== 'r'); choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : opts[(Math.random() * opts.length) | 0]; }
+    else {
+      // Bot: always use placed tile only, even in anyMode.
+      const botOpts = anyMode ? claimable(t).map(g => ({t, g})) : opts;
+      if (botOpts.length && Math.random() < .55) {
+        const cs = botOpts.filter(o => o.g.kind !== 'r');
+        choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : botOpts[(Math.random() * botOpts.length) | 0];
+      }
+    }
   }
   if (my !== token) return;
   if (forced === undefined) {
-    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed, m: choice ? groupsOf(t).findIndex(g => gid(t, g) === gid(t, choice)) : -1};
+    const mt = choice ? choice.t : t;
+    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
+      m: choice ? groupsOf(mt).findIndex(g => gid(mt, g) === gid(mt, choice.g)) : -1};
+    if (choice && (mt.x !== t.x || mt.y !== t.y)) { mv.mtx = mt.x; mv.mty = mt.y; }
     // A bot move counts as a skipped turn, unless the player came back while it was being made.
     if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
     autoAway = false;
@@ -1808,9 +1841,8 @@ async function afterPlace(t, p, forced) {
     if (net) netSend({t: 'move', g: net.gameId, ...mv}); else saveGame();
   }
   players[p].stats.t++; if (choice) players[p].stats.m++;
-  if (choice) { placeMeeple(t, choice, p, true); if (!fast()) beep('meeple'); }
+  if (choice) { placeMeeple(choice.t, choice.g, p, true); if (!fast()) beep('meeple'); }
   renderPlayers();
-  await scoreAfter(t, p);
   if (my !== token) return;
   turn = (turn + 1) % players.length;
   await wait(250);
@@ -2960,8 +2992,9 @@ function autoMoveFor(who) {
   if (!current) return;
   const m = botPick(current.type); if (!m) return;
   const t = {x: m.x, y: m.y, type: current.type, r: m.r};
-  const opts = players[who].meeples > 0 ? claimable(t) : [], g = opts.length && Math.random() < .55 ? opts[(Math.random() * opts.length) | 0] : null;
-  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: g ? groupsOf(t).findIndex(q => gid(t, q) === gid(t, g)) : -1, auto: 1});
+  const botOpts = players[who].meeples > 0 ? claimable(t).map(g => ({t, g})) : [];
+  const o = botOpts.length && Math.random() < .55 ? botOpts[(Math.random() * botOpts.length) | 0] : null;
+  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: o ? groupsOf(t).findIndex(q => gid(t, q) === gid(t, o.g)) : -1, auto: 1});
 }
 $('#status').addEventListener('click', e => {
   if (!e.target.closest('#imHere')) return;
@@ -2981,7 +3014,8 @@ async function pumpRemote() {
   await wait(350); if (my !== token) return;
   const t = {x: mv.x, y: mv.y, type: current.type, r: mv.r, seed: mv.seed};
   await dropAt(t); if (my !== token) return;
-  afterPlace(t, mv.p, mv.m >= 0 ? groupsOf(t)[mv.m] : null);
+  const mt = (mv.mtx != null && mv.mty != null) ? at(mv.mtx, mv.mty) : t;
+  afterPlace(t, mv.p, mv.m >= 0 && mt ? {t: mt, g: groupsOf(mt)[mv.m]} : null);
 }
 function renderLobby() {
   if (mm) matchRender();
@@ -3205,7 +3239,7 @@ function showSay(p, i) {
 /* ---------------- progress: level, daily quests, achievements, rating ----------------
    Counted games are the ones that pay gold: you alone against bots, or online. */
 const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
-const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0}, wallet.prog);
+const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false}, wallet.prog);
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
 const xpNeed = l => 50 + 50 * l;
@@ -3266,8 +3300,18 @@ function gameDone(place, score) {
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
 }
-const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got'); };
-function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); }
+const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
+function ptabsDot() {
+  questsToday();
+  const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
+  const aDot = ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got');
+  const tDot = !!PROG.inTop10;
+  document.querySelectorAll('#ptabs button').forEach(b => {
+    const pt = b.dataset.pt;
+    b.classList.toggle('hasdot', pt === 'quests' ? qDot : pt === 'ach' ? aDot : tDot);
+  });
+}
+function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
 let ptab = 'quests';
 function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
 function renderProgress() {
@@ -3277,6 +3321,7 @@ function renderProgress() {
   const st = PROG.st;
   $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
+  ptabsDot();
   const el = $('#ptab');
   if (ptab === 'quests') {
     // Rewards ready to claim go first, then the ones in progress, claimed ones last.
@@ -3293,7 +3338,7 @@ function renderProgress() {
     }).join('');
   } else renderTop();
 }
-$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; renderProgress(); };
+$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
@@ -3309,7 +3354,18 @@ async function syncRating(force) {
   try {
     const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
     const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
-    if (r.ok) { PROG.up = target; saveWallet(); if (PROG.up < PROG.cups) setTimeout(syncRating, 61000); }
+    if (r.ok) {
+      PROG.up = target; saveWallet(); progressDot();
+      if (PROG.up < PROG.cups) setTimeout(syncRating, 61000);
+      try {
+        const tr = await fetch(`${FB.dbUrl}/leaders.json?auth=${tok}&orderBy=%22r%22&limitToLast=10`);
+        if (tr.ok) {
+          const top10uids = Object.keys((await tr.json()) || {});
+          PROG.inTop10 = top10uids.includes(fbAuth.uid);
+          saveWallet(); progressDot();
+        }
+      } catch (_) {}
+    }
   } catch (_) {}
 }
 async function renderTop() {
@@ -3330,6 +3386,7 @@ async function renderTop() {
       : mine < 0 ? `<div class="lead me myrank"><i>—</i><span>Вы пока не в рейтинге</span><b>🏆 ${PROG.cups}</b></div>` : '';
     el.innerHTML = rows.length ? `<div class="podium">${podium}</div>${list}${myRow}` : '<p class="qnote">Пока никого — выиграйте рейтинговую партию первым!</p>';
     el.innerHTML += '<p class="qnote">Кубки — за онлайн-партии на рейтинг: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
+    PROG.inTop10 = mine >= 0 && mine < 10; saveWallet(); progressDot();
     syncRating();
   } catch (_) { el.innerHTML = '<p class="qnote">Нет связи — проверьте интернет</p>'; }
 }
@@ -3710,7 +3767,7 @@ $('#scr-friends').addEventListener('click', e => {
   else if (d.facc) acceptFriend(d.facc);
   else if (d.fjoin) joinInvite(d.fjoin);
   else if (d.fdrop) dropInbox(d.fdrop);
-  else if (d.fdel) { const f = friends.find(x => x.uid === d.fdel); confirmBox(f.mutual ? `Удалить ${f.n} из друзей?` : `Отменить заявку для ${f.n}?`, 'Да', () => removeFriend(d.fdel)); }
+  else if (d.fdel) { const f = friends.find(x => x.uid === d.fdel); const nm = f ? f.n : 'игрока'; confirmBox(f && !f.mutual ? `Отменить заявку для ${nm}?` : `Удалить ${nm} из друзей?`, 'Удалить', () => removeFriend(d.fdel)); }
 });
 /* ---------------- owner panel: news push to all players ----------------
    Hidden: 7 taps on "Версия" in Settings. Sending starts .github/workflows/news.yml through the
@@ -3893,6 +3950,44 @@ function confirmBox(text, yes, ok) {
   document.body.append(box);
   box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b && e.target !== box) return; box.remove(); if (b && b.dataset.a === 'y') ok(); };
 }
+function openFeedback() {
+  if (!FB) { toastAny('Нужно подключение к интернету'); return; }
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  const first = !wallet.feedbackSent;
+  const CATS = [{k:'bug',ic:'🐛',t:'Баг'},{k:'idea',ic:'💡',t:'Идея'},{k:'other',ic:'💬',t:'Другое'}];
+  box.innerHTML = `<div class="ocard" style="width:min(340px,92vw)">
+    <h3>Написать разработчику</h3>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 12px">Пожелания, идеи, баги — всё пойдёт в дело${first ? '.<br><b style="color:#f2b84b">+10 золота</b> за первое сообщение' : ''}</p>
+    <div style="display:flex;gap:6px;margin-bottom:12px">${CATS.map(c => `<button class="chip fb-cat${c.k==='idea'?' sel':''}" data-cat="${c.k}" style="flex:1;justify-content:center">${c.ic} ${c.t}</button>`).join('')}</div>
+    <textarea id="fbText" rows="4" placeholder="Расскажите что думаете…" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:inherit;font:14px var(--f-body);padding:10px 12px;resize:vertical;outline:none;min-height:80px"></textarea>
+    <button class="cta wide" id="fbSend" style="margin-top:10px">Отправить${first ? ' (+10 золота)' : ''}</button>
+    <button class="ghostbtn" id="fbCancel" style="margin-top:6px">Отмена</button>
+  </div>`;
+  document.body.append(box);
+  let cat = 'idea';
+  box.querySelectorAll('.fb-cat').forEach(b => b.addEventListener('click', () => {
+    cat = b.dataset.cat;
+    box.querySelectorAll('.fb-cat').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  box.querySelector('#fbCancel').onclick = () => box.remove();
+  box.onclick = e => { if (e.target === box) box.remove(); };
+  box.querySelector('#fbSend').onclick = async () => {
+    const msg = box.querySelector('#fbText').value.trim();
+    if (!msg) { box.querySelector('#fbText').focus(); return; }
+    const btn = box.querySelector('#fbSend'); btn.disabled = true; btn.textContent = 'Отправляем…';
+    try {
+      const tok = fbAuth ? await fbToken() : null;
+      const uid = (fbAuth && fbAuth.uid) || 'anon';
+      const ver = window.AndroidApp ? (AndroidApp.versionName ? AndroidApp.versionName() : '') : 'web';
+      const url = `${FB.dbUrl}/feedback/${uid}/${Date.now()}.json` + (tok ? `?auth=${tok}` : '');
+      await fetch(url, {method:'PUT', body:JSON.stringify({k:cat, m:msg.slice(0,1000), v:ver, t:{'.sv':'timestamp'}})});
+      if (first) { wallet.gold += 10; wallet.feedbackSent = true; saveWallet(); }
+      box.remove();
+      toastAny(first ? 'Спасибо за помощь! +10 золота 🎉' : 'Спасибо за обратную связь!');
+    } catch (_) { btn.disabled = false; btn.textContent = 'Отправить'; toastAny('Нет связи — попробуйте позже'); }
+  };
+}
+if ($('#feedbackBtn')) $('#feedbackBtn').onclick = openFeedback;
 if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 $('#friendsBtn').onclick = () => { friendsBack = 'menu'; show('friends'); };
