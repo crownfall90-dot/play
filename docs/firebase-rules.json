@@ -62,6 +62,13 @@
         ".write": "auth != null && !data.exists() && newData.val() === auth.uid && auth.token.email != null && root.child('profiles').child(auth.uid).exists()",
         ".validate": "$code.length === 6"
       }
+    },
+    "fcodeOf": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid && !data.exists() && auth.token.email != null && root.child('profiles').child(auth.uid).exists()",
+        ".validate": "newData.isString() && root.child('fcodes').child(newData.val()).val() === $uid"
+      }
     }
   }
 }
