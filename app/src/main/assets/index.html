@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- В магазине убрана подсказка про золото за места"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- В магазине убрана подсказка про золото за места\n- Интерфейс одного физического размера на любом телефоне: кнопки и текст не становятся мельче на большом экране"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -134,7 +134,7 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 .modes{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .mode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:14px 6px 12px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));color:var(--ink);cursor:pointer;min-width:0}
 .mode .mic{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;margin-bottom:5px;color:var(--m);background:rgba(255,255,255,.07);background:color-mix(in srgb,var(--m) 18%,transparent);border:1px solid color-mix(in srgb,var(--m) 35%,transparent)}
-.mode b{font:700 13px var(--f-display);white-space:nowrap}.mode small{color:var(--muted);font-size:11px;line-height:1.25;text-align:center}
+.mode b{font:700 13px var(--f-display);white-space:normal;text-align:center;line-height:1.15;text-wrap:balance}.mode small{color:var(--muted);font-size:11px;line-height:1.25;text-align:center}
 @media (max-width:370px){.mode b{font-size:12px}.mode small{font-size:10.5px}}
 @media (max-height:640px){.logo{font-size:28px}.tag{display:none}.playon{min-height:72px}.mode{padding:10px 4px}.mode .mic{width:40px;height:40px}}
 #scr-match{background:radial-gradient(120% 70% at 50% 35%,#2d4174 0%,#18213d 55%,#0f1528 100%)}
@@ -4166,6 +4166,9 @@ if (isApp) {
   document.documentElement.classList.add('app');
   if (isWeb) document.documentElement.classList.add('web');
   showWhatsNew(isAndroid ? AndroidApp.versionName() : window.WEB_VERSION);
+  // The same physical size on every phone: the app reports the screen size in inches (see uiScale in
+  // MainActivity) and the whole page is zoomed by that factor. Web browsers keep 100%.
+  if (isAndroid && AndroidApp.uiScale) { const z = +AndroidApp.uiScale(); if (z > 0 && Math.abs(z - 1) > .01) document.documentElement.style.zoom = z; }
 }
 /* ---------------- web build: install, back gesture, links ---------------- */
 // Where the web version lives; invites carry this link. Change it here after moving to your own domain.
