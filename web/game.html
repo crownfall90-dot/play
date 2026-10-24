@@ -3630,9 +3630,10 @@ async function statsDialog() {
   try {
     const [pres, lead, rel] = await Promise.all([
       fbGet('presence').catch(() => null), fbGet('leaders').catch(() => null),
-      (devGet('devToken') ? gh('/releases?per_page=100') : fetch(`https://api.github.com/repos/${DEV_REPO}/releases?per_page=100`)).then(r => r.ok ? r.json() : []).catch(() => []),
+      // Public list, no token: the owner's token only has access to Actions, so with it GitHub refuses the list.
+      fetch(`https://api.github.com/repos/${DEV_REPO}/releases?per_page=100`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
-    const rels = Array.isArray(rel) ? rel : []; // GitHub may answer with a limit message instead of the list
+    const relOk = Array.isArray(rel), rels = relOk ? rel : []; // GitHub may answer with a limit message instead of the list
     // Only real game records: a name and a state. Leftovers from early builds and test runs
     // (just a time, no name) are skipped.
     const now = Date.now(), P = Object.values(pres || {}).filter(v => v && typeof v.n === 'string' && v.n && v.s), D = 864e5;
@@ -3644,8 +3645,8 @@ async function statsDialog() {
     const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
     out.innerHTML = `<div class="stgrid">${tile(P.length, 'игроков заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
       ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(n(v => ago(v) < 30 * D), 'за месяц')}${tile(lead ? Object.keys(lead).length : 0, 'в рейтинге')}
-      ${tile(apk, 'скачиваний APK')}${tile(rels.length || '—', 'версий вышло')}</div>
-      <p class="shint">Игрок — телефон или браузер, где открывали игру и у которого есть имя. «С профилем» считается после обновления игроков до новых версий. Скачивания APK включают обновления</p>`;
+      ${tile(relOk ? apk : '—', 'скачиваний APK')}${tile(rels.length || '—', 'версий вышло')}</div>
+      <p class="shint">Игрок — телефон или браузер, где открывали игру и у которого есть имя. «С профилем» считается после обновления игроков до новых версий. Скачивания APK — сколько раз скачали файл приложения с GitHub, включая обновления; игру через веб-версию или из Google Play сюда не считаем</p>`;
   } catch (_) { out.innerHTML = '<p class="shint">Не получилось загрузить — проверьте интернет</p>'; }
 }
 
