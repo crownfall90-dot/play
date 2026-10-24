@@ -77,6 +77,7 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 .sgroup{display:flex;flex-direction:column;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.04);overflow:hidden}
 .srow{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:56px;box-sizing:border-box;width:100%;background:none;border:0;color:var(--ink);font:inherit;text-align:left;text-decoration:none}
 .srow+.srow{border-top:1px solid var(--line)}
+.srow[hidden]{display:none}
 .srow.btn{cursor:pointer}.srow.btn:active{background:rgba(255,255,255,.06)}
 .sic{flex:0 0 36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:rgba(255,255,255,.07)}
 .stx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.stx b{font:700 14.5px var(--f-body)}.stx small{color:var(--muted);font-size:11.5px;line-height:1.3}
@@ -629,7 +630,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="sgroup">
             <div class="srow"><span class="sic">ℹ️</span><span class="stx"><b>Версия</b></span><b class="sval" id="verFull">—</b></div>
             <button class="srow btn" id="checkUpd"><span class="sic">🔄</span><span class="stx"><b>Проверить обновления</b></span><span class="sgo">›</span></button>
-            <a class="srow btn" href="https://github.com/crownfall90-dot/play/blob/main/docs/privacy-policy.md" target="_blank" rel="noopener"><span class="sic">🔒</span><span class="stx"><b>Политика конфиденциальности</b></span><span class="sgo">›</span></a>
+            <a class="srow btn" href="https://crownfall90-dot.github.io/play/privacy.html" target="_blank" rel="noopener"><span class="sic">🔒</span><span class="stx"><b>Политика конфиденциальности</b></span><span class="sgo">›</span></a>
             <button class="srow btn" id="devBtn" hidden><span class="sic">📣</span><span class="stx"><b>Панель владельца</b></span><span class="sgo">›</span></button>
           </div>
           <p class="shint scenter">Puzzlegrad. Без рекламы и покупок</p>
@@ -2480,9 +2481,11 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
 });
 
-$('#checkUpd').onclick = () => { $('#checkUpd').textContent = 'Проверяем…'; AndroidApp.checkUpdates(); setTimeout(() => $('#checkUpd').textContent = 'Проверить обновления', 4000); };
-window.onNoUpdate = () => { $('#checkUpd').textContent = 'Проверить обновления'; toastAny('У вас последняя версия'); };
-window.onCheckFailed = () => { $('#checkUpd').textContent = 'Проверить обновления'; toastAny('Не удалось проверить обновления — попробуйте чуть позже'); };
+// Only the label changes: replacing the button's text would wipe its icon and arrow.
+const checkLabel = t => { const b = $('#checkUpd b'); if (b) b.textContent = t; };
+$('#checkUpd').onclick = () => { checkLabel('Проверяем…'); AndroidApp.checkUpdates(); setTimeout(() => checkLabel('Проверить обновления'), 4000); };
+window.onNoUpdate = () => { checkLabel('Проверить обновления'); toastAny('У вас последняя версия'); };
+window.onCheckFailed = () => { checkLabel('Проверить обновления'); toastAny('Не удалось проверить обновления — попробуйте чуть позже'); };
 function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
 
 /* ---------------- game menu: pause, settings, cancel / resign, draw ---------------- */

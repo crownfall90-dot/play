@@ -13,6 +13,7 @@ if [ "$target" = web ]; then
   cp -r app/src/main/assets/fonts "$site/fonts"; cp -r web/icons "$site/icons"; cp web/manifest.webmanifest "$site/"
   sed "s/__VERSION__/$(echo "${2:-dev}" | tr -cd 'A-Za-z0-9.-')/" web/sw.js > "$site/sw.js"
   touch "$site/.nojekyll"
+  python3 scripts/privacy-page.py "$site/privacy.html"
 else
   out=app/src/main/assets/index.html
 fi
