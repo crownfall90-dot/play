@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Новые детальные объекты на пазлах: четыре вида домиков с черепицей, окнами и трубами, каменная крепость с воротами и флагом\n• Ели, дубы с яблоками, берёзы, кусты, камни и стога сена на полях\n• Водопады на краю реки; объёмные пазлы в 3D"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Реки петляют, по берегам камыш и камни; у дорог колеи и обочины; в деревнях мостовые и разные крыши; тополя\n• Новые пазлы: тупик у валунов, вход в шахту, тупик со шлагбаумом, поле с валунами, излучина реки с дорогой\n• Перед партией колода перемешивается и первая карта ложится в центр; каждый ход карта летит из стопки\n• Достроенные объекты остаются в цвете владельца и отмечаются его флажками\n• Покупка фигурки в магазине — с подтверждением"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -207,6 +207,11 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .coach .skip{border:0;background:none;color:var(--muted);font:600 12px var(--f-body);cursor:pointer;padding:6px}
 .tutpulse{animation:tutp 1.2s ease-in-out infinite!important;position:relative;z-index:3}
 @keyframes tutp{0%,100%{box-shadow:0 0 0 0 rgba(242,184,75,.75)}50%{box-shadow:0 0 0 8px rgba(242,184,75,0)}}
+.cback{display:block;width:100%;height:100%;border-radius:9px;background:radial-gradient(circle at 50% 50%,#f2d68a 0 14%,transparent 15%),radial-gradient(circle at 50% 50%,#7a5a2a 0 19%,transparent 20%),repeating-linear-gradient(45deg,#5d9d40 0 6px,#6aab4a 6px 12px);border:3px solid #ead9b0;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15),0 6px 12px rgba(0,0,0,.4);box-sizing:border-box}
+.shuffle{position:absolute;left:50%;top:46%;width:0;height:0;z-index:6;pointer-events:none}
+.shuffle .cback{position:absolute;left:-36px;top:-36px;width:72px;height:72px}
+.flycard{position:fixed;width:22px;height:22px;z-index:40;pointer-events:none;transform-origin:0 0}
+.flycard .cback{border-width:1.5px;border-radius:3px}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
 .goldchip{position:absolute;top:10px;right:14px;display:flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;background:var(--glass);border:1px solid var(--line);cursor:pointer;z-index:2}
@@ -726,7 +731,9 @@ const TYPES = {
   fort:{e:'ffff',n:3,fort:true,name:'Крепость'}, fortR:{e:'ffrf',n:2,fort:true,name:'Крепость с дорогой'},
   wS:{e:'wfwf',n:2,name:'Река'}, wC:{e:'wwff',n:2,name:'Излучина реки'},
   wBr:{e:'wrwr',n:1,name:'Мост через реку'}, wCity:{e:'wcwf',n:1,name:'Город у реки'},
-  wEnd:{e:'wfff',n:2,name:'Исток реки'},
+  wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
+  rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
+  rEnd:{e:'rfff',n:1,end:'barrier',name:'Тупик'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
 };
 const KIND = {c:'Город',r:'Дорога',f:'Крепость'};
 
@@ -795,21 +802,53 @@ function drawTile(id) {
     }
     g.setLineDash([]);
   };
-  const WATER = [[38,'#c8bd7c'],[28,'#3b88cf'],[16,'#4ea2e4'],[3,'rgba(210,238,255,.75)',[7,15]]];
-  const ROAD = [[24,'#7a603b'],[18,'#d9bf88'],[8,'#e8d4a4'],[2,'rgba(150,120,70,.5)',[2,7]]];
+  // Rivers meander: two cubic curves through a point near the middle, leaving each edge at a
+  // right angle so neighbouring pieces join; reeds and stones line the banks.
+  const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const cub = (p0, p1, p2, p3, t) => { const a = lerp(p0, p1, t), b = lerp(p1, p2, t), c2 = lerp(p2, p3, t), d = lerp(a, b, t), e = lerp(b, c2, t); return [lerp(d, e, t), [e[0] - d[0], e[1] - d[1]]]; };
+  const riverPath = (a, b) => {
+    const A = mid[a], ia = [-V[a][0], -V[a][1]];
+    if (b == null) { const M = [C[0] + (R() - .5) * 16, C[1] + (R() - .5) * 16]; return [[A, [A[0] + ia[0] * S * .22 + ia[1] * S * .12, A[1] + ia[1] * S * .22 - ia[0] * S * .12], [M[0] - ia[0] * 10, M[1] - ia[1] * 10], M]]; }
+    const B = mid[b], ib = [-V[b][0], -V[b][1]];
+    const M = [C[0] + (R() - .5) * S * .24, C[1] + (R() - .5) * S * .24];
+    let tx = B[0] - A[0] + (ib[0] - ia[0]) * 0, ty = B[1] - A[1]; const L = Math.hypot(tx, ty) || 1; tx = tx / L * S * .2; ty = ty / L * S * .2;
+    return [[A, [A[0] + ia[0] * S * .26, A[1] + ia[1] * S * .26], [M[0] - tx, M[1] - ty], M], [M, [M[0] + tx, M[1] + ty], [B[0] + ib[0] * S * .26, B[1] + ib[1] * S * .26], B]];
+  };
+  const strokeSegs = (segs, w, col, dash) => { g.beginPath(); g.moveTo(...segs[0][0]); segs.forEach(q => g.bezierCurveTo(...q[1], ...q[2], ...q[3])); g.lineWidth = w; g.strokeStyle = col; g.lineCap = 'butt'; g.lineJoin = 'round'; g.setLineDash(dash || []); g.stroke(); g.setLineDash([]); };
+  const along = (segs, fn) => segs.forEach(q => { for (let t = .06; t < .96; t += .08) { const [pt, d] = cub(...q, t), L = Math.hypot(...d) || 1; fn(pt, [-d[1] / L, d[0] / L]); } });
+  const water = segs => {
+    strokeSegs(segs, 40, '#b9b07a'); strokeSegs(segs, 34, '#cdbf86'); strokeSegs(segs, 28, '#2f7cc2'); strokeSegs(segs, 18, '#4a9fe3'); strokeSegs(segs, 7, 'rgba(140,205,250,.75)');
+    strokeSegs(segs, 2, 'rgba(225,245,255,.8)', [6, 13]);
+    along(segs, ([x, y], [nx, ny]) => {
+      for (const sd of [-1, 1]) {
+        const r1 = R();
+        if (r1 < .35) { const bx = x + nx * sd * 21, by = y + ny * sd * 21; g.strokeStyle = r1 < .2 ? '#3f7d2c' : '#56932f'; g.lineWidth = 1.4; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(bx + k * 1.5, by + 3); g.lineTo(bx + k * 2.6, by - 4 - R() * 3); g.stroke(); } }
+        else if (r1 < .45) { g.fillStyle = '#9c968a'; g.beginPath(); g.ellipse(x + nx * sd * 15, y + ny * sd * 15, 2.6, 1.8, R(), 0, 7); g.fill(); }
+      }
+      if (R() < .25) { g.strokeStyle = 'rgba(230,248,255,.55)'; g.lineWidth = 1; g.beginPath(); g.arc(x + (R() - .5) * 10, y + (R() - .5) * 10, 3 + R() * 2, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
+    });
+  };
+  // Roads keep their shape (the owner colouring follows it) but get verges, two wheel ruts and pebbles.
+  const ROAD = [[26,'rgba(60,90,30,.35)'],[22,'#80653e'],[18,'#d9bf88'],[12,'#c7a874'],[8,'#e2cb98'],[2,'rgba(150,120,70,.45)',[2,7]]];
+  const roadPts = (a, b, fn) => { const A = mid[a], B = b == null ? C : mid[b]; for (let t = .08; t < .95; t += .07) { const u = 1 - t, x = b == null ? A[0] + (B[0] - A[0]) * t : u * u * A[0] + 2 * u * t * C[0] + t * t * B[0], y = b == null ? A[1] + (B[1] - A[1]) * t : u * u * A[1] + 2 * u * t * C[1] + t * t * B[1]; fn(x, y); } };
+  const pebbles = (a, b) => roadPts(a, b, (x, y) => { if (R() < .55) { g.fillStyle = R() < .5 ? 'rgba(120,96,60,.55)' : 'rgba(250,236,200,.7)'; g.beginPath(); g.arc(x + (R() - .5) * 14, y + (R() - .5) * 14, .9 + R() * .9, 0, 7); g.fill(); } if (R() < .3) { g.strokeStyle = '#4f8e33'; g.lineWidth = 1.2; const sx = x + (R() < .5 ? -12 : 12) * (Math.abs(mid[a][0] - C[0]) < 1 ? 1 : 0), sy = y + (R() < .5 ? -12 : 12) * (Math.abs(mid[a][1] - C[1]) < 1 ? 1 : 0); g.beginPath(); g.moveTo(sx - 2, sy + 2); g.lineTo(sx, sy - 3); g.lineTo(sx + 2, sy + 2); g.stroke(); } });
   const w = idx('w');
-  if (w.length === 2) strip(w[0], w[1], WATER); else w.forEach(d => strip(d, null, WATER));
+  if (w.length === 2) water(riverPath(w[0], w[1])); else w.forEach(d => water(riverPath(d, null)));
   if (w.length === 1) {
-    [[36,30,'#c8bd7c'],[29,23,'#3b88cf']].forEach(([a, b, col]) => { g.beginPath(); g.ellipse(C[0], C[1], a, b, 0, 0, 7); g.fillStyle = col; g.fill(); });
-    g.beginPath(); g.ellipse(C[0] - 7, C[1] - 6, 14, 8, 0, 0, 7); g.fillStyle = 'rgba(140,200,245,.6)'; g.fill();
+    // a spring: a pond ringed with stones
+    [[37,31,'#b9b07a'],[33,27,'#cdbf86'],[28,22,'#2f7cc2'],[20,15,'#4a9fe3']].forEach(([a, b, col]) => { g.beginPath(); g.ellipse(C[0], C[1], a, b, 0, 0, 7); g.fillStyle = col; g.fill(); });
+    g.beginPath(); g.ellipse(C[0] - 7, C[1] - 6, 11, 6, 0, 0, 7); g.fillStyle = 'rgba(170,220,250,.7)'; g.fill();
+    for (let k = 0; k < 14; k++) { const an = k / 14 * 7, rx = C[0] + Math.cos(an) * 34, ry = C[1] + Math.sin(an) * 28; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(rx, ry, 4 + R() * 2, 3, an, 0, 7); g.fill(); }
   }
   const r = idx('r');
-  if (r.length === 2) strip(r[0], r[1], ROAD); else r.forEach(d => strip(d, null, ROAD));
-  if (r.length >= 3 || (r.length === 1 && !def.fort)) {
+  if (r.length === 2) { strip(r[0], r[1], ROAD); pebbles(r[0], r[1]); } else r.forEach(d => { strip(d, null, ROAD); pebbles(d, null); });
+  if (def.end) { g.beginPath(); g.ellipse(C[0], C[1], 22, 18, 0, 0, 7); g.fillStyle = '#c7a874'; g.fill(); g.beginPath(); g.ellipse(C[0], C[1], 17, 13, 0, 0, 7); g.fillStyle = '#d9bf88'; g.fill(); }
+  else if (r.length >= 3 || (r.length === 1 && !def.fort)) {
     g.beginPath(); g.arc(C[0], C[1], 15, 0, 7); g.fillStyle = '#7a603b'; g.fill();
     g.beginPath(); g.arc(C[0], C[1], 12, 0, 7); g.fillStyle = '#d9bf88'; g.fill();
     g.beginPath(); g.arc(C[0], C[1], 5, 0, 7); g.fillStyle = '#5a6e7c'; g.fill(); g.strokeStyle = '#8b8478'; g.lineWidth = 2.5; g.stroke();
   }
+  if (def.rocks) for (let k = 0; k < 10; k++) { g.fillStyle = 'rgba(110,100,85,.35)'; g.beginPath(); g.ellipse(30 + R() * 132, 30 + R() * 132, 3 + R() * 4, 2 + R() * 2, R() * 3, 0, 7); g.fill(); }
   if (id === 'wBr') {
     g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(C[0] - 30, C[1] - 12, 60, 28);
     g.fillStyle = '#a8743f'; g.fillRect(C[0] - 30, C[1] - 15, 60, 30);
@@ -818,14 +857,18 @@ function drawTile(id) {
   }
   const cp = cityPaths(E);
   if (cp) {
-    g.save(); g.clip(cp.fill); g.fillStyle = '#d8b47e'; g.fillRect(0, 0, S, S);
-    const ROOFS = ['#b9452f','#c95b3c','#a03a2b','#d4733f','#8f3b2e'];
-    for (let y = -6, row = 0; y < S; y += 15, row++) for (let x = row % 2 ? -2 : 7; x < S; x += 18) {
-      const jx = x + R()*4, jy = y + R()*3;
-      g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(jx + 1.5, jy + 2, 14, 11);
-      g.fillStyle = ROOFS[(R() * ROOFS.length) | 0]; g.fillRect(jx, jy, 14, 10);
-      g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(jx, jy, 14, 3.5);
-      g.fillStyle = 'rgba(0,0,0,.2)'; g.fillRect(jx + 6.5, jy, 1, 10);
+    // Town: cobbled lanes, then rows of gabled roofs (lit and shaded halves, a ridge, the odd chimney).
+    g.save(); g.clip(cp.fill); g.fillStyle = '#cdb48c'; g.fillRect(0, 0, S, S);
+    for (let i = 0; i < 520; i++) { g.fillStyle = R() < .5 ? 'rgba(120,100,70,.35)' : 'rgba(250,235,205,.45)'; g.beginPath(); g.ellipse(R() * S, R() * S, 2.2, 1.6, R() * 3, 0, 7); g.fill(); }
+    const ROOFS = [['#c8503a','#8f3020'],['#d4733f','#9c4a24'],['#a9432f','#73281b'],['#5f7488','#3a4a5a'],['#c79a45','#8a6420']];
+    for (let y = -6, row = 0; y < S; y += 16, row++) for (let x = row % 2 ? -4 : 6; x < S; x += 19) {
+      if (R() < .08) { g.fillStyle = '#4f8e3a'; g.beginPath(); g.arc(x + 8, y + 6, 6, 0, 7); g.fill(); g.fillStyle = '#6fb050'; g.beginPath(); g.arc(x + 6.5, y + 4.5, 3.5, 0, 7); g.fill(); continue; }
+      const jx = x + R() * 4, jy = y + R() * 3, ww = 13 + R() * 4, hh = 10 + R() * 2, [lt, dk] = ROOFS[(R() * ROOFS.length) | 0];
+      g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(jx + 2, jy + 2.5, ww, hh);
+      g.fillStyle = lt; g.fillRect(jx, jy, ww, hh / 2); g.fillStyle = dk; g.fillRect(jx, jy + hh / 2, ww, hh / 2);
+      g.fillStyle = 'rgba(255,240,220,.45)'; g.fillRect(jx, jy + hh / 2 - .6, ww, 1.2);
+      g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = .6; for (let k = 3; k < ww; k += 3) { g.beginPath(); g.moveTo(jx + k, jy); g.lineTo(jx + k, jy + hh); g.stroke(); }
+      if (R() < .35) { g.fillStyle = '#6d4a36'; g.fillRect(jx + ww * .7, jy + 1, 2.4, 3.2); }
     }
     g.restore();
     if (cp.wall) {
@@ -934,6 +977,48 @@ function drawSprites() {
     g.strokeStyle = '#8a5a22'; g.lineWidth = .8; g.beginPath(); g.moveTo(2.2, h - 6); g.quadraticCurveTo(w / 2, h - 4.4, w - 2.2, h - 6); g.stroke();
   });
 
+  sprite('poplar', 14, 40, (g, w, h) => {
+    shadow(g, w / 2, h - 1.4, 6, 1.5);
+    g.fillStyle = '#5a3d24'; g.fillRect(w / 2 - 1, h - 7, 2, 6);
+    g.fillStyle = lin(g, 1, 0, w - 1, 0, [[0, '#6fb04f'], [.5, '#3f8a3a'], [1, '#1f5226']]);
+    g.beginPath(); g.moveTo(w / 2, 1); g.bezierCurveTo(w + 1, 10, w - .5, h - 9, w / 2, h - 5); g.bezierCurveTo(.5, h - 9, -1, 10, w / 2, 1); g.fill();
+    g.strokeStyle = 'rgba(20,60,25,.35)'; g.lineWidth = .5; for (let y = 8; y < h - 8; y += 4) { g.beginPath(); g.moveTo(w / 2 - 3, y + 2); g.quadraticCurveTo(w / 2, y, w / 2 + 3, y + 2); g.stroke(); }
+  });
+  const rock = (g, cx, cy, rw, rh, c0, c1) => {
+    poly(g, [[cx - rw, cy], [cx - rw * .8, cy - rh * .6], [cx - rw * .2, cy - rh], [cx + rw * .5, cy - rh * .85], [cx + rw, cy - rh * .3], [cx + rw * .9, cy]], lin(g, cx - rw, cy - rh, cx + rw, cy, [[0, c0], [.55, c1], [1, '#5b574f']]), 'rgba(40,38,34,.6)');
+    poly(g, [[cx - rw * .2, cy - rh], [cx + rw * .5, cy - rh * .85], [cx + rw * .15, cy - rh * .45], [cx - rw * .45, cy - rh * .55]], 'rgba(255,255,255,.28)');
+  };
+  sprite('boulders', 32, 22, (g, w, h) => {
+    shadow(g, w / 2, h - 2, 15, 2.6, .35);
+    rock(g, 9, h - 2.5, 8, 11, '#c9c5bb', '#958f84'); rock(g, 23, h - 2.2, 8.5, 13, '#bdb8ad', '#888277'); rock(g, 16, h - 1.6, 7, 8, '#d3cfc6', '#a29c90');
+    g.fillStyle = 'rgba(90,140,60,.75)'; [[5, h - 2.6], [28, h - 2.4], [16, h - 1.8]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y, 2.6, 1, 0, 0, 7); g.fill(); });
+  });
+  sprite('mine', 40, 32, (g, w, h) => {
+    shadow(g, w / 2, h - 2, 19, 3, .35);
+    // rocky hill
+    poly(g, [[1, h - 2], [5, h - 13], [12, h - 24], [21, h - 30], [30, h - 24], [37, h - 12], [39, h - 2]], lin(g, 2, h - 30, 38, h - 2, [[0, '#b7b0a2'], [.5, '#8c8578'], [1, '#5f5a50']]), 'rgba(40,36,30,.6)');
+    g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.moveTo(12, h - 24); g.lineTo(21, h - 30); g.lineTo(18, h - 20); g.closePath(); g.fill();
+    g.fillStyle = 'rgba(90,140,60,.8)'; [[6, h - 12, 3], [33, h - 13, 2.6], [24, h - 27, 2.2]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); });
+    // dark entrance with a timber frame
+    g.fillStyle = '#17120f'; g.beginPath(); g.moveTo(13, h - 2); g.lineTo(13, h - 13); g.quadraticCurveTo(20, h - 19, 27, h - 13); g.lineTo(27, h - 2); g.fill();
+    g.fillStyle = '#7a5130'; g.fillRect(12, h - 15, 2.4, 13); g.fillRect(25.6, h - 15, 2.4, 13); g.fillStyle = '#8c5f38'; g.fillRect(11, h - 16.5, 18, 2.6);
+    g.fillStyle = '#5a3a20'; g.fillRect(11, h - 14, 18, .8);
+    // rails and a lantern
+    g.strokeStyle = '#6b6b70'; g.lineWidth = .7; g.beginPath(); g.moveTo(16.5, h - 2); g.lineTo(18, h - 9); g.moveTo(23.5, h - 2); g.lineTo(22, h - 9); g.stroke();
+    g.strokeStyle = '#6e4a2a'; g.lineWidth = .8; for (let y = h - 3; y > h - 9; y -= 2) { g.beginPath(); g.moveTo(16 + (h - y) * .1, y); g.lineTo(24 - (h - y) * .1, y); g.stroke(); }
+    g.fillStyle = '#ffcf5a'; g.beginPath(); g.arc(30, h - 12, 1.3, 0, 7); g.fill(); g.fillStyle = 'rgba(255,210,90,.35)'; g.beginPath(); g.arc(30, h - 12, 3, 0, 7); g.fill();
+  });
+  sprite('barrier', 28, 20, (g, w, h) => {
+    shadow(g, w / 2, h - 1.6, 13, 2);
+    g.fillStyle = '#6e4a2a'; g.fillRect(4, h - 12, 2.2, 11); g.fillRect(w - 6.2, h - 12, 2.2, 11);
+    poly(g, [[2, h - 12], [w - 2, h - 12], [w - 2, h - 9], [2, h - 9]], '#f2efe6', 'rgba(40,30,20,.6)');
+    g.fillStyle = '#d6402f'; for (let x = 2; x < w - 2; x += 6) { g.beginPath(); g.moveTo(x, h - 9); g.lineTo(x + 3, h - 12); g.lineTo(x + 6, h - 12); g.lineTo(x + 3, h - 9); g.fill(); }
+    poly(g, [[2, h - 7], [w - 2, h - 7], [w - 2, h - 5], [2, h - 5]], '#a8743f', 'rgba(40,30,20,.5)');
+    // a sign on a post
+    g.fillStyle = '#6e4a2a'; g.fillRect(w / 2 - .8, 1, 1.6, h - 13);
+    poly(g, [[w / 2 - 5, 1], [w / 2 + 5, 1], [w / 2 + 5, 6], [w / 2 - 5, 6]], '#e8d6a6', 'rgba(60,40,20,.7)');
+    g.fillStyle = '#c0392b'; g.beginPath(); g.arc(w / 2, 3.5, 1.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(w / 2 - 1, 3.2, 2, .6);
+  });
   /* Stone keep: coursed masonry, a shaded right side, battlements with depth, slits, a gate, a flag. */
   sprite('tower', 38, 60, (g) => {
     shadow(g, 19, 58.2, 16, 2.6, .32);
@@ -1068,9 +1153,13 @@ function addDecor(el, t, delay) {
     for (let i = 0; i < n; i++) items.push([i === 0 && city.length >= 3 ? 'tower' : HOUSES[(R() * 4) | 0], cx + pts[i][0], cy + pts[i][1]]);
   }
   if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
+  // A road that stops in the middle ends at boulders, a mine or a barrier, just past the centre.
+  const end = TYPES[t.type].end;
+  if (end) { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
+  if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
   for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
     if (E[a] === 'c' || E[b] === 'c' || lowGfx()) continue;
-    if (R() < .62) { const k = R(); items.push([k < .4 ? 'pine' : k < .68 ? 'oak' : k < .78 ? 'birch' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.33 + R()*.06) + (R() - .5) * .06, sy * (.33 + R()*.06)]); }
+    if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.33 + R()*.06) + (R() - .5) * .06, sy * (.33 + R()*.06)]); }
   }
   items.sort((p, q) => p[2] - q[2]);
   items.forEach((it, i) => addSprite(el, it[0], it[1], it[2], '', delay == null ? null : delay + i * .05, it[0] === 'tower' && city.length ? .8 : 1));
@@ -1280,6 +1369,44 @@ function ownSvg(t, list) {
   }
   return 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">${out}</svg>`);
 }
+/* Finished and scored features stay in their owners' colours and get little banners of
+   those colours on a few of their pieces (around the keep for a fortress). */
+let doneFeats = [];
+function flagSprite(col) {
+  const k = 'fl' + col.slice(1);
+  if (!SPR[k]) {
+    sprite(k, 13, 24, (g, w, h) => {
+      const sh = g.createRadialGradient(4, h - 1.5, 0, 4, h - 1.5, 4); sh.addColorStop(0, 'rgba(0,0,0,.3)'); sh.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = sh; g.fillRect(0, h - 4, 9, 4);
+      g.fillStyle = '#5a3d24'; g.fillRect(3.3, 2, 1.4, h - 3);
+      g.fillStyle = '#f2c94c'; g.beginPath(); g.arc(4, 2, 1.5, 0, 7); g.fill();
+      g.fillStyle = col; g.beginPath(); g.moveTo(4.7, 3); g.quadraticCurveTo(8, 2, 12.5, 4.5); g.quadraticCurveTo(9, 6.5, 12.5, 9.5); g.quadraticCurveTo(8, 8, 4.7, 10.5); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(0,0,0,.22)'; g.beginPath(); g.moveTo(8.5, 3.2); g.quadraticCurveTo(10.5, 3.6, 12.5, 4.5); g.quadraticCurveTo(9, 6.5, 12.5, 9.5); g.quadraticCurveTo(10.5, 8.6, 8.5, 8.4); g.closePath(); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.fillRect(4.7, 3.4, 3, 1);
+    });
+    const st = document.createElement('style'); st.textContent = `.s-${k}{background-image:url(${SPR[k].url})}`; document.head.appendChild(st);
+  }
+  return k;
+}
+function markDone(c, cols) {
+  doneFeats.push({ids: c.ids, cols}); markOwn();
+  let spots = [];
+  if (c.kind === 'f') {
+    const center = c.tiles.find(t => c.ids.has(key(t.x, t.y) + '|f'));
+    if (center) spots = [[-.36, -.36], [.36, -.36], [.36, .36], [-.36, .36]].map(p => [center, p]);
+  } else {
+    const ts = c.tiles, step = Math.max(1, Math.ceil(ts.length / 6));
+    for (let i = 0; i < ts.length; i += step) {
+      const t = ts[i], g = groupsOf(t).find(q => c.ids.has(gid(t, q)));
+      if (!g) continue;
+      const [x, y] = groupPos(t, g);
+      spots.push([t, [x + (c.kind === 'r' ? .1 : .14), y - .06]]);
+    }
+  }
+  spots.forEach(([t, [x, y]], i) => {
+    const b = addSprite(t.el, flagSprite(cols[i % cols.length]), x, y, 'flag', fast() ? null : .1 + i * .08, 1.35);
+    b.dataset.flag = '1';
+  });
+}
 function updateOwnership() {
   if (!ownDirty) return;
   ownDirty = false;
@@ -1296,6 +1423,12 @@ function updateOwnership() {
       if (!perTile.has(t)) perTile.set(t, []);
       perTile.get(t).push({kind: rest[0], edges: rest.slice(1).split('').map(Number), cols});
     }
+  }
+  for (const f of doneFeats) for (const id of f.ids) {
+    const [k, rest] = id.split('|'), t = tiles.get(k);
+    if (!t || rest[0] === 'f') continue;
+    if (!perTile.has(t)) perTile.set(t, []);
+    perTile.get(t).push({kind: rest[0], edges: rest.slice(1).split('').map(Number), cols: f.cols});
   }
   for (const [t, list] of perTile) {
     t.el.querySelector('.face').style.backgroundImage = `url("${ownSvg(t, list)}"), url(${TILE_URL[t.type]})`;
@@ -1445,6 +1578,7 @@ async function resolveFeature(c, final, placer) {
   const each = win.length > 1 && gameRules.tie === 'split' ? Math.floor(pts / win.length) : pts;
   win.forEach(i => { const m = c.meeples.find(x => x.p === i); floatText(m.t, groupPos(m.t, m.g), '+' + each, players[i].col); });
   win.forEach(i => { players[i].score += each; players[i].stats[c.kind] += each; });
+  if (!final) markDone(c, win.map(i => players[i].col));
   if (!final && !fast()) win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each}); });
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
@@ -1461,7 +1595,7 @@ function startTurn() {
   while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
   renderDeck();
   if (!current) return endGame();
-  renderTray(); renderPlayers(); turnTok++;
+  renderTray(); drawFx(); renderPlayers(); turnTok++;
   if (queue.some(q => q.n === applied)) return waitRemote();
   if (isLocal(turn)) {
     if (localHumans() > 1) return handOver();
@@ -1628,7 +1762,7 @@ function startGame(cfg, replay = []) {
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
   buildBoard(); buildMini();
   world.innerHTML = '<div class="ground"></div>';
-  ghost = null; slotEls = []; meeples = []; turn = 0; phase = 'idle';
+  ghost = null; slotEls = []; meeples = []; doneFeats = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
   players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0}, meeples: rules.meeples, missed: 0}; });
   if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
@@ -1648,8 +1782,53 @@ function startGame(cfg, replay = []) {
   Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
   $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
   renderPlayers(); renderResults(false);
-  toast(`Первая карта из стопки: ${TYPES[first.type].name}`);
-  startTurn();
+  if (replay.length || cfg.noIntro) { toast(`Первая карта из стопки: ${TYPES[first.type].name}`); return startTurn(); }
+  const my = token;
+  introThen(first, () => { if (my !== token) return; toast(`Первая карта из стопки: ${TYPES[first.type].name}`); startTurn(); });
+}
+/* Opening of a new game: the stack is shuffled in the middle of the table, then its top card
+   flies to the centre and becomes the first piece. Purely visual: the order is in cfg.deck. */
+const cardBack = () => '<i class="cback"></i>';
+function introThen(first, done) {
+  // The game screen opens right after startGame(): begin on the next frame, once it is visible.
+  requestAnimationFrame(() => requestAnimationFrame(() => introRun(first, done)));
+}
+function introRun(first, done) {
+  const br = board.getBoundingClientRect();
+  if (RM || !gameVisible || br.width < 10) return done();
+  first.el.style.visibility = 'hidden';
+  const box = document.createElement('div'); box.className = 'shuffle';
+  box.innerHTML = Array.from({length: 8}, () => cardBack()).join('');
+  board.append(box);
+  const cards = [...box.children];
+  cards.forEach((c, i) => c.style.transform = `translate(${-i}px,${-i * 1.6}px)`);
+  beep('rotate');
+  // two riffles: the stack splits left and right and falls back together
+  const riffle = (k) => Promise.all(cards.map((c, i) => c.animate([
+    {transform: `translate(${-i}px,${-i * 1.6}px)`},
+    {transform: `translate(${(i % 2 ? 1 : -1) * (46 + i * 3)}px,${-i * 1.6 - 8}px) rotate(${(i % 2 ? 1 : -1) * (10 + i)}deg)`, offset: .45},
+    {transform: `translate(${-i}px,${-i * 1.6}px)`}], {duration: 520, delay: k * 40 + i * 25, easing: 'cubic-bezier(.4,0,.2,1)'}).finished));
+  riffle(0).then(() => { beep('rotate'); return riffle(1); }).then(() => {
+    const top = cards[cards.length - 1], a = top.getBoundingClientRect(), f = first.el.querySelector('.face').getBoundingClientRect();
+    const dx = f.left + f.width / 2 - (a.left + a.width / 2), dy = f.top + f.height / 2 - (a.top + a.height / 2), sc = Math.max(.6, f.width / a.width);
+    const fl = top.animate([{transform: top.style.transform}, {transform: `translate(${dx}px,${dy - 40}px) scale(${sc * 1.1}) rotate(8deg)`, offset: .6}, {transform: `translate(${dx}px,${dy}px) scale(${sc})`, opacity: .9}], {duration: 560, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards'});
+    cards.slice(0, -1).forEach(c => c.animate([{opacity: 1}, {opacity: 0}], {duration: 400, delay: 200, fill: 'forwards'}));
+    return fl.finished;
+  }).then(() => {
+    box.remove(); first.el.style.visibility = '';
+    first.el.animate([{transform: 'translateZ(30px)', opacity: .4}, {transform: 'translateZ(0)', opacity: 1}], {duration: 260, easing: 'cubic-bezier(.5,0,.8,.4)'});
+    beep('place'); setTimeout(done, 320);
+  }).catch(() => { box.remove(); first.el.style.visibility = ''; done(); });
+}
+// Every turn the next card leaves the stack in the corner and lands in the tray.
+function drawFx() {
+  if (RM || fast() || !gameVisible) return;
+  const from = $('.dstack').getBoundingClientRect(), to = ct.getBoundingClientRect();
+  if (!from.width || !to.width) return;
+  const c = document.createElement('div'); c.className = 'flycard'; c.innerHTML = cardBack();
+  c.style.left = from.left + 'px'; c.style.top = from.top + 'px'; document.body.append(c);
+  const dx = to.left - from.left + (to.width - 22) / 2, dy = to.top - from.top + (to.height - 22) / 2, sc = to.width / 22;
+  c.animate([{transform: 'translate(0,0) scale(1)'}, {transform: `translate(${dx * .5}px,${dy * .5 - 60}px) scale(${sc * .7}) rotate(-12deg)`, offset: .5}, {transform: `translate(${dx}px,${dy}px) scale(${sc})`, opacity: .2}], {duration: 520, easing: 'cubic-bezier(.4,0,.3,1)'}).finished.then(() => c.remove(), () => c.remove());
 }
 function buildMini() {
   const mini = $('#mini'); mini.innerHTML = '';
@@ -1802,11 +1981,27 @@ $('#figgrid').addEventListener('click', e => {
   const k = b.dataset.fig, f = FIGS[k];
   if (!wallet.owned.includes(k)) {
     if (wallet.gold < f.price) return toastAny(`Не хватает ${f.price - wallet.gold} золота`);
-    wallet.gold -= f.price; wallet.owned.push(k); beep('coin'); toastAny(`${f.name} — ваша фигурка!`);
+    return confirmBuy(k);
   }
+  pickFig(k);
+});
+function pickFig(k) {
   wallet.fig = k; saveWallet(); renderShop();
   if (net) netSend({t: 'hello', id: myId, name: myName(), fig: k, col: wallet.color});
-});
+}
+// Buying spends gold, so it asks first: the figure, its price and what is left afterwards.
+function confirmBuy(k) {
+  const f = FIGS[k], box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><img src="${figPreview(k)}" alt="" style="width:64px;height:84px;margin:0 auto;display:block"><h3>Купить «${f.name}»?</h3><p>Цена: <b><i class="coin" style="display:inline-block;vertical-align:-3px"></i> ${f.price}</b> · останется ${wallet.gold - f.price} золота</p><button class="cta wide" data-b="yes">Купить</button><button class="ghostbtn" data-b="no">Отмена</button></div>`;
+  document.body.append(box);
+  box.onclick = e => {
+    const b = e.target.closest('[data-b]'); if (!b && e.target !== box) return;
+    box.remove();
+    if (!b || b.dataset.b !== 'yes' || wallet.owned.includes(k) || wallet.gold < f.price) return;
+    wallet.gold -= f.price; wallet.owned.push(k); beep('coin'); toastAny(`${f.name} — ваша фигурка!`);
+    pickFig(k);
+  };
+}
 
 /* ---------------- saved game (offline) ---------------- */
 function saveGame() { try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {} }
@@ -2252,7 +2447,7 @@ function onNet(d) {
     // Quick match: a room that started without us is no use — look for another one.
     if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
-    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id});
+    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
     return show('game');
   }
