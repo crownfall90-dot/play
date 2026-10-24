@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Фишка вернулась после постройки — ставьте её на любое свободное место на поле\n- Кружок на кнопке прогресса: показывает, когда есть незабранные награды или новые кубки в рейтинге\n- Раздел поддержки в настройках: написать разработчику (баги, идеи, пожелания)"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -518,7 +518,7 @@ html.lowgfx .tile .sd.s{display:block}
 .cta.wide{width:100%}
 .mrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .chip{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.07);font:600 13px var(--f-body);cursor:pointer}
-.chip svg{width:14px;height:15px} .chip.skip{color:var(--muted)}
+.chip svg{width:14px;height:15px} .chip.skip{color:var(--muted)} .chip.sel{background:rgba(76,141,255,.2);border-color:rgba(76,141,255,.6);color:#a8c8ff}
 .ocard.fin{max-width:340px;position:relative;overflow:hidden}
 .ocard.fin>*{flex-shrink:0}
 .medal{font-size:54px;line-height:1;animation:medal .7s cubic-bezier(.2,1.6,.4,1) both}
@@ -642,6 +642,10 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <button class="instcard" id="installBtn" hidden><span class="iic"><img src="icons/icon-192.png" alt=""></span><span class="itx"><b>Установите игру</b><small>Иконка на экране, весь экран, работает без интернета</small></span><span class="igo">Как?</span></button>
           <div class="sgroup prof" id="acct"></div>
           <div id="prefs"></div>
+          <div class="h3">Поддержка</div>
+          <div class="sgroup">
+            <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Пожелания, идеи, баги — всё пойдёт в дело</small></span><span class="sgo">›</span></button>
+          </div>
           <div class="h3">О приложении</div>
           <div class="sgroup">
             <div class="srow"><span class="sic">ℹ️</span><span class="stx"><b>Версия</b></span><b class="sval" id="verFull">—</b></div>
@@ -3234,7 +3238,7 @@ function showSay(p, i) {
 /* ---------------- progress: level, daily quests, achievements, rating ----------------
    Counted games are the ones that pay gold: you alone against bots, or online. */
 const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
-const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0}, wallet.prog);
+const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0}, wallet.prog);
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
 const xpNeed = l => 50 + 50 * l;
@@ -3295,7 +3299,7 @@ function gameDone(place, score) {
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
 }
-const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got'); };
+const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got') || (PROG.cups > 0 && PROG.cups > (PROG.cupsSeen || 0)); };
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); }
 let ptab = 'quests';
 function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
@@ -3322,7 +3326,7 @@ function renderProgress() {
     }).join('');
   } else renderTop();
 }
-$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; renderProgress(); };
+$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.cups > (PROG.cupsSeen || 0)) { PROG.cupsSeen = PROG.cups; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
@@ -3338,7 +3342,7 @@ async function syncRating(force) {
   try {
     const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
     const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
-    if (r.ok) { PROG.up = target; saveWallet(); if (PROG.up < PROG.cups) setTimeout(syncRating, 61000); }
+    if (r.ok) { PROG.up = target; saveWallet(); progressDot(); if (PROG.up < PROG.cups) setTimeout(syncRating, 61000); }
   } catch (_) {}
 }
 async function renderTop() {
@@ -3739,7 +3743,7 @@ $('#scr-friends').addEventListener('click', e => {
   else if (d.facc) acceptFriend(d.facc);
   else if (d.fjoin) joinInvite(d.fjoin);
   else if (d.fdrop) dropInbox(d.fdrop);
-  else if (d.fdel) { const f = friends.find(x => x.uid === d.fdel); confirmBox(f.mutual ? `Удалить ${f.n} из друзей?` : `Отменить заявку для ${f.n}?`, 'Да', () => removeFriend(d.fdel)); }
+  else if (d.fdel) { const f = friends.find(x => x.uid === d.fdel); const nm = f ? f.n : 'игрока'; confirmBox(f && !f.mutual ? `Отменить заявку для ${nm}?` : `Удалить ${nm} из друзей?`, 'Удалить', () => removeFriend(d.fdel)); }
 });
 /* ---------------- owner panel: news push to all players ----------------
    Hidden: 7 taps on "Версия" in Settings. Sending starts .github/workflows/news.yml through the
@@ -3922,6 +3926,44 @@ function confirmBox(text, yes, ok) {
   document.body.append(box);
   box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b && e.target !== box) return; box.remove(); if (b && b.dataset.a === 'y') ok(); };
 }
+function openFeedback() {
+  if (!FB) { toastAny('Нужно подключение к интернету'); return; }
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  const first = !wallet.feedbackSent;
+  const CATS = [{k:'bug',ic:'🐛',t:'Баг'},{k:'idea',ic:'💡',t:'Идея'},{k:'other',ic:'💬',t:'Другое'}];
+  box.innerHTML = `<div class="ocard" style="width:min(340px,92vw)">
+    <h3>Написать разработчику</h3>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 12px">Пожелания, идеи, баги — всё пойдёт в дело${first ? '.<br><b style="color:#f2b84b">+10 золота</b> за первое сообщение' : ''}</p>
+    <div style="display:flex;gap:6px;margin-bottom:12px">${CATS.map(c => `<button class="chip fb-cat${c.k==='idea'?' sel':''}" data-cat="${c.k}" style="flex:1;justify-content:center">${c.ic} ${c.t}</button>`).join('')}</div>
+    <textarea id="fbText" rows="4" placeholder="Расскажите что думаете…" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:inherit;font:14px var(--f-body);padding:10px 12px;resize:vertical;outline:none;min-height:80px"></textarea>
+    <button class="cta wide" id="fbSend" style="margin-top:10px">Отправить${first ? ' (+10 золота)' : ''}</button>
+    <button class="ghostbtn" id="fbCancel" style="margin-top:6px">Отмена</button>
+  </div>`;
+  document.body.append(box);
+  let cat = 'idea';
+  box.querySelectorAll('.fb-cat').forEach(b => b.addEventListener('click', () => {
+    cat = b.dataset.cat;
+    box.querySelectorAll('.fb-cat').forEach(x => x.classList.toggle('sel', x === b));
+  }));
+  box.querySelector('#fbCancel').onclick = () => box.remove();
+  box.onclick = e => { if (e.target === box) box.remove(); };
+  box.querySelector('#fbSend').onclick = async () => {
+    const msg = box.querySelector('#fbText').value.trim();
+    if (!msg) { box.querySelector('#fbText').focus(); return; }
+    const btn = box.querySelector('#fbSend'); btn.disabled = true; btn.textContent = 'Отправляем…';
+    try {
+      const tok = fbAuth ? await fbToken() : null;
+      const uid = (fbAuth && fbAuth.uid) || 'anon';
+      const ver = window.AndroidApp ? (AndroidApp.versionName ? AndroidApp.versionName() : '') : 'web';
+      const url = `${FB.dbUrl}/feedback/${uid}/${Date.now()}.json` + (tok ? `?auth=${tok}` : '');
+      await fetch(url, {method:'PUT', body:JSON.stringify({k:cat, m:msg.slice(0,1000), v:ver, t:{'.sv':'timestamp'}})});
+      if (first) { wallet.gold += 10; wallet.feedbackSent = true; saveWallet(); }
+      box.remove();
+      toastAny(first ? 'Спасибо за помощь! +10 золота 🎉' : 'Спасибо за обратную связь!');
+    } catch (_) { btn.disabled = false; btn.textContent = 'Отправить'; toastAny('Нет связи — попробуйте позже'); }
+  };
+}
+if ($('#feedbackBtn')) $('#feedbackBtn').onclick = openFeedback;
 if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 $('#friendsBtn').onclick = () => { friendsBack = 'menu'; show('friends'); };

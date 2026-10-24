@@ -80,6 +80,14 @@
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid && !data.exists() && newData.val() === root.child('guestN').val()"
       }
+    },
+    "feedback": {
+      "$uid": {
+        "$key": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['k', 'm', 't']) && newData.child('k').isString() && newData.child('m').isString() && newData.child('m').val().length <= 1000 && newData.child('t').val() === now"
+        }
+      }
     }
   }
 }
