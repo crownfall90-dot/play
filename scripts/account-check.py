@@ -34,8 +34,10 @@ def main():
         try: s = json.loads(v.get('s', '{}'))
         except Exception: s = {}
         if (w.get('name') or '').lower() in wanted or (s.get('name') or '').lower() in wanted:
-            found.setdefault(uid, {})['profile'] = {'wallet.name': w.get('name'), 'seat.name': s.get('name'), 'gold': w.get('gold')}
+            found.setdefault(uid, {})['profile'] = {'wallet.name': w.get('name'), 'seat.name': s.get('name'), 'gold': w.get('gold'), 'guest': w.get('guest'), 'no': w.get('no'),
+                                                    'saved': v.get('t'), 'streak': w.get('streak'), 'owned': len(w.get('owned') or []), 'by': v.get('by')}
     for uid in found:
+        if uid in pres: found[uid]['presence_raw'] = pres[uid]
         req = urllib.request.Request(f'https://identitytoolkit.googleapis.com/v1/projects/{pid}/accounts:lookup', json.dumps({'localId': [uid]}).encode(),
                                      {'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json'})
         with urllib.request.urlopen(req) as r:
