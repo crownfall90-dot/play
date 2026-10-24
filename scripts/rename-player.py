@@ -18,10 +18,10 @@ def main():
     tok = an.token(sa)
     db = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'app', 'google-services.json')))['project_info'].get('firebase_url') \
         or f"https://{sa['project_id']}-default-rtdb.europe-west1.firebasedatabase.app"
-    def call(method, path, body=None):
-        req = urllib.request.Request(f'{db}/{path}.json', None if body is None else json.dumps(body).encode(), {'Authorization': 'Bearer ' + tok}, method=method)
+    def call(method, path, body=None, query=''):
+        req = urllib.request.Request(f'{db}/{path}.json{query}', None if body is None else json.dumps(body).encode(), {'Authorization': 'Bearer ' + tok}, method=method)
         with urllib.request.urlopen(req) as r: return json.load(r)
-    uids = [u for u in (call('GET', 'profiles?shallow=true') or {}) if u.startswith(prefix)]
+    uids = [u for u in (call('GET', 'profiles', query='?shallow=true') or {}) if u.startswith(prefix)]
     if len(uids) != 1: sys.exit(f'{len(uids)} profiles start with {prefix}')
     uid = uids[0]
     prof = call('GET', f'profiles/{uid}')
