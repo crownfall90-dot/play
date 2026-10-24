@@ -1,0 +1,27 @@
+name: Rename player
+
+# Fixes the nickname of one account (uid prefix as printed by "Account check").
+on:
+  workflow_dispatch:
+    inputs:
+      uid:
+        description: Начало uid из «Account check»
+        type: string
+      name:
+        description: Новый ник
+        type: string
+      apply:
+        description: Записать (иначе только показать)
+        type: boolean
+        default: false
+
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          UID_PREFIX: ${{ inputs.uid }}
+          NEW_NAME: ${{ inputs.name }}
+        run: python3 scripts/rename-player.py "$UID_PREFIX" "$NEW_NAME" ${{ inputs.apply && '--apply' || '' }}
