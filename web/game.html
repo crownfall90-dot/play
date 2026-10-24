@@ -2679,7 +2679,7 @@ async function presenceCount() {
     const r = await fetch(`${FB.dbUrl}/presence.json?auth=${tok}&orderBy=%22t%22&startAt=${Date.now() - 150000}`);
     if (!r.ok) return;
     const all = (await r.json()) || {};
-    presenceList = Object.entries(all).map(([uid, v]) => ({uid, ...v})).filter(x => x.s !== 'off').sort((a, b) => (b.uid === (fbAuth && fbAuth.uid)) - (a.uid === (fbAuth && fbAuth.uid)) || b.t - a.t);
+    presenceList = Object.entries(all).map(([uid, v]) => ({uid, ...v})).filter(x => x.s && x.n && x.s !== 'off').sort((a, b) => (b.uid === (fbAuth && fbAuth.uid)) - (a.uid === (fbAuth && fbAuth.uid)) || b.t - a.t);
     const n = presenceList.length;
     document.querySelectorAll('.onlineN').forEach(e => { e.hidden = !n; e.querySelector('b').textContent = n; });
   } catch (_) {}
@@ -3578,17 +3578,19 @@ async function statsDialog() {
       (devGet('devToken') ? gh('/releases?per_page=100') : fetch(`https://api.github.com/repos/${DEV_REPO}/releases?per_page=100`)).then(r => r.ok ? r.json() : []).catch(() => []),
     ]);
     const rels = Array.isArray(rel) ? rel : []; // GitHub may answer with a limit message instead of the list
-    const now = Date.now(), P = Object.values(pres || {}), D = 864e5;
+    // Only real game records: a name and a state. Leftovers from early builds and test runs
+    // (just a time, no name) are skipped.
+    const now = Date.now(), P = Object.values(pres || {}).filter(v => v && typeof v.n === 'string' && v.n && v.s), D = 864e5;
     const ago = v => now - (v.t || 0);
     const online = P.filter(v => v.s !== 'off' && ago(v) < 150000);
     const n = f => P.filter(f).length;
     const apk = rels.reduce((sum, r) => sum + (r.assets || []).filter(a => /\.apk$/.test(a.name)).reduce((x, a) => x + a.download_count, 0), 0);
     const tile = (num, label) => `<div class="stt"><b>${num}</b><small>${label}</small></div>`;
     const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
-    out.innerHTML = `<div class="stgrid">${tile(P.length, 'устройств заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
+    out.innerHTML = `<div class="stgrid">${tile(P.length, 'игроков заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
       ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(n(v => ago(v) < 30 * D), 'за месяц')}${tile(lead ? Object.keys(lead).length : 0, 'в рейтинге')}
       ${tile(apk, 'скачиваний APK')}${tile(rels.length || '—', 'версий вышло')}</div>
-      <p class="shint">«Устройства» — каждый телефон или браузер, где открывали игру (с версии 1.0.13x). «С профилем» считается после обновления игроков до новых версий. Скачивания APK включают обновления</p>`;
+      <p class="shint">Игрок — телефон или браузер, где открывали игру и у которого есть имя. «С профилем» считается после обновления игроков до новых версий. Скачивания APK включают обновления</p>`;
   } catch (_) { out.innerHTML = '<p class="shint">Не получилось загрузить — проверьте интернет</p>'; }
 }
 
