@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Код друга постоянный: после переустановки или на новом телефоне у вас будет тот же код."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Ежедневная награда за серию входов: заходите каждый день — награда растёт с 10 до 100 золота за неделю подряд."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -285,6 +285,13 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .gift{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(242,184,75,.16),rgba(242,184,75,.04));border:1px solid rgba(242,184,75,.35)}
 .gift .gi{flex:1;min-width:0}.gift .gi b{display:block;font:700 14px var(--f-display)}.gift .gi small{color:var(--muted);font-size:12px}
 .gift .cta{height:44px;padding:0 16px}
+.ocard.streak .fire{font-size:46px;line-height:1;animation:wob 1.8s ease-in-out infinite}
+.days{list-style:none;margin:2px 0 4px;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.days li{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--line);opacity:.65}
+.days li small{font-size:10.5px;color:var(--muted)}.days li b{font:800 14px var(--f-display);display:flex;align-items:center;gap:3px}.days li .coin{width:12px;height:12px}
+.days li.done{opacity:1;background:rgba(63,194,122,.14);border-color:rgba(63,194,122,.4)}.days li.done b{color:#7fe0a8}
+.days li.now{opacity:1;background:rgba(242,184,75,.18);border-color:var(--brass);box-shadow:0 0 0 3px rgba(242,184,75,.15);animation:spulse 1.6s ease-in-out infinite}@keyframes spulse{50%{box-shadow:0 0 0 6px rgba(242,184,75,.05)}}
+.days li.big{grid-column:span 2}
 .chest.ready svg{animation:wob 1.6s ease-in-out infinite}
 .ocard .chest{display:flex;justify-content:center}.ocard .chest svg{animation:chestpop .5s cubic-bezier(.3,1.6,.5,1)}
 @keyframes chestpop{from{transform:scale(.2)}}
@@ -2102,6 +2109,34 @@ function openGift() {
   box.querySelector('.cta').onclick = () => box.remove();
   document.body.append(box);
 }
+/* Daily streak: the first visit of each day pays gold that grows day by day for a week
+   (10 → 100), then the week starts again. Missing a day starts the streak over. Days are
+   the phone's local calendar days. */
+const STREAK_GOLD = [10, 15, 20, 25, 35, 50, 100];
+const localDay = (shift = 0) => { const d = new Date(Date.now() + shift * 864e5); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
+function streakState() {
+  const st = wallet.streak || {n: 0, last: ''};
+  // n: days in a row already claimed; today's claim makes it n + 1 (or 1 after a gap)
+  const next = st.last === localDay(-1) ? st.n + 1 : 1;
+  return {st, ready: st.last !== localDay(), next, day: (next - 1) % 7};
+}
+function streakCheck() {
+  if (!isApp || (typeof tut !== 'undefined' && tut) || !(wallet.tut || wallet.tutAsked) || document.querySelector('body > .over')) return;
+  const {st, ready, next, day} = streakState();
+  if (!ready) return;
+  const lost = st.n > 1 && next === 1;
+  const gold = STREAK_GOLD[day];
+  const cells = STREAK_GOLD.map((g, i) => `<li class="${i < day ? 'done' : i === day ? 'now' : ''}${i === 6 ? ' big' : ''}"><small>День ${i + 1}</small>${i < day ? '<b>✓</b>' : `<b><i class="coin"></i>${g}</b>`}</li>`).join('');
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard streak"><div class="fire">🔥</div><h3>${next === 1 ? (lost ? 'Серия прервалась — начнём заново' : 'Ежедневная награда') : `${next} ${next % 10 === 1 && next % 100 !== 11 ? 'день' : next % 10 >= 2 && next % 10 <= 4 && (next % 100 < 10 || next % 100 >= 20) ? 'дня' : 'дней'} подряд!`}</h3><p>Заходите каждый день — награда растёт до 100 золота. Пропуск дня начинает серию заново</p><ol class="days">${cells}</ol><button class="cta wide" id="streakTake">Забрать +${gold} <i class="coin" style="display:inline-block;vertical-align:-2px"></i></button></div>`;
+  document.body.append(box);
+  box.querySelector('#streakTake').onclick = () => {
+    wallet.streak = {n: next, last: localDay(), best: Math.max(next, st.best || 0)};
+    wallet.gold += gold; saveWallet(); beep('coin');
+    document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
+    box.remove(); toastAny(day === 6 ? `Неделя подряд! +${gold} золота 🎉` : `+${gold} золота. Завтра — ${STREAK_GOLD[(day + 1) % 7]}`);
+  };
+}
 const CHEST_SVG = '<svg viewBox="0 0 64 56" width="72" height="63" aria-hidden="true"><rect x="6" y="22" width="52" height="30" rx="4" fill="#9a5b2c"/><rect x="6" y="22" width="52" height="7" fill="#7b4521"/><path d="M6 22 Q32 0 58 22 Z" fill="#b36a32"/><rect x="28" y="14" width="8" height="38" fill="#f2b84b"/><rect x="26" y="26" width="12" height="10" rx="2" fill="#ffd36b" stroke="#8a5a12" stroke-width="1.5"/><rect x="6" y="38" width="52" height="3" fill="#f2b84b"/></svg>';
 // Gold by place: 1st +15, 2nd +10, 3rd +5, 4th 0, 5th −5 (ties share the higher place).
 // Paid for games against bots and online games; several people on one phone get none,
@@ -3758,7 +3793,7 @@ function show(name) {
   if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
   if (name === 'progress') renderProgress();
   if (name === 'friends') openFriends();
-  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => setTimeout(notifNudge, 1200)); }
+  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => { setTimeout(streakCheck, 700); setTimeout(notifNudge, 1600); }); }
   clearTimeout(presenceSoon); presenceSoon = setTimeout(() => presenceMark(true), 1500);
 }
 document.addEventListener('click', e => {
