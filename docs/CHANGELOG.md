@@ -818,3 +818,24 @@
 - Version journal: all releases and what they contained (#85)
 - Release only on request; accumulate changes (#84)
 
+## 1.0.185 — 2026-10-25
+
+**Игрокам:**
+- Интерфейс подстраивается под размер экрана: на любом телефоне кнопки и текст примерно одного размера
+- В магазине убрана подсказка про золото за места
+- Экран настроек полностью переделан: карточка профиля, группы, переключатели и понятные подписи
+- Единый стиль на всех экранах: карточки, заголовки, списки и переключатели оформлены одинаково
+
+**В коде:**
+- UI: unified style across all screens (#97)
+- Settings: redesigned screen (#96)
+- Release notes for the next version (#95)
+- Remove unused code; layout reference is the owner's phone (#94)
+- Known screen size: realme GT3 240W (#93)
+- Delete guests: clean up test leftovers (#92)
+- Account check: use the word all (#91)
+- Account check: list all players (#90)
+- Collect device model and screen diagonal (#89)
+- Same physical interface size on every phone (#88)
+- Release tag at the built commit; journal rebuilt at each release (#87)
+
