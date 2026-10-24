@@ -142,7 +142,7 @@ html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
 .pz i:nth-child(7){animation-name:pz8}
 @keyframes pz8{0%,66.7%{opacity:0;transform:translateZ(80px)}75.0%{opacity:1;transform:translateZ(0)}82%{opacity:1;transform:translateZ(0)}93%,100%{opacity:0;transform:translateZ(-6px)}}
 #boot{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;background:radial-gradient(120% 60% at 50% 40%,#34477a 0%,#18213d 55%,#0f1528 100%);transition:opacity .35s}
-#boot.gone{opacity:0;pointer-events:none}#boot b{font:800 26px var(--f-display);color:var(--ink)}#boot b span{color:var(--brass)}
+#boot.gone{opacity:0;pointer-events:none}#boot small{color:var(--muted);font-size:13px;margin-top:-14px;animation:blink 1.4s ease-in-out infinite}#boot .pz{width:200px;height:200px}#boot b{font:800 26px var(--f-display);color:var(--ink)}#boot b span{color:var(--brass)}
 .lbwait{display:flex;align-items:center;gap:14px}
 .saybtn{margin-left:auto}
 html.app .saybtn:not([hidden])+.deck{margin-left:0}
@@ -449,7 +449,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
       <button role="tab" data-tab="results" aria-selected="false">Итоги</button>
     </nav>
   </header>
-  <div id="boot"><div class="pz"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><b>Puzzle<span>grad</span></b></div>
+  <div id="boot"><div class="pz"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><b>Puzzle<span>grad</span></b><small>Загрузка…</small></div>
   <main class="stage">
     <div class="phone"><div class="scr">
       <div class="sbar"><span>9:41</span><span class="cam"></span><span>▾ ◢ 87%</span></div>
@@ -523,7 +523,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="rcard"><b>Ход</b><p>Вы получаете верхнюю карту стопки. Тапните по жёлтой рамке на поле, поверните карту и нажмите «Поставить». Края карты должны совпадать с соседями: дорога к дороге, город к городу, река к реке.</p></div>
           <div class="rcard"><b>Фигурка</b><p>После хода можно поставить одну свою фигурку на только что положенную карту: на город, на дорогу или на крепость — только в одно место. Объект становится вашим. Занятый объект забрать нельзя.</p></div>
           <div class="rcard"><b>Очки</b><p>Когда объект достроен, очки получает его хозяин, даже если последнюю карту положил соперник, а фигурка возвращается.</p>
-            <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
+            <dl class="pts"><dt>Дорога</dt><dd>1 очко за карту</dd><dt>Большой мост</dt><dd>+3 очка дороге за каждую половину</dd><dt>Город</dt><dd>2 очка за карту</dd><dt>Крепость</dt><dd>9 очков, когда её окружают 8 карт</dd><dt>В конце</dt><dd>недостроенное — по 1 очку за карту</dd></dl></div>
           <div class="rcard"><b>Золото</b><p>За место в партии с ботами или онлайн:</p><dl class="pts"><dt>1-е место</dt><dd>+15</dd><dt>2-е место</dt><dd>+10</dd><dt>3-е место</dt><dd>+5</dd><dt>4-е место</dt><dd>0</dd><dt>5-е место</dt><dd>−5</dd></dl><p>За одним телефоном золото не начисляется. Сдавшийся игрок золота не получает.</p></div>
           <div class="rcard"><b>Спорный объект</b><p>Если дороги или города с фигурками разных игроков срослись, объект достаётся тому, у кого на нём больше фигурок. При равенстве действует правило партии: очки получает каждый из лидеров полностью или они делят их поровну. Дороги, города и крепости окрашиваются в цвет владельца; у спорных цвета чередуются.</p></div>
           <button class="cta wide" id="tutBtn">Пройти обучение</button>
@@ -717,7 +717,7 @@ const TYPES = {
   r3:{e:'frrr',n:3,name:'Развилка'}, r4:{e:'rrrr',n:1,name:'Перекрёсток'},
   fort:{e:'ffff',n:3,fort:true,name:'Крепость'}, fortR:{e:'ffrf',n:2,fort:true,name:'Крепость с дорогой'},
   wS:{e:'wfwf',n:2,name:'Река'}, wC:{e:'wwff',n:2,name:'Излучина реки'},
-  wBr:{e:'wrwr',n:2,name:'Мост через реку'}, brHalf:{e:'fbfr',n:4,bridge:true,name:'Половина большого моста'}, wCity:{e:'wcwf',n:1,name:'Город у реки'},
+  wBr:{e:'wrwr',n:2,name:'Мост через реку'}, brHalf:{e:'fbfr',n:2,bridge:true,name:'Половина большого моста'}, wCity:{e:'wcwf',n:1,name:'Город у реки'},
   wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
   rEnd:{e:'rfff',n:1,end:'barrier',name:'Тупик'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
@@ -1592,7 +1592,8 @@ async function scoreAfter(t, p) {
   for (const c of evs) await resolveFeature(c, false, p);
 }
 async function resolveFeature(c, final, placer) {
-  const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : c.tiles.length;
+  // A road over a big bridge is worth 3 more for each half of the bridge on it.
+  const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : c.tiles.length + 3 * c.tiles.filter(t => TYPES[t.type].bridge).length;
   c.tiles.forEach(x => x.el.classList.add('glow'));
   setTimeout(() => c.tiles.forEach(x => x.el.classList.remove('glow')), 1100);
   const cnt = players.map(() => 0); c.meeples.forEach(m => cnt[m.p]++);
@@ -3049,7 +3050,7 @@ window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs();
-if (isApp) setTimeout(offerTutorial, 1600);
+if (isApp) setTimeout(offerTutorial, 3800);
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
 /* Loaders lay real pieces one by one, and they fit like in a game: road to road, river to river,
@@ -3082,7 +3083,7 @@ function relayLoader(pz) {
   const grid = loaderLayout(); if (!grid) return;
   pz.querySelectorAll('i').forEach((el, i) => { el.style.backgroundImage = `url(${pieceUrl(grid[i])})`; });
 }
-Promise.all(Object.keys(TYPES).map(k => new Promise(res => { const im = new Image(); im.onload = im.onerror = res; im.src = TILE_URL[k]; loaderImgs[k] = im; }))).then(() => {
+const loaderReady = Promise.all(Object.keys(TYPES).map(k => new Promise(res => { const im = new Image(); im.onload = im.onerror = res; im.src = TILE_URL[k]; loaderImgs[k] = im; }))).then(() => {
   document.querySelectorAll('.pz').forEach(pz => {
     relayLoader(pz);
     // all pieces are hidden at the end of a cycle: swap in a new layout then
@@ -3091,7 +3092,16 @@ Promise.all(Object.keys(TYPES).map(k => new Promise(res => { const im = new Imag
 });
 window.__ready = true;
 // In the app the loader stays a moment as a splash, long enough to see a few tiles land.
-{ const boot = $('#boot'); if (boot) setTimeout(() => { boot.classList.add('gone'); setTimeout(() => boot.remove(), 400); }, isApp ? 1400 : 0); }
+// On app start the splash lays one full fitting 3x3 (restarted once the real pieces are in).
+{ const boot = $('#boot'); if (boot) {
+  const hide = () => { boot.classList.add('gone'); setTimeout(() => boot.remove(), 400); };
+  if (!isApp) hide();
+  else loaderReady.then(() => {
+    const pieces = boot.querySelectorAll('.pz i');
+    pieces.forEach(i => { i.style.animation = 'none'; void i.offsetWidth; i.style.animation = ''; });
+    setTimeout(hide, 3000);
+  });
+} }
 show(isApp ? 'menu' : 'game');
 })();
 </script>
