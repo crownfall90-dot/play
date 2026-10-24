@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Экран партии стал проще: на одном телефоне — только имена и цвета игроков, в игре с ботами соперники-боты отмечены значком, без лишних переключателей."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Друзья: у каждого свой код друга. Добавляйте по коду, из списка «в сети» или прямо из комнаты.\n- Видно, кто из друзей сейчас в сети и что делает, а кто и когда был в сети последний раз.\n- «Позвать» — друг сразу получает приглашение в вашу комнату и входит одной кнопкой."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -313,6 +313,9 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .frow .av{position:relative}.frow.on .av::after{content:"";position:absolute;right:-2px;bottom:-2px;width:9px;height:9px;border-radius:50%;background:#3fc27a;border:2px solid #141b33}
 .frow .chip{height:34px;padding:0 11px;flex:0 0 auto}.frow .chip.go{background:rgba(63,194,122,.18);border-color:rgba(63,194,122,.5);color:#9be9bd}.frow .chip.x{color:var(--muted);padding:0 10px}
 #fCodeIn::placeholder{font:600 15px var(--f-body);letter-spacing:.02em;text-transform:none}
+.ocard.dev textarea.field{height:auto;padding:12px 14px;resize:none;font:500 15px var(--f-body)}
+.ocard.dev .field{margin:4px 0}.devtest{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);text-align:left;margin:4px 0}
+.devtest input{width:18px;height:18px;accent-color:var(--brass)}
 .chip.addf{height:30px;padding:0 10px;margin-left:4px;flex:0 0 auto}
 .froom{display:flex;align-items:center;gap:10px}.froom span{flex:1}.froom .chip{height:34px;flex:0 0 auto;background:rgba(63,194,122,.18);border-color:rgba(63,194,122,.5);color:#9be9bd}
 .froom{margin:0;padding:10px 12px;border-radius:12px;background:rgba(63,194,122,.12);border:1px solid rgba(63,194,122,.35);font-size:13px;color:#bfeccf}
@@ -563,6 +566,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <div class="opt"><span>Золото</span><b class="goldN">0</b></div>
           </div>
           <button class="cta wide" id="checkUpd">Проверить обновления</button>
+          <button class="ghostbtn" id="devBtn" hidden>📣 Панель владельца</button>
           <p class="shint">Puzzlegrad. Без рекламы и покупок. Политика конфиденциальности: github.com/crownfall90-dot/play</p>
         </div>
       </section>
@@ -2328,6 +2332,7 @@ function renderPrefs() {
   renderAccount();
   $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : 'веб-макет';
   $('#checkUpd').hidden = !window.AndroidApp;
+  $('#devBtn').hidden = !devGet('devPanel');
 }
 $('#prefs').addEventListener('click', e => {
   const b = e.target.closest('.mseg button'); if (!b) return;
@@ -3370,6 +3375,94 @@ $('#scr-friends').addEventListener('click', e => {
   else if (d.fdrop) dropInbox(d.fdrop);
   else if (d.fdel) { const f = friends.find(x => x.uid === d.fdel); confirmBox(f.mutual ? `Удалить ${f.n} из друзей?` : `Отменить заявку для ${f.n}?`, 'Да', () => removeFriend(d.fdel)); }
 });
+/* ---------------- owner panel: news push to all players ----------------
+   Hidden: 7 taps on "Версия" in Settings. Sending starts .github/workflows/news.yml through the
+   GitHub API with the owner's own token (fine-grained, this repository, Actions: read and write),
+   kept only on this phone. Nobody without that token can send; the Firebase key stays in GitHub. */
+const DEV_REPO = 'crownfall90-dot/play', DEV_WF = 'news.yml';
+const devGet = k => { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } };
+const devSet = (k, v) => { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (_) {} };
+let devTaps = 0, devTapAt = 0;
+$('#verFull').closest('.opt').addEventListener('click', () => {
+  if (Date.now() - devTapAt > 1500) devTaps = 0;
+  devTapAt = Date.now();
+  if (++devTaps < 7) return;
+  devTaps = 0; devSet('devPanel', '1'); $('#devBtn').hidden = false; devPanel();
+});
+async function gh(path, opt = {}) {
+  return fetch('https://api.github.com/repos/' + DEV_REPO + path, {...opt, headers: {Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + devGet('devToken'), 'X-GitHub-Api-Version': '2022-11-28', ...(opt.body ? {'Content-Type': 'application/json'} : {})}});
+}
+const RUN_TEXT = {queued: 'в очереди', in_progress: 'отправляется', completed: ''};
+async function devStatus(el) {
+  try {
+    const r = await gh(`/actions/workflows/${DEV_WF}/runs?per_page=1`);
+    if (!r.ok) { el.textContent = r.status === 401 ? 'Токен не подходит — замените его' : 'Нет доступа (' + r.status + ')'; return null; }
+    const run = ((await r.json()).workflow_runs || [])[0];
+    if (!run) { el.textContent = 'Ещё ничего не отправляли'; return null; }
+    const when = new Date(run.created_at).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
+    el.textContent = `Последняя отправка ${when}: ` + (run.status === 'completed' ? (run.conclusion === 'success' ? '✅ доставлена в Firebase' : '❌ ошибка — откройте Actions на GitHub') : '⏳ ' + RUN_TEXT[run.status]);
+    return run;
+  } catch (_) { el.textContent = 'Нет связи с GitHub'; return null; }
+}
+function devPanel() {
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  const draw = () => {
+    const tok = devGet('devToken');
+    box.innerHTML = `<div class="ocard dev"><div style="font-size:38px">📣</div><h3>Сообщение всем игрокам</h3>
+      ${tok ? `<input class="field" id="devTitle" maxlength="60" placeholder="Заголовок" value="${devGet('devTitle').replace(/"/g, '&quot;')}">
+      <textarea class="field" id="devBody" maxlength="300" rows="4" placeholder="Текст уведомления">${devGet('devBody').replace(/</g, '&lt;')}</textarea>
+      <label class="devtest"><input type="checkbox" id="devTest"${devGet('devTestOn') ? ' checked' : ''}> Только мне — проверить, как выглядит</label>
+      <button class="cta wide" id="devSend">Отправить</button>
+      <p class="shint" id="devState">Проверяем…</p>
+      <button class="linkbtn" id="devForget">Сменить токен GitHub</button>`
+      : `<p>Пуш уходит через GitHub. Нужен ваш токен: GitHub → Settings → Developer settings → Fine-grained tokens → репозиторий ${DEV_REPO}, разрешение «Actions: Read and write». Токен хранится только на этом телефоне.</p>
+      <input class="field" id="devTok" type="password" placeholder="github_pat_…" autocomplete="off">
+      <button class="cta wide" id="devSave">Сохранить</button><p class="shint" id="devState"></p>`}
+      <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
+    if (tok) devStatus(box.querySelector('#devState'));
+  };
+  draw(); document.body.append(box);
+  box.addEventListener('input', e => { if (e.target.id === 'devTitle') devSet('devTitle', e.target.value); if (e.target.id === 'devBody') devSet('devBody', e.target.value); });
+  box.addEventListener('change', e => {
+    if (e.target.id !== 'devTest') return;
+    devSet('devTestOn', e.target.checked ? '1' : '');
+    if (e.target.checked && window.AndroidApp && AndroidApp.newsTest) AndroidApp.newsTest(true);
+  });
+  box.addEventListener('click', async e => {
+    const id = e.target.id, st = box.querySelector('#devState');
+    if (id === 'devClose' || e.target === box) return box.remove();
+    if (id === 'devForget') { devSet('devToken', ''); return draw(); }
+    if (id === 'devSave') {
+      const t = box.querySelector('#devTok').value.trim(); if (!t) return;
+      devSet('devToken', t); st.textContent = 'Проверяем…';
+      const r = await gh('').catch(() => null);
+      if (!r || !r.ok) { devSet('devToken', ''); st.textContent = r ? 'GitHub не принял токен (' + r.status + ')' : 'Нет связи с GitHub'; return; }
+      return draw();
+    }
+    if (id !== 'devSend') return;
+    const title = box.querySelector('#devTitle').value.trim(), body = box.querySelector('#devBody').value.trim(), test = box.querySelector('#devTest').checked;
+    if (!title || !body) return toastAny('Нужны заголовок и текст');
+    const go = async () => {
+      if (test && window.AndroidApp && AndroidApp.newsTest) AndroidApp.newsTest(true);
+      e.target.disabled = true; st.textContent = 'Отправляем…';
+      try {
+        const r = await gh(`/actions/workflows/${DEV_WF}/dispatches`, {method: 'POST', body: JSON.stringify({ref: 'main', inputs: {title, body, test: String(test)}})});
+        if (r.status !== 204) { st.textContent = r.status === 401 || r.status === 403 ? 'Нет прав — проверьте токен (Actions: Read and write)' : 'GitHub ответил ' + r.status; e.target.disabled = false; return; }
+      } catch (_) { st.textContent = 'Нет связи с GitHub'; e.target.disabled = false; return; }
+      toastAny(test ? 'Проверка отправлена вам — придёт через минуту' : 'Отправлено — дойдёт за минуту-две');
+      if (!test) { devSet('devTitle', ''); devSet('devBody', ''); }
+      // Follow the run until it finishes.
+      for (let i = 0; i < 18 && box.isConnected; i++) {
+        await new Promise(r => setTimeout(r, i ? 10000 : 4000));
+        const run = await devStatus(st); if (run && run.status === 'completed') break;
+      }
+      e.target.disabled = false;
+    };
+    if (test) return go();
+    confirmBox(`Отправить «${title.replace(/[<>&"]/g, "").slice(0, 40)}» всем игрокам?`, 'Отправить всем', go);
+  });
+}
+$('#devBtn').onclick = devPanel;
 $('#fAdd').onclick = () => addByCode($('#fCodeIn').value);
 $('#fCopy').onclick = () => wallet.fcode && copyText(`Добавь меня в друзья в Puzzlegrad: код ${wallet.fcode}`, 'Код скопирован — отправьте его другу');
 function confirmBox(text, yes, ok) {

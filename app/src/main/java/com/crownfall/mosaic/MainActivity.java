@@ -276,5 +276,15 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void logError(String message) { report(new RuntimeException("JS: " + message)); }
+
+        /** Owner panel: this phone also gets test announcements. */
+        @JavascriptInterface
+        public void newsTest(boolean on) {
+            try {
+                PushService.testTopic(MainActivity.this, on);
+            } catch (Exception e) {
+                report(e);
+            }
+        }
     }
 }

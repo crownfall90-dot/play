@@ -82,6 +82,26 @@ public class UpdateNotifier extends JobService {
                 .build());
     }
 
+    /** An announcement from the game's owner: its own channel, a new notification each time. */
+    static void news(Context c, String title, String body) {
+        if (title == null || title.isEmpty()) title = "Puzzlegrad";
+        if (body == null) body = "";
+        NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(new NotificationChannel("news", "Новости игры", NotificationManager.IMPORTANCE_DEFAULT));
+        }
+        PendingIntent open = PendingIntent.getActivity(c, 0, new Intent(c, MainActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP), PendingIntent.FLAG_IMMUTABLE);
+        Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, "news") : new Notification.Builder(c);
+        nm.notify((int) (System.currentTimeMillis() / 1000), b.setSmallIcon(R.drawable.ic_stat_update)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setStyle(new Notification.BigTextStyle().bigText(body))
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build());
+    }
+
     interface Found {
         /** code is 0 when there is no newer version. */
         void found(int code, String version, String notes);

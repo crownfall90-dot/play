@@ -1,0 +1,30 @@
+name: Send news push
+
+# Started from the owner panel in the game (GitHub API, the owner's own token) or by hand here.
+# Sends a notification to every installed game that has notifications on; "test" sends it only
+# to the owner's phone (topic news-test, turned on in the owner panel).
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: Заголовок
+        required: true
+      body:
+        description: Текст
+        required: true
+      test:
+        description: Только мне (проверка)
+        type: boolean
+        default: false
+
+jobs:
+  news:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          NEWS_TITLE: ${{ inputs.title }}
+          NEWS_BODY: ${{ inputs.body }}
+          NEWS_TOPIC: ${{ inputs.test && 'news-test' || 'news' }}
+        run: python3 scripts/fcm-send.py --news
