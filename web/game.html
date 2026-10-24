@@ -551,6 +551,19 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 .bd .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;background:var(--c)}
 .ract{display:flex;flex-direction:column;gap:8px}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+/* one look for every screen: same card surface, radius, headings, grouped lists, segmented controls */
+.lb .h3{margin:6px 0 -6px 4px}
+.stats div,.fig,.steps>div,.ptsgrid>div,.goal,.rulesbox,.mode,.quest,.gift,.codecard,.profile,.joinrow .field,.plist li,.tutcard,.pod,.locgrid>*{border-radius:18px}
+.profile{background:linear-gradient(160deg,rgba(76,141,255,.14),rgba(255,255,255,.04));border-color:var(--line)}
+.seg{background:rgba(0,0,0,.22);border:0;border-radius:12px;padding:3px;gap:3px}.seg button{border-radius:9px}
+.flist,.plist{gap:0;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.04);overflow:hidden}
+.flist li,.plist li{border:0;border-radius:0;background:none;padding:10px 14px;min-height:56px;box-sizing:border-box}
+.flist li+li,.plist li+li{border-top:1px solid var(--line)}
+.flist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.plist li.empty{border-style:solid}
+.plist:empty{display:none}
+.lead.me{border-radius:0}
+#ptab>.lead{border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:10px 14px;min-height:56px;box-sizing:border-box}
 </style>
 
 <div class="page">
