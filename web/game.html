@@ -1318,7 +1318,8 @@ function groupPos(t, g) {
   if (g.edges.length === 2) { const b = V[g.edges[1]]; return [(a[0]*.4225 + b[0]*.1225) * .5, (a[1]*.4225 + b[1]*.1225) * .5]; }
   return [a[0] * .3, a[1] * .3];
 }
-const claimable = t => groupsOf(t).filter(g => component(t, g).meeples.length === 0);
+const claimable = t => groupsOf(t).filter(g => { const c = component(t, g); return c.meeples.length === 0 && !c.complete; });
+const claimableAll = () => { const r = []; for (const t of tiles.values()) for (const g of claimable(t)) r.push({t, g}); return r; };
 const label = g => g.kind === 'r' && g.edges.length === 1 ? 'Дорога ' + ARROW[g.edges[0]] : KIND[g.kind];
 
 /* ---------------- dom: world ---------------- */
@@ -1737,14 +1738,20 @@ async function dropAt(t) {
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
-function askMeeple(t, opts, p) {
+function askMeeple(mainTile, opts, p) {
   meepleOpts = opts; phase = 'meeple'; tutEvent('meeple');
-  const gms = opts.map((g, i) => { const [x, y] = groupPos(t, g); const b = addSprite(t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
-  mrow.innerHTML = opts.map((g, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+  const anyMode = mainTile == null;
+  const gms = opts.map((o, i) => { const [x, y] = groupPos(o.t, o.g); const b = addSprite(o.t.el, 'mg', x, y, 'gm', null, 1.25); b.dataset.i = i; return b; });
+  if (anyMode) {
+    mrow.innerHTML = '<button class="chip skip" data-i="-1">Без фишки</button>';
+    setStatus(`Фишка вернулась! Нажмите на место на поле или «Без фишки». Осталось <b>${players[p].meeples}</b>`);
+  } else {
+    mrow.innerHTML = opts.map((o, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(o.g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+    setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
+  }
   prow.hidden = true; mrow.hidden = false;
-  setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   return new Promise(res => {
-    meepleResolve = g => { meepleResolve = null; setTimeout(() => tutEvent('meepleDone')); gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(g); };
+    meepleResolve = o => { meepleResolve = null; setTimeout(() => tutEvent('meepleDone')); gms.forEach(b => b.remove()); mrow.hidden = true; prow.hidden = false; res(o); };
     mrow.onpointerover = e => { const b = e.target.closest('.chip'); gms.forEach((m, i) => m.classList.toggle('hl', b && +b.dataset.i === i)); };
   });
 }
@@ -1766,24 +1773,45 @@ function meepleClock(secs) {
 let autoMove = false, autoAway = false; // autoAway: the bot was already playing for this player // this move is played for a player who did not act in time
 async function afterPlace(t, p, forced) {
   const my = token;
-  const opts = players[p].meeples > 0 ? claimable(t) : [];
-  let choice = null;
-  if (forced !== undefined) choice = forced;
-  else if (opts.length) {
+  // Score completed groups FIRST — so we can detect if this player's meeple returned.
+  const meeplesBefore = players[p].meeples;
+  await scoreAfter(t, p);
+  if (my !== token) return;
+  const meepleReturned = players[p].meeples > meeplesBefore;
+
+  // opts: {t, g} pairs — anywhere on board if a meeple returned, otherwise only placed tile.
+  const anyMode = meepleReturned && players[p].meeples > 0;
+  const opts = players[p].meeples > 0
+    ? (anyMode ? claimableAll() : claimable(t).map(g => ({t, g})))
+    : [];
+  let choice = null; // {t, g} or null
+  if (forced !== undefined) {
+    choice = forced; // already {t, g} or null from caller
+  } else if (opts.length) {
     if (isLocal(p) && !(autoMove && autoAway)) {
       // Time ran out: the card was put down for you; 10 more seconds to place a figure.
       if (autoMove) { toast('Время вышло: карта на поле. 10 секунд на фишку'); meepleClock(10); }
       meepleActed = false;
-      choice = await askMeeple(t, opts, p);
+      choice = await askMeeple(anyMode ? null : t, opts, p);
       stopTimer();
       if (autoMove && meepleActed) autoMove = false; // the player was there after all
     }
     else if (tut) choice = null; // the tutorial bot never claims anything
-    else if (Math.random() < .55) { const cs = opts.filter(g => g.kind !== 'r'); choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : opts[(Math.random() * opts.length) | 0]; }
+    else {
+      // Bot: always use placed tile only, even in anyMode.
+      const botOpts = anyMode ? claimable(t).map(g => ({t, g})) : opts;
+      if (botOpts.length && Math.random() < .55) {
+        const cs = botOpts.filter(o => o.g.kind !== 'r');
+        choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : botOpts[(Math.random() * botOpts.length) | 0];
+      }
+    }
   }
   if (my !== token) return;
   if (forced === undefined) {
-    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed, m: choice ? groupsOf(t).findIndex(g => gid(t, g) === gid(t, choice)) : -1};
+    const mt = choice ? choice.t : t;
+    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
+      m: choice ? groupsOf(mt).findIndex(g => gid(mt, g) === gid(mt, choice.g)) : -1};
+    if (choice && (mt.x !== t.x || mt.y !== t.y)) { mv.mtx = mt.x; mv.mty = mt.y; }
     // A bot move counts as a skipped turn, unless the player came back while it was being made.
     if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
     autoAway = false;
@@ -1792,9 +1820,8 @@ async function afterPlace(t, p, forced) {
     if (net) netSend({t: 'move', g: net.gameId, ...mv}); else saveGame();
   }
   players[p].stats.t++; if (choice) players[p].stats.m++;
-  if (choice) { placeMeeple(t, choice, p, true); if (!fast()) beep('meeple'); }
+  if (choice) { placeMeeple(choice.t, choice.g, p, true); if (!fast()) beep('meeple'); }
   renderPlayers();
-  await scoreAfter(t, p);
   if (my !== token) return;
   turn = (turn + 1) % players.length;
   await wait(250);
@@ -2944,8 +2971,9 @@ function autoMoveFor(who) {
   if (!current) return;
   const m = botPick(current.type); if (!m) return;
   const t = {x: m.x, y: m.y, type: current.type, r: m.r};
-  const opts = players[who].meeples > 0 ? claimable(t) : [], g = opts.length && Math.random() < .55 ? opts[(Math.random() * opts.length) | 0] : null;
-  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: g ? groupsOf(t).findIndex(q => gid(t, q) === gid(t, g)) : -1, auto: 1});
+  const botOpts = players[who].meeples > 0 ? claimable(t).map(g => ({t, g})) : [];
+  const o = botOpts.length && Math.random() < .55 ? botOpts[(Math.random() * botOpts.length) | 0] : null;
+  netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: o ? groupsOf(t).findIndex(q => gid(t, q) === gid(t, o.g)) : -1, auto: 1});
 }
 $('#status').addEventListener('click', e => {
   if (!e.target.closest('#imHere')) return;
@@ -2965,7 +2993,8 @@ async function pumpRemote() {
   await wait(350); if (my !== token) return;
   const t = {x: mv.x, y: mv.y, type: current.type, r: mv.r, seed: mv.seed};
   await dropAt(t); if (my !== token) return;
-  afterPlace(t, mv.p, mv.m >= 0 ? groupsOf(t)[mv.m] : null);
+  const mt = (mv.mtx != null && mv.mty != null) ? at(mv.mtx, mv.mty) : t;
+  afterPlace(t, mv.p, mv.m >= 0 && mt ? {t: mt, g: groupsOf(mt)[mv.m]} : null);
 }
 function renderLobby() {
   if (mm) matchRender();
