@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- В магазине убрана подсказка про золото за места\n- Интерфейс одного физического размера на любом телефоне: кнопки и текст не становятся мельче на большом экране"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Интерфейс подстраивается под размер экрана: на любом телефоне кнопки и текст примерно одного размера\n- В магазине убрана подсказка про золото за места"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -89,6 +89,24 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 /* On a computer or tablet the game stays phone-shaped in the middle of the screen. */
 @media (min-width:700px){html.web body{background:#0a0e1a radial-gradient(900px 600px at 50% 0%,#1d2848,transparent 70%)}
   html.web .phone{max-width:460px;margin:0 auto;box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(0,0,0,.6)}}
+/* Settings: grouped cards, switches, a profile card on top */
+.sgroup{display:flex;flex-direction:column;border-radius:18px;border:1px solid var(--line);background:rgba(255,255,255,.04);overflow:hidden}
+.srow{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:56px;box-sizing:border-box;width:100%;background:none;border:0;color:var(--ink);font:inherit;text-align:left;text-decoration:none}
+.srow+.srow{border-top:1px solid var(--line)}
+.srow.btn{cursor:pointer}.srow.btn:active{background:rgba(255,255,255,.06)}
+.sic{flex:0 0 36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:18px;background:rgba(255,255,255,.07)}
+.stx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.stx b{font:700 14.5px var(--f-body)}.stx small{color:var(--muted);font-size:11.5px;line-height:1.3}
+.sval{font:700 14px var(--f-display);color:var(--muted);font-variant-numeric:tabular-nums}.sgo{color:var(--muted);font-size:22px;line-height:1}
+.tgl{flex:0 0 50px;position:relative;width:50px;height:30px;border-radius:15px;border:0;background:rgba(255,255,255,.14);cursor:pointer;transition:background .2s;padding:0}
+.tgl span{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.35);transition:transform .2s}
+.tgl[aria-checked="true"]{background:var(--brass)}.tgl[aria-checked="true"] span{transform:translateX(20px)}
+.srow.sseg{flex-wrap:wrap;row-gap:10px}.srow.sseg .mseg{flex:1 1 100%}.srow.sseg .mseg button{flex:1;padding:8px 6px;font-size:13px}
+.sgroup.prof{padding:14px;gap:12px;background:linear-gradient(160deg,rgba(76,141,255,.14),rgba(255,255,255,.04))}
+.prow{display:flex;align-items:center;gap:12px}.av.big{width:48px;height:48px;font-size:20px}
+.pwho{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pwho b{font:800 17px var(--f-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pwho small{color:var(--muted);font-size:12px;word-break:break-all;line-height:1.25}
+.pact{display:flex;gap:8px;flex-wrap:wrap}.pact .chip{flex:1;justify-content:center}.chip.pri{background:var(--brass);color:var(--brass-ink);border-color:transparent}
+.scenter{text-align:center}
+#scr-settings .h3{margin:10px 0 6px 4px}
 .instcard{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;border-radius:18px;border:1px solid rgba(242,184,75,.45);background:linear-gradient(135deg,rgba(242,184,75,.18),rgba(76,141,255,.10));color:var(--ink);text-align:left;cursor:pointer}
 .instcard .iic{flex:0 0 46px;height:46px;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.35)}.instcard .iic img{width:100%;height:100%;display:block}
 .instcard .itx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.instcard .itx b{font:800 14px var(--f-display)}.instcard .itx small{color:var(--muted);font-size:12px;line-height:1.3}
@@ -608,17 +626,16 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
         <div class="lb">
           <div class="ltop"><button class="iconbtn" id="settingsBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Настройки</b></div>
           <button class="instcard" id="installBtn" hidden><span class="iic"><img src="icons/icon-192.png" alt=""></span><span class="itx"><b>Установите игру</b><small>Иконка на экране, весь экран, работает без интернета</small></span><span class="igo">Как?</span></button>
-          <div class="h3">Игра</div>
-          <div class="opts" id="prefs"></div>
-          <div class="h3">Профиль</div>
-          <div class="opts" id="acct"></div>
+          <div class="sgroup prof" id="acct"></div>
+          <div id="prefs"></div>
           <div class="h3">О приложении</div>
-          <div class="opts">
-            <div class="opt"><span>Версия</span><b id="verFull">—</b></div>
+          <div class="sgroup">
+            <div class="srow"><span class="sic">ℹ️</span><span class="stx"><b>Версия</b></span><b class="sval" id="verFull">—</b></div>
+            <button class="srow btn" id="checkUpd"><span class="sic">🔄</span><span class="stx"><b>Проверить обновления</b></span><span class="sgo">›</span></button>
+            <a class="srow btn" href="https://github.com/crownfall90-dot/play/blob/main/docs/privacy-policy.md" target="_blank" rel="noopener"><span class="sic">🔒</span><span class="stx"><b>Политика конфиденциальности</b></span><span class="sgo">›</span></a>
+            <button class="srow btn" id="devBtn" hidden><span class="sic">📣</span><span class="stx"><b>Панель владельца</b></span><span class="sgo">›</span></button>
           </div>
-          <button class="cta wide" id="checkUpd">Проверить обновления</button>
-          <button class="ghostbtn" id="devBtn" hidden>📣 Панель владельца</button>
-          <p class="shint">Puzzlegrad. Без рекламы и покупок. Политика конфиденциальности: github.com/crownfall90-dot/play</p>
+          <p class="shint scenter">Puzzlegrad. Без рекламы и покупок</p>
         </div>
       </section>
 
@@ -2420,22 +2437,33 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('click', e => { if (e.target.closest('button') && !e.target.closest('#scr-game .board')) beep('tap'); });
 /* ---------------- settings ---------------- */
 const PREFS = [
-  {k: 'sound', label: 'Звуки', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'music', label: 'Музыка', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'notify', label: 'Уведомления (обновления, новости)', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
-  {k: 'view', label: 'Вид поля', opts: [['3d', '3D'], ['top', 'Сверху']]},
-  {k: 'speed', label: 'Скорость ботов', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
-  {k: 'gfx', label: 'Графика', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
-  {k: 'zones', label: 'Цвет владельца на дорогах и городах', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'alert', label: 'Подсветка экрана в ваш ход', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'sound', ic: '🔊', label: 'Звуки', hint: 'Стук карт, фишки, фанфары', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'music', ic: '🎵', label: 'Музыка', hint: 'Спокойная музыка в меню и партии', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'view', ic: '🧊', label: 'Вид поля', hint: 'Объёмное поле или вид сверху', opts: [['3d', '3D'], ['top', 'Сверху']]},
+  {k: 'speed', ic: '⚡', label: 'Скорость ботов', hint: 'Как быстро ходят соперники-боты', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
+  {k: 'alert', ic: '💡', label: 'Подсветка хода', hint: 'Экран мигает, когда ваш ход', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'zones', ic: '🎨', label: 'Цвет владельца', hint: 'Закрашивать дороги и города цветом игрока', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'gfx', ic: '✨', label: 'Графика', hint: 'Экономная — для слабых телефонов', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
+  {k: 'notify', ic: '🔔', label: 'Уведомления', hint: 'Новые версии и новости игры', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
 ];
+const PREF_GROUPS = [['Звук', ['sound', 'music']], ['Игра', ['view', 'speed', 'alert', 'zones']], ['Экран', ['gfx']], ['Уведомления', ['notify']]];
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
 Object.assign(wallet, Object.assign({music: true, notify: true, view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
 const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
 applyGfx();
 function renderPrefs() {
-  $('#prefs').innerHTML = PREFS.filter(r => !r.app || window.AndroidApp).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span></div>`).join('');
+  const row = r => {
+    const sw = typeof r.opts[0][0] === 'boolean';
+    const ctl = sw
+      ? `<button class="tgl" role="switch" data-pref="${r.k}" aria-checked="${!!wallet[r.k]}" aria-label="${r.label}"><span></span></button>`
+      : `<span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span>`;
+    return `<div class="srow${sw ? '' : ' sseg'}"><span class="sic">${r.ic}</span><span class="stx"><b>${r.label}</b><small>${r.hint}</small></span>${ctl}</div>`;
+  };
+  $('#prefs').innerHTML = PREF_GROUPS.map(([title, keys]) => {
+    const rows = keys.map(k => PREFS.find(r => r.k === k)).filter(r => !r.app || window.AndroidApp);
+    return rows.length ? `<div class="h3">${title}</div><div class="sgroup">${rows.map(row).join('')}</div>` : '';
+  }).join('');
   renderAccount();
   $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : window.WEB_VERSION || 'веб-макет';
   $('#checkUpd').hidden = !window.AndroidApp;
@@ -2443,10 +2471,10 @@ function renderPrefs() {
   devGet('devToken'); $('#devBtn').hidden = !devGet('devPanel');
 }
 $('#prefs').addEventListener('click', e => {
-  const b = e.target.closest('.mseg button'); if (!b) return;
+  const sw = e.target.closest('.tgl'), b = e.target.closest('.mseg button'); if (!sw && !b) return;
   e.stopPropagation();
-  const r = PREFS.find(x => x.k === b.parentNode.dataset.pref);
-  wallet[r.k] = r.opts[+b.dataset.i][0]; saveWallet(); renderPrefs();
+  const r = PREFS.find(x => x.k === (sw || b.parentNode).dataset.pref);
+  wallet[r.k] = sw ? !wallet[r.k] : r.opts[+b.dataset.i][0]; saveWallet(); renderPrefs();
   if (r.k === 'music') { try { audio(); musicUpdate(); } catch (_) {} }
   if (r.k === 'sound') beep('turn');
   if (r.k === 'notify' && window.AndroidApp && AndroidApp.setUpdateNotifications) AndroidApp.setUpdateNotifications(wallet.notify);
@@ -3690,7 +3718,7 @@ const devSet = (k, v) => {
   if (DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.setPref) try { AndroidApp.setPref(k, v || ''); } catch (_) {}
 };
 let devTaps = 0, devTapAt = 0;
-$('#verFull').closest('.opt').addEventListener('click', () => {
+$('#verFull').closest('.srow').addEventListener('click', () => {
   if (Date.now() - devTapAt > 1500) devTaps = 0;
   devTapAt = Date.now();
   if (++devTaps < 7) return;
@@ -4110,9 +4138,10 @@ function renameDialog() {
 }
 function renderAccount() {
   const el = $('#acct'); if (!el) return;
-  const linked = fbAuth && fbAuth.email;
-  el.innerHTML = `<div class="opt"><span class="profline" style="border:0;background:none;padding:0"><span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b></span><button class="chip" id="rnBtn">Сменить · <i class="coin" style="display:inline-block;width:11px;height:11px;vertical-align:-1px"></i> ${RENAME_PRICE}</button></div>` +
-    (FB ? `<div class="opt"><span>${linked ? `<b class="acmail">${String(fbAuth.email).replace(/[<>&"]/g, '')}</b>` : 'Профиль не защищён'}</span><span>${linked ? '<button class="chip" id="acLogout">Выйти</button>' : '<button class="chip" id="acLink">Сохранить</button><button class="chip" id="acLogin">Войти</button>'}</span></div>` : '');
+  const linked = fbAuth && fbAuth.email, lvl = typeof PROG !== 'undefined' && PROG.lvl ? ` · уровень ${PROG.lvl}` : '';
+  const mail = linked ? String(fbAuth.email).replace(/[<>&"]/g, '') : '';
+  el.innerHTML = `<div class="prow"><span class="av big" style="--c:${wallet.color}">${profileName()[0]}</span><span class="pwho"><b>${profileName()}</b><small>${linked ? mail : 'Профиль не сохранён'}${lvl}</small></span><button class="chip" id="rnBtn">Сменить <i class="coin" style="display:inline-block;width:11px;height:11px"></i> ${RENAME_PRICE}</button></div>` +
+    (FB ? `<div class="pact">${linked ? '<button class="chip" id="acLogout">Выйти из аккаунта</button>' : '<button class="chip pri" id="acLink">Сохранить профиль</button><button class="chip" id="acLogin">Войти</button>'}</div>` : '');
   $('#rnBtn').onclick = renameDialog;
   if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
   if ($('#acLogin')) $('#acLogin').onclick = () => accountDialog('login');
