@@ -839,3 +839,12 @@
 - Same physical interface size on every phone (#88)
 - Release tag at the built commit; journal rebuilt at each release (#87)
 
+## 1.0.186 — 2026-10-25
+
+**Игрокам:**
+- Исправлена кнопка «Проверить обновления» в настройках; политика конфиденциальности обновлена и открывается как обычная страница
+
+**В коде:**
+- Settings: fix update check row, privacy policy page (#99)
+- Changelog for 1.0.185 (#98)
+
