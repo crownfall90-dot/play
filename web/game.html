@@ -338,7 +338,10 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .ferr{margin:0;text-align:center;font-size:13px;color:#f3c7a0;display:flex;flex-direction:column;align-items:center;gap:8px}.ferr[hidden]{display:none}
 .froom{display:flex;align-items:center;gap:10px}.froom span{flex:1}.froom .chip{height:34px;flex:0 0 auto;background:rgba(63,194,122,.18);border-color:rgba(63,194,122,.5);color:#9be9bd}
 .froom{margin:0;padding:10px 12px;border-radius:12px;background:rgba(63,194,122,.12);border:1px solid rgba(63,194,122,.35);font-size:13px;color:#bfeccf}
-.fnum{position:absolute;bottom:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:#3fc27a;color:#0d2a1a;font:800 10px/16px var(--f-body);font-style:normal;text-align:center;padding:0 3px;box-sizing:border-box}
+.quickinv{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;margin:0 0 10px;min-height:44px;padding:8px 14px;border-radius:16px;border:1px dashed rgba(255,255,255,.22);background:rgba(255,255,255,.04);color:var(--ink);font:700 14px var(--f-body);cursor:pointer}
+.quickinv em{display:inline-flex;align-items:center;gap:5px;font-style:normal;font-size:12px;color:#9be9bd;background:rgba(63,194,122,.14);padding:3px 8px;border-radius:999px}.quickinv em i{width:7px;height:7px;border-radius:50%;background:#3fc27a}.quickinv em u{text-decoration:none}
+.qcard{max-width:360px;max-height:86vh;overflow:auto}.qcard .flist{width:100%;max-height:34vh;overflow:auto;text-align:left}.qcard p{margin:0;color:var(--muted);font-size:13.5px}
+.fnum{position:absolute;bottom:-2px;right:-2px;width:13px;height:13px;border-radius:50%;background:#3fc27a;border:2.5px solid #141b33;box-sizing:border-box;font-size:0;box-shadow:0 0 8px rgba(63,194,122,.8)}
 .h3{font:700 12px var(--f-display);color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:4px 0 -4px}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .plist li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
@@ -576,6 +579,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <button class="playon" id="playOnline"><span class="pglow"></span>
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
+          <button class="quickinv" id="quickInviteBtn" hidden><span>👥</span><b>Позвать друга играть</b><em hidden><i></i><u>0</u> в сети</em></button>
           <div class="modes">
             <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С друзьями</b><small>Комната по коду</small></button>
             <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
@@ -681,7 +685,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button></div>
+        <div class="sfoot"><button class="ghostbtn wide" id="setupInvite" hidden>👥 Позвать друга в эту игру</button><button class="cta wide" id="start">Начать партию</button></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -692,7 +696,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <p class="shint" id="mSub">Обычно это занимает меньше минуты</p>
           <div class="mclock" id="mClock">0:00</div>
           <ul class="mseats" id="mSeats"></ul>
-          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
+          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="ghostbtn" id="mInvite">👥 Позвать друга</button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
         </div>
       </section>
 
@@ -2614,6 +2618,7 @@ function openSetup(mode) {
     if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
   });
   $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
+  $('#setupInvite').hidden = !(FB && (mode === 'online' || mode === 'friends'));
   colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
 }
@@ -2652,7 +2657,7 @@ function toastAny(t) { const d = document.createElement('div'); d.className = 't
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
 $('#copyLink').onclick = () => track('share', {content_type: 'room'}) || copyText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
-$('#invite').onclick = () => { if (!FB) return $('#copyLink').click(); friendsBack = 'lobby'; show('friends'); };
+$('#invite').onclick = () => { if (!FB) return $('#copyLink').click(); quickInvite(); };
 
 /* ---------------- online ----------------
    Phones in a room share one append-only log of messages named after the room code.
@@ -3507,10 +3512,16 @@ async function acceptFriend(from) {
 }
 function dropInbox(key) { delete inbox[key]; fbDel(`inbox/${myUid()}/${key}`); renderFriends(); friendsDot(); }
 async function removeFriend(uid) { await fbDel(`friends/${myUid()}/${uid}`); friends = friends.filter(f => f.uid !== uid); renderFriends(); }
+// A room to invite into: the current one, or a new private room (a search for opponents is dropped).
+function ensureRoom() {
+  if (mm) stopMatch(false);
+  if (!net || net.quick || (net.gameId && phase !== 'end')) { connect(newCode(), true); net.max = Math.max(2, setup.onN || 2); friendsBack = 'lobby'; }
+  return net.code;
+}
 // Invite a friend to my room; without a room, open one first.
 async function inviteFriend(uid) {
   const f = friends.find(x => x.uid === uid); if (!f) return;
-  if (!net || net.quick || (net.gameId && phase !== 'end')) { connect(newCode(), true); net.max = Math.max(2, setup.onN || 2); friendsBack = 'lobby'; }
+  ensureRoom();
   track('friend_invite');
   try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`${f.n} приглашён(а) в комнату ${net.code}`); }
   catch (_) { toastAny('Не получилось — проверьте интернет'); }
@@ -3562,10 +3573,51 @@ async function inboxListen() {
   } catch (_) { setTimeout(inboxListen, 30000); }
 }
 const friendsOnline = () => friends.filter(f => f.on).length;
+/* Quick invite: a sheet with the friends who are online and a "call" button for each, from the main
+   menu, the search for opponents, the game setup and the room. The first invite opens a private room
+   (same number of players) and takes the host there; friends get a card to join with one tap. */
+const onLobbyScreen = () => !$('#scr-lobby').hidden;
+function drawQuickInvite(box, loading) {
+  const list = box.querySelector('#qList'), sub = box.querySelector('#qSub');
+  const on = friends.filter(f => f.on), room = net && !net.quick && !(net.gameId && phase !== 'end') ? net.code : null;
+  sub.textContent = loading ? 'Ищем друзей в сети…' : on.length ? 'Нажмите «Позвать» — другу придёт приглашение в комнату' : friends.length ? 'Сейчас никого из друзей нет в сети' : 'У вас пока нет друзей в игре';
+  list.innerHTML = on.map(f => fRow(f, `<button class="chip go" data-qinv="${f.uid}">${room && invited.code === room && invited.uids.has(f.uid) ? '✓ Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('');
+}
+async function quickInvite() {
+  if (!FB || !registered()) { friendsBack = 'menu'; return show('friends'); }
+  document.querySelectorAll('.over.qinv').forEach(x => x.remove());
+  const box = document.createElement('div'); box.className = 'over qinv'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard qcard"><h3>Позвать друга</h3><p id="qSub"></p><ul class="flist" id="qList"></ul><button class="chip" data-q="link">🔗 Скопировать ссылку на комнату</button><button class="ghostbtn" data-q="all">Все друзья и коды</button><button class="cta wide" data-q="x">Готово</button></div>`;
+  document.body.append(box);
+  box.onclick = async e => {
+    const b = e.target.closest('[data-qinv],[data-q]');
+    if (!b) { if (e.target === box) box.remove(); return; }
+    if (b.dataset.qinv) {
+      b.disabled = true; await inviteFriend(b.dataset.qinv);
+      if (!onLobbyScreen()) show('lobby');
+      return drawQuickInvite(box);
+    }
+    if (b.dataset.q === 'link') { ensureRoom(); $('#copyLink').onclick(); if (!onLobbyScreen()) show('lobby'); }
+    else if (b.dataset.q === 'all') { box.remove(); friendsBack = onLobbyScreen() && net ? 'lobby' : 'menu'; show('friends'); }
+    else box.remove();
+  };
+  drawQuickInvite(box, true);
+  try { await loadFriends(); } catch (_) {}
+  if (document.body.contains(box)) drawQuickInvite(box);
+}
+$('#quickInviteBtn').onclick = quickInvite;
+$('#mInvite').onclick = quickInvite;
+$('#setupInvite').onclick = quickInvite;
+function quickInviteBtns() {
+  const b = $('#quickInviteBtn'); if (!b) return;
+  const can = !!FB, n = friendsOnline(); b.hidden = !can;
+  const e = b.querySelector('em'); e.hidden = !n; e.querySelector('u').textContent = n;
+}
 function friendsDot() {
   const b = $('#friendsBtn'); if (!b) return;
   b.classList.toggle('hasdot', Object.values(inbox).some(v => v.k === 'f' || v.k === 'r'));
-  const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = n;
+  quickInviteBtns();
+  const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = ''; b.title = n ? `Друзей в сети: ${n}` : '';
 }
 const fRow = (f, btn, sub) => `<li class="lead frow${f.on ? ' on' : ''}"><span class="av" style="--c:${f.c || (f.on ? '#3fc27a' : '#5b6684')}">${(f.n || '?')[0]}</span><span class="fwho"><b>${f.n}</b><small>${sub}</small></span>${btn}</li>`;
 function renderFriends() {
