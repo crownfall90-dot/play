@@ -324,9 +324,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .seg button[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink)}
 .plist input{width:100%;min-width:0;background:transparent;border:0;border-bottom:1px dashed rgba(255,255,255,.2);color:var(--ink);font:600 15px var(--f-body);padding:2px 0}
 .plist input:focus{outline:none;border-bottom-color:var(--brass)}
-.kind{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--line);flex:0 0 auto}
-.kind button{border:0;background:transparent;color:var(--muted);font:600 12px var(--f-body);padding:7px 9px;cursor:pointer}
-.kind button[aria-pressed="true"]{background:rgba(242,184,75,.18);color:var(--brass)}
+.botmark{flex:0 0 auto;color:var(--muted);font:600 12px var(--f-body);padding:6px 9px;border-radius:10px;border:1px solid var(--line)}
 .shint{margin:0;color:var(--muted);font-size:12.5px}
 .plist li.seat{flex-wrap:wrap}
 .colbtn{border:2px solid rgba(255,255,255,.7);cursor:pointer;font:700 12px var(--f-display);color:#10131c}
@@ -602,7 +600,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="h3">Сколько игроков</div>
           <div class="seg" id="seg"><button>2</button><button>3</button><button>4</button><button>5</button></div>
           <p class="shint" id="segHint" hidden></p>
-          <div class="col" id="seatsBox"><div class="h3">Кто играет</div>
+          <div class="col" id="seatsBox"><div class="h3">Игроки</div>
             <ul class="plist" id="slist"></ul></div>
           <div class="col" id="meBox" hidden><div class="h3">Ваше имя</div>
             <div class="profline" id="setupName"></div>
@@ -2420,9 +2418,8 @@ function renderSetup() {
     $('#start').disabled = false; $('#start').textContent = m.go;
     return;
   }
-  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span><span class="kind" data-i="${i}"><button data-h="1" aria-pressed="${s.human}">Человек</button><button data-h="0" aria-pressed="${!s.human}">Бот</button></span>${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
-  const ok = setup.seats.slice(0, setup.n).some(s => s.human);
-  $('#start').disabled = !ok; $('#start').textContent = ok ? m.go : 'Нужен хотя бы один человек';
+  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span>${s.human ? '' : '<span class="botmark" title="Бот">🤖 бот</span>'}${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
+  $('#start').disabled = false; $('#start').textContent = m.go;
 }
 $('#seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (onlineMode()) setup.onN = +b.textContent; else setup.n = +b.textContent; saveSetup(); renderSetup(); };
 $('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
@@ -2433,7 +2430,6 @@ $('#slist').addEventListener('click', e => {
   const cb = e.target.closest('[data-col]'); if (cb) { colorEdit = colorEdit === +cb.dataset.col ? -1 : +cb.dataset.col; return renderSetup(); }
   const sw = e.target.closest('[data-sw]'); if (sw && colorEdit >= 0) { setup.seats[colorEdit].col = sw.dataset.sw; if (colorEdit === 0) { wallet.color = sw.dataset.sw; saveWallet(); } colorEdit = -1; saveSetup(); return renderSetup(); }
 });
-$('#slist').addEventListener('click', e => { const b = e.target.closest('.kind button'); if (!b) return; setup.seats[+b.parentNode.dataset.i].human = b.dataset.h === '1'; saveSetup(); renderSetup(); });
 $('#start').onclick = () => {
   if (setupMode === 'online') return quickMatch();
   if (setupMode === 'friends') return createRoom();
@@ -2444,11 +2440,11 @@ $('#setupColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = setup.seats[0].col = sw.dataset.sw; saveWallet(); saveSetup(); renderSetup();
 });
-// "С ботами": you against bots; "Локально": everyone at the table passes one phone. Any seat can still be switched.
+// "С ботами": you against bots; "Локально": everyone at the table passes one phone. The mode decides who is who.
 // Every way to play opens this screen first: how many players, who they are, the rules.
 // bots / local play on this phone; online looks for strangers; friends opens a room by code.
 const SETUP_MODES = {
-  bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами. Любое место можно переключить на человека.'},
+  bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.'},
   online: {title: 'Игра онлайн', go: 'Найти соперников', hint: 'Рейтинговая партия: правила у всех одинаковые, выбирается только режим. Подберём соперников с тем же режимом и числом игроков.', seg: 'Поиск соберёт столько игроков, включая вас'},
   friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'После создания появится код комнаты — отправьте его друзьям. Свободные места можно занять ботами.', seg: 'Столько мест будет в комнате, включая вас'},
