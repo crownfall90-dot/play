@@ -103,15 +103,15 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 28 && insets.getDisplayCutout() != null) {
             android.view.DisplayCutout c = insets.getDisplayCutout();
             top = c.getSafeInsetTop(); bottom = c.getSafeInsetBottom(); left = c.getSafeInsetLeft(); right = c.getSafeInsetRight();
-            int w = root.getWidth() > 0 ? root.getWidth() : getResources().getDisplayMetrics().widthPixels;
+            // The top row of the menu has four buttons that reach the middle of the screen, so a camera
+            // hole anywhere on the top edge (centre included) pushes the menu down.
             for (android.graphics.Rect r : c.getBoundingRects()) {
-                if (r.top < w && (r.left < w * 0.3 || r.right > w * 0.7)) cornerCut = true;
+                if (r.top <= 0 && r.bottom > 0) cornerCut = true;
             }
         }
         // The navigation (gesture) bar stays on screen, see on top of the page: keep content clear of it.
         bottom = Math.max(bottom, navBottom(insets));
-        // A hole in the middle of the top edge sits between our corner buttons, so the game screen
-        // can start at the very top; a cutout in a corner pushes it down.
+        // --itg: the menu starts below a camera hole on the top edge.
         insetsJs = String.format(java.util.Locale.US,
                 "(function(s){s.setProperty('--it','%.1fpx');s.setProperty('--ib','%.1fpx');s.setProperty('--il','%.1fpx');s.setProperty('--ir','%.1fpx');s.setProperty('--itg','%.1fpx');})(document.documentElement.style)",
                 top / d, bottom / d, left / d, right / d, (cornerCut ? top : 0) / d);
