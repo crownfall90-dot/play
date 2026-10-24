@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "• Профиль можно сохранить почтой и паролем — после переустановки или на новом телефоне войдите и получите обратно золото, фигурки, прогресс и рейтинг\n• При первом запуске: «Начать» (обучение и никнейм) или «Войти в профиль»\n• Смена имени в настройках — 500 золота"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "• Свайп от края экрана теперь сразу работает как «назад»: закрывает окно, возвращает на прошлый экран или открывает меню партии\n• Выход из игры — двумя свайпами на главном экране\n• Профиль можно сохранить почтой и войти в него после переустановки; смена имени за 500 золота"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -3328,11 +3328,18 @@ window.onUpdateAvailable = (info, manual) => {
 };
 
 // Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.
+let backAt = 0;
 window.onBack = () => {
   const dlg = [...document.querySelectorAll('body > .over')].pop();
   if (dlg) { if (dlg.id === 'gmenu') closeGameMenu(); else if (dlg !== updBox || !dlg.querySelector('#upd').disabled) dlg.remove(); return true; }
   const cur = [...document.querySelectorAll('.screen')].find(x => !x.hidden);
-  if (!cur || cur.id === 'scr-menu') return false;
+  // On the main menu the first "back" only warns; a second one within 2 s closes the app.
+  if (!cur || cur.id === 'scr-menu') {
+    if (Date.now() - backAt < 2000) return false;
+    backAt = Date.now(); toastAny('Смахните ещё раз, чтобы выйти'); return true;
+  }
+  if (cur.id === 'scr-match') { show('menu'); return true; }
+  if (cur.id === 'scr-lobby') { $('#lobbyBack').click(); return true; }
   if (cur.id === 'scr-game' && phase !== 'end') { openGameMenu(); return true; }
   if (cur.id === 'scr-settings') { $('#settingsBack').click(); return true; }
   show('menu'); return true;

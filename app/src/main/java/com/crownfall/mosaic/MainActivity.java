@@ -86,6 +86,8 @@ public class MainActivity extends Activity {
                 if (r.top < w && (r.left < w * 0.3 || r.right > w * 0.7)) cornerCut = true;
             }
         }
+        // The navigation (gesture) bar stays on screen, see on top of the page: keep content clear of it.
+        bottom = Math.max(bottom, navBottom(insets));
         // A hole in the middle of the top edge sits between our corner buttons, so the game screen
         // can start at the very top; a cutout in a corner pushes it down.
         insetsJs = String.format(java.util.Locale.US,
@@ -95,17 +97,29 @@ public class MainActivity extends Activity {
     }
 
     @SuppressWarnings("deprecation")
+    private int navBottom(WindowInsets insets) {
+        if (Build.VERSION.SDK_INT >= 30) return insets.getInsets(WindowInsets.Type.navigationBars()).bottom;
+        return insets.getSystemWindowInsetBottom();
+    }
+
+    /* Only the status bar is hidden. The navigation / gesture bar stays (transparent, drawn over the
+       page), so a single edge swipe is the system "back" gesture: with the bar hidden too, Android
+       needs a first swipe just to bring it back ("swipe again"). */
+    @SuppressWarnings("deprecation")
     private void hideSystemBars() {
+        getWindow().setNavigationBarColor(android.graphics.Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 29) getWindow().setNavigationBarContrastEnforced(false);
         if (Build.VERSION.SDK_INT >= 30) {
             android.view.WindowInsetsController c = getWindow().getInsetsController();
             if (c != null) {
                 getWindow().setDecorFitsSystemWindows(false);
-                c.hide(WindowInsets.Type.systemBars());
+                c.hide(WindowInsets.Type.statusBars());
+                c.show(WindowInsets.Type.navigationBars());
                 c.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
             }
         } else {
             getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
                     | View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                     | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         }
