@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Если уведомления выключены, игра раз в неделю мягко предложит их включить — одной кнопкой."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Появилась веб-версия игры — для iPhone, компьютеров и любых телефонов. Ссылки-приглашения в комнату и в друзья открывают её сразу."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -80,6 +80,19 @@ html.app .room{flex:0 1 auto;max-width:42%}
 html.app .deck{margin-left:auto}
 html.app .room b,html.app .room span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html.app .tray{padding-bottom:calc(12px + var(--ib,0px))}
+/* Web build (iPhone, Android browsers, computers): cut-outs and the home bar come from env(). */
+html.web{--it:env(safe-area-inset-top,0px);--ib:env(safe-area-inset-bottom,0px);--il:env(safe-area-inset-left,0px);--ir:env(safe-area-inset-right,0px);--itg:env(safe-area-inset-top,0px)}
+html.web,html.web body{height:100%;overflow:hidden;overscroll-behavior:none}
+html.web body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
+html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
+@supports (height:100dvh){html.web .page{height:100dvh}}
+/* On a computer or tablet the game stays phone-shaped in the middle of the screen. */
+@media (min-width:700px){html.web body{background:#0a0e1a radial-gradient(900px 600px at 50% 0%,#1d2848,transparent 70%)}
+  html.web .phone{max-width:460px;margin:0 auto;box-shadow:0 0 0 1px var(--line),0 30px 80px rgba(0,0,0,.6)}}
+.installbtn{display:flex;align-items:center;justify-content:center;gap:8px;margin:2px auto 0;height:38px;padding:0 16px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--ink);font:600 13px var(--f-body);cursor:pointer}
+.inststeps{text-align:left;margin:0;padding:0 0 0 4px;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.inststeps li{display:flex;gap:10px;align-items:center}.inststeps b.n{flex:0 0 26px;height:26px;border-radius:50%;background:var(--brass);color:var(--brass-ink);display:grid;place-items:center;font:800 13px var(--f-display)}
+.inststeps svg{vertical-align:-4px}
 
 /* ---------- menu ---------- */
 #scr-menu{background:radial-gradient(120% 60% at 50% 20%,#34477a 0%,#18213d 55%,#0f1528 100%)}
@@ -535,6 +548,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <button class="playon" id="playOnline"><span class="pglow"></span>
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
+          <button class="installbtn" id="installBtn" hidden>📲 Установить игру на телефон</button>
           <div class="modes">
             <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С друзьями</b><small>Комната по коду</small></button>
             <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
@@ -1965,7 +1979,7 @@ function startGame(cfg, replay = []) {
   playersEl.style.gridTemplateColumns = `repeat(${players.length},1fr)`;
   const h = humanCount(), b = players.length - h;
   if (net) $('.room').innerHTML = `<b>${net.quick ? 'Онлайн' : 'Комната ' + net.code}</b><span><i></i>онлайн · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
-  else if (window.AndroidApp) $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Люди и боты' : 'С ботами') : 'Один телефон'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
+  else if (window.AndroidApp || window.WEBAPP) $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Люди и боты' : 'С ботами') : 'Один телефон'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
   deck = cfg.deck.slice();
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
@@ -2333,7 +2347,7 @@ applyGfx();
 function renderPrefs() {
   $('#prefs').innerHTML = PREFS.filter(r => !r.app || window.AndroidApp).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-pref="${r.k}">${r.opts.map(([v, l], i) => `<button data-i="${i}" aria-pressed="${wallet[r.k] === v}">${l}</button>`).join('')}</span></div>`).join('');
   renderAccount();
-  $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : 'веб-макет';
+  $('#verFull').textContent = window.AndroidApp ? AndroidApp.versionName() : window.WEB_VERSION || 'веб-макет';
   $('#checkUpd').hidden = !window.AndroidApp;
   $('#devBtn').hidden = !devGet('devPanel');
 }
@@ -2525,7 +2539,7 @@ document.addEventListener('click', e => {
 renderRules();
 function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on ftoast'; d.style.position = 'fixed'; d.style.top = 'auto'; d.style.bottom = 'calc(28px + var(--ib, 0px))'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); }
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
-$('#copyLink').onclick = () => copyText(`Заходи в Puzzlegrad: Онлайн с друзьями → код ${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
+$('#copyLink').onclick = () => copyText(`Заходи в Puzzlegrad: ${SITE_URL}?room=${net.code} (или «С друзьями» → код ${net.code})`, 'Приглашение скопировано — отправьте его друзьям');
 $('#invite').onclick = () => { if (!FB) return $('#copyLink').click(); friendsBack = 'lobby'; show('friends'); };
 
 /* ---------------- online ----------------
@@ -3527,7 +3541,7 @@ $('#fGate').addEventListener('click', e => {
   if (id === 'fgName') askProfile(); else if (id === 'fgLink') accountDialog('link'); else if (id === 'fgLogin') accountDialog('login');
 });
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
-$('#fCopy').onclick = () => wallet.fcode && copyText(`Добавь меня в друзья в Puzzlegrad: код ${wallet.fcode}`, 'Код скопирован — отправьте его другу');
+$('#fCopy').onclick = () => wallet.fcode && copyText(`Добавь меня в друзья в Puzzlegrad: код ${wallet.fcode} — ${SITE_URL}?friend=${wallet.fcode}`, 'Код скопирован — отправьте его другу');
 function confirmBox(text, yes, ok) {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><h3>${text}</h3><button class="cta wide" data-a="y">${yes}</button><button class="ghostbtn" data-a="n">Отмена</button></div>`;
@@ -3645,11 +3659,72 @@ document.addEventListener('click', e => {
 });
 $('#again').onclick = () => { newGame(); show('game'); };
 
-/* ---------------- app shell (Android) ---------------- */
-const isApp = !!window.AndroidApp;
+/* ---------------- app shell (Android app and the web build) ---------------- */
+// The web build (scripts/wrap-web.sh web) runs on iPhone, in Android browsers and on computers.
+// Without either, this file is the browser mock-up with screen tabs.
+const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb;
 if (isApp) {
   document.documentElement.classList.add('app');
-  showWhatsNew(AndroidApp.versionName());
+  if (isWeb) document.documentElement.classList.add('web');
+  showWhatsNew(isAndroid ? AndroidApp.versionName() : window.WEB_VERSION);
+}
+/* ---------------- web build: install, back gesture, links ---------------- */
+// Where the web version lives; invites carry this link. Change it here after moving to your own domain.
+const SITE_URL = 'https://crownfall90-dot.github.io/play/';
+const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isMobile = isIOS || /Android/i.test(navigator.userAgent);
+let installEvt = null;
+if (isWeb) {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  // Two-finger gestures belong to the board, never to page zoom (iOS ignores user-scalable=no).
+  document.addEventListener('gesturestart', e => e.preventDefault());
+  document.addEventListener('dblclick', e => e.preventDefault());
+  // Browser / system "back": the same as the Android button. A guard entry in the history keeps
+  // the page open; when the game says "nothing to close" (second back on the menu) we really leave.
+  try {
+    history.replaceState({pg: 'root'}, '');
+    history.pushState({pg: 'guard'}, '');
+    addEventListener('popstate', () => {
+      if (window.onBack()) history.pushState({pg: 'guard'}, '');
+      else history.back();
+    });
+  } catch (_) {}
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; renderInstall(); });
+  addEventListener('appinstalled', () => { installEvt = null; renderInstall(); toastAny('Игра установлена — ищите иконку Puzzlegrad'); });
+}
+function renderInstall() {
+  const b = $('#installBtn'); if (!b) return;
+  b.hidden = !isWeb || standalone() || !(isMobile || installEvt);
+}
+const SHARE_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4c8dff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M8 7l4-4 4 4"/><path d="M6 11H5a1 1 0 00-1 1v8a1 1 0 001 1h14a1 1 0 001-1v-8a1 1 0 00-1-1h-1"/></svg>';
+function installDialog() {
+  if (installEvt) { installEvt.prompt(); installEvt.userChoice.then(() => { installEvt = null; renderInstall(); }); return; }
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  const inApp = /Telegram|Instagram|FBAN|FBAV|VK|YaBrowser\/.*Mobile/i.test(navigator.userAgent);
+  const steps = isIOS
+    ? (inApp || !/Safari/.test(navigator.userAgent)
+      ? `<li><b class="n">1</b><span>Откройте эту страницу в <b>Safari</b></span></li><li><b class="n">2</b><span>Нажмите «Поделиться» ${SHARE_ICON}</span></li><li><b class="n">3</b><span>Выберите <b>«На экран «Домой»»</b></span></li>`
+      : `<li><b class="n">1</b><span>Нажмите «Поделиться» ${SHARE_ICON} внизу экрана</span></li><li><b class="n">2</b><span>Прокрутите и выберите <b>«На экран «Домой»»</b></span></li><li><b class="n">3</b><span>Нажмите <b>«Добавить»</b> — иконка появится на экране</span></li>`)
+    : `<li><b class="n">1</b><span>Откройте меню браузера <b>⋮</b></span></li><li><b class="n">2</b><span>Выберите <b>«Добавить на главный экран»</b> или <b>«Установить приложение»</b></span></li>`;
+  box.innerHTML = `<div class="ocard"><div style="font-size:40px">📲</div><h3>Установите Puzzlegrad</h3><p>Игра откроется с иконки на весь экран, как обычное приложение, и будет работать даже без интернета</p><ol class="inststeps">${steps}</ol>${isIOS ? '' : '<a class="ghostbtn manual" href="https://github.com/crownfall90-dot/play/releases/latest" target="_blank" rel="noopener">Или скачать приложение для Android</a>'}<button class="cta wide" data-x>Понятно</button></div>`;
+  document.body.append(box);
+  box.onclick = e => { if (e.target === box || e.target.closest('[data-x]')) box.remove(); };
+}
+$('#installBtn').onclick = installDialog;
+renderInstall();
+// Links from invites: ?room=CODE opens that room, ?friend=CODE fills in the friend's code.
+function openLink() {
+  const q = new URLSearchParams(location.search), room = (q.get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), fr = (q.get('friend') || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (!room && !fr) return;
+  try { history.replaceState(history.state, '', location.pathname); } catch (_) {}
+  if (room.length === 5) { connect(room, false); show('lobby'); }
+  else if (fr.length === 6) { friendsBack = 'menu'; show('friends'); $('#fCodeIn').value = fr; toastAny('Нажмите «Добавить», чтобы отправить заявку'); }
+}
+// On the first visit from a phone (not installed yet) show how to install, once.
+function firstInstallHint() {
+  if (!isWeb || standalone() || !isMobile || wallet.installHinted || document.querySelector('body > .over')) return;
+  wallet.installHinted = true; saveWallet(); installDialog();
 }
 // After an update (from Google Play or GitHub) show what changed, once per version.
 function showWhatsNew(ver) {
@@ -3695,7 +3770,7 @@ window.onBack = () => {
   // On the main menu the first "back" only warns; a second one within 2 s closes the app.
   if (!cur || cur.id === 'scr-menu') {
     if (Date.now() - backAt < 2000) return false;
-    backAt = Date.now(); toastAny('Смахните ещё раз, чтобы выйти'); return true;
+    backAt = Date.now(); toastAny(isWeb && !isMobile ? 'Нажмите «Назад» ещё раз, чтобы выйти' : 'Смахните ещё раз, чтобы выйти'); return true;
   }
   if (cur.id === 'scr-match') { show('menu'); return true; }
   if (cur.id === 'scr-lobby') { $('#lobbyBack').click(); return true; }
@@ -3716,7 +3791,7 @@ window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs();
-if (isApp) setTimeout(offerTutorial, 3800);
+if (isApp) setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 3800);
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
 /* Loaders lay real pieces one by one, and they fit like in a game: road to road, river to river,
