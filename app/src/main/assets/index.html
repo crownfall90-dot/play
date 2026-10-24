@@ -398,6 +398,8 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .edgeglow{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--c,#f2b84b),inset 0 0 38px 6px var(--c,#f2b84b)}
 .edgeglow.on{animation:edge 2.4s ease-in-out}
 @keyframes edge{0%,100%{opacity:0}15%,45%,75%{opacity:1}30%,60%{opacity:.35}}
+.updlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%}.updlist li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);font-size:14px}.updlist i{width:10px;height:10px;border-radius:50%;flex:0 0 auto}.updlist b{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.updlist span{color:var(--muted);font-size:12.5px}.updlist li.ok span{color:#9be9bd}
+#updpause small{color:var(--muted);font-size:12px}
 .timer{display:flex;align-items:center;gap:6px}.timer i{width:9px;height:9px;border-radius:50%;background:var(--c,#fff);flex:0 0 auto}
 .timer.low{color:#ff8a80;border-color:rgba(255,138,128,.5)}
 
@@ -887,7 +889,8 @@ let queue = [], applied = 0, gameLog = null;
 const fast = () => queue.length > 1;
 // A paused offline game (game menu open) holds bots and animations until it resumes.
 let paused = false;
-const wait = ms => new Promise(r => { const go = () => paused && !net ? setTimeout(go, 150) : r(); setTimeout(go, RM || fast() ? Math.min(ms, 40) : ms); });
+const clock = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+const wait = ms => new Promise(r => { const go = () => (paused && !net) || updHold() ? setTimeout(go, 150) : r(); setTimeout(go, RM || fast() ? Math.min(ms, 40) : ms); });
 const myId = (() => { let v = null; try { v = localStorage.getItem('clientId'); if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem('clientId', v); } } catch (_) {} return v || Math.random().toString(36).slice(2, 10); })();
 const $ = s => document.querySelector(s);
 const meepleSvg = col => `<svg viewBox="0 0 100 110"><path d="${MEEPLE_D}" fill="${col}" stroke="rgba(0,0,0,.35)" stroke-width="6"/></svg>`;
@@ -1728,7 +1731,7 @@ function meepleClock(secs) {
   timerId = setInterval(() => {
     if (my !== token || phase !== 'meeple') return stopTimer();
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.textContent = `0:${String(left).padStart(2, '0')}`; el.classList.add('low');
+    el.textContent = clock(left); el.classList.add('low');
     if (!left) { stopTimer(); if (meepleResolve) meepleResolve(null); }
   }, 250);
 }
@@ -1836,10 +1839,10 @@ function startTimer() {
   const tick = () => {
     if (my !== token || who !== turn || !['place', 'meeple', 'handover'].includes(phase)) return stopTimer();
     const now = Date.now();
-    if (phase === 'handover' || (paused && !net)) { end += now - last; last = now; return; }
+    if (phase === 'handover' || (paused && !net) || updHold()) { end += now - last; last = now; return; }
     last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.innerHTML = `<i></i>${net || localHumans() > 1 ? players[who].name.slice(0, 10) + ' ' : ''}0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
+    el.innerHTML = `<i></i>${net || localHumans() > 1 ? players[who].name.slice(0, 10) + ' ' : ''}${clock(left)}`; el.classList.toggle('low', left <= 10);
     if (left > 0) return;
     stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
@@ -2793,10 +2796,15 @@ function onNet(d) {
     net.gameId = d.id;
     startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
-    else try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now()})); } catch (_) {} // to come back after a restart
+    else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now()})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
   }
   if (m.t === 'move') return onMove(m);
+  if (m.g === net.gameId && phase !== 'end') {
+    if (m.t === 'upd') { if (live) { updOpen(m.c); if (appCode() >= m.c) updAnnounce(); } return; }
+    if (m.t === 'ver') { if (live && net.upd && typeof m.c === 'number' && m.c >= net.upd.c) { net.upd.ready.add(m.o); updCheck(); } return; }
+    if (m.t === 'upresume') { if (live && net.upd && m.c >= net.upd.c) updEnd('Партия продолжается'); return; }
+  }
   if (m.g !== net.gameId || !players[m.p] || phase === 'end') return;
   if (m.t === 'resign') return onResign(m.p);
   if (m.t === 'here') { players[m.p].missed = 0; return renderPlayers(); }
@@ -2827,12 +2835,13 @@ function watchClock() {
   stopTimer();
   const pl = players[turn]; if (!net || !pl || !pl.human || pl.resigned) return;
   const secs = pl.missed >= 1 ? 2 : gameRules.timer || 60;
-  const el = $('#timer'), my = token, who = turn, end = Date.now() + secs * 1000;
+  const el = $('#timer'), my = token, who = turn; let end = Date.now() + secs * 1000, last = Date.now();
   el.hidden = false; el.style.setProperty('--c', pl.col);
   const tick = () => {
     if (my !== token || who !== turn || phase !== 'remote') return stopTimer();
+    const now = Date.now(); if (updHold()) end += now - last; last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.innerHTML = `<i></i>${pl.name.slice(0, 10)} 0:${String(left).padStart(2, '0')}`; el.classList.toggle('low', left <= 10);
+    el.innerHTML = `<i></i>${pl.name.slice(0, 10)} ${clock(left)}`; el.classList.toggle('low', left <= 10);
   };
   tick(); timerId = setInterval(tick, 250);
 }
@@ -2845,9 +2854,10 @@ let watchId = 0;
 function startWatch() {
   clearInterval(watchId);
   if (!net || !net.gameId || phase === 'end') return;
-  const n = applied, who = turn, t0 = Date.now();
+  const n = applied, who = turn; let t0 = Date.now();
   watchId = setInterval(() => {
     if (!net || applied !== n || turn !== who || phase !== 'remote') return clearInterval(watchId);
+    if (updHold()) { t0 += 1000; return; }
     if (queue.some(q => q.n === applied) || Date.now() - t0 < watchDelay(who)) return;
     clearInterval(watchId); autoMoveFor(who);
   }, 1000);
@@ -4144,6 +4154,9 @@ function bootHide() {
 }
 window.onUpdateChecked = () => { boot.checked = true; bootHide(); };
 window.onUpdateAvailable = (info, manual) => {
+  lastUpd = info;
+  // In an online game the whole table waits for the update (see "update pause").
+  if (net && net.gameId && phase !== 'end' && info.code > appCode() && !(net.upd && net.upd.c >= info.code) && players.some(p => p.owner === myId)) { netSend({t: 'upd', g: net.gameId, c: info.code}); updOpen(info.code); }
   if (updBox && document.body.contains(updBox)) return;
   boot.checked = true;
   // "Later" quiets this version for half an hour unless the player asked to check.
@@ -4151,7 +4164,7 @@ window.onUpdateAvailable = (info, manual) => {
   const box = updBox = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><h3>Вышло обновление ${info.version}</h3><p>Что нового:</p><div class="notes-list"></div><div class="prog" hidden><i></i></div><button class="cta wide" id="upd">Обновить</button><a class="ghostbtn manual" id="manual" hidden href="https://github.com/crownfall90-dot/play/releases/latest">Скачать вручную</a><button class="ghostbtn" id="later">Позже</button></div>`;
   box.querySelector('.notes-list').textContent = info.notes || 'Исправления и улучшения';
-  if (players.length && phase !== 'end' && phase !== 'idle') box.querySelector('p').textContent = (net ? 'После обновления вернитесь в комнату по коду. ' : 'Партия сохранится. ') + 'Что нового:';
+  if (players.length && phase !== 'end' && phase !== 'idle') box.querySelector('p').textContent = (net ? 'Партия на паузе: после обновления вернитесь в комнату — игра продолжится, когда обновятся все. ' : 'Партия сохранится. ') + 'Что нового:';
   document.body.append(box);
   // Offered on the splash: the dialog sits above it and "Later" opens the game.
   if (!boot.gone) {
@@ -4170,10 +4183,58 @@ window.onUpdateAvailable = (info, manual) => {
   };
 };
 
+/* ---------------- update pause ---------------- */
+// When a new version comes out during an online game, the game waits for everyone: the clocks and the
+// bots stop, a card shows who has updated, and play goes on when all seat owners are on the new
+// version (they say so when they come back into the room), when someone taps "continue" or after 10 minutes.
+// Phones from before this feature do not know the message and keep playing.
+const UPD_WAIT = 10 * 60 * 1000;
+function appCode() { return isAndroid ? (parseInt(String(AndroidApp.versionName()).split('.').pop(), 10) || 0) : 1e9; } // the web build updates by reloading
+function updHold() { return !!(net && net.upd && !net.upd.done); }
+let lastUpd = null, updTick = 0;
+const updOwners = () => [...new Set(players.filter(p => p.owner && p.human && !p.resigned).map(p => p.owner))];
+// Tell the table which version this phone runs (sent on joining the game and when a pause starts).
+function updAnnounce() { if (net && net.gameId && players.some(p => p.owner === myId)) netSend({t: 'ver', g: net.gameId, c: appCode(), o: myId}); }
+function updOpen(c) {
+  if (!net || !net.gameId || phase === 'end' || !players.length || !players.some(p => p.owner === myId && !p.resigned)) return;
+  if (net.upd && net.upd.c >= c) return;
+  net.upd = {c, since: Date.now(), ready: new Set(), done: false};
+  clearInterval(updTick); updTick = setInterval(updCheck, 1000);
+  updCheck();
+}
+function updCheck() {
+  const u = net && net.upd; if (!u || u.done) return clearInterval(updTick);
+  if (appCode() >= u.c) u.ready.add(myId);
+  if (updOwners().every(o => u.ready.has(o))) return updEnd('Все обновились — партия продолжается');
+  if (Date.now() - u.since > UPD_WAIT) return updEnd('Время ожидания вышло — партия продолжается');
+  renderUpdPause();
+}
+function updEnd(text) {
+  if (net && net.upd) net.upd.done = true;
+  clearInterval(updTick); const b = $('#updpause'); if (b) b.remove();
+  if (text) toastAny(text);
+}
+function renderUpdPause() {
+  const u = net.upd; let box = $('#updpause');
+  if (!box) { box = document.createElement('div'); box.id = 'updpause'; box.className = 'over'; box.style.position = 'fixed'; document.body.append(box); }
+  const left = Math.max(0, Math.ceil((u.since + UPD_WAIT - Date.now()) / 1000));
+  const rows = players.filter(p => p.owner && p.human && !p.resigned).map(p => `<li class="${u.ready.has(p.owner) ? 'ok' : ''}"><i style="background:${p.col}"></i><b>${p.name}</b><span>${u.ready.has(p.owner) ? '✓ обновился' : 'обновляется…'}</span></li>`).join('');
+  const mine = appCode() < u.c;
+  const key = rows + mine + (left < 1);
+  if (box.dataset.k !== key) {
+    box.dataset.k = key;
+    box.innerHTML = `<div class="ocard"><div style="font-size:38px">⏸</div><h3>Партия на паузе</h3><p>Вышло обновление. Время хода остановлено, пока все игроки не обновятся.</p><ul class="updlist">${rows}</ul>${mine ? '<button class="cta wide" id="updGo">Обновить</button>' : ''}<button class="ghostbtn" id="updSkip">Продолжить без ожидания</button><small id="updLeft"></small></div>`;
+    $('#updSkip').onclick = () => { netSend({t: 'upresume', g: net.gameId, c: u.c}); updEnd('Партия продолжается'); };
+    const go = $('#updGo'); if (go) go.onclick = () => { if (lastUpd) window.onUpdateAvailable(lastUpd, true); else if (window.AndroidApp && AndroidApp.checkUpdates) AndroidApp.checkUpdates(); };
+  }
+  const t = $('#updLeft'); if (t) t.textContent = `Само продолжится через ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+}
+
 // Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.
 let backAt = 0;
 window.onBack = () => {
   const dlg = [...document.querySelectorAll('body > .over')].pop();
+  if (dlg && dlg.id === 'updpause') return true;
   if (dlg) { if (dlg.id === 'gmenu') closeGameMenu(); else if (dlg !== updBox || !dlg.querySelector('#upd').disabled) dlg.remove(); return true; }
   const cur = [...document.querySelectorAll('.screen')].find(x => !x.hidden);
   // On the main menu the first "back" only warns; a second one within 2 s closes the app.
