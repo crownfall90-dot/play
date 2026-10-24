@@ -4052,7 +4052,7 @@ function installDialog() {
       ? `<li><b class="n">1</b><span>Откройте эту страницу в <b>Safari</b></span></li><li><b class="n">2</b><span>Нажмите «Поделиться» ${SHARE_ICON}</span></li><li><b class="n">3</b><span>Выберите <b>«На экран «Домой»»</b></span></li>`
       : `<li><b class="n">1</b><span>Нажмите «Поделиться» ${SHARE_ICON} внизу экрана</span></li><li><b class="n">2</b><span>Прокрутите и выберите <b>«На экран «Домой»»</b></span></li><li><b class="n">3</b><span>Нажмите <b>«Добавить»</b> — иконка появится на экране</span></li>`)
     : `<li><b class="n">1</b><span>Откройте меню браузера <b>⋮</b></span></li><li><b class="n">2</b><span>Выберите <b>«Добавить на главный экран»</b> или <b>«Установить приложение»</b></span></li>`;
-  box.innerHTML = `<div class="ocard"><div style="font-size:40px">📲</div><h3>Установите Puzzlegrad</h3><p>Игра откроется с иконки на весь экран, как обычное приложение, и будет работать даже без интернета</p><ol class="inststeps">${steps}</ol>${isIOS ? '' : '<a class="ghostbtn manual" href="https://github.com/crownfall90-dot/play/releases/latest" target="_blank" rel="noopener">Или скачать приложение для Android</a>'}<button class="cta wide" data-x>Понятно</button></div>`;
+  box.innerHTML = `<div class="ocard"><div style="font-size:40px">📲</div><h3>Установите Puzzlegrad</h3><p>Игра откроется с иконки на весь экран, как обычное приложение, и будет работать даже без интернета</p><ol class="inststeps">${steps}</ol>${isIOS ? '' : '<a class="ghostbtn manual" href="https://github.com/crownfall90-dot/play/releases/latest/download/Puzzlegrad.apk" rel="noopener">Или скачать приложение для Android</a>'}<button class="cta wide" data-x>Понятно</button></div>`;
   document.body.append(box);
   box.onclick = e => { if (e.target === box || e.target.closest('[data-x]')) box.remove(); };
 }
@@ -4074,7 +4074,8 @@ function parseLink(href) {
 }
 // The Android shell calls this when the game is opened (or already open) with a link.
 window.onDeepLink = href => { const l = parseLink(href); if (l) bootReady.then(() => setTimeout(() => routeLink(l), 400)); };
-const APK_URL = 'https://github.com/crownfall90-dot/play/releases/latest';
+// Every release carries a copy named Puzzlegrad.apk, so this link always downloads the newest version.
+const APK_URL = 'https://github.com/crownfall90-dot/play/releases/latest/download/Puzzlegrad.apk';
 function openLink() {
   const l = parseLink(location.href); if (!l || !(l.room || l.friend)) return;
   try { history.replaceState(history.state, '', location.pathname); } catch (_) {}
