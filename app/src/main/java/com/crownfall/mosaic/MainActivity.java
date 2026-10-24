@@ -277,6 +277,39 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void logError(String message) { report(new RuntimeException("JS: " + message)); }
 
+        /** Whether Android lets the game show notifications (the system switch, not the in-game one). */
+        @JavascriptInterface
+        public boolean notificationsAllowed() {
+            try {
+                android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) return false;
+                return Build.VERSION.SDK_INT < 33 || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+            } catch (Exception e) {
+                report(e);
+                return true;
+            }
+        }
+
+        /** Asks Android to allow notifications: the system question if it may still be asked, else the app's notification settings. */
+        @JavascriptInterface
+        public void askNotifications() {
+            runOnUiThread(() -> {
+                try {
+                    if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                            && shouldShowRequestPermissionRationale(android.Manifest.permission.POST_NOTIFICATIONS)) {
+                        requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 1);
+                        return;
+                    }
+                    Intent i = Build.VERSION.SDK_INT >= 26
+                            ? new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName())
+                            : new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName()));
+                    startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (Exception e) {
+                    report(e);
+                }
+            });
+        }
+
         /** Owner panel: this phone also gets test announcements. */
         @JavascriptInterface
         public void newsTest(boolean on) {

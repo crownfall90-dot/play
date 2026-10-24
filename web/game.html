@@ -2302,7 +2302,7 @@ document.addEventListener('click', e => { if (e.target.closest('button') && !e.t
 const PREFS = [
   {k: 'sound', label: 'Звуки', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'music', label: 'Музыка', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'notify', label: 'Уведомления об обновлениях', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
+  {k: 'notify', label: 'Уведомления (обновления, новости)', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
   {k: 'view', label: 'Вид поля', opts: [['3d', '3D'], ['top', 'Сверху']]},
   {k: 'speed', label: 'Скорость ботов', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
   {k: 'gfx', label: 'Графика', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
@@ -3481,6 +3481,31 @@ function devPanel() {
   });
 }
 $('#devBtn').onclick = devPanel;
+/* Notifications are off (in Android or in the game's settings): once a week, on the main menu,
+   offer to turn them on. The first offer comes a day after the first start. */
+const NOTIF_EVERY = 7 * 864e5;
+const notifOff = () => !!window.AndroidApp && AndroidApp.notificationsAllowed && (!wallet.notify || !AndroidApp.notificationsAllowed());
+function notifNudge() {
+  if (!notifOff() || tut || document.querySelector('body > .over')) return;
+  const now = Date.now();
+  if (!wallet.notifAt) { wallet.notifAt = now - NOTIF_EVERY + 864e5; saveWallet(); return; }
+  if (now - wallet.notifAt < NOTIF_EVERY) return;
+  wallet.notifAt = now; saveWallet();
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🔔</div><h3>Включите уведомления</h3><p>Вы узнаете о приглашениях в игру, новых версиях, турнирах и подарках. Без спама — только важное</p><button class="cta wide" data-n="on">Включить</button><button class="ghostbtn" data-n="no">Не сейчас</button></div>`;
+  document.body.append(box);
+  box.onclick = e => {
+    const b = e.target.closest('[data-n]'); if (!b) return; box.remove();
+    if (b.dataset.n !== 'on') return;
+    if (!wallet.notify) { wallet.notify = true; saveWallet(); AndroidApp.setUpdateNotifications(true); if (!$('#scr-settings').hidden) renderPrefs(); }
+    if (!AndroidApp.notificationsAllowed()) AndroidApp.askNotifications(); else toastAny('Уведомления включены');
+  };
+}
+// Back from the system settings: say thanks once they are on.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden || !window.AndroidApp || !AndroidApp.notificationsAllowed) return;
+  if (wallet.notifAt && Date.now() - wallet.notifAt < 10 * 60000 && wallet.notify && AndroidApp.notificationsAllowed() && !wallet.notifThanked) { wallet.notifThanked = true; saveWallet(); toastAny('Уведомления включены 👍'); }
+});
 $('#fAdd').onclick = () => addByCode($('#fCodeIn').value);
 $('#fGate').addEventListener('click', e => {
   const id = e.target.id;
@@ -3596,7 +3621,7 @@ function show(name) {
   if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
   if (name === 'progress') renderProgress();
   if (name === 'friends') openFriends();
-  if (name === 'menu') friendsDot();
+  if (name === 'menu') { friendsDot(); setTimeout(notifNudge, 1200); }
   clearTimeout(presenceSoon); presenceSoon = setTimeout(() => presenceMark(true), 1500);
 }
 document.addEventListener('click', e => {
