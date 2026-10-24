@@ -120,7 +120,8 @@ public class MainActivity extends Activity {
     /** Diagonals of phone models measured or published exactly, by "manufacturer model" (lower case). */
     private static final java.util.Map<String, Double> KNOWN_INCHES = new java.util.HashMap<>();
     static {
-        // KNOWN_INCHES.put("realme rmx0000", 6.7); // add a model here once its exact diagonal is known
+        KNOWN_INCHES.put("realme rmx3709", 6.74); // realme GT3 240W
+        // add a model here once its exact diagonal is known: "manufacturer model" in lower case
     }
 
     private void sendInsets(WindowInsets insets) {
