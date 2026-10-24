@@ -3,7 +3,8 @@
 first joined (Firebase Auth creation time), and moves the guest counter /guestN past them, so new
 guests continue as nickname<N+1>, nickname<N+2>…
 
-Usage: FIREBASE_SERVICE_ACCOUNT='<json>' scripts/assign-numbers.py [--apply]
+Usage: FIREBASE_SERVICE_ACCOUNT='<json>' scripts/assign-numbers.py [--apply] [--first NICKNAME]
+--first puts that player ahead of everyone (the owner, who was there before the sign-up dates).
 Without --apply it only prints the plan (nicknames and numbers, no e-mails). Safe to run again:
 players who already have a number keep it.
 """
@@ -33,6 +34,7 @@ def token(sa):
 
 def main():
     apply = '--apply' in sys.argv
+    first = sys.argv[sys.argv.index('--first') + 1].strip().lower() if '--first' in sys.argv[:-1] else ''
     sa = json.loads(os.environ['FIREBASE_SERVICE_ACCOUNT'])
     tok, pid = token(sa), sa['project_id']
     db = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'app', 'google-services.json')))['project_info'].get('firebase_url') \
@@ -68,7 +70,7 @@ def main():
     have = get('playerNo') or {}
     counter = get('guestN') or 0
     top = max([counter] + list(have.values()))
-    order = sorted((u for u in names if u not in have), key=lambda u: created.get(u, 1 << 62))
+    order = sorted((u for u in names if u not in have), key=lambda u: (names[u].strip().lower() != first, created.get(u, 1 << 62)))
     plan = []
     for u in order:
         top += 1
