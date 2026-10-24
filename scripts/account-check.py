@@ -25,7 +25,8 @@ def main():
     pres, lead, prof, no = get('presence') or {}, get('leaders') or {}, get('profiles') or {}, get('playerNo') or {}
     found = {}
     for uid, v in pres.items():
-        if (v or {}).get('n', '').lower() in wanted: found.setdefault(uid, {})['presence'] = v['n']
+        if '*' in wanted and (v or {}).get('n'): found.setdefault(uid, {})['presence'] = v['n']
+        elif (v or {}).get('n', '').lower() in wanted: found.setdefault(uid, {})['presence'] = v['n']
     for uid, v in lead.items():
         if (v or {}).get('n', '').lower() in wanted: found.setdefault(uid, {})['leaders'] = v['n']
     for uid, v in prof.items():
