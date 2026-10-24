@@ -3312,11 +3312,18 @@ window.onUpdateAvailable = (info, manual) => {
 };
 
 // Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.
+let backAt = 0;
 window.onBack = () => {
   const dlg = [...document.querySelectorAll('body > .over')].pop();
   if (dlg) { if (dlg.id === 'gmenu') closeGameMenu(); else if (dlg !== updBox || !dlg.querySelector('#upd').disabled) dlg.remove(); return true; }
   const cur = [...document.querySelectorAll('.screen')].find(x => !x.hidden);
-  if (!cur || cur.id === 'scr-menu') return false;
+  // On the main menu the first "back" only warns; a second one within 2 s closes the app.
+  if (!cur || cur.id === 'scr-menu') {
+    if (Date.now() - backAt < 2000) return false;
+    backAt = Date.now(); toastAny('Смахните ещё раз, чтобы выйти'); return true;
+  }
+  if (cur.id === 'scr-match') { show('menu'); return true; }
+  if (cur.id === 'scr-lobby') { $('#lobbyBack').click(); return true; }
   if (cur.id === 'scr-game' && phase !== 'end') { openGameMenu(); return true; }
   if (cur.id === 'scr-settings') { $('#settingsBack').click(); return true; }
   show('menu'); return true;
