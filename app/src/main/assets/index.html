@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- «Дорога к обрыву» в 3D стала настоящей пропастью: каменные слои уходят вниз, на дне туман"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -507,7 +507,7 @@ html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:n
 .pit .pw.n{top:46px}.pit .pw.s{top:calc(100% - 1px);filter:brightness(.8)}
 .pit .pw.e,.pit .pw.w{top:46px;bottom:1px;width:64px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,.35) 45%,rgba(0,0,0,.88) 100%),repeating-linear-gradient(0deg,transparent 0 16px,rgba(0,0,0,.22) 16px 17px,transparent 17px 31px,rgba(255,235,200,.1) 31px 32px),repeating-linear-gradient(90deg,#8a7b62 0 4px,#6b5e49 4px 9px,#7b6d55 9px 12px,#52473a 12px 19px,#6e6250 19px 22px)}
 .pit .pw.e{left:calc(100% - 1px);filter:brightness(.72)}.pit .pw.w{left:1px;filter:brightness(1.05)}
-html.flat #world .pit .pw,html.lowgfx #world .pit .pw{display:none}
+html.flat #world .pit .pw,html.lowgfx #world .pit .pw,.pit.merge .pw.s{display:none}
 html.flat #world .pit .pf,html.lowgfx #world .pit .pf{transform:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
@@ -950,7 +950,7 @@ const TYPES = {
   wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
   wLake:{e:'wwww',n:2,lake:true,name:'Разлив реки'}, wTee:{e:'wwwf',n:2,lake:true,name:'Заводь с протокой'},
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
-  rEnd:{e:'rfff',n:1,end:'cliff',name:'Дорога к обрыву'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
+  rEnd:{e:'rfxf',n:1,end:'cliff',name:'Дорога к обрыву'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
 };
 /* Rare pieces: one for every combination of town, road and field edges the regular set lacks,
    so towns and roads can nearly always be finished. Odd river mixes (three or four rivers, a river
@@ -1536,6 +1536,10 @@ function refreshRoadEnds() {
   for (const t of tiles.values()) {
     if (!t.el) continue;
     t.rw = t.rw || {};
+    if (TYPES[t.type].end === 'cliff') { // two chasms facing each other join into one: no wall between them
+      const dr = [0, 1, 2, 3].find(d => edgeAt(t, d) === 'r'), nb = dr != null && at(t.x + DX[(dr + 2) % 4], t.y + DY[(dr + 2) % 4]), pit = t.el.querySelector('.pit');
+      if (pit) pit.classList.toggle('merge', !!(nb && TYPES[nb.type].end === 'cliff'));
+    }
     for (let d = 0; d < 4; d++) {
       const open = edgeAt(t, d) === 'r' && !at(t.x + DX[d], t.y + DY[d]);
       if (open && !t.rw[d]) t.rw[d] = addSprite(t.el, 'gravel', V[d][0] * .4, V[d][1] * .4, '', fast() ? null : .05);
