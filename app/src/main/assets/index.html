@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Таймер хода больше не закрывает количество фигурок: плашка с временем теперь под карточкой игрока"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -498,17 +498,13 @@ html.lowgfx .face.t-wLake::after,html.lowgfx .face.t-wTee::after{display:none}
 @keyframes foam{to{transform:scale(1.25);opacity:.7}}
 html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:none}
 .face.t-rEnd{box-shadow:none}
-/* A real hole in the card: floor and four rock walls go down inside the tile (the chasm is cut out of the card's art). */
+/* A torn card: only the kept half exists; its torn face is a jagged slab of soil and rock going down. */
 .pit{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
 .pit i{position:absolute;display:block}
-.pit .pf{left:1px;right:1px;top:46px;bottom:1px;transform:translateZ(-64px);background:radial-gradient(ellipse at 50% 35%,rgba(150,162,200,.4),transparent 72%),linear-gradient(#1a140e,#06050a)}
-.pit .pw{--rock:repeating-linear-gradient(180deg,#8a7b62 0 4px,#6b5e49 4px 9px,#7b6d55 9px 12px,#52473a 12px 19px,#6e6250 19px 22px)}
-.pit .pw.n,.pit .pw.s{left:1px;right:1px;height:64px;transform-origin:top;transform:rotateX(-90deg);background:linear-gradient(rgba(0,0,0,0) 0,rgba(0,0,0,.35) 45%,rgba(0,0,0,.88) 100%),repeating-linear-gradient(90deg,transparent 0 16px,rgba(0,0,0,.22) 16px 17px,transparent 17px 31px,rgba(255,235,200,.1) 31px 32px),var(--rock)}
-.pit .pw.n{top:46px}.pit .pw.s{top:calc(100% - 1px);filter:brightness(.8)}
-.pit .pw.e,.pit .pw.w{top:46px;bottom:1px;width:64px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,.35) 45%,rgba(0,0,0,.88) 100%),repeating-linear-gradient(0deg,transparent 0 16px,rgba(0,0,0,.22) 16px 17px,transparent 17px 31px,rgba(255,235,200,.1) 31px 32px),repeating-linear-gradient(90deg,#8a7b62 0 4px,#6b5e49 4px 9px,#7b6d55 9px 12px,#52473a 12px 19px,#6e6250 19px 22px)}
-.pit .pw.e{left:calc(100% - 1px);filter:brightness(.72)}.pit .pw.w{left:1px;filter:brightness(1.05)}
-html.flat #world .pit .pw,html.lowgfx #world .pit .pw,.pit.merge .pw.s{display:none}
-html.flat #world .pit .pf,html.lowgfx #world .pit .pf{transform:none}
+.pit .pw{left:0;right:0;top:44px;height:40px;transform-origin:top;transform:rotateX(-90deg);filter:brightness(1.05);
+  background:linear-gradient(#5f9a3e 0,#5f9a3e 3px,transparent 3px),linear-gradient(rgba(0,0,0,0) 0,rgba(0,0,0,.25) 40%,rgba(0,0,0,.8) 100%),repeating-linear-gradient(90deg,transparent 0 13px,rgba(0,0,0,.2) 13px 14px,transparent 14px 29px,rgba(255,235,200,.12) 29px 30px),repeating-linear-gradient(180deg,#8a7458 0 3px,#6a553d 3px 7px,#7d6648 7px 11px,#4f3e2b 11px 17px,#6f5a40 17px 20px);
+  clip-path:polygon(0 0,100% 0,100% 54%,95% 66%,89% 48%,83% 72%,76% 58%,69% 86%,62% 62%,55% 78%,47% 56%,40% 92%,33% 64%,26% 80%,19% 52%,12% 74%,6% 58%,0 70%)}
+html.flat #world .pit,html.lowgfx #world .pit{display:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
@@ -1178,19 +1174,18 @@ function drawTile(id) {
     g.fillStyle = '#7d725f'; g.fillRect(S * .33, C[1] - 23, 6, 46);
   }
   if (def.end === 'cliff') {
-    // The road runs to the lip of a drop and stops: the whole far half of the card is a sheer chasm edge to edge,
-    // with a crumbling rock lip, layered strata, mist at the bottom and warning posts on the road.
-    const d0 = r[0], H = S / 2 + 3, L = 4;
+    // A torn card: the far half is simply not there. The kept half ends in a crumbling edge (soil, roots, loose stones)
+    // and two warning posts stand on the road; the far half is made transparent, the 3D rim is built in CSS.
+    const d0 = r[0], H = S / 2 + 3;
     g.save(); g.translate(C[0], C[1]); g.rotate(Math.atan2(-V[d0][1], -V[d0][0]));
-    const lip = []; for (let y = -H; y <= H; y += 9) lip.push([L + (R() - .5) * 6 + Math.sin(y * .09) * 3, y]);
-    const edge = new Path2D(); edge.moveTo(lip[0][0], lip[0][1]); lip.forEach(q => edge.lineTo(q[0], q[1]));
-    const pit = new Path2D(edge); pit.lineTo(H, H); pit.lineTo(H, -H); pit.closePath();
-    g.lineJoin = 'round'; g.lineCap = 'round';
-    g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.fill(pit); g.globalCompositeOperation = 'source-over';
-    for (const [w2, col] of [[16, 'rgba(40,60,25,.4)'], [11, '#6b5e48'], [7, '#a89c82'], [2, '#d4c9ac']]) { g.lineWidth = w2; g.strokeStyle = col; g.stroke(edge); }
-    g.fillStyle = '#6d6252'; lip.forEach(([x, y], k) => { if (k % 2) { g.beginPath(); g.moveTo(x - 3, y - 4); g.lineTo(x + 6 + R() * 3, y); g.lineTo(x - 3, y + 4); g.closePath(); g.fill(); } });
-    for (let k = 0; k < 7; k++) { g.fillStyle = k % 2 ? '#c7a874' : '#a88a58'; g.save(); g.translate(L + 3 + R() * 18, (R() - .5) * 60); g.rotate(R() * 3); g.fillRect(-2.5, -1.6, 5 + R() * 2, 3.2); g.restore(); }
-    for (const sy of [-17, 17]) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-14, sy + 1, 5, 12); g.fillStyle = '#f4f1e8'; g.fillRect(-15, sy - 11, 4, 22); g.fillStyle = '#d8402e'; for (let q = -11; q < 11; q += 8) g.fillRect(-15, sy + q, 4, 4); }
+    const void_ = new Path2D(); void_.rect(0, -H, H, 2 * H);
+    g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.fill(void_); g.globalCompositeOperation = 'source-over';
+    // crumbling rim along the tear, drawn on the kept side
+    for (const [w2, col] of [[10, 'rgba(60,40,22,.55)'], [6, '#7a5a38'], [3, '#a98255']]) { g.strokeStyle = col; g.lineWidth = w2; g.beginPath(); g.moveTo(-w2 / 2 + 1, -H); g.lineTo(-w2 / 2 + 1, H); g.stroke(); }
+    for (let y = -H + 4; y < H; y += 7 + R() * 5) { g.fillStyle = R() < .5 ? '#8a6a44' : '#5e4630'; g.beginPath(); g.moveTo(-1, y - 3); g.lineTo(-6 - R() * 7, y + R() * 3); g.lineTo(-1, y + 4); g.closePath(); g.fill(); }
+    for (let y = -H + 10; y < H; y += 14 + R() * 12) { g.strokeStyle = '#4f8e33'; g.lineWidth = 1.2; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(-9 - R() * 4, y + k * 2); g.lineTo(-13 - R() * 4, y + k * 2 + 3 + R() * 3); g.stroke(); } }
+    for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(-12 - R() * 14, (R() - .5) * 150, 2.4 + R() * 2.4, 1.8 + R() * 1.2, R() * 3, 0, 7); g.fill(); }
+    for (const sy of [-17, 17]) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-24, sy + 1, 5, 12); g.fillStyle = '#f4f1e8'; g.fillRect(-25, sy - 11, 4, 22); g.fillStyle = '#d8402e'; for (let q = -11; q < 11; q += 8) g.fillRect(-25, sy + q, 4, 4); }
     g.restore();
   }
   const cp = cityPaths(E);
@@ -1516,7 +1511,15 @@ function tileEl(t, decor, delay) {
   if (decor) addDecor(el, t, delay);
   if (TYPES[t.type].end === 'cliff') {
     const dr = [0, 1, 2, 3].find(d => edgeAt(t, d) === 'r');
-    if (dr != null) { const pit = document.createElement('div'); pit.className = 'pit'; pit.style.transform = `rotate(${(((dr + 2) % 4) - 2) * 90}deg)`; pit.innerHTML = '<i class="pf"></i><i class="pw n"></i><i class="pw s"></i><i class="pw e"></i><i class="pw w"></i>'; el.append(pit); }
+    if (dr != null) {
+      const c = (dr + 2) % 4, sd = el.querySelectorAll('.sd');
+      sd[c].style.display = 'none';
+      // the two sides next to the tear only exist on the kept half
+      const side = (k, clip) => { sd[k].style.clipPath = clip; };
+      if (c === 2 || c === 0) { const clip = c === 2 ? 'inset(0 0 50% 0)' : 'inset(50% 0 0 0)'; side(1, clip); side(3, clip); }
+      else { const clip = c === 1 ? 'inset(0 50% 0 0)' : 'inset(0 0 0 50%)'; side(0, clip); side(2, clip); }
+      const pit = document.createElement('div'); pit.className = 'pit'; pit.style.transform = `rotate(${(c - 2) * 90}deg)`; pit.innerHTML = '<i class="pw"></i>'; el.append(pit);
+    }
   }
   return el;
 }
@@ -1536,10 +1539,6 @@ function refreshRoadEnds() {
   for (const t of tiles.values()) {
     if (!t.el) continue;
     t.rw = t.rw || {};
-    if (TYPES[t.type].end === 'cliff') { // two chasms facing each other join into one: no wall between them
-      const dr = [0, 1, 2, 3].find(d => edgeAt(t, d) === 'r'), nb = dr != null && at(t.x + DX[(dr + 2) % 4], t.y + DY[(dr + 2) % 4]), pit = t.el.querySelector('.pit');
-      if (pit) pit.classList.toggle('merge', !!(nb && TYPES[nb.type].end === 'cliff'));
-    }
     for (let d = 0; d < 4; d++) {
       const open = edgeAt(t, d) === 'r' && !at(t.x + DX[d], t.y + DY[d]);
       if (open && !t.rw[d]) t.rw[d] = addSprite(t.el, 'gravel', V[d][0] * .4, V[d][1] * .4, '', fast() ? null : .05);
