@@ -82,6 +82,7 @@
       }
     },
     "feedback": {
+      ".read": "auth != null && auth.token.email != null",
       "$uid": {
         "$key": {
           ".write": "auth != null && auth.uid === $uid",
