@@ -898,7 +898,7 @@ const PL0 = [
 // Colours players can pick; seats start with the first five.
 const PALETTE = [
   {col: '#ef5350', name: 'Красный'}, {col: '#4c8dff', name: 'Синий'}, {col: '#f7c948', name: 'Жёлтый'}, {col: '#3fc27a', name: 'Зелёный'},
-  {col: '#b06cf0', name: 'Фиолетовый'}, {col: '#ff8c42', name: 'Оранжевый'}, {col: '#ff6fae', name: 'Розовый'}, {col: '#2ec4d6', name: 'Бирюзовый'},
+  {col: '#b06cf0', name: 'Фиолетовый'}, {col: '#ff8c42', name: 'Оранжевый'}, {col: '#ff6fae', name: 'Розовый'},
 ];
 const validCol = c => PALETTE.some(x => x.col === c);
 const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human, col: p.col}))};
@@ -3789,14 +3789,12 @@ $('#tutBtn').onclick = startTutorial;
 function askProfile() {
   if (wallet.name || document.getElementById('profBox')) return;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'profBox'; box.style.position = 'fixed';
-  const sw = () => PALETTE.map(c => `<button class="sw${c.col === wallet.color ? ' on' : ''}" style="--c:${c.col}" data-pc="${c.col}" aria-label="${c.name}"></button>`).join('');
-  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
-    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><div class="swatches" id="profCols">${sw()}</div>
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг. Цвет выберете перед партией</p>
+    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off">
     <button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
-  box.querySelector('#profCols').onclick = e => { const b = e.target.closest('[data-pc]'); if (!b) return; wallet.color = setup.seats[0].col = b.dataset.pc; av.style.setProperty('--c', wallet.color); box.querySelector('#profCols').innerHTML = sw(); };
   ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); };
   box.querySelector('#profLogin').onclick = () => { box.remove(); accountDialog('login'); };
   setTimeout(() => inp.focus(), 200);
