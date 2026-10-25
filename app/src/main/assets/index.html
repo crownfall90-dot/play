@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Уведомления об обновлении больше не приходят повторно, пока вы не открыли игру и не обновились: следующие придут только после обновления"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -2062,11 +2062,18 @@ async function resolveFeature(c, final, placer) {
   if (!final && !fast()) win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each}); });
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
-  const help = !final && placer != null && !win.includes(placer) ? ` · помог${isMe(players[placer]) ? 'ли вы' : ': ' + players[placer].name}` : '';
+  // Whoever finishes an object for somebody else gets 1 point of respect.
+  const helped = !final && placer != null && !win.includes(placer);
+  if (helped) {
+    players[placer].score += 1;
+    const ht = c.tiles.find(x => x.by === placer) || c.tiles[0];
+    floatText(ht, [0, -.12], '+1 респект', players[placer].col);
+  }
+  const help = helped ? ` · помог${isMe(players[placer]) ? 'ли вы' : ': ' + players[placer].name} (+1 респект)` : '';
   const share = win.length > 1 ? ` (спорный, ${gameRules.tie === 'split' ? 'поровну' : 'каждому'})` : '';
   toast(`${KIND[c.kind]} ${final ? 'не достроен' : done}${help} · ${win.map(i => players[i].name).join(' и ')} +${each}${share}`);
   [...c.meeples].forEach(removeMeeple);
-  renderPlayers(win);
+  renderPlayers(helped ? [...win, placer] : win);
   await wait(final ? 700 : 950);
 }
 function startTurn() {
