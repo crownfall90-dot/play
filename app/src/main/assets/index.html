@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Таймер хода больше не закрывает количество фигурок: плашка с временем теперь под карточкой игрока"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -504,6 +504,12 @@ html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:n
 .pit .pw{left:0;right:0;top:44px;height:40px;transform-origin:top;transform:rotateX(-90deg);filter:brightness(1.05);
   background:linear-gradient(#5f9a3e 0,#5f9a3e 3px,transparent 3px),linear-gradient(rgba(0,0,0,0) 0,rgba(0,0,0,.25) 40%,rgba(0,0,0,.8) 100%),repeating-linear-gradient(90deg,transparent 0 13px,rgba(0,0,0,.2) 13px 14px,transparent 14px 29px,rgba(255,235,200,.12) 29px 30px),repeating-linear-gradient(180deg,#8a7458 0 3px,#6a553d 3px 7px,#7d6648 7px 11px,#4f3e2b 11px 17px,#6f5a40 17px 20px);
   clip-path:polygon(0 0,100% 0,100% 54%,95% 66%,89% 48%,83% 72%,76% 58%,69% 86%,62% 62%,55% 78%,47% 56%,40% 92%,33% 64%,26% 80%,19% 52%,12% 74%,6% 58%,0 70%)}
+/* A wooden fence along the torn edge, open where the road comes to it. */
+.pit .fn{left:2px;right:2px;top:40px;height:16px;transform-origin:top;transform:rotateX(90deg);
+  background:linear-gradient(rgba(0,0,0,0) 0,rgba(0,0,0,0) 14%,#9a6c3e 14%,#b98a54 22%,#6b4a2a 30%,transparent 30%,transparent 58%,#9a6c3e 58%,#b98a54 66%,#6b4a2a 74%,transparent 74%),repeating-linear-gradient(90deg,transparent 0,transparent 9px,#6b4a2a 9px,#8a6238 11px,#4f361e 13px,transparent 13px,transparent 21px);
+  -webkit-mask-image:linear-gradient(90deg,#000 0,#000 36%,transparent 36%,transparent 64%,#000 64%,#000 100%);mask-image:linear-gradient(90deg,#000 0,#000 36%,transparent 36%,transparent 64%,#000 64%,#000 100%)}
+.pit .fp{top:40px;width:4px;height:20px;transform-origin:top;transform:rotateX(90deg);background:linear-gradient(90deg,#4f361e,#8a6238,#4f361e);border-top:3px solid #d8402e}
+.pit .fp.a{left:calc(36% - 2px)}.pit .fp.b{left:calc(64% - 2px)}
 html.flat #world .pit,html.lowgfx #world .pit{display:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
@@ -1175,7 +1181,7 @@ function drawTile(id) {
   }
   if (def.end === 'cliff') {
     // A torn card: the far half is simply not there. The kept half ends in a crumbling edge (soil, roots, loose stones)
-    // and two warning posts stand on the road; the far half is made transparent, the 3D rim is built in CSS.
+    // the far half is made transparent, the 3D rim is built in CSS.
     const d0 = r[0], H = S / 2 + 3;
     g.save(); g.translate(C[0], C[1]); g.rotate(Math.atan2(-V[d0][1], -V[d0][0]));
     const void_ = new Path2D(); void_.rect(0, -H, H, 2 * H);
@@ -1185,7 +1191,6 @@ function drawTile(id) {
     for (let y = -H + 4; y < H; y += 7 + R() * 5) { g.fillStyle = R() < .5 ? '#8a6a44' : '#5e4630'; g.beginPath(); g.moveTo(-1, y - 3); g.lineTo(-6 - R() * 7, y + R() * 3); g.lineTo(-1, y + 4); g.closePath(); g.fill(); }
     for (let y = -H + 10; y < H; y += 14 + R() * 12) { g.strokeStyle = '#4f8e33'; g.lineWidth = 1.2; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(-9 - R() * 4, y + k * 2); g.lineTo(-13 - R() * 4, y + k * 2 + 3 + R() * 3); g.stroke(); } }
     for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(-12 - R() * 14, (R() - .5) * 150, 2.4 + R() * 2.4, 1.8 + R() * 1.2, R() * 3, 0, 7); g.fill(); }
-    for (const sy of [-17, 17]) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-24, sy + 1, 5, 12); g.fillStyle = '#f4f1e8'; g.fillRect(-25, sy - 11, 4, 22); g.fillStyle = '#d8402e'; for (let q = -11; q < 11; q += 8) g.fillRect(-25, sy + q, 4, 4); }
     g.restore();
   }
   const cp = cityPaths(E);
@@ -1518,7 +1523,7 @@ function tileEl(t, decor, delay) {
       const side = (k, clip) => { sd[k].style.clipPath = clip; };
       if (c === 2 || c === 0) { const clip = c === 2 ? 'inset(0 0 50% 0)' : 'inset(50% 0 0 0)'; side(1, clip); side(3, clip); }
       else { const clip = c === 1 ? 'inset(0 50% 0 0)' : 'inset(0 0 0 50%)'; side(0, clip); side(2, clip); }
-      const pit = document.createElement('div'); pit.className = 'pit'; pit.style.transform = `rotate(${(c - 2) * 90}deg)`; pit.innerHTML = '<i class="pw"></i>'; el.append(pit);
+      const pit = document.createElement('div'); pit.className = 'pit'; pit.style.transform = `rotate(${(c - 2) * 90}deg)`; pit.innerHTML = '<i class="pw"></i><i class="fn"></i><i class="fp a"></i><i class="fp b"></i>'; el.append(pit);
     }
   }
   return el;
