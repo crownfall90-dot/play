@@ -2111,6 +2111,11 @@ async function resolveFeature(c, final, placer) {
   await wait(final ? 700 : 950);
 }
 // The history is in: show where the game stands (the last card put down), not how it got there.
+// Catching up on a game's history lasts while old moves keep arriving (over the network they trickle in), and ends
+// once none has come for a moment: then the camera goes to the last placed tile.
+let catchT = 0;
+function catchKeep() { catchUp = true; clearTimeout(catchT); catchT = setTimeout(catchEnd, 900); }
+function catchEnd() { clearTimeout(catchT); if (!catchUp) return; catchUp = false; focusLast(); }
 function focusLast() {
   const t = lastPlaced; if (!t || !t.el) return;
   ensureVisible(t.x, t.y);
@@ -2119,7 +2124,6 @@ function focusLast() {
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer();
-  if (catchUp && !queue.some(q => q.n === applied)) { catchUp = false; focusLast(); }
   while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
   renderDeck();
   if (!current) return endGame();
@@ -2344,7 +2348,7 @@ function startGame(cfg, replay = []) {
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
-  queue = replay.map(m => ({...m, old: true})); applied = 0; catchUp = false; lastPlaced = null; markOwn();
+  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = false; lastPlaced = null; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
@@ -3314,7 +3318,7 @@ async function pumpRemote() {
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
   const mv = queue.splice(i, 1)[0], my = token;
-  catchUp = !!mv.old;
+  if (mv.old) catchKeep(); else catchEnd();
   if (catchUp) await new Promise(r => setTimeout(r)); // let the screen breathe while a long history goes in
   if (my !== token) return;
   if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }

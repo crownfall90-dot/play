@@ -22,16 +22,30 @@ class Updater {
     /** On launch (and from Settings): if Google Play has a newer version, open its update screen. */
     void check(boolean manual) {
         manager.getAppUpdateInfo().addOnSuccessListener(info -> {
-            if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                    && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
+            int st = info.updateAvailability();
+            // A screen the player closed with "not now" leaves the update "in progress" for Play: still an update.
+            boolean newer = st == UpdateAvailability.UPDATE_AVAILABLE || st == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS;
+            if (newer && info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)) {
                 if (manual || System.currentTimeMillis() - lastOffer > 30 * 60 * 1000L) start(info);
                 else activity.js("window.onUpdateChecked && window.onUpdateChecked(false)");
+            } else if (newer && manual) {
+                openStore();
             } else {
                 activity.js(manual ? "window.onNoUpdate && window.onNoUpdate()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
             }
         }).addOnFailureListener(e -> {
-            activity.js(manual ? "window.onNoUpdate && window.onNoUpdate()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
+            activity.js(manual ? "window.onCheckFailed && window.onCheckFailed()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
         });
+    }
+
+    /** Play would not open its own update screen: send the player to the store page. */
+    private void openStore() {
+        try {
+            activity.startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,
+                    android.net.Uri.parse("market://details?id=" + activity.getPackageName())));
+        } catch (Exception e) {
+            activity.js("window.onCheckFailed && window.onCheckFailed()");
+        }
     }
 
     /** Background check for the update notification. */
