@@ -471,7 +471,7 @@ html.flat .ct .face{border-radius:4px;box-shadow:none}
 .tile .sd.fall::before{content:"";position:absolute;background:repeating-linear-gradient(180deg,#9fd8ff 0 3px,#4ea2e4 3px 7px,#3b88cf 7px 10px);background-size:100% 10px;animation:fallY .5s linear infinite;box-shadow:0 0 0 1.5px rgba(200,189,124,.8)}
 .tile .sd.n.fall::before,.tile .sd.s.fall::before{left:calc(50% - 6.5px);width:13px;top:0;bottom:0}
 .tile .sd.e.fall::before,.tile .sd.w.fall::before{top:calc(50% - 6.5px);height:13px;left:0;right:0;background:repeating-linear-gradient(90deg,#9fd8ff 0 3px,#4ea2e4 3px 7px,#3b88cf 7px 10px);background-size:10px 100%;animation-name:fallX}
-.face.t-wLake::after,.face.t-wTee::after{content:"";position:absolute;inset:16%;border-radius:50%;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.3) 50%,transparent 62%) 0 0/260% 100%;mix-blend-mode:screen;pointer-events:none;animation:lakeFlow 3.6s linear infinite}
+.face.t-wLake::after,.face.t-wTee::after{content:"";position:absolute;inset:8%;border-radius:34%;background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.3) 50%,transparent 62%) 0 0/260% 100%;mix-blend-mode:screen;pointer-events:none;animation:lakeFlow 3.6s linear infinite}
 @keyframes lakeFlow{from{background-position:130% 0}to{background-position:-30% 0}}
 html.lowgfx .face.t-wLake::after,html.lowgfx .face.t-wTee::after{display:none}
 .tile .sd.fall::after{content:"";position:absolute;border-radius:50%;background:radial-gradient(rgba(255,255,255,.95),rgba(190,230,255,.5) 55%,transparent 72%);animation:foam .9s ease-in-out infinite alternate}
@@ -1066,43 +1066,44 @@ function drawTile(id) {
     for (let k = 0; k < 14; k++) { const an = k / 14 * 7, rx = C[0] + Math.cos(an) * 34, ry = C[1] + Math.sin(an) * 28; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(rx, ry, 4 + R() * 2, 3, an, 0, 7); g.fill(); }
   }
   if (def.lake) {
-    // The river spreads into a pond: bank and sand rings, deep water with a sheen, flow streaks running out
-    // along the channels, lily pads with lotus flowers, and reeds with cattails along the bank.
-    const rx = 56 + R() * 4, ry = 49 + R() * 4, rot = (R() - .5) * .5;
-    const rim = (k, fn) => { g.beginPath(); g.ellipse(C[0], C[1], rx + k, ry + k, rot, 0, 7); fn(); };
-    rim(11, () => { g.fillStyle = 'rgba(50,80,30,.35)'; g.fill(); });
-    rim(8, () => { g.fillStyle = '#b9b07a'; g.fill(); });
-    rim(4, () => { g.fillStyle = '#cdbf86'; g.fill(); });
-    const deep = g.createRadialGradient(C[0] - 14, C[1] - 16, 6, C[0], C[1], rx + 4);
-    deep.addColorStop(0, '#6cc0f2'); deep.addColorStop(.55, '#3f95dc'); deep.addColorStop(1, '#2468ad');
-    rim(0, () => { g.fillStyle = deep; g.fill(); });
-    g.save(); g.beginPath(); g.ellipse(C[0], C[1], rx, ry, rot, 0, 7); g.clip();
-    // the current: curved streaks from the middle out to every channel, and slow rings between
+    // A lake over the whole card: water to the very edges, open on every river side; only the corners (and the closed
+    // side of the three-way lake) stay as land with a sandy shore, reeds and stones. Flow streaks run out to every
+    // river, lily pads and lotuses float on the water.
+    const base = document.createElement('canvas'); base.width = S; base.height = S; base.getContext('2d').drawImage(c, 0, 0);
+    const dead = [0, 1, 2, 3].filter(d => E[d] !== 'w'), RR = 50, rot = dead.length ? dead[0] * Math.PI / 2 : 0;
+    const deep = g.createRadialGradient(C[0], C[1], 8, C[0], C[1], 125); deep.addColorStop(0, '#74c6f4'); deep.addColorStop(.5, '#3f95dc'); deep.addColorStop(1, '#2468ad');
+    g.fillStyle = deep; g.fillRect(0, 0, S, S);
+    // current: curved streaks from the middle out to every river
     for (const d of w) {
       const A = mid[d], ux = V[d][0], uy = V[d][1];
-      for (let k = -2; k <= 2; k++) {
-        const off = k * 8, sx = C[0] - uy * off * .5 + ux * 8, sy = C[1] + ux * off * .5 + uy * 8;
-        g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo((sx + A[0]) / 2 - uy * off * .35, (sy + A[1]) / 2 + ux * off * .35, A[0] - ux * 4 - uy * off * .7, A[1] - uy * 4 + ux * off * .7);
-        g.lineWidth = 1.5; g.strokeStyle = k % 2 ? 'rgba(230,248,255,.42)' : 'rgba(230,248,255,.7)'; g.setLineDash([9, 11]); g.lineDashOffset = k * 5; g.stroke();
+      for (let k = -3; k <= 3; k++) {
+        const off = k * 9, sx = C[0] - uy * off * .45 + ux * 6, sy = C[1] + ux * off * .45 + uy * 6;
+        g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo((sx + A[0]) / 2 - uy * off * .4, (sy + A[1]) / 2 + ux * off * .4, A[0] - uy * off * .55, A[1] + ux * off * .55);
+        g.lineWidth = 1.5; g.strokeStyle = k % 2 ? 'rgba(230,248,255,.4)' : 'rgba(230,248,255,.68)'; g.setLineDash([10, 12]); g.lineDashOffset = k * 5; g.stroke();
       }
     }
     g.setLineDash([]);
-    g.strokeStyle = 'rgba(225,245,255,.35)'; g.lineWidth = 1;
-    for (let k = 0; k < 7; k++) { const x = C[0] + (R() - .5) * rx * 1.4, y = C[1] + (R() - .5) * ry * 1.3; g.beginPath(); g.ellipse(x, y, 7 + R() * 7, 3 + R() * 3, rot, Math.PI * 1.05, Math.PI * 1.95); g.stroke(); }
-    g.fillStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 9; k++) { g.beginPath(); g.arc(C[0] + (R() - .5) * rx * 1.5, C[1] + (R() - .5) * ry * 1.4, .8 + R() * .9, 0, 7); g.fill(); }
-    // lily pads (a notch cut out), a few with lotus flowers
-    const clear = (x, y) => w.every(d => { const ax = mid[d][0] - C[0], ay = mid[d][1] - C[1], L = Math.hypot(ax, ay), t = Math.max(0, Math.min(1, ((x - C[0]) * ax + (y - C[1]) * ay) / (L * L))); return Math.hypot(x - C[0] - ax * t, y - C[1] - ay * t) > 17; });
+    g.strokeStyle = 'rgba(225,245,255,.34)'; g.lineWidth = 1;
+    for (let k = 0; k < 10; k++) { const x = 20 + R() * (S - 40), y = 20 + R() * (S - 40); g.beginPath(); g.ellipse(x, y, 8 + R() * 9, 3 + R() * 3, (R() - .5) * .5, Math.PI * 1.05, Math.PI * 1.95); g.stroke(); }
+    g.fillStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 14; k++) { g.beginPath(); g.arc(14 + R() * (S - 28), 14 + R() * (S - 28), .8 + R() * .9, 0, 7); g.fill(); }
+    // is a point on open water? (undo the card's rotation first, then test the corner coves and the closed-side strip)
+    const onWater = (x, y) => {
+      const dx = x - C[0], dy = y - C[1], cx = dx * Math.cos(rot) + dy * Math.sin(rot) + C[0], cy = -dx * Math.sin(rot) + dy * Math.cos(rot) + C[1];
+      const cor = dead.length ? [[S, S], [0, S]] : [[0, 0], [S, 0], [S, S], [0, S]];
+      return cor.every(([px, py]) => Math.hypot(cx - px, cy - py) > RR + 12) && (!dead.length || cy > RR * 1.15 + 14);
+    };
+    const clearOfRivers = (x, y) => w.every(d => { const ax = mid[d][0] - C[0], ay = mid[d][1] - C[1], L = Math.hypot(ax, ay), t = Math.max(0, Math.min(1, ((x - C[0]) * ax + (y - C[1]) * ay) / (L * L))); return Math.hypot(x - C[0] - ax * t, y - C[1] - ay * t) > 15; });
     let pads = 0;
-    for (let tries = 0; tries < 80 && pads < 7; tries++) {
-      const an = R() * 6.28, dist = .25 + R() * .62, x = C[0] + Math.cos(an) * rx * dist, y = C[1] + Math.sin(an) * ry * dist;
-      if (!clear(x, y)) continue;
-      const r = 7 + R() * 5, a0 = R() * 6.28;
-      g.fillStyle = 'rgba(0,40,80,.28)'; g.beginPath(); g.ellipse(x + 1.5, y + 2, r, r * .8, 0, 0, 7); g.fill();
+    for (let tries = 0; tries < 160 && pads < 9; tries++) {
+      const x = 22 + R() * (S - 44), y = 22 + R() * (S - 44);
+      if (!onWater(x, y) || !clearOfRivers(x, y)) continue;
+      const rr = 7 + R() * 5, a0 = R() * 6.28;
+      g.fillStyle = 'rgba(0,40,80,.28)'; g.beginPath(); g.ellipse(x + 1.5, y + 2, rr, rr * .8, 0, 0, 7); g.fill();
       g.save(); g.translate(x, y); g.scale(1, .82);
-      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, r, a0 + .3, a0 + 6.28 - .3); g.closePath();
-      const lg = g.createRadialGradient(-r * .3, -r * .3, 1, 0, 0, r); lg.addColorStop(0, '#7cc65a'); lg.addColorStop(1, '#2f8a3e');
+      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, rr, a0 + .3, a0 + 6.28 - .3); g.closePath();
+      const lg = g.createRadialGradient(-rr * .3, -rr * .3, 1, 0, 0, rr); lg.addColorStop(0, '#7cc65a'); lg.addColorStop(1, '#2f8a3e');
       g.fillStyle = lg; g.fill(); g.strokeStyle = '#256b30'; g.lineWidth = 1; g.stroke();
-      g.strokeStyle = 'rgba(210,245,170,.5)'; g.lineWidth = .7; for (let v = 0; v < 4; v++) { const q = a0 + 1 + v * 1.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(q) * r * .85, Math.sin(q) * r * .85); g.stroke(); }
+      g.strokeStyle = 'rgba(210,245,170,.5)'; g.lineWidth = .7; for (let v = 0; v < 4; v++) { const q = a0 + 1 + v * 1.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(q) * rr * .85, Math.sin(q) * rr * .85); g.stroke(); }
       g.restore();
       if (pads % 3 === 1) {
         const pink = pads % 2 === 1;
@@ -1111,22 +1112,31 @@ function drawTile(id) {
       }
       pads++;
     }
-    g.restore();
-    // reeds and cattails around the bank, away from the channels
-    const nearCh = an => w.some(d => { const da = Math.atan2(V[d][1], V[d][0]); let df = Math.abs(((an - da + 9.42) % 6.2832) - 3.1416); return df < .5 || df > 5.78; });
-    const dead = [0, 1, 2, 3].filter(d => E[d] !== 'w');
-    for (let k = 0; k < 34; k++) {
-      const an = R() * 6.28; if (nearCh(an)) continue;
-      const bx = C[0] + Math.cos(an) * (rx + 7), by = C[1] + Math.sin(an) * (ry + 7);
-      if (bx < 6 || by < 6 || bx > S - 6 || by > S - 6) continue;
+    // the land goes back: corner coves (and the closed side), then a sandy shore along their edge
+    g.save(); g.translate(C[0], C[1]); g.rotate(rot); g.translate(-C[0], -C[1]);
+    const land = new Path2D();
+    (dead.length ? [[S, S], [0, S]] : [[0, 0], [S, 0], [S, S], [0, S]]).forEach(([x, y]) => { land.moveTo(x + RR, y); land.arc(x, y, RR, 0, 7); });
+    if (dead.length) {
+      land.moveTo(-6, -6); land.lineTo(S + 6, -6); land.lineTo(S + 6, RR * .95);
+      land.bezierCurveTo(S * .82, RR * 1.2, S * .64, RR * .78, S * .5, RR * 1.0); land.bezierCurveTo(S * .36, RR * 1.22, S * .18, RR * .8, -6, RR * .95); land.closePath();
+    }
+    g.save(); g.clip(land); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(base, 0, 0); g.restore();
+    g.lineJoin = 'round';
+    for (const [lw, col] of [[16, 'rgba(50,80,30,.35)'], [11, '#b9b07a'], [7, '#cdbf86'], [2, 'rgba(255,255,255,.4)']]) { g.lineWidth = lw; g.strokeStyle = col; g.stroke(land); }
+    // reeds, cattails and stones along the shore
+    const shore = [];
+    (dead.length ? [[S, S, Math.PI, 1.5 * Math.PI], [0, S, 1.5 * Math.PI, 2 * Math.PI]] : [[0, 0, 0, Math.PI / 2], [S, 0, Math.PI / 2, Math.PI], [S, S, Math.PI, 1.5 * Math.PI], [0, S, 1.5 * Math.PI, 2 * Math.PI]]).forEach(([cx, cy, a0, a1]) => { for (let k = 0; k < 9; k++) { const an = a0 + (a1 - a0) * (.08 + .84 * R()); shore.push([cx + Math.cos(an) * (RR + 7), cy + Math.sin(an) * (RR + 7)]); } });
+    if (dead.length) for (let k = 0; k < 11; k++) { const x = 14 + R() * (S - 28); shore.push([x, RR * (.98 + Math.sin(x / S * 6.28) * .1) + 8]); }
+    for (const [bx, by] of shore) {
+      if (bx < 4 || by < 4 || bx > S - 4 || by > S - 4) continue;
       const lean = (R() - .5) * 5, tall = 12 + R() * 9;
       g.strokeStyle = R() < .5 ? '#3f7d2c' : '#56932f'; g.lineWidth = 1.5; g.lineCap = 'round';
       for (let j = -1; j <= 1; j++) { g.beginPath(); g.moveTo(bx + j * 2.4, by + 3); g.quadraticCurveTo(bx + j * 2.8 + lean * .4, by - tall * .5, bx + j * 3 + lean, by - tall + Math.abs(j) * 3); g.stroke(); }
-      if (R() < .5) { g.strokeStyle = '#4c8a30'; g.beginPath(); g.moveTo(bx + 1, by + 3); g.lineTo(bx + 1 + lean * .6, by - tall - 3); g.stroke(); g.fillStyle = '#7a4f2c'; g.beginPath(); g.ellipse(bx + 1 + lean * .6, by - tall - 6, 1.9, 4.4, 0, 0, 7); g.fill(); }
+      if (R() < .45) { g.strokeStyle = '#4c8a30'; g.beginPath(); g.moveTo(bx + 1, by + 3); g.lineTo(bx + 1 + lean * .6, by - tall - 3); g.stroke(); g.fillStyle = '#7a4f2c'; g.beginPath(); g.ellipse(bx + 1 + lean * .6, by - tall - 6, 1.9, 4.4, 0, 0, 7); g.fill(); }
     }
     g.lineCap = 'butt';
-    // a few flat stones on the bank
-    for (let k = 0; k < 12; k++) { const an = R() * 6.28; if (nearCh(an)) continue; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(C[0] + Math.cos(an) * (rx + 3), C[1] + Math.sin(an) * (ry + 3), 3.5 + R() * 2, 2.4, an, 0, 7); g.fill(); }
+    for (let k = 0; k < 14; k++) { const [bx, by] = shore[(R() * shore.length) | 0]; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(bx + (R() - .5) * 10, by + 6 + R() * 4, 3.5 + R() * 2, 2.4, R(), 0, 7); g.fill(); }
+    g.restore();
   }
   const r = idx('r');
   if (r.length === 2) { strip(r[0], r[1], ROAD); pebbles(r[0], r[1]); } else r.forEach(d => { strip(d, null, ROAD); pebbles(d, null); });
