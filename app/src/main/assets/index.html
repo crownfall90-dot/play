@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Друзья онлайн теперь в лобби внизу, а при поиске игры их можно позвать сразу — поиск начнётся вместе с ними"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Новая фигурка «Королева» в магазине — самая дорогая, 2500 золота"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -2191,6 +2191,7 @@ const FIGS = {
   knight: {name: 'Рыцарь', price: 600},
   archer: {name: 'Лучник', price: 900},
   king: {name: 'Король', price: 1500},
+  queen: {name: 'Королева', price: 2500},
 };
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
@@ -2283,6 +2284,7 @@ function drawFigure(g, w, h, fill, fig, ghost) {
   const p = new Path2D(MEEPLE_D);
   g.save(); g.scale(w / 100, h / 130); g.translate(0, 20);
   if (fig === 'king') { g.fillStyle = '#8e2430'; g.beginPath(); g.moveTo(34, 36); g.lineTo(66, 36); g.lineTo(84, 104); g.lineTo(16, 104); g.closePath(); g.fill(); }
+  if (fig === 'queen') { g.fillStyle = '#8a3fb5'; g.beginPath(); g.moveTo(36, 36); g.lineTo(64, 36); g.quadraticCurveTo(80, 84, 92, 108); g.lineTo(8, 108); g.quadraticCurveTo(20, 84, 36, 36); g.closePath(); g.fill(); g.fillStyle = '#f2c230'; g.fillRect(14, 102, 72, 4); }
   g.fillStyle = fill; g.fill(p);
   g.save(); g.clip(p);
   g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(36, 32, 20, 40, -.3, 0, 7); g.fill();
@@ -2306,6 +2308,10 @@ function drawFigure(g, w, h, fill, fig, ghost) {
   } else if (fig === 'king') {
     shape('#f2c230', () => { g.moveTo(32, 10); g.lineTo(32, -6); g.lineTo(41, 3); g.lineTo(50, -10); g.lineTo(59, 3); g.lineTo(68, -6); g.lineTo(68, 10); g.closePath(); });
     g.fillStyle = '#d6303f'; g.beginPath(); g.arc(50, 4, 3, 0, 7); g.fill();
+  } else if (fig === 'queen') {
+    shape('#f6d44a', () => { g.moveTo(30, 12); g.lineTo(28, -8); g.lineTo(39, 2); g.lineTo(44, -14); g.lineTo(50, -2); g.lineTo(56, -14); g.lineTo(61, 2); g.lineTo(72, -8); g.lineTo(70, 12); g.closePath(); });
+    g.fillStyle = '#e0457b'; g.beginPath(); g.arc(50, 6, 3.2, 0, 7); g.fill();
+    g.fillStyle = '#fff'; [28, 44, 56, 72].forEach(x => { g.beginPath(); g.arc(x, x === 28 || x === 72 ? -9 : -15, 2.4, 0, 7); g.fill(); });
   }
   g.restore();
 }
