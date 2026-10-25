@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Если вас позвали в комнату друга, можно позвать и своих друзей — пока в комнате есть места"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Если вас позвали в комнату друга, можно позвать и своих друзей — пока в комнате есть места\n- Настройки: уровень в профиле теперь на отдельной строке под почтой"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -487,8 +487,8 @@ html.lowgfx .tile .sd.s{display:block}
 .slot::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);background:linear-gradient(var(--brass),var(--brass)) center/100% 3px no-repeat,linear-gradient(var(--brass),var(--brass)) center/3px 100% no-repeat;opacity:.9}
 .slot.sel{opacity:0}
 .bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1));pointer-events:none}
-.bb.pop{animation:pop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
-@keyframes pop{from{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
+.bb.pop{animation:bbpop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
+@keyframes bbpop{from{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
 .gm{pointer-events:auto;cursor:pointer;animation:gmb 1s ease-in-out infinite}
 .gm.hl{filter:drop-shadow(0 0 5px #ffd36b) brightness(1.2)}
 @keyframes gmb{50%{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) translateY(-6px)}}
@@ -1382,7 +1382,7 @@ function addDecor(el, t, delay) {
   if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
   for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
     if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
-    if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.33 + R()*.06) + (R() - .5) * .06, sy * (.33 + R()*.06)]); }
+    if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.30 + R()*.05) + (R() - .5) * .05, sy * (.30 + R()*.05)]); }
   }
   items.sort((p, q) => p[2] - q[2]);
   items.forEach((it, i) => addSprite(el, it[0], it[1], it[2], '', delay == null ? null : delay + i * .05, it[0] === 'tower' && city.length ? .8 : 1));
