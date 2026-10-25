@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puzzlegrad Feedback</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky header + scrollable list, dark-first admin dashboard */
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --border: rgba(255,255,255,.08);
+  --fg: #e8eaf0;
+  --muted: #7c84a0;
+  --accent: #4f8ef7;
+  --bug: #f56565;
+  --idea: #ecc94b;
+  --other: #68d391;
+  --status-new: #4f8ef7;
+  --status-seen: #7c84a0;
+  --status-done: #48bb78;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f0f2f8;
+  --surface: #ffffff;
+  --surface2: #e8eaf0;
+  --border: rgba(0,0,0,.10);
+  --fg: #1a1d27;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --bug: #dc2626;
+  --idea: #b45309;
+  --other: #16a34a;
+  --status-new: #2563eb;
+  --status-seen: #9ca3af;
+  --status-done: #16a34a;
+  color-scheme: light;
+}}
+:root[data-theme="light"] {
+  --bg: #f0f2f8;
+  --surface: #ffffff;
+  --surface2: #e8eaf0;
+  --border: rgba(0,0,0,.10);
+  --fg: #1a1d27;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --bug: #dc2626;
+  --idea: #b45309;
+  --other: #16a34a;
+  --status-new: #2563eb;
+  --status-seen: #9ca3af;
+  --status-done: #16a34a;
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  min-height: 100%;
+}
+
+/* Login screen */
+#login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding-block: 32px;
+}
+.login-card {
+  width: 100%;
+  max-width: 360px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.login-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: -12px;
+}
+.field { display: flex; flex-direction: column; gap: 6px }
+.field label { font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: .05em; text-transform: uppercase }
+.field input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color .15s;
+}
+.field input:focus { border-color: var(--accent) }
+.btn-primary {
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 11px;
+  transition: opacity .15s;
+}
+.btn-primary:hover { opacity: .88 }
+.btn-primary:disabled { opacity: .45; cursor: default }
+.error-msg { color: var(--bug); font-size: 13px; text-align: center }
+
+/* Header */
+#app { display: none; flex-direction: column; min-height: 100dvh }
+#app.visible { display: flex }
+header {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding-block: 14px;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  background: var(--bg);
+}
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-title { font-size: 18px; font-weight: 700; flex: 1; letter-spacing: -.01em }
+.btn-sm {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  transition: color .15s, border-color .15s;
+}
+.btn-sm:hover { color: var(--fg); border-color: var(--fg) }
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.stat-chip .count { color: var(--fg) }
+.stat-chip .label { color: var(--muted); font-weight: 400; font-size: 12px }
+
+/* Filters */
+.filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  transition: all .15s;
+}
+.filter-btn.active {
+  border-color: transparent;
+  color: #fff;
+}
+.filter-btn[data-cat="all"].active { background: var(--accent) }
+.filter-btn[data-cat="bug"].active { background: var(--bug) }
+.filter-btn[data-cat="idea"].active { background: var(--idea); color: #1a1d27 }
+.filter-btn[data-cat="other"].active { background: var(--other); color: #1a1d27 }
+.filter-btn[data-status="new"].active { background: var(--status-new) }
+.filter-btn[data-status="done"].active { background: var(--status-done); color: #1a1d27 }
+
+/* Sort + search */
+.toolbar {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.search-input {
+  flex: 1;
+  min-width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  padding: 7px 11px;
+  outline: none;
+  transition: border-color .15s;
+}
+.search-input:focus { border-color: var(--accent) }
+.sort-select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--fg);
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  padding: 7px 11px;
+  outline: none;
+  cursor: pointer;
+}
+
+/* Main list */
+main { padding-block: 16px; flex: 1 }
+#feedback-list { display: flex; flex-direction: column; gap: 8px }
+
+.fb-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color .15s;
+  cursor: default;
+}
+.fb-card:hover { border-color: rgba(255,255,255,.18) }
+.fb-card.done { opacity: .5 }
+
+.fb-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.cat-badge {
+  flex-shrink: 0;
+  font-size: 15px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface2);
+}
+.fb-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.fb-msg {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fg);
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+.fb-uid {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fb-bottom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fb-date { font-size: 12px; color: var(--muted); flex: 1 }
+.fb-ver {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--muted);
+  background: var(--surface2);
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.status-pills { display: flex; gap: 6px }
+.status-pill {
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  transition: opacity .15s;
+}
+.status-pill:hover { opacity: .8 }
+.status-pill[data-s="new"] { background: rgba(79,142,247,.15); color: var(--status-new) }
+.status-pill[data-s="seen"] { background: rgba(124,132,160,.15); color: var(--status-seen) }
+.status-pill[data-s="done"] { background: rgba(72,187,120,.15); color: var(--status-done) }
+.status-pill.active[data-s="new"] { background: var(--status-new); color: #fff }
+.status-pill.active[data-s="seen"] { background: var(--status-seen); color: var(--bg) }
+.status-pill.active[data-s="done"] { background: var(--status-done); color: #1a1d27 }
+
+/* Empty / loading */
+.empty {
+  text-align: center;
+  padding: 60px 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.loading { color: var(--accent) }
+
+/* Pulse loading animation */
+@keyframes pulse { 0%,100% { opacity: .4 } 50% { opacity: 1 } }
+.loading::after { content: "…"; animation: pulse 1.2s infinite }
+
+@media (prefers-reduced-motion: reduce) {
+  .loading::after { animation: none }
+  .fb-card, .btn-sm, .btn-primary, .status-pill, .filter-btn { transition: none }
+}
+</style>
+</head>
+<body>
+
+<!-- Login screen -->
+<div id="login-screen">
+  <div class="login-card">
+    <div>
+      <div class="login-title">Puzzlegrad</div>
+      <div class="login-sub">Панель отзывов игроков</div>
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input id="email-in" type="email" autocomplete="email" placeholder="your@email.com">
+    </div>
+    <div class="field">
+      <label>Пароль</label>
+      <input id="pass-in" type="password" autocomplete="current-password">
+    </div>
+    <button id="login-btn" class="btn-primary">Войти</button>
+    <div id="login-err" class="error-msg" hidden></div>
+  </div>
+</div>
+
+<!-- Main app -->
+<div id="app">
+  <header>
+    <div class="header-row">
+      <span class="header-title">Отзывы игроков</span>
+      <button id="refresh-btn" class="btn-sm">↻ Обновить</button>
+      <button id="logout-btn" class="btn-sm">Выйти</button>
+    </div>
+    <div class="stats-row" id="stats-row">
+      <div class="stat-chip"><span class="count" id="stat-total">—</span><span class="label">всего</span></div>
+      <div class="stat-chip">🐛 <span class="count" id="stat-bug">—</span><span class="label">баги</span></div>
+      <div class="stat-chip">💡 <span class="count" id="stat-idea">—</span><span class="label">идеи</span></div>
+      <div class="stat-chip">💬 <span class="count" id="stat-other">—</span><span class="label">другое</span></div>
+      <div class="stat-chip">✓ <span class="count" id="stat-done">—</span><span class="label">готово</span></div>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" data-cat="all">Все</button>
+      <button class="filter-btn" data-cat="bug">🐛 Баги</button>
+      <button class="filter-btn" data-cat="idea">💡 Идеи</button>
+      <button class="filter-btn" data-cat="other">💬 Другое</button>
+      <button class="filter-btn" data-status="new">● Новые</button>
+      <button class="filter-btn" data-status="done">✓ Готово</button>
+    </div>
+    <div class="toolbar">
+      <input id="search-in" class="search-input" type="search" placeholder="Поиск по тексту…">
+      <select id="sort-sel" class="sort-select">
+        <option value="newest">Новее</option>
+        <option value="oldest">Старее</option>
+        <option value="cat">По категории</option>
+      </select>
+    </div>
+  </header>
+  <main>
+    <div id="feedback-list"><div class="empty loading">Загружаем отзывы</div></div>
+  </main>
+</div>
+
+<script>
+const API_KEY = 'AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw';
+const DB_URL  = 'https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app';
+const CATS = { bug: '🐛', idea: '💡', other: '💬' };
+const CAT_LABEL = { bug: 'Баг', idea: 'Идея', other: 'Другое' };
+
+let token = null, items = [], filterCat = 'all', filterStatus = null, searchQ = '';
+
+/* ── LocalStorage helpers (status per feedback key) ── */
+function loadStatuses() {
+  try { return JSON.parse(localStorage.getItem('fb_statuses') || '{}'); } catch { return {}; }
+}
+function saveStatuses(s) {
+  try { localStorage.setItem('fb_statuses', JSON.stringify(s)); } catch {}
+}
+function getStatus(uid, key) {
+  return loadStatuses()[uid + '/' + key] || 'new';
+}
+function setStatus(uid, key, s) {
+  const m = loadStatuses();
+  m[uid + '/' + key] = s;
+  saveStatuses(m);
+}
+
+/* ── Auth ── */
+async function signIn(email, password) {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, returnSecureToken: true })
+  });
+  const d = await r.json();
+  if (!r.ok) throw new Error(d.error?.message || 'Ошибка входа');
+  return d.idToken;
+}
+
+/* ── Fetch all feedback ── */
+async function loadFeedback() {
+  const r = await fetch(`${DB_URL}/feedback.json?auth=${token}`);
+  if (!r.ok) {
+    const e = await r.json().catch(() => ({}));
+    throw new Error(e.error || `HTTP ${r.status}`);
+  }
+  const data = await r.json();
+  if (!data) return [];
+  const out = [];
+  for (const [uid, keys] of Object.entries(data)) {
+    if (!keys || typeof keys !== 'object') continue;
+    for (const [key, fb] of Object.entries(keys)) {
+      if (!fb || typeof fb !== 'object') continue;
+      out.push({ uid, key, k: fb.k || 'other', m: fb.m || '', v: fb.v || null, t: fb.t || 0 });
+    }
+  }
+  return out;
+}
+
+/* ── Render ── */
+function fmtDate(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateStats() {
+  const st = loadStatuses();
+  const vis = filtered();
+  document.getElementById('stat-total').textContent = vis.length;
+  document.getElementById('stat-bug').textContent   = vis.filter(x => x.k === 'bug').length;
+  document.getElementById('stat-idea').textContent  = vis.filter(x => x.k === 'idea').length;
+  document.getElementById('stat-other').textContent = vis.filter(x => x.k === 'other').length;
+  document.getElementById('stat-done').textContent  = vis.filter(x => (st[x.uid+'/'+x.key]||'new') === 'done').length;
+}
+
+function filtered() {
+  const st = loadStatuses();
+  return items.filter(fb => {
+    if (filterCat !== 'all' && fb.k !== filterCat) return false;
+    const s = st[fb.uid+'/'+fb.key] || 'new';
+    if (filterStatus === 'new' && s === 'done') return false;
+    if (filterStatus === 'done' && s !== 'done') return false;
+    if (searchQ) {
+      const q = searchQ.toLowerCase();
+      if (!fb.m.toLowerCase().includes(q) && !fb.uid.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function sorted(arr) {
+  const sel = document.getElementById('sort-sel')?.value || 'newest';
+  const copy = [...arr];
+  if (sel === 'newest') copy.sort((a,b) => b.t - a.t);
+  else if (sel === 'oldest') copy.sort((a,b) => a.t - b.t);
+  else copy.sort((a,b) => a.k.localeCompare(b.k) || b.t - a.t);
+  return copy;
+}
+
+function render() {
+  updateStats();
+  const list = document.getElementById('feedback-list');
+  const fbs = sorted(filtered());
+  if (!fbs.length) {
+    list.innerHTML = '<div class="empty">Ничего не найдено</div>';
+    return;
+  }
+  const st = loadStatuses();
+  list.innerHTML = fbs.map(fb => {
+    const s = st[fb.uid+'/'+fb.key] || 'new';
+    const ic = CATS[fb.k] || '💬';
+    const statusHtml = ['new','seen','done'].map(sx =>
+      `<button class="status-pill${s===sx?' active':''}" data-s="${sx}" data-uid="${esc(fb.uid)}" data-key="${esc(fb.key)}">${
+        sx==='new'?'Новое':sx==='seen'?'Посмотрено':'Готово'
+      }</button>`
+    ).join('');
+    return `<div class="fb-card${s==='done'?' done':''}" data-uid="${esc(fb.uid)}" data-key="${esc(fb.key)}">
+  <div class="fb-top">
+    <span class="cat-badge" title="${CAT_LABEL[fb.k]||'Другое'}">${ic}</span>
+    <div class="fb-meta">
+      <div class="fb-msg">${esc(fb.m)}</div>
+      <div class="fb-uid">${esc(fb.uid)}</div>
+    </div>
+  </div>
+  <div class="fb-bottom">
+    <span class="fb-date">${fmtDate(fb.t)}</span>
+    ${fb.v ? `<span class="fb-ver">v${esc(String(fb.v))}</span>` : ''}
+    <div class="status-pills">${statusHtml}</div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+/* ── Status click ── */
+document.getElementById('feedback-list').addEventListener('click', e => {
+  const pill = e.target.closest('.status-pill');
+  if (!pill) return;
+  const uid = pill.dataset.uid, key = pill.dataset.key, s = pill.dataset.s;
+  setStatus(uid, key, s);
+  render();
+});
+
+/* ── Filters ── */
+document.querySelectorAll('.filter-btn[data-cat]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn[data-cat]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterCat = btn.dataset.cat;
+    render();
+  });
+});
+document.querySelectorAll('.filter-btn[data-status]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const wasActive = btn.classList.contains('active');
+    document.querySelectorAll('.filter-btn[data-status]').forEach(b => b.classList.remove('active'));
+    if (!wasActive) { btn.classList.add('active'); filterStatus = btn.dataset.status; }
+    else { filterStatus = null; }
+    render();
+  });
+});
+document.getElementById('search-in').addEventListener('input', e => {
+  searchQ = e.target.value.trim();
+  render();
+});
+document.getElementById('sort-sel').addEventListener('change', render);
+
+/* ── Login ── */
+document.getElementById('login-btn').addEventListener('click', async () => {
+  const btn = document.getElementById('login-btn');
+  const err = document.getElementById('login-err');
+  err.hidden = true;
+  btn.disabled = true;
+  btn.textContent = 'Входим…';
+  try {
+    const email = document.getElementById('email-in').value.trim();
+    const pass  = document.getElementById('pass-in').value;
+    token = await signIn(email, pass);
+    try { localStorage.setItem('fb_email', email); } catch {}
+    document.getElementById('login-screen').hidden = true;
+    document.getElementById('app').classList.add('visible');
+    await doLoad();
+  } catch (e) {
+    err.textContent = e.message;
+    err.hidden = false;
+    btn.disabled = false;
+    btn.textContent = 'Войти';
+  }
+});
+document.getElementById('email-in').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('pass-in').focus() });
+document.getElementById('pass-in').addEventListener('keydown', e => { if (e.key==='Enter') document.getElementById('login-btn').click() });
+
+/* ── Load / refresh ── */
+async function doLoad() {
+  const list = document.getElementById('feedback-list');
+  list.innerHTML = '<div class="empty loading">Загружаем отзывы</div>';
+  try {
+    items = await loadFeedback();
+    render();
+  } catch (e) {
+    list.innerHTML = `<div class="empty" style="color:var(--bug)">Ошибка: ${esc(e.message)}<br><small style="color:var(--muted)">Убедитесь что правила Firebase опубликованы</small></div>`;
+  }
+}
+document.getElementById('refresh-btn').addEventListener('click', doLoad);
+
+/* ── Logout ── */
+document.getElementById('logout-btn').addEventListener('click', () => {
+  token = null; items = [];
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('login-screen').hidden = false;
+  document.getElementById('login-err').hidden = true;
+  document.getElementById('pass-in').value = '';
+  document.getElementById('feedback-list').innerHTML = '<div class="empty loading">Загружаем отзывы</div>';
+});
+
+/* ── Restore email from localStorage ── */
+try {
+  const saved = localStorage.getItem('fb_email');
+  if (saved) document.getElementById('email-in').value = saved;
+} catch {}
+</script>
+</body>
+</html>
