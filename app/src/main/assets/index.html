@@ -3660,8 +3660,12 @@ function ensureRoom() {
   return net.code;
 }
 // Invite a friend to my room; without a room, open one first.
+const INVITE_GAP = 5000, inviteAt = {};
 async function inviteFriend(uid) {
   const f = friends.find(x => x.uid === uid); if (!f) return;
+  const wait = INVITE_GAP - (Date.now() - (inviteAt[uid] || 0));
+  if (wait > 0) return toastAny(`Приглашать можно раз в 5 секунд — подождите ${Math.ceil(wait / 1000)} с`);
+  inviteAt[uid] = Date.now();
   if (mm) { if (!net) return toastAny('Секунду — комната создаётся'); } else ensureRoom();
   track('friend_invite');
   try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`${f.n} приглашён(а) в комнату ${net.code}`); }
