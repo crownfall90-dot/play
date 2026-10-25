@@ -407,7 +407,7 @@ public class MainActivity extends Activity {
                             js("window.onGoogleError && window.onGoogleError('" + (cancel ? "canceled" : "failed") + "')");
                         }
                     };
-                    cm.getCredentialAsync(req, null, exec, cb);
+                    cm.getCredentialAsync(MainActivity.this, req, null, exec, cb);
                 } catch (Exception e) {
                     report(e);
                     js("window.onGoogleError && window.onGoogleError('failed')");
