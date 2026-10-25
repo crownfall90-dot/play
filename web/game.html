@@ -395,14 +395,11 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .mseg button[aria-pressed="true"]{background:var(--brass);color:var(--brass-ink)}
 .world.nohint .slot{border-color:transparent;background:transparent}
 .world.nohint .slot::after{display:none}
-.timer{position:absolute;left:10px;top:10px;z-index:4;font:800 14px var(--f-display);font-variant-numeric:tabular-nums;background:var(--glass);border:1px solid var(--line);border-radius:10px;padding:5px 9px}
 .edgeglow{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--c,#f2b84b),inset 0 0 38px 6px var(--c,#f2b84b)}
 .edgeglow.on{animation:edge 2.4s ease-in-out}
 @keyframes edge{0%,100%{opacity:0}15%,45%,75%{opacity:1}30%,60%{opacity:.35}}
 .updlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%}.updlist li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);font-size:14px}.updlist i{width:10px;height:10px;border-radius:50%;flex:0 0 auto}.updlist b{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.updlist span{color:var(--muted);font-size:12.5px}.updlist li.ok span{color:#9be9bd}
 #updpause small{color:var(--muted);font-size:12px}
-.timer{display:flex;align-items:center;gap:6px}.timer i{width:9px;height:9px;border-radius:50%;background:var(--c,#fff);flex:0 0 auto}
-.timer.low{color:#ff8a80;border-color:rgba(255,138,128,.5)}
 
 /* ---------- game ---------- */
 #scr-game{background:linear-gradient(180deg,var(--sky-top),var(--sky-bot) 75%)}
@@ -420,6 +417,7 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .pl.active{border-color:var(--brass);background:rgba(242,184,75,.13);box-shadow:0 0 0 3px rgba(242,184,75,.14)}
 .pl .tg{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font:700 8.5px var(--f-body);letter-spacing:.08em;text-transform:uppercase;background:var(--brass);color:var(--brass-ink);padding:1px 6px;border-radius:6px;white-space:nowrap;display:none}
 .pl.active .tg{display:block}
+.pl .tg.low{background:#ff8a80;color:#3a0d0d}
 .av{width:26px;height:26px;border-radius:50%;background:var(--c);display:grid;place-items:center;font:700 12px var(--f-display);color:#10131c;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);flex:0 0 auto}
 .pl .nm{font-size:11px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pl .sc{font:800 16px var(--f-display);font-variant-numeric:tabular-nums;line-height:1.15}
@@ -771,7 +769,6 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
           <div class="toast" id="toast"></div>
-          <div class="timer" id="timer" hidden></div>
           <div class="edgeglow" id="edgeglow"></div>
           <div class="fabs">
             <button class="fab" id="zin" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
@@ -1661,10 +1658,17 @@ function imBack() {
   const b = document.getElementById('kickBox'); if (b) b.remove();
   renderPlayers(); if (phase === 'place' && turn === me) { stopTimer(); beginHumanTurn(); }
 }
+let clk = null; // the running turn clock, shown in the active player's card
+const turnTag = i => (isMe(players[i]) ? 'ваш ход' : 'ходит') + (clk && clk.who === i ? ' · ' + clock(clk.left) : '');
+function setClock(who, left, low) {
+  clk = {who, left, low};
+  const c = playersEl.children[who], tg = c && c.querySelector('.tg');
+  if (tg) { tg.textContent = turnTag(who); tg.classList.toggle('low', low); }
+}
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${isMe(p) ? 'ваш ход' : 'ходит'}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg${clk && clk.who === i && clk.low ? ' low' : ''}">${turnTag(i)}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -1773,11 +1777,11 @@ let meepleActed = false;
 // A short clock for the figure after the turn's card was put down automatically.
 function meepleClock(secs) {
   stopTimer();
-  const el = $('#timer'), end = Date.now() + secs * 1000, my = token; el.hidden = false;
+  const end = Date.now() + secs * 1000, my = token, who = turn;
   timerId = setInterval(() => {
     if (my !== token || phase !== 'meeple') return stopTimer();
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.textContent = clock(left); el.classList.add('low');
+    setClock(who, left, true);
     if (!left) { stopTimer(); if (meepleResolve) meepleResolve(null); }
   }, 250);
 }
@@ -1891,7 +1895,13 @@ function startTurn() {
   else waitRemote();
 }
 let timerId = 0;
-function stopTimer() { clearInterval(timerId); $('#timer').hidden = true; }
+function stopTimer() {
+  clearInterval(timerId);
+  if (!clk) return;
+  const who = clk.who; clk = null;
+  const c = playersEl.children[who], tg = c && c.querySelector('.tg');
+  if (tg) { tg.textContent = turnTag(who); tg.classList.remove('low'); }
+}
 // Turn clock for people (bots are quick anyway). When it runs out the card goes to a random fitting spot.
 function startTimer() {
   stopTimer();
@@ -1900,16 +1910,15 @@ function startTimer() {
   const away = players[turn].missed >= 1;
   const secs = away ? 2 : gameRules.timer || (net ? 60 : 0);
   if (!secs) return;
-  const el = $('#timer'), my = token, who = turn;
+  const my = token, who = turn;
   let end = Date.now() + secs * 1000, last = Date.now();
-  el.hidden = false; el.style.setProperty('--c', players[turn].col);
   const tick = () => {
     if (my !== token || who !== turn || !['place', 'meeple', 'handover'].includes(phase)) return stopTimer();
     const now = Date.now();
     if (phase === 'handover' || (paused && !net) || updHold()) { end += now - last; last = now; return; }
     last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.innerHTML = `<i></i>${net || localHumans() > 1 ? players[who].name.slice(0, 10) + ' ' : ''}${clock(left)}`; el.classList.toggle('low', left <= 10);
+    setClock(who, left, left <= 10);
     if (left > 0) return;
     stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
@@ -2954,13 +2963,12 @@ function watchClock() {
   stopTimer();
   const pl = players[turn]; if (!net || !pl || !pl.human || pl.resigned) return;
   const secs = pl.missed >= 1 ? 2 : gameRules.timer || 60;
-  const el = $('#timer'), my = token, who = turn; let end = Date.now() + secs * 1000, last = Date.now();
-  el.hidden = false; el.style.setProperty('--c', pl.col);
+  const my = token, who = turn; let end = Date.now() + secs * 1000, last = Date.now();
   const tick = () => {
     if (my !== token || who !== turn || phase !== 'remote') return stopTimer();
     const now = Date.now(); if (updHold()) end += now - last; last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
-    el.innerHTML = `<i></i>${pl.name.slice(0, 10)} ${clock(left)}`; el.classList.toggle('low', left <= 10);
+    setClock(who, left, left <= 10);
   };
   tick(); timerId = setInterval(tick, 250);
 }
