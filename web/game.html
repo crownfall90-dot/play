@@ -965,11 +965,14 @@ const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Mat
 const hash = s => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 let net = null;
 let queue = [], applied = 0, gameLog = null;
-const fast = () => queue.length > 1;
+// catchUp: moves taken from the history (coming back to a game) are applied at once, without animation, sound or
+// messages; only the last tile is shown (see focusLast).
+let catchUp = false, lastPlaced = null;
+const fast = () => queue.length > 1 || catchUp;
 // A paused offline game (game menu open) holds bots and animations until it resumes.
 let paused = false;
 const clock = sec => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-const wait = ms => new Promise(r => { const go = () => (paused && !net) || updHold() ? setTimeout(go, 150) : r(); setTimeout(go, RM || fast() ? Math.min(ms, 40) : ms); });
+const wait = ms => new Promise(r => { const go = () => (paused && !net) || updHold() ? setTimeout(go, 150) : r(); if (fast() && !RM) go(); else setTimeout(go, RM ? Math.min(ms, 40) : ms); });
 const myId = (() => { let v = null; try { v = localStorage.getItem('clientId'); if (!v) { v = Math.random().toString(36).slice(2, 10); localStorage.setItem('clientId', v); } } catch (_) {} return v || Math.random().toString(36).slice(2, 10); })();
 const $ = s => document.querySelector(s);
 const meepleSvg = col => `<svg viewBox="0 0 100 110"><path d="${MEEPLE_D}" fill="${col}" stroke="rgba(0,0,0,.35)" stroke-width="6"/></svg>`;
@@ -1558,6 +1561,7 @@ function removeMeeple(m) {
   a.onfinish = () => m.el.remove();
 }
 function floatText(t, [x, y], txt, col) {
+  if (fast()) return;
   const f = document.createElement('i'); f.className = 'fl'; f.textContent = txt;
   f.style.cssText = `left:${(0.5 + x) * T}px;top:${(0.5 + y) * T - 20}px;--c:${col}`;
   t.el.append(f); setTimeout(() => f.remove(), 1600);
@@ -1836,7 +1840,7 @@ function renderPlayers(bump = []) {
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
-function toast(txt) { toastEl.textContent = txt; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2000); }
+function toast(txt) { if (fast()) return; toastEl.textContent = txt; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2000); }
 function renderDeck() { $('#deckN').textContent = deck.length; }
 function renderTray() {
   if (!current) { tface.className = 'face'; cname.innerHTML = ''; return; }
@@ -1910,8 +1914,8 @@ async function dropAt(t) {
   sel = {x: t.x, y: t.y};
   if (!ghost) placeGhost();
   ghost.classList.remove('ghost');
-  await ghost.animate([{transform: 'translateZ(26px)'}, {transform: 'translateZ(0)'}], {duration: RM || fast() ? 1 : 260, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
-  ghost.remove(); ghost = null;
+  if (!(RM || fast())) await ghost.animate([{transform: 'translateZ(26px)'}, {transform: 'translateZ(0)'}], {duration: 260, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
+  ghost.remove(); ghost = null; lastPlaced = t;
   t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
   const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
@@ -2070,9 +2074,16 @@ async function resolveFeature(c, final, placer) {
   renderPlayers(helped ? [...win, placer] : win);
   await wait(final ? 700 : 950);
 }
+// The history is in: show where the game stands (the last card put down), not how it got there.
+function focusLast() {
+  const t = lastPlaced; if (!t || !t.el) return;
+  ensureVisible(t.x, t.y);
+  t.el.classList.add('glow'); setTimeout(() => t.el.classList.remove('glow'), 1500);
+}
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer();
+  if (catchUp && !queue.some(q => q.n === applied)) { catchUp = false; focusLast(); }
   while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
   renderDeck();
   if (!current) return endGame();
@@ -2297,7 +2308,7 @@ function startGame(cfg, replay = []) {
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
-  queue = replay.slice(); applied = 0; markOwn();
+  queue = replay.map(m => ({...m, old: true})); applied = 0; catchUp = false; lastPlaced = null; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
@@ -2693,7 +2704,7 @@ const SFX = {
   lose: t => [[76, 0], [74, .22], [72, .44], [71, .7]].forEach(([n, d]) => pluck(t + d, NOTE(n), .8, .13)),
 };
 function beep(kind) {
-  if (!wallet.sound || !SFX[kind]) return;
+  if (!wallet.sound || !SFX[kind] || fast()) return;
   try { audio(); SFX[kind](actx.currentTime + .01); } catch (_) {}
 }
 
@@ -3180,7 +3191,7 @@ function onNet(d) {
     else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now()})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
   }
-  if (m.t === 'move') return onMove(m);
+  if (m.t === 'move') { if (!live) m.old = true; return onMove(m); }
   if (m.g === net.gameId && phase !== 'end') {
     if (m.t === 'upd') { if (live) { updOpen(m.c); if (appCode() >= m.c) updAnnounce(); } return; }
     if (m.t === 'ver') { if (live && net.upd && typeof m.c === 'number' && m.c >= net.upd.c) { net.upd.ready.add(m.o); updCheck(); } return; }
@@ -3267,7 +3278,10 @@ async function pumpRemote() {
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
   const mv = queue.splice(i, 1)[0], my = token;
-  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toast('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
+  catchUp = !!mv.old;
+  if (catchUp) await new Promise(r => setTimeout(r)); // let the screen breathe while a long history goes in
+  if (my !== token) return;
+  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
   phase = 'busy'; applied++;
   if (mv.auto) { if (++players[mv.p].missed === 1 && !fast()) toast(`${players[mv.p].name} пропустил ход — за него играет бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
