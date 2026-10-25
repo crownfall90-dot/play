@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- При возвращении в онлайн-партию история ходов теперь перематывается мгновенно: без анимации каждого хода, затем камера переходит к последнему пазлу\n- Исправлена проверка обновлений в настройках: после отказа от обновления она снова предлагает его, а не пишет, что версия актуальна"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Проверка обновлений в настройках стала надёжнее: если вы отложили обновление кнопкой «Позже», оно снова предлагается, а не сообщает, что версия актуальна"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -2841,7 +2841,8 @@ $('#prefs').addEventListener('click', e => {
 // Only the label changes: replacing the button's text would wipe its icon and arrow.
 const checkLabel = t => { const b = $('#checkUpd b'); if (b) b.textContent = t; };
 $('#checkUpd').onclick = () => { checkLabel('Проверяем…'); AndroidApp.checkUpdates(); setTimeout(() => checkLabel('Проверить обновления'), 4000); };
-window.onNoUpdate = () => { checkLabel('Проверить обновления'); toastAny('У вас последняя версия'); };
+// A version this session already heard about (and the player put off) is still an update, whatever a later check says.
+window.onNoUpdate = () => { checkLabel('Проверить обновления'); if (lastUpd && lastUpd.code > appCode()) return window.onUpdateAvailable(lastUpd, true); toastAny('У вас последняя версия'); };
 window.onCheckFailed = () => { checkLabel('Проверить обновления'); toastAny('Не удалось проверить обновления — попробуйте чуть позже'); };
 function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
 

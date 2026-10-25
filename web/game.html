@@ -2825,7 +2825,8 @@ $('#prefs').addEventListener('click', e => {
 // Only the label changes: replacing the button's text would wipe its icon and arrow.
 const checkLabel = t => { const b = $('#checkUpd b'); if (b) b.textContent = t; };
 $('#checkUpd').onclick = () => { checkLabel('Проверяем…'); AndroidApp.checkUpdates(); setTimeout(() => checkLabel('Проверить обновления'), 4000); };
-window.onNoUpdate = () => { checkLabel('Проверить обновления'); toastAny('У вас последняя версия'); };
+// A version this session already heard about (and the player put off) is still an update, whatever a later check says.
+window.onNoUpdate = () => { checkLabel('Проверить обновления'); if (lastUpd && lastUpd.code > appCode()) return window.onUpdateAvailable(lastUpd, true); toastAny('У вас последняя версия'); };
 window.onCheckFailed = () => { checkLabel('Проверить обновления'); toastAny('Не удалось проверить обновления — попробуйте чуть позже'); };
 function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2D' : '3D'; tweenCam({tilt: top ? 22 : 55}, 400); }
 
