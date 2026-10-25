@@ -726,6 +726,12 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <p class="rnote">⏳ Недостроенное в конце — по 1 очку за карту</p>
           <div class="h3">Фишки</div>
           <div class="tags"><span>☝️ Одна фишка за ход</span><span>🔒 Занятое не занять</span><span>🎯 Больше фишек — объект ваш</span><span>↩️ Фишка возвращается после очков</span><span>🤝 Ничья — по правилу партии</span></div>
+          <div class="h3">Особые случаи</div>
+          <div class="tags"><span>🤝 Достроили чужой объект — +1 балл «респект»</span><span>🧍 Все карты достроенного объекта ваши — можно поставить на него свободную фишку и забрать очки</span></div>
+          <div class="h3">Карты местности</div>
+          <div class="tags"><span>🌊 Озеро занимает всю карту и впадает во все стороны реки</span><span>⛲ Исток — река начинается из родника</span><span>🚧 Дорога к обрыву: за обрывом ставить можно только обрыв, видна половина карты</span></div>
+          <div class="h3">Время хода</div>
+          <div class="tags"><span>⏱ Время хода показано у игрока, чей сейчас ход</span><span>📳 За 10 секунд до конца — вибрация</span><span>🤖 Если время вышло, ход делает бот (по смыслу, не наугад)</span><span>💤 Свёрнута игра больше минуты — вас выводит из онлайн-партии, можно вернуться</span><span>💬 Быстрые фразы и эмодзи — не чаще раза в несколько секунд</span></div>
           <div class="h3">Золото за место</div>
           <div class="goldrow"><span>🥇<b>+15</b></span><span>🥈<b>+10</b></span><span>🥉<b>+5</b></span><span>4<b>0</b></span><span>5<b>−5</b></span></div>
           <p class="rnote">С ботами и онлайн. За одним телефоном золото не начисляется</p>
@@ -1063,10 +1069,24 @@ function drawTile(id) {
   const w = idx('w');
   if (w.length === 2) water(riverPath(w[0], w[1])); else w.forEach(d => water(riverPath(d, null)));
   if (w.length === 1) {
-    // a spring: a pond ringed with stones
-    [[37,31,'#b9b07a'],[33,27,'#cdbf86'],[28,22,'#2f7cc2'],[20,15,'#4a9fe3']].forEach(([a, b, col]) => { g.beginPath(); g.ellipse(C[0], C[1], a, b, 0, 0, 7); g.fillStyle = col; g.fill(); });
-    g.beginPath(); g.ellipse(C[0] - 7, C[1] - 6, 11, 6, 0, 0, 7); g.fillStyle = 'rgba(170,220,250,.7)'; g.fill();
-    for (let k = 0; k < 14; k++) { const an = k / 14 * 7, rx = C[0] + Math.cos(an) * 34, ry = C[1] + Math.sin(an) * 28; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(rx, ry, 4 + R() * 2, 3, an, 0, 7); g.fill(); }
+    // A spring: water wells up from a mossy rock outcrop on the closed side, fills a clear round pool with rings and
+    // sparkles, and spills into the river on the open side. Reeds and flowers dot the bank.
+    const d0 = w[0], ux = V[d0][0], uy = V[d0][1], px = -uy, py = ux;
+    const at = (f, o) => [C[0] + ux * f + px * o, C[1] + uy * f + py * o];
+    // damp bank around the pool
+    g.fillStyle = 'rgba(70,110,40,.35)'; g.beginPath(); g.ellipse(...at(-4, 0), 40, 34, 0, 0, 7); g.fill();
+    // pool: sandy rim, deep water, bright centre
+    [[30,'#d8cf9c'],[27,'#b9ae78'],[24,'#2468ad'],[19,'#3f95dc'],[12,'#6fbdf0']].forEach(([r, col]) => { g.beginPath(); g.ellipse(...at(-8, 0), r, r * .9, 0, 0, 7); g.fillStyle = col; g.fill(); });
+    g.strokeStyle = 'rgba(235,250,255,.8)'; g.lineWidth = 1.4; [5, 10, 15].forEach((r, k) => { g.globalAlpha = 1 - k * .25; g.beginPath(); g.ellipse(...at(-8, 0), r, r * .88, 0, 0, 7); g.stroke(); }); g.globalAlpha = 1;
+    // bubbles and sparkles
+    g.fillStyle = 'rgba(255,255,255,.85)'; [[-12,-4,2.4],[-3,2,1.8],[-9,5,1.4],[-14,2,1.2],[-5,-7,1.2]].forEach(([f, o, r]) => { g.beginPath(); g.arc(...at(f, o), r, 0, 7); g.fill(); });
+    // rock outcrop behind the pool: stacked boulders with moss on top
+    const rocks = [[-44,-20,15,11,'#7d776b'],[-48,-3,17,13,'#8d8779'],[-44,15,15,11,'#7d776b'],[-38,-9,12,10,'#a39d90'],[-38,8,12,10,'#a39d90'],[-30,-26,9,7,'#8d8779'],[-30,24,9,7,'#8d8779']];
+    rocks.forEach(([f, o, rx, ry, col]) => { const [x, y] = at(f, o); g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(x + 2, y + 3, rx, ry * .85, 0, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.22)'; g.beginPath(); g.ellipse(x - 3, y - 3, rx * .55, ry * .45, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(90,150,60,.75)'; g.beginPath(); g.ellipse(x + rx * .25, y - ry * .5, rx * .55, ry * .3, 0, 0, 7); g.fill(); });
+    // water trickling from the rocks into the pool
+    g.strokeStyle = '#8fd0f6'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(...at(-34, 0)); g.quadraticCurveTo(...at(-26, 2), ...at(-20, 0)); g.stroke(); g.lineCap = 'butt';
+    // reeds and flowers on the bank
+    [[-14,34],[-26,38],[-6,-36],[-22,-38],[16,38],[22,-40]].forEach(([f, o], k) => { const [x, y] = at(f, o); g.strokeStyle = '#4f8a2c'; g.lineWidth = 1.8; for (let j = -1; j <= 1; j++) { g.beginPath(); g.moveTo(x + j * 2, y + 4); g.lineTo(x + j * 4, y - 9 - R() * 3); g.stroke(); } if (k % 2) { g.fillStyle = ['#f4d35e', '#fff', '#f08fb0'][k % 3]; g.beginPath(); g.arc(x + 4, y - 4, 2.2, 0, 7); g.fill(); } });
   }
   if (def.lake) {
     // A lake over the whole card: water to the very edges, open on every river side; only the corners (and the closed
