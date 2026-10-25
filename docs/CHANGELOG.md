@@ -1007,3 +1007,12 @@
 - Fence along the cliff edge
 - Changelog for 1.0.199
 
+## 1.0.201 — 2026-10-25
+
+**Игрокам:**
+- Уведомления об обновлении больше не приходят повторно, пока вы не открыли игру и не обновились: следующие придут только после обновления
+
+**В коде:**
+- No repeat update notifications until the phone updates
+- Changelog for 1.0.200
+
