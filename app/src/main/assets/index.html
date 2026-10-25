@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Приглашать друга в комнату можно раз в 5 секунд, а тексты приглашений стали аккуратнее"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Приглашать друга в комнату можно раз в 5 секунд, а тексты приглашений стали аккуратнее\n- Время на ход теперь показывается в карточке игрока, чей сейчас ход, рядом с ником"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -539,7 +539,12 @@ html.lowgfx .tile .sd.s{display:block}
 .confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}.confetti span{position:absolute;top:-12px;width:7px;height:12px;background:var(--cc);border-radius:2px;animation:fall 2.6s linear var(--dl) both}
 @keyframes fall{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(420px) rotate(560deg);opacity:0}}
 .sumline{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
-.sumline span{padding:8px 2px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);font-size:10.5px;display:flex;flex-direction:column;gap:2px}.sumline b{color:var(--ink);font:800 16px var(--f-display)}
+#rres:not([hidden]){display:flex;flex-direction:column;gap:10px}
+#podium{display:flex;justify-content:center;align-items:flex-end;gap:10px}
+#podium .pc{flex:1 1 0;min-width:0;max-width:150px}
+#podium .pc b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rchip small{text-wrap:balance}.lvlup{text-wrap:balance;text-align:center}
+.sumline span{justify-content:flex-start;padding:10px 4px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--muted);font-size:10.5px;display:flex;flex-direction:column;gap:2px}.sumline b{color:var(--ink);font:800 16px var(--f-display)}
 .over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(10,14,26,.6);z-index:8;padding:20px}
 .ocard{width:100%;max-width:320px;border-radius:22px;background:linear-gradient(170deg,#2b3a66,#161e38);border:1px solid var(--line);padding:22px 18px 18px;display:flex;flex-direction:column;gap:12px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5)}
 .ocard h3{font:800 20px var(--f-display);margin:0;text-wrap:balance}
@@ -2172,7 +2177,7 @@ function rewardChips(g) {
   const rw = g.rw || {}, sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
   const chips = [];
   if (rw.rated) chips.push(`<div class="rchip cup${rw.cups ? '' : ' zero'}" style="--i:0"><b>🏆 ${sign(rw.cups)}</b><small>кубков · всего ${PROG.cups}</small></div>`);
-  else if (net && !net.quick) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>комната с друзьями — без кубков</small></div>`);
+  else if (net && !net.quick) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>без кубков: игра с друзьями</small></div>`);
   chips.push(`<div class="rchip gold${g.delta < 0 ? ' neg' : ''}" style="--i:1"><b><i class="coin"></i> ${sign(g.delta)}</b><small>золота · всего ${wallet.gold}</small></div>`);
   if (rw.xp) chips.push(`<div class="rchip xp" style="--i:2"><b>⭐ +${rw.xp}</b><small>опыта · уровень ${rw.lvl}</small></div>`);
   return `<div class="rchips">${chips.join('')}</div>${rw.up ? `<div class="lvlup">🎉 Новый уровень ${rw.lvl}! +${20 * rw.up} золота</div>` : ''}`;
