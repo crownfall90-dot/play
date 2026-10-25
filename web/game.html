@@ -481,6 +481,8 @@ html.lowgfx .face.t-wLake::after,html.lowgfx .face.t-wTee::after{display:none}
 @keyframes fallX{to{background-position:10px 0}}
 @keyframes foam{to{transform:scale(1.25);opacity:.7}}
 html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:none}
+.tile .sd.n.cl,.tile .sd.s.cl{height:46px;background:linear-gradient(#5f9a3e 0,#5f9a3e 2.5px,#9a8d72 3px,#6b5e48 25%,#4a4033 55%,#2a231b 80%,#0e0b08 100%)}
+.tile .sd.e.cl,.tile .sd.w.cl{width:46px;background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#9a8d72 3px,#6b5e48 25%,#4a4033 55%,#2a231b 80%,#0e0b08 100%)}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
@@ -922,7 +924,7 @@ const TYPES = {
   wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
   wLake:{e:'wwww',n:2,lake:true,name:'Разлив реки'}, wTee:{e:'wwwf',n:2,lake:true,name:'Заводь с протокой'},
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
-  rEnd:{e:'rfff',n:1,end:'cliff',name:'Обрыв'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
+  rEnd:{e:'rfff',n:1,end:'cliff',name:'Дорога к обрыву'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
 };
 /* Rare pieces: one for every combination of town, road and field edges the regular set lacks,
    so towns and roads can nearly always be finished. Odd river mixes (three or four rivers, a river
@@ -1150,26 +1152,24 @@ function drawTile(id) {
     g.fillStyle = '#7d725f'; g.fillRect(S * .33, C[1] - 23, 6, 46);
   }
   if (def.end === 'cliff') {
-    // The road runs to the lip of a chasm and stops: crumbling edge, rock ledge, strata, a misty bottom, warning posts.
-    const d0 = r[0], Y = S / 2 - 15, X1 = S / 2 - 11, L = 7;
+    // The road runs to the lip of a drop and stops: the whole far half of the card is a sheer chasm edge to edge,
+    // with a crumbling rock lip, layered strata, mist at the bottom and warning posts on the road.
+    const d0 = r[0], H = S / 2 + 3, L = 4;
     g.save(); g.translate(C[0], C[1]); g.rotate(Math.atan2(-V[d0][1], -V[d0][0]));
-    const lip = []; for (let y = -Y; y <= Y; y += 10) lip.push([L + (R() - .5) * 7 + Math.abs(y) * .1, y]);
-    const pit = new Path2D(); pit.moveTo(lip[0][0], lip[0][1]); lip.forEach(q => pit.lineTo(q[0], q[1]));
-    pit.quadraticCurveTo(X1 + 7, Y, X1, Y * .5); pit.quadraticCurveTo(X1 + 9, 0, X1, -Y * .5); pit.quadraticCurveTo(X1 + 7, -Y, lip[0][0], lip[0][1]); pit.closePath();
-    g.lineJoin = 'round';
-    g.strokeStyle = 'rgba(40,60,25,.45)'; g.lineWidth = 18; g.stroke(pit);
-    g.strokeStyle = '#6b5e48'; g.lineWidth = 13; g.stroke(pit);
-    g.strokeStyle = '#a89c82'; g.lineWidth = 8; g.stroke(pit);
-    g.strokeStyle = '#d4c9ac'; g.lineWidth = 2.2; g.stroke(pit);
-    const ab = g.createLinearGradient(L, 0, X1, 0); ab.addColorStop(0, '#4a3826'); ab.addColorStop(.35, '#241a12'); ab.addColorStop(1, '#07060b');
+    const lip = []; for (let y = -H; y <= H; y += 9) lip.push([L + (R() - .5) * 6 + Math.sin(y * .09) * 3, y]);
+    const edge = new Path2D(); edge.moveTo(lip[0][0], lip[0][1]); lip.forEach(q => edge.lineTo(q[0], q[1]));
+    const pit = new Path2D(edge); pit.lineTo(H, H); pit.lineTo(H, -H); pit.closePath();
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    const ab = g.createLinearGradient(L, 0, H, 0); ab.addColorStop(0, '#4d3a26'); ab.addColorStop(.3, '#271c13'); ab.addColorStop(1, '#06050a');
     g.fillStyle = ab; g.fill(pit);
     g.save(); g.clip(pit);
-    for (let i = 0; i < 9; i++) { const x = L + 6 + i * 8 + R() * 3; g.strokeStyle = i % 2 ? 'rgba(0,0,0,.35)' : 'rgba(150,120,80,.2)'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(x, -Y); g.bezierCurveTo(x + (R() - .5) * 12, -Y * .4, x + (R() - .5) * 12, Y * .4, x + (R() - .5) * 6, Y); g.stroke(); }
-    const mist = g.createRadialGradient(X1 - 8, 0, 2, X1 - 8, 0, 46); mist.addColorStop(0, 'rgba(140,150,185,.4)'); mist.addColorStop(1, 'rgba(140,150,185,0)');
-    g.fillStyle = mist; g.fillRect(L, -Y, X1 - L + 8, 2 * Y);
+    for (let i = 0; i < 11; i++) { const x = L + 7 + i * 7.5 + R() * 3; g.strokeStyle = i % 2 ? 'rgba(0,0,0,.4)' : 'rgba(160,125,85,.2)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, -H); g.bezierCurveTo(x + (R() - .5) * 14, -H * .4, x + (R() - .5) * 14, H * .4, x + (R() - .5) * 8, H); g.stroke(); }
+    const mist = g.createRadialGradient(H - 12, 0, 2, H - 12, 0, 70); mist.addColorStop(0, 'rgba(150,160,195,.45)'); mist.addColorStop(1, 'rgba(150,160,195,0)');
+    g.fillStyle = mist; g.fillRect(L, -H, H - L, 2 * H);
     g.restore();
-    g.fillStyle = '#6d6252'; lip.forEach(([x, y], k) => { if (k % 2) { g.beginPath(); g.moveTo(x - 3, y - 4); g.lineTo(x + 5 + R() * 3, y); g.lineTo(x - 3, y + 4); g.closePath(); g.fill(); } });
-    for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? '#c7a874' : '#a88a58'; g.save(); g.translate(L + 1 + R() * 14, (R() - .5) * 22); g.rotate(R() * 3); g.fillRect(-2.5, -1.6, 5 + R() * 2, 3.2); g.restore(); }
+    for (const [w2, col] of [[16, 'rgba(40,60,25,.4)'], [11, '#6b5e48'], [7, '#a89c82'], [2, '#d4c9ac']]) { g.lineWidth = w2; g.strokeStyle = col; g.stroke(edge); }
+    g.fillStyle = '#6d6252'; lip.forEach(([x, y], k) => { if (k % 2) { g.beginPath(); g.moveTo(x - 3, y - 4); g.lineTo(x + 6 + R() * 3, y); g.lineTo(x - 3, y + 4); g.closePath(); g.fill(); } });
+    for (let k = 0; k < 7; k++) { g.fillStyle = k % 2 ? '#c7a874' : '#a88a58'; g.save(); g.translate(L + 3 + R() * 18, (R() - .5) * 60); g.rotate(R() * 3); g.fillRect(-2.5, -1.6, 5 + R() * 2, 3.2); g.restore(); }
     for (const sy of [-17, 17]) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-14, sy + 1, 5, 12); g.fillStyle = '#f4f1e8'; g.fillRect(-15, sy - 11, 4, 22); g.fillStyle = '#d8402e'; for (let q = -11; q < 11; q += 8) g.fillRect(-15, sy + q, 4, 4); }
     g.restore();
   }
@@ -1326,25 +1326,18 @@ function drawSprites() {
     g.strokeStyle = '#6e4a2a'; g.lineWidth = .8; for (let y = h - 3; y > h - 9; y -= 2) { g.beginPath(); g.moveTo(16 + (h - y) * .1, y); g.lineTo(24 - (h - y) * .1, y); g.stroke(); }
     g.fillStyle = '#ffcf5a'; g.beginPath(); g.arc(30, h - 12, 1.3, 0, 7); g.fill(); g.fillStyle = 'rgba(255,210,90,.35)'; g.beginPath(); g.arc(30, h - 12, 3, 0, 7); g.fill();
   });
-  // Roadworks where a road runs out into an empty cell: striped barricade, a cone, a gravel heap and a lamp.
-  sprite('works', 38, 26, (g, w, h) => {
-    shadow(g, w / 2, h - 1.6, 17, 2.4, .34);
-    g.fillStyle = '#9c8f78'; g.beginPath(); g.ellipse(6, h - 3, 6, 3.2, 0, 0, 7); g.fill();
-    g.fillStyle = '#b8ab92'; g.beginPath(); g.ellipse(5, h - 4.4, 4, 2.2, 0, 0, 7); g.fill();
-    g.fillStyle = '#6e4a2a'; g.fillRect(12, h - 14, 2.2, 13); g.fillRect(w - 12.2, h - 14, 2.2, 13);
-    for (const y of [h - 15, h - 9]) {
-      poly(g, [[10, y], [w - 10, y], [w - 10, y + 4], [10, y + 4]], '#f4f1e8', 'rgba(40,30,20,.6)');
-      g.save(); g.beginPath(); g.rect(10, y, w - 20, 4); g.clip(); g.fillStyle = '#d8402e';
-      for (let x = 6; x < w - 8; x += 7) { g.beginPath(); g.moveTo(x, y + 4); g.lineTo(x + 3.5, y); g.lineTo(x + 7, y); g.lineTo(x + 3.5, y + 4); g.fill(); }
-      g.restore();
+  // Where a road runs out into an empty cell: a scatter of stones and gravel on the track, so it reads as "the road goes on".
+  sprite('gravel', 40, 14, (g, w, h) => {
+    const R = rng(77);
+    g.fillStyle = 'rgba(120,96,60,.35)'; g.beginPath(); g.ellipse(w / 2, h - 4, 17, 4.6, 0, 0, 7); g.fill();
+    for (let k = 0; k < 16; k++) { g.fillStyle = k % 3 ? 'rgba(235,222,190,.9)' : 'rgba(110,90,58,.7)'; g.beginPath(); g.ellipse(6 + R() * (w - 12), h - 3 - R() * 5, .9 + R() * 1.1, .6 + R() * .7, R() * 3, 0, 7); g.fill(); }
+    for (const [x, y, rx, ry, c0, c1] of [[10, h - 3, 4.6, 3.2, '#bdb8ad', '#8d887c'], [27, h - 3.5, 5.4, 3.8, '#c9c5bb', '#97917f'], [19, h - 2.2, 3.2, 2.2, '#d3cfc6', '#a29c90'], [33, h - 2.4, 3, 2, '#b4afa4', '#868072']]) {
+      const lg = g.createLinearGradient(x - rx, y - ry, x + rx, y + ry); lg.addColorStop(0, c0); lg.addColorStop(1, c1);
+      g.fillStyle = 'rgba(30,25,15,.3)'; g.beginPath(); g.ellipse(x + 1, y + 1, rx, ry * .8, 0, 0, 7); g.fill();
+      g.fillStyle = lg; g.beginPath(); g.ellipse(x, y - ry * .3, rx, ry, 0, 0, 7); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(x - rx * .25, y - ry * .7, rx * .45, ry * .3, 0, 0, 7); g.fill();
     }
-    const lg = g.createRadialGradient(w / 2, h - 19, 0, w / 2, h - 19, 6); lg.addColorStop(0, 'rgba(255,220,90,.9)'); lg.addColorStop(1, 'rgba(255,200,60,0)');
-    g.fillStyle = lg; g.beginPath(); g.arc(w / 2, h - 19, 6, 0, 7); g.fill();
-    g.fillStyle = '#ffc93a'; g.strokeStyle = 'rgba(60,40,10,.7)'; g.lineWidth = .5; g.beginPath(); g.arc(w / 2, h - 18.5, 2.1, 0, 7); g.fill(); g.stroke();
-    g.fillStyle = '#5a5a5a'; g.fillRect(w / 2 - 1.6, h - 16.5, 3.2, 1.6);
-    poly(g, [[w - 8, h - 2], [w - 3.5, h - 2], [w - 5, h - 15], [w - 6.5, h - 15]], '#f08a24', 'rgba(60,30,10,.6)');
-    poly(g, [[w - 7.3, h - 9], [w - 4.2, h - 9], [w - 4.6, h - 12], [w - 6.9, h - 12]], '#fff');
-    g.fillStyle = '#4a4a4a'; g.fillRect(w - 9, h - 2.2, 7, 1.6);
+    g.strokeStyle = '#4f8e33'; g.lineWidth = .9; for (const x of [3, 37, 22]) { for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(x + k, h - 1.5); g.lineTo(x + k * 1.6, h - 5.5); g.stroke(); } }
   });
   /* Stone keep: coursed masonry, a shaded right side, battlements with depth, slits, a gate, a flag. */
   sprite('tower', 38, 60, (g) => {
@@ -1500,6 +1493,7 @@ function tileEl(t, decor, delay) {
   el.style.left = (t.x * T - T / 2) + 'px'; el.style.top = (t.y * T - T / 2) + 'px';
   el.innerHTML = `<i class="sd n"></i><i class="sd e"></i><i class="sd s"></i><i class="sd w"></i><div class="face t-${t.type}" style="--r:${t.r * 90}deg"></div>`;
   if (decor) addDecor(el, t, delay);
+  if (TYPES[t.type].end === 'cliff') { const dr = [0, 1, 2, 3].find(d => edgeAt(t, d) === 'r'); if (dr != null) el.querySelectorAll('.sd')[(dr + 2) % 4].classList.add('cl'); }
   return el;
 }
 // Walls between two pieces are never seen: drop them, so only the outline of the kingdom has
@@ -1513,14 +1507,14 @@ function walls(t, has = (x, y) => tiles.has(key(x, y))) {
     sd[d].classList.toggle('fall', !sd[d].hidden && edgeAt(t, d) === 'w');
   }
 }
-// Where a road runs out into an empty cell, roadworks stand at the end; they go away once a card is put there.
+// Where a road runs out into an empty cell, stones and gravel lie on the track; they go away once a card is put there.
 function refreshRoadEnds() {
   for (const t of tiles.values()) {
     if (!t.el) continue;
     t.rw = t.rw || {};
     for (let d = 0; d < 4; d++) {
       const open = edgeAt(t, d) === 'r' && !at(t.x + DX[d], t.y + DY[d]);
-      if (open && !t.rw[d]) t.rw[d] = addSprite(t.el, 'works', V[d][0] * .4, V[d][1] * .4, '', fast() ? null : .05);
+      if (open && !t.rw[d]) t.rw[d] = addSprite(t.el, 'gravel', V[d][0] * .4, V[d][1] * .4, '', fast() ? null : .05);
       else if (!open && t.rw[d]) { t.rw[d].remove(); delete t.rw[d]; }
     }
   }
