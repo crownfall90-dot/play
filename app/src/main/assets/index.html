@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Плюсики, куда можно поставить пазл, теперь цвета игрока, чей ход\n- Домики и деревья у дальнего края плитки больше не торчат над пустой клеткой позади\n- Дорога, которая выходит в пустую клетку, теперь заканчивается ремонтным ограждением: полосатый барьер, конус и лампа; пропадает, когда рядом кладут карту\n- Сообщение «Партия разошлась между телефонами» теперь подсказывает причину: разные версии игры"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Плюсики, куда можно поставить пазл, теперь цвета игрока, чей ход\n- Домики и деревья у дальнего края плитки больше не торчат над пустой клеткой позади\n- Дорога, которая выходит в пустую клетку, теперь заканчивается ремонтным ограждением: полосатый барьер, конус и лампа; пропадает, когда рядом кладут карту\n- Сообщение «Партия разошлась между телефонами» теперь подсказывает причину: разные версии игры\n- Быстрые сообщения и эмодзи в партии: больше эмоций и фраз, красивая панель, яркие облачка цвета игрока и анимация; следующее сообщение можно отправить только когда прошлое пропало"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -428,6 +428,8 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .world.nohint .slot::after{display:none}
 .edgeglow{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:0;border-radius:inherit;box-shadow:inset 0 0 0 3px var(--c,#f2b84b),inset 0 0 38px 6px var(--c,#f2b84b)}
 .edgeglow.on{animation:edge 2.4s ease-in-out}
+.edgeglow.warn{animation:edgewarn 1.1s ease-in-out infinite}.edgeglow.warn.hard{animation-duration:.55s}
+@keyframes edgewarn{0%,100%{opacity:.12}50%{opacity:.95}}
 @keyframes edge{0%,100%{opacity:0}15%,45%,75%{opacity:1}30%,60%{opacity:.35}}
 .updlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;width:100%}.updlist li{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);font-size:14px}.updlist i{width:10px;height:10px;border-radius:50%;flex:0 0 auto}.updlist b{flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.updlist span{color:var(--muted);font-size:12.5px}.updlist li.ok span{color:#9be9bd}
 #updpause small{color:var(--muted);font-size:12px}
@@ -2059,14 +2061,25 @@ function startTurn() {
 }
 let timerId = 0;
 function stopTimer() {
-  clearInterval(timerId);
+  clearInterval(timerId); idleWarn();
   if (!clk) return;
   const c = playersEl.children[clk.who], el = c && c.querySelector('.clk'); clk = null;
   if (el) el.remove();
 }
 // Turn clock for people (bots are quick anyway). When it runs out the card goes to a random fitting spot.
+// "Hurry up" alert: in the last 10 s of a turn, if the player has done nothing for a moment, the screen edges pulse
+// red; in the last 5 s the phone also buzzes lightly every second.
+let lastAct = Date.now(), buzzedAt = -1;
+['pointerdown', 'pointermove', 'wheel', 'keydown'].forEach(ev => document.addEventListener(ev, () => { lastAct = Date.now(); }, {passive: true, capture: true}));
+function idleWarn(left) {
+  const g = $('#edgeglow');
+  if (left == null) { g.classList.remove('warn', 'hard'); buzzedAt = -1; return; }
+  if (!g.classList.contains('warn')) { g.classList.remove('on'); g.style.setProperty('--c', '#ff5a4d'); g.classList.add('warn'); }
+  g.classList.toggle('hard', left <= 5);
+  if (left <= 5 && buzzedAt !== left) { buzzedAt = left; try { if (navigator.vibrate) navigator.vibrate(left <= 1 ? [50, 40, 50] : 40); } catch (_) {} }
+}
 function startTimer() {
-  stopTimer();
+  stopTimer(); lastAct = Date.now();
   // Online a turn always has a clock, so one silent player can't hold up the table;
   // someone who already missed two turns gets a few seconds before the bot moves for them.
   const away = players[turn].missed >= 1;
@@ -2081,6 +2094,7 @@ function startTimer() {
     last = now;
     const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
     setClock(who, left, left <= 10);
+    if (wallet.alert && left > 0 && left <= 10 && isLocal(who) && ['place', 'meeple'].includes(phase) && now - lastAct > 2500) idleWarn(left); else idleWarn();
     if (left > 0) return;
     stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
@@ -2654,7 +2668,7 @@ const PREFS = [
   {k: 'music', ic: '🎵', label: 'Музыка', hint: 'Спокойная музыка в меню и партии', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'view', ic: '🧊', label: 'Вид поля', hint: 'Объёмное поле или вид сверху', opts: [['3d', '3D'], ['top', 'Сверху']]},
   {k: 'speed', ic: '⚡', label: 'Скорость ботов', hint: 'Как быстро ходят соперники-боты', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
-  {k: 'alert', ic: '💡', label: 'Подсветка хода', hint: 'Экран мигает, когда ваш ход', opts: [[true, 'Вкл'], [false, 'Выкл']]},
+  {k: 'alert', ic: '💡', label: 'Подсветка хода', hint: 'Экран мигает на вашем ходу и краснеет, если время на исходе, а вы бездействуете; в последние 5 секунд лёгкая вибрация', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'zones', ic: '🎨', label: 'Цвет владельца', hint: 'Закрашивать дороги и города цветом игрока', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'gfx', ic: '✨', label: 'Графика', hint: 'Экономная — для слабых телефонов', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
   {k: 'notify', ic: '🔔', label: 'Уведомления', hint: 'Новые версии и новости игры', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
