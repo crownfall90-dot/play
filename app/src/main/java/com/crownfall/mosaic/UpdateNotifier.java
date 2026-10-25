@@ -42,9 +42,14 @@ public class UpdateNotifier extends JobService {
         PushService.subscribe(c, on);
     }
 
-    /** Shows the "new version" notification once per version, if the player allows it. */
+    /**
+     * Shows the "new version" notification once per version, if the player allows it. A phone that was already told
+     * about a version it has not installed yet gets no further update notifications (pushes go to a topic, so the
+     * phone itself decides): they start again once the game is updated to at least that version.
+     */
     static void announce(Context c, int code, String version, String notes) {
-        if (!prefs(c).getBoolean("notify", true) || prefs(c).getInt("notified", 0) >= code) return;
+        int notified = prefs(c).getInt("notified", 0);
+        if (!prefs(c).getBoolean("notify", true) || notified >= code || notified > BuildConfig.VERSION_CODE) return;
         show(c, version, notes);
         prefs(c).edit().putInt("notified", code).apply();
     }
