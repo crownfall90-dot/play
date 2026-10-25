@@ -88,7 +88,7 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 .srow.sseg{flex-wrap:wrap;row-gap:10px}.srow.sseg .mseg{flex:1 1 100%}.srow.sseg .mseg button{flex:1;padding:8px 6px;font-size:13px}
 .sgroup.prof{padding:14px;gap:12px;background:linear-gradient(160deg,rgba(76,141,255,.14),rgba(255,255,255,.04))}
 .prow{display:flex;align-items:center;gap:12px}.av.big{width:48px;height:48px;font-size:20px}
-.pwho{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pwho b{font:800 17px var(--f-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pwho small{color:var(--muted);font-size:12px;word-break:break-all;line-height:1.25}
+.pwho{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.pwho b{font:800 17px var(--f-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pwho small{color:var(--muted);font-size:12px;line-height:1.25}.pwho .pmail{word-break:break-all}.pwho .plvl{color:var(--brass);font-weight:700}
 .pact{display:flex;gap:8px;flex-wrap:wrap}.pact .chip{flex:1;justify-content:center}.chip.pri{background:var(--brass);color:var(--brass-ink);border-color:transparent}
 .scenter{text-align:center}
 #scr-settings .h3{margin:10px 0 6px 4px}
@@ -4270,9 +4270,9 @@ function renameDialog() {
 }
 function renderAccount() {
   const el = $('#acct'); if (!el) return;
-  const linked = fbAuth && fbAuth.email, lvl = typeof PROG !== 'undefined' && PROG.lvl ? ` · уровень ${PROG.lvl}` : '';
+  const linked = fbAuth && fbAuth.email, lvl = typeof PROG !== 'undefined' && PROG.lvl ? `<small class="plvl">Уровень ${PROG.lvl}</small>` : '';
   const mail = linked ? String(fbAuth.email).replace(/[<>&"]/g, '') : '';
-  el.innerHTML = `<div class="prow"><span class="av big" style="--c:${wallet.color}">${profileName()[0]}</span><span class="pwho"><b>${profileName()}</b><small>${linked ? mail : 'Профиль не сохранён'}${lvl}</small></span><button class="chip" id="rnBtn">Сменить <i class="coin" style="display:inline-block;width:11px;height:11px"></i> ${RENAME_PRICE}</button></div>` +
+  el.innerHTML = `<div class="prow"><span class="av big" style="--c:${wallet.color}">${profileName()[0]}</span><span class="pwho"><b>${profileName()}</b><small class="pmail">${linked ? mail : 'Профиль не сохранён'}</small>${lvl}</span><button class="chip" id="rnBtn">Сменить <i class="coin" style="display:inline-block;width:11px;height:11px"></i> ${RENAME_PRICE}</button></div>` +
     (FB ? `<div class="pact">${linked ? '<button class="chip" id="acLogout">Выйти из аккаунта</button>' : '<button class="chip pri" id="acLink">Сохранить профиль</button><button class="chip" id="acLogin">Войти</button>'}</div>` : '');
   $('#rnBtn').onclick = renameDialog;
   if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
