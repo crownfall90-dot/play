@@ -2595,6 +2595,32 @@ $('#resume').onclick = () => {
   connect(lg.code, false); show('lobby');
 };
 
+/* ---------------- minimised for over a minute: out of the online game ----------------
+   In the background the phone does not play, so after AFK_MS the player is taken out of the room; on coming back a
+   card says so and offers to rejoin (the game goes on from the room's log, a bot plays for the player meanwhile). */
+const AFK_MS = 60000;
+let hiddenAt = 0, afkTimer = 0;
+function afkKick() {
+  if (tut || document.getElementById('afkBox') || (!net && !mm)) return;
+  let kind = 'room', code = null;
+  token++; turnTok++; stopTimer(); clearInterval(watchId);
+  if (mm) { kind = 'search'; stopMatch(false); }
+  else { code = net.code; leaveRoom(); }
+  closeGameMenu(); const sb = document.getElementById('sayBox'); if (sb) sb.hidden = true;
+  show('menu');
+  const b = document.createElement('div'); b.className = 'over'; b.id = 'afkBox'; b.style.position = 'fixed';
+  b.innerHTML = `<div class="ocard"><div style="font-size:46px">💤</div><h3>Из-за бездействия вы отключились</h3><p>${kind === 'search' ? 'Игра была свёрнута больше минуты, поиск остановлен' : 'Игра была свёрнута больше минуты. Пока вас нет, за вас играет бот'}</p><button class="cta wide" id="afkBack">${kind === 'search' ? 'Искать снова' : 'Перезайти'}</button><button class="ghostbtn" id="afkMenu">В меню</button></div>`;
+  document.body.append(b);
+  b.querySelector('#afkMenu').onclick = () => b.remove();
+  b.querySelector('#afkBack').onclick = () => { b.remove(); if (kind === 'search') quickMatch(); else { connect(code, false); show('lobby'); } };
+}
+document.addEventListener('visibilitychange', () => {
+  clearTimeout(afkTimer);
+  if (document.hidden) { hiddenAt = Date.now(); afkTimer = setTimeout(afkKick, AFK_MS); return; }
+  if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
+  hiddenAt = 0;
+});
+
 /* ---------------- sound ---------------- */
 let actx = null;
 /* Sound effects and music are synthesised with Web Audio: no audio files, nothing to load.
