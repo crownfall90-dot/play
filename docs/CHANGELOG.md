@@ -873,3 +873,13 @@
 - Friends invite in lobby, cancel vs bots, friend accept toast
 - Changelog for 1.0.187 (#103)
 
+## 1.0.189 — 2026-10-25
+
+**Игрокам:**
+- Друзья онлайн теперь в лобби внизу, а при поиске игры их можно позвать сразу — поиск начнётся вместе с ними
+- Точка у вкладки «Рейтинг» пропадает, как только вы посмотрели рейтинг
+
+**В коде:**
+- Friends online in search and lobby bottom, rating tab dot fix
+- Changelog for 1.0.188
+
