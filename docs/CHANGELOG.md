@@ -905,3 +905,14 @@
 - Invite cooldown 5s and friend invite wording fixes
 - Changelog for 1.0.190
 
+## 1.0.192 — 2026-10-25
+
+**Игрокам:**
+- Если вас позвали в комнату друга, можно позвать и своих друзей — пока в комнате есть места
+- Настройки: уровень в профиле теперь на отдельной строке под почтой
+
+**В коде:**
+- Settings profile: level under the email
+- Guests can invite their own friends into the room
+- Changelog for 1.0.191
+
