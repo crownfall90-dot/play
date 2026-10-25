@@ -428,12 +428,14 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .dstack i:nth-child(1){transform:translate(4px,-4px);opacity:.45}.dstack i:nth-child(2){transform:translate(2px,-2px);opacity:.7}
 .deck b{font:800 15px var(--f-display);font-variant-numeric:tabular-nums;display:block;line-height:1}
 .deck small{color:var(--muted);font-size:10px;line-height:1}
-.players{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 10px 10px}
+.players{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:4px 10px 18px}
 .pl{position:relative;border-radius:14px;padding:8px 4px 6px;background:rgba(255,255,255,.05);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;transition:background .3s,border-color .3s}
 .pl.active{border-color:var(--brass);background:rgba(242,184,75,.13);box-shadow:0 0 0 3px rgba(242,184,75,.14)}
 .pl .tg{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font:700 8.5px var(--f-body);letter-spacing:.08em;text-transform:uppercase;background:var(--brass);color:var(--brass-ink);padding:1px 6px;border-radius:6px;white-space:nowrap;display:none}
 .pl.active .tg{display:block}
-.pl .tg.low{background:#ff8a80;color:#3a0d0d}
+.pl .clk{position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);font:800 18px var(--f-display);font-variant-numeric:tabular-nums;line-height:1;background:var(--brass);color:var(--brass-ink);padding:4px 11px;border-radius:11px;box-shadow:0 3px 8px rgba(0,0,0,.4);white-space:nowrap;z-index:1}
+.pl .clk.low{background:#ff8a80;color:#3a0d0d;animation:clkpulse 1s ease-in-out infinite}
+@keyframes clkpulse{50%{transform:translateX(-50%) scale(1.1)}}
 .av{width:26px;height:26px;border-radius:50%;background:var(--c);display:grid;place-items:center;font:700 12px var(--f-display);color:#10131c;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);flex:0 0 auto}
 .pl .nm{font-size:11px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pl .sc{font:800 16px var(--f-display);font-variant-numeric:tabular-nums;line-height:1.15}
@@ -1680,16 +1682,19 @@ function imBack() {
   renderPlayers(); if (phase === 'place' && turn === me) { stopTimer(); beginHumanTurn(); }
 }
 let clk = null; // the running turn clock, shown in the active player's card
-const turnTag = i => (isMe(players[i]) ? 'ваш ход' : 'ходит') + (clk && clk.who === i ? ' · ' + clock(clk.left) : '');
+const turnTag = i => isMe(players[i]) ? 'ваш ход' : 'ходит';
+const clkHtml = i => clk && clk.who === i ? `<span class="clk${clk.low ? ' low' : ''}">${clock(clk.left)}</span>` : '';
 function setClock(who, left, low) {
   clk = {who, left, low};
-  const c = playersEl.children[who], tg = c && c.querySelector('.tg');
-  if (tg) { tg.textContent = turnTag(who); tg.classList.toggle('low', low); }
+  const c = playersEl.children[who]; if (!c) return;
+  let el = c.querySelector('.clk');
+  if (!el) { el = document.createElement('span'); el.className = 'clk'; c.append(el); }
+  el.textContent = clock(left); el.classList.toggle('low', low);
 }
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg${clk && clk.who === i && clk.low ? ' low' : ''}">${turnTag(i)}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -1782,7 +1787,7 @@ function askMeeple(mainTile, opts, p) {
     mrow.innerHTML = '<button class="chip skip" data-i="-1">Без фишки</button>';
     setStatus(`Фишка вернулась! Нажмите на место на поле или «Без фишки». Осталось <b>${players[p].meeples}</b>`);
   } else {
-    mrow.innerHTML = opts.map((o, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(o.g)}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+    mrow.innerHTML = opts.map((o, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(o.g)}${o.done ? ' · очки сразу' : ''}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
     setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   }
   prow.hidden = true; mrow.hidden = false;
@@ -1810,16 +1815,18 @@ let autoMove = false, autoAway = false; // autoAway: the bot was already playing
 async function afterPlace(t, p, forced) {
   const my = token;
   // Score completed groups FIRST — so we can detect if this player's meeple returned.
+  t.by = p;
   const meeplesBefore = players[p].meeples;
-  await scoreAfter(t, p);
+  const mine = players[p].meeples > 0 && !tut ? doneMine(t, p) : [];
+  await scoreAfter(t, p, new Set(mine.flatMap(m => [...m.c.ids])));
   if (my !== token) return;
   const meepleReturned = players[p].meeples > meeplesBefore;
 
   // opts: {t, g} pairs — anywhere on board if a meeple returned, otherwise only placed tile.
   const anyMode = meepleReturned && players[p].meeples > 0;
-  const opts = players[p].meeples > 0
+  const opts = (players[p].meeples > 0
     ? (anyMode ? claimableAll() : claimable(t).map(g => ({t, g})))
-    : [];
+    : []).concat(players[p].meeples > 0 ? mine.map(m => ({t: m.t, g: m.g, done: true})) : []);
   let choice = null; // {t, g} or null
   if (forced !== undefined) {
     choice = forced; // already {t, g} or null from caller
@@ -1857,18 +1864,35 @@ async function afterPlace(t, p, forced) {
   }
   players[p].stats.t++; if (choice) players[p].stats.m++;
   if (choice) { placeMeeple(choice.t, choice.g, p, true); if (!fast()) beep('meeple'); }
+  // Finished objects of this move that nobody claimed score now: for the figure just put on one, otherwise "no points".
+  const picked = choice && mine.find(m => gid(m.t, m.g) === gid(choice.t, choice.g));
+  if (picked && !fast()) await wait(450);
+  for (const m of mine) if (my === token) await resolveFeature(component(m.t, m.g), false, p);
   renderPlayers();
   if (my !== token) return;
   turn = (turn + 1) % players.length;
   await wait(250);
   if (my === token) startTurn();
 }
-async function scoreAfter(t, p) {
+// Objects this move completed with no figures on them and built only by this player: a free figure
+// may still be put on them, and then they score for that player at once.
+function doneMine(t, p) {
+  const out = [], seen = new Set();
+  const consider = (tt, g) => {
+    if (seen.has(gid(tt, g))) return;
+    const c = component(tt, g); c.ids.forEach(i => seen.add(i));
+    if (c.complete && !c.meeples.length && c.tiles.every(x => x.by === p)) out.push({t: tt, g, c});
+  };
+  groupsOf(t).forEach(g => g.kind !== 'f' && consider(t, g));
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); const g = n && TYPES[n.type].fort && groupsOf(n).find(x => x.kind === 'f'); if (g) consider(n, g); }
+  return out;
+}
+async function scoreAfter(t, p, skip) {
   const evs = [], seen = new Set();
   const consider = (tt, g) => { if (seen.has(gid(tt, g))) return; const c = component(tt, g); c.ids.forEach(i => seen.add(i)); if (c.complete) evs.push(c); };
   groupsOf(t).forEach(g => g.kind !== 'f' && consider(t, g));
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); if (n && TYPES[n.type].fort) consider(n, {kind: 'f', edges: []}); }
-  for (const c of evs) await resolveFeature(c, false, p);
+  for (const c of evs) if (!skip || ![...c.ids].some(i => skip.has(i))) await resolveFeature(c, false, p);
 }
 // A road with a whole big bridge on it (two halves joined bridge to bridge): every other piece of
 // the road counts double, each bridge half 1. Otherwise 1 per piece.
@@ -1919,9 +1943,8 @@ let timerId = 0;
 function stopTimer() {
   clearInterval(timerId);
   if (!clk) return;
-  const who = clk.who; clk = null;
-  const c = playersEl.children[who], tg = c && c.querySelector('.tg');
-  if (tg) { tg.textContent = turnTag(who); tg.classList.remove('low'); }
+  const c = playersEl.children[clk.who], el = c && c.querySelector('.clk'); clk = null;
+  if (el) el.remove();
 }
 // Turn clock for people (bots are quick anyway). When it runs out the card goes to a random fitting spot.
 function startTimer() {
