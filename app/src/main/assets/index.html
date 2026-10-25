@@ -160,7 +160,7 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 .mwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 24px calc(24px + var(--ib,0px));text-align:center}
 .mtitle{font:800 20px var(--f-display);margin:0}
 .mclock{font:700 15px var(--f-display);color:var(--brass);font-variant-numeric:tabular-nums}
-.monline{width:100%;max-width:360px;text-align:left}
+.monline{width:100%;max-width:360px;text-align:left;display:flex;flex-direction:column;gap:8px}.monline .h3{margin:0}
 .mseats{list-style:none;margin:6px 0;padding:0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:58px}
 .mseats li{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);max-width:64px;animation:chestpop .4s cubic-bezier(.3,1.6,.5,1)}
 .mseats .av{width:44px;height:44px;font-size:17px}
@@ -3046,7 +3046,7 @@ function renderLobby() {
       if (x.uid && x.uid !== myUid() && invited.uids.has(x.uid) && !invited.joined.has(x.uid)) {
         invited.joined.add(x.uid);
         const f = friends.find(f => f.uid === x.uid);
-        toastAny(`${f ? f.n : clean(x.name)} принял(а) и присоединился(-ась)`);
+        toastAny(`Друг ${f ? f.n : clean(x.name)} уже в комнате`);
       }
     });
   }
@@ -3668,7 +3668,7 @@ async function inviteFriend(uid) {
   inviteAt[uid] = Date.now();
   if (mm) { if (!net) return toastAny('Секунду — комната создаётся'); } else ensureRoom();
   track('friend_invite');
-  try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`${f.n} приглашён(а) в комнату ${net.code}`); }
+  try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`Приглашение отправлено: ${f.n}`); }
   catch (_) { toastAny('Не получилось — проверьте интернет'); }
   if (invited.code !== net.code) invited = {code: net.code, uids: new Set(), joined: new Set()};
   invited.uids.add(uid); renderFriends();
