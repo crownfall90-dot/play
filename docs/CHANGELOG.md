@@ -892,3 +892,16 @@
 - Queen figure (2500 gold)
 - Changelog for 1.0.189
 
+## 1.0.191 — 2026-10-25
+
+**Игрокам:**
+- Приглашать друга в комнату можно раз в 5 секунд, а тексты приглашений стали аккуратнее
+- Время на ход теперь показывается в карточке игрока, чей сейчас ход, рядом с ником
+- Итоги партии: аккуратнее блоки наград и уровня, подиум по центру, короче подписи
+
+**В коде:**
+- Results screen polish
+- Turn clock shown in the active player's card
+- Invite cooldown 5s and friend invite wording fixes
+- Changelog for 1.0.190
+
