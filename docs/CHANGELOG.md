@@ -883,3 +883,12 @@
 - Friends online in search and lobby bottom, rating tab dot fix
 - Changelog for 1.0.188
 
+## 1.0.190 — 2026-10-25
+
+**Игрокам:**
+- Новая фигурка «Королева» в магазине — самая дорогая, 2500 золота
+
+**В коде:**
+- Queen figure (2500 gold)
+- Changelog for 1.0.189
+
