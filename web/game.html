@@ -144,6 +144,7 @@ html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
 .mwrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:0 24px calc(24px + var(--ib,0px));text-align:center}
 .mtitle{font:800 20px var(--f-display);margin:0}
 .mclock{font:700 15px var(--f-display);color:var(--brass);font-variant-numeric:tabular-nums}
+.monline{width:100%;max-width:360px;text-align:left}
 .mseats{list-style:none;margin:6px 0;padding:0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;min-height:58px}
 .mseats li{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);max-width:64px;animation:chestpop .4s cubic-bezier(.3,1.6,.5,1)}
 .mseats .av{width:44px;height:44px;font-size:17px}
@@ -719,7 +720,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <p class="shint" id="mSub">Обычно это занимает меньше минуты</p>
           <div class="mclock" id="mClock">0:00</div>
           <ul class="mseats" id="mSeats"></ul>
-          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="ghostbtn" id="mInvite">👥 Позвать друга</button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
+          <div class="monline" id="mOnline" hidden><div class="h3" id="mOnlineTitle">Друзья онлайн</div><ul class="flist" id="mOnlineList"></ul></div>
+          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
         </div>
       </section>
 
@@ -736,16 +738,16 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="col" id="lbRoom" hidden>
             <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите на код, чтобы скопировать</small>
               <div class="row2"><button class="chip" id="copyLink">🔗 Скопировать код</button></div></div>
-            <div id="lobbyOnline" hidden>
-              <div class="h3" id="lobbyOnlineTitle">Друзья онлайн</div>
-              <ul class="flist" id="lobbyOnlineList"></ul>
-            </div>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
             <p class="shint">Если два игрока выберут один цвет, при старте он достанется одному из них случайно, второму — другой свободный.</p>
             <div class="h3" id="lbCount">Игроки</div>
             <ul class="plist" id="plist"></ul>
             <button class="chip" id="addBot">+ Добавить бота</button>
+            <div id="lobbyOnline" hidden>
+              <div class="h3" id="lobbyOnlineTitle">Друзья онлайн</div>
+              <ul class="flist" id="lobbyOnlineList"></ul>
+            </div>
             <div class="h3">Правила партии</div>
             <div class="rulesbox" data-rules id="lbRules"></div>
             <button class="cta wide" id="backToGame" hidden>Вернуться в партию</button>
@@ -2725,7 +2727,7 @@ function toastAny(t) { const d = document.createElement('div'); d.className = 't
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
 $('#copyLink').onclick = () => track('share', {content_type: 'room'}) || copyText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
-$('#lbRoom').addEventListener('click', async e => {
+document.addEventListener('click', async e => {
   const b = e.target.closest('[data-linv]'); if (!b) return;
   b.disabled = true; await inviteFriend(b.dataset.linv); renderLobbyFriends();
 });
@@ -3121,6 +3123,7 @@ function quickMatch() {
     es.onerror = () => { if (!me.ready && mm === me) matchFail(me); };
   })();
   show('match'); matchRender();
+  if (FB && registered()) loadFriends().then(renderLobbyFriends).catch(() => {});
 }
 function matchFail(me) { if (mm !== me) return; toastAny('Нет связи с сервером — проверьте интернет'); stopMatch(); show('menu'); }
 const matchSay = (msg) => FIRE.send(MATCH_ROOM, msg).catch(() => {});
@@ -3141,7 +3144,7 @@ function matchDecide(me) {
   // Waiting alone in our own room while others wait too: move to a room with more people,
   // or, between two lone players, the one with the larger code moves to the smaller.
   const seats = net.lobby ? net.lobby.seats : [];
-  if (net.host && seats.length <= 1 && !net.gameId) {
+  if (net.host && seats.length <= 1 && !net.gameId && !(invited.code === net.code && invited.uids.size)) {
     const other = open.find(o => o.n > 1 || o.code < net.code);
     if (other) { matchSay({t: 'close', code: net.code}); return connect(other.code, false, true); }
   }
@@ -3185,6 +3188,7 @@ function matchRender() {
   const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
   // Nobody for our size yet, but a room of the same mode waits for another number of players.
   const alt = !full && seats.length <= 1 && Date.now() - mm.t0 > 4000 ? [...mm.other].filter(([c, o]) => !mm.closed.has(c) && !mm.skip.has(c) && Date.now() - o.ts < SEEK_FRESH && o.n < o.want).sort((a, b) => b[1].n - a[1].n)[0] : null;
+  renderLobbyFriends();
   $('#mOther').hidden = !alt;
   if (alt) { $('#mOther').textContent = `Есть партия на ${alt[1].want} — присоединиться (${alt[1].n} из ${alt[1].want})`; $('#mOther').dataset.code = alt[0]; $('#mOther').dataset.want = alt[1].want; }
 }
@@ -3242,7 +3246,7 @@ function showSay(p, i) {
 /* ---------------- progress: level, daily quests, achievements, rating ----------------
    Counted games are the ones that pay gold: you alone against bots, or online. */
 const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
-const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false}, wallet.prog);
+const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false, topSeen: false}, wallet.prog);
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
 const xpNeed = l => 50 + 50 * l;
@@ -3341,7 +3345,7 @@ function renderProgress() {
     }).join('');
   } else renderTop();
 }
-$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; saveWallet(); progressDot(); } renderProgress(); };
+$('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; PROG.topSeen = true; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
@@ -3364,7 +3368,9 @@ async function syncRating(force) {
         const tr = await fetch(`${FB.dbUrl}/leaders.json?auth=${tok}&orderBy=%22r%22&limitToLast=10`);
         if (tr.ok) {
           const top10uids = Object.keys((await tr.json()) || {});
-          PROG.inTop10 = top10uids.includes(fbAuth.uid);
+          const inTop = top10uids.includes(fbAuth.uid);
+          if (!inTop) PROG.topSeen = false;
+          PROG.inTop10 = inTop && !PROG.topSeen;
           saveWallet(); progressDot();
         }
       } catch (_) {}
@@ -3389,7 +3395,7 @@ async function renderTop() {
       : mine < 0 ? `<div class="lead me myrank"><i>—</i><span>Вы пока не в рейтинге</span><b>🏆 ${PROG.cups}</b></div>` : '';
     el.innerHTML = rows.length ? `<div class="podium">${podium}</div>${list}${myRow}` : '<p class="qnote">Пока никого — выиграйте рейтинговую партию первым!</p>';
     el.innerHTML += '<p class="qnote">Кубки — за онлайн-партии на рейтинг: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
-    PROG.inTop10 = mine >= 0 && mine < 10; saveWallet(); progressDot();
+    PROG.topSeen = mine >= 0 && mine < 10; PROG.inTop10 = false; saveWallet(); progressDot();
     syncRating();
   } catch (_) { el.innerHTML = '<p class="qnote">Нет связи — проверьте интернет</p>'; }
 }
@@ -3634,7 +3640,7 @@ function ensureRoom() {
 // Invite a friend to my room; without a room, open one first.
 async function inviteFriend(uid) {
   const f = friends.find(x => x.uid === uid); if (!f) return;
-  ensureRoom();
+  if (mm) { if (!net) return toastAny('Секунду — комната создаётся'); } else ensureRoom();
   track('friend_invite');
   try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`${f.n} приглашён(а) в комнату ${net.code}`); }
   catch (_) { toastAny('Не получилось — проверьте интернет'); }
@@ -3690,55 +3696,29 @@ const friendsOnline = () => friends.filter(f => f.on).length;
    opponents, the game setup and the room. The first invite opens a private room
    (same number of players) and takes the host there; friends get a card to join with one tap. */
 const onLobbyScreen = () => !$('#scr-lobby').hidden;
-function drawQuickInvite(box, loading) {
-  const list = box.querySelector('#qList'), sub = box.querySelector('#qSub');
-  const on = friends.filter(f => f.on), room = net && !net.quick && !(net.gameId && phase !== 'end') ? net.code : null;
-  sub.textContent = loading ? 'Ищем друзей в сети…' : on.length ? 'Нажмите «Позвать» — другу придёт приглашение в комнату' : friends.length ? 'Сейчас никого из друзей нет в сети' : 'У вас пока нет друзей в игре';
-  list.innerHTML = on.map(f => fRow(f, `<button class="chip go" data-qinv="${f.uid}">${room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids.has(f.uid) ? '✓ Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('');
-}
-async function quickInvite() {
-  if (!FB || !registered()) { friendsBack = 'menu'; return show('friends'); }
-  document.querySelectorAll('.over.qinv').forEach(x => x.remove());
-  const box = document.createElement('div'); box.className = 'over qinv'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard qcard"><h3>Позвать друга</h3><p id="qSub"></p><ul class="flist" id="qList"></ul><button class="chip" data-q="link">🔗 Скопировать ссылку на комнату</button><button class="ghostbtn" data-q="all">Все друзья и коды</button><button class="cta wide" data-q="x">Готово</button></div>`;
-  document.body.append(box);
-  box.onclick = async e => {
-    const b = e.target.closest('[data-qinv],[data-q]');
-    if (!b) { if (e.target === box) box.remove(); return; }
-    if (b.dataset.qinv) {
-      b.disabled = true; await inviteFriend(b.dataset.qinv);
-      if (!onLobbyScreen()) show('lobby');
-      return drawQuickInvite(box);
-    }
-    if (b.dataset.q === 'link') { ensureRoom(); $('#copyLink').onclick(); if (!onLobbyScreen()) show('lobby'); }
-    else if (b.dataset.q === 'all') { box.remove(); friendsBack = onLobbyScreen() && net ? 'lobby' : 'menu'; show('friends'); }
-    else box.remove();
-  };
-  drawQuickInvite(box, true);
-  try { await loadFriends(); } catch (_) {}
-  if (document.body.contains(box)) drawQuickInvite(box);
-}
-$('#mInvite').onclick = quickInvite;
 function friendsDot() {
   const b = $('#friendsBtn'); if (!b) return;
   b.classList.toggle('hasdot', Object.values(inbox).some(v => v.k === 'f' || v.k === 'r'));
   const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = ''; b.title = n ? `Друзей в сети: ${n}` : '';
 }
 const fRow = (f, btn, sub) => `<li class="lead frow${f.on ? ' on' : ''}"><span class="av" style="--c:${f.c || (f.on ? '#3fc27a' : '#5b6684')}">${(f.n || '?')[0]}</span><span class="fwho"><b>${f.n}</b><small>${sub}</small></span>${btn}</li>`;
-function renderLobbyFriends() {
-  const section = $('#lobbyOnline'); if (!section) return;
-  if (!net || net.quick || (net.gameId && phase !== 'end') || !FB || !registered()) { section.hidden = true; return; }
-  const seats = net.lobby ? net.lobby.seats : [];
-  const inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
-  const on = friends.filter(f => f.on && !inRoom.has(f.uid));
-  section.hidden = on.length === 0;
+function fillOnline(sec, title, list, show, inRoom, room) {
+  if (!sec) return;
+  const on = show ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];
+  sec.hidden = !on.length;
   if (!on.length) return;
-  const room = net.code;
-  $('#lobbyOnlineTitle').textContent = `Друзья онлайн · ${on.length}`;
-  $('#lobbyOnlineList').innerHTML = on.map(f => fRow(f, `<button class="chip go" data-linv="${f.uid}">${
-    invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' :
-    invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'
+  title.textContent = `Друзья онлайн · ${on.length}`;
+  const html = on.map(f => fRow(f, `<button class="chip go" data-linv="${f.uid}">${
+    room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' :
+    room && invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'
   }</button>`, STATE_TEXT[f.p && f.p.s] || 'в игре')).join('');
+  if (list.innerHTML !== html) list.innerHTML = html; // matchRender ticks every second: don't swallow taps
+}
+function renderLobbyFriends() {
+  const ok = FB && registered(), seats = net && net.lobby ? net.lobby.seats : [];
+  const inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
+  fillOnline($('#lobbyOnline'), $('#lobbyOnlineTitle'), $('#lobbyOnlineList'), ok && net && !net.quick && !(net.gameId && phase !== 'end'), inRoom, net && net.code);
+  fillOnline($('#mOnline'), $('#mOnlineTitle'), $('#mOnlineList'), ok && !!mm && !(net && net.gameId), inRoom, net && net.quick ? net.code : null);
 }
 function renderFriends() {
   const box = $('#flist'); if (!box || $('#scr-friends').hidden) return;
