@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Пазл «Дорога к обрыву» переделан: дорога упирается в пропасть, которая занимает всю дальнюю половину плитки от края до края, с отвесной стенкой сбоку\n- На открытых концах дорог вместо ремонтных ограждений теперь россыпь камней и щебня: это просто продолжение дороги, а не тупик"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -497,8 +497,18 @@ html.lowgfx .face.t-wLake::after,html.lowgfx .face.t-wTee::after{display:none}
 @keyframes fallX{to{background-position:10px 0}}
 @keyframes foam{to{transform:scale(1.25);opacity:.7}}
 html.lowgfx .tile .sd.fall::before,html.lowgfx .tile .sd.fall::after{animation:none}
-.tile .sd.n.cl,.tile .sd.s.cl{height:46px;background:linear-gradient(#5f9a3e 0,#5f9a3e 2.5px,#9a8d72 3px,#6b5e48 25%,#4a4033 55%,#2a231b 80%,#0e0b08 100%)}
-.tile .sd.e.cl,.tile .sd.w.cl{width:46px;background:linear-gradient(90deg,#5f9a3e 0,#5f9a3e 2.5px,#9a8d72 3px,#6b5e48 25%,#4a4033 55%,#2a231b 80%,#0e0b08 100%)}
+.face.t-rEnd{box-shadow:none}
+/* A real hole in the card: floor and four rock walls go down inside the tile (the chasm is cut out of the card's art). */
+.pit{position:absolute;inset:0;transform-style:preserve-3d;pointer-events:none}
+.pit i{position:absolute;display:block}
+.pit .pf{left:1px;right:1px;top:46px;bottom:1px;transform:translateZ(-64px);background:radial-gradient(ellipse at 50% 35%,rgba(150,162,200,.4),transparent 72%),linear-gradient(#1a140e,#06050a)}
+.pit .pw{--rock:repeating-linear-gradient(180deg,#8a7b62 0 4px,#6b5e49 4px 9px,#7b6d55 9px 12px,#52473a 12px 19px,#6e6250 19px 22px)}
+.pit .pw.n,.pit .pw.s{left:1px;right:1px;height:64px;transform-origin:top;transform:rotateX(-90deg);background:linear-gradient(rgba(0,0,0,0) 0,rgba(0,0,0,.35) 45%,rgba(0,0,0,.88) 100%),repeating-linear-gradient(90deg,transparent 0 16px,rgba(0,0,0,.22) 16px 17px,transparent 17px 31px,rgba(255,235,200,.1) 31px 32px),var(--rock)}
+.pit .pw.n{top:46px}.pit .pw.s{top:calc(100% - 1px);filter:brightness(.8)}
+.pit .pw.e,.pit .pw.w{top:46px;bottom:1px;width:64px;transform-origin:left;transform:rotateY(90deg);background:linear-gradient(90deg,rgba(0,0,0,0) 0,rgba(0,0,0,.35) 45%,rgba(0,0,0,.88) 100%),repeating-linear-gradient(0deg,transparent 0 16px,rgba(0,0,0,.22) 16px 17px,transparent 17px 31px,rgba(255,235,200,.1) 31px 32px),repeating-linear-gradient(90deg,#8a7b62 0 4px,#6b5e49 4px 9px,#7b6d55 9px 12px,#52473a 12px 19px,#6e6250 19px 22px)}
+.pit .pw.e{left:calc(100% - 1px);filter:brightness(.72)}.pit .pw.w{left:1px;filter:brightness(1.05)}
+html.flat #world .pit .pw,html.lowgfx #world .pit .pw{display:none}
+html.flat #world .pit .pf,html.lowgfx #world .pit .pf{transform:none}
 html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:none}
 html.lowgfx .tile .sd.s{display:block}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
@@ -1176,13 +1186,7 @@ function drawTile(id) {
     const edge = new Path2D(); edge.moveTo(lip[0][0], lip[0][1]); lip.forEach(q => edge.lineTo(q[0], q[1]));
     const pit = new Path2D(edge); pit.lineTo(H, H); pit.lineTo(H, -H); pit.closePath();
     g.lineJoin = 'round'; g.lineCap = 'round';
-    const ab = g.createLinearGradient(L, 0, H, 0); ab.addColorStop(0, '#4d3a26'); ab.addColorStop(.3, '#271c13'); ab.addColorStop(1, '#06050a');
-    g.fillStyle = ab; g.fill(pit);
-    g.save(); g.clip(pit);
-    for (let i = 0; i < 11; i++) { const x = L + 7 + i * 7.5 + R() * 3; g.strokeStyle = i % 2 ? 'rgba(0,0,0,.4)' : 'rgba(160,125,85,.2)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, -H); g.bezierCurveTo(x + (R() - .5) * 14, -H * .4, x + (R() - .5) * 14, H * .4, x + (R() - .5) * 8, H); g.stroke(); }
-    const mist = g.createRadialGradient(H - 12, 0, 2, H - 12, 0, 70); mist.addColorStop(0, 'rgba(150,160,195,.45)'); mist.addColorStop(1, 'rgba(150,160,195,0)');
-    g.fillStyle = mist; g.fillRect(L, -H, H - L, 2 * H);
-    g.restore();
+    g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.fill(pit); g.globalCompositeOperation = 'source-over';
     for (const [w2, col] of [[16, 'rgba(40,60,25,.4)'], [11, '#6b5e48'], [7, '#a89c82'], [2, '#d4c9ac']]) { g.lineWidth = w2; g.strokeStyle = col; g.stroke(edge); }
     g.fillStyle = '#6d6252'; lip.forEach(([x, y], k) => { if (k % 2) { g.beginPath(); g.moveTo(x - 3, y - 4); g.lineTo(x + 6 + R() * 3, y); g.lineTo(x - 3, y + 4); g.closePath(); g.fill(); } });
     for (let k = 0; k < 7; k++) { g.fillStyle = k % 2 ? '#c7a874' : '#a88a58'; g.save(); g.translate(L + 3 + R() * 18, (R() - .5) * 60); g.rotate(R() * 3); g.fillRect(-2.5, -1.6, 5 + R() * 2, 3.2); g.restore(); }
@@ -1218,6 +1222,7 @@ function drawTile(id) {
     g.fillStyle = '#bdb299'; rr(C[0] - 36, C[1] - 36, 72, 72, 9); g.fill();
     g.fillStyle = 'rgba(120,108,88,.5)'; for (let i = 0; i < 40; i++) g.fillRect(C[0] - 34 + R()*62, C[1] - 34 + R()*62, 6, 4);
   }
+  if (def.end === 'cliff') return c.toDataURL('image/png'); // the chasm is a real hole, so this card needs transparency and no frame
   g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = 3; g.strokeRect(1.5, 1.5, S - 3, S - 3);
   g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(2, S - 2); g.lineTo(2, 2); g.lineTo(S - 2, 2); g.stroke();
   return c.toDataURL('image/jpeg', .88);
@@ -1509,7 +1514,10 @@ function tileEl(t, decor, delay) {
   el.style.left = (t.x * T - T / 2) + 'px'; el.style.top = (t.y * T - T / 2) + 'px';
   el.innerHTML = `<i class="sd n"></i><i class="sd e"></i><i class="sd s"></i><i class="sd w"></i><div class="face t-${t.type}" style="--r:${t.r * 90}deg"></div>`;
   if (decor) addDecor(el, t, delay);
-  if (TYPES[t.type].end === 'cliff') { const dr = [0, 1, 2, 3].find(d => edgeAt(t, d) === 'r'); if (dr != null) el.querySelectorAll('.sd')[(dr + 2) % 4].classList.add('cl'); }
+  if (TYPES[t.type].end === 'cliff') {
+    const dr = [0, 1, 2, 3].find(d => edgeAt(t, d) === 'r');
+    if (dr != null) { const pit = document.createElement('div'); pit.className = 'pit'; pit.style.transform = `rotate(${(((dr + 2) % 4) - 2) * 90}deg)`; pit.innerHTML = '<i class="pf"></i><i class="pw n"></i><i class="pw s"></i><i class="pw e"></i><i class="pw w"></i>'; el.append(pit); }
+  }
   return el;
 }
 // Walls between two pieces are never seen: drop them, so only the outline of the kingdom has
