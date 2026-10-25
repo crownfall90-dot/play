@@ -2533,13 +2533,14 @@ function openGameMenu() {
   const live = phase !== 'end' && players.length;
   if (!net && live) paused = true;
   const online = !!net, seat = mySeat();
+  const allBots = online && live && seat >= 0 && !players.some(p => p.human && p.owner !== myId && !p.resigned);
   const box = document.createElement('div'); box.className = 'over'; box.id = 'gmenu'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><h3>${online ? 'Онлайн-партия' : live ? 'Пауза' : 'Меню'}</h3>
     <p>${online ? 'Партия идёт, пока вы в меню' : live ? 'Боты ждут, время хода остановлено' : ''}</p>
     <button class="cta wide" data-a="resume">Продолжить</button>
     <button class="ghostbtn" data-a="settings">Настройки</button>
-    ${online && live && seat >= 0 ? `<div class="row2b"><button class="ghostbtn" data-a="draw">Предложить ничью</button><button class="ghostbtn danger" data-a="resign">Сдаться</button></div>` : ''}
-    ${!online && live ? '<button class="ghostbtn danger" data-a="cancel">Отменить партию</button>' : ''}
+    ${online && live && seat >= 0 && !allBots ? `<div class="row2b"><button class="ghostbtn" data-a="draw">Предложить ничью</button><button class="ghostbtn danger" data-a="resign">Сдаться</button></div>` : ''}
+    ${(!online && live) || allBots ? '<button class="ghostbtn danger" data-a="cancel">Отменить партию</button>' : ''}
     <button class="ghostbtn" data-a="menu">Выйти в главное меню</button></div>`;
   document.body.append(box);
   const confirmOnce = (b, text) => { if (b.dataset.sure) return true; b.dataset.sure = 1; b.textContent = text; return false; };
@@ -2551,6 +2552,7 @@ function openGameMenu() {
     if (a === 'menu') { box.remove(); return show('menu'); }
     if (a === 'cancel') {
       if (!confirmOnce(b, 'Точно отменить? Нажмите ещё раз')) return;
+      if (online) { netSend({t: 'resign', g: net.gameId, p: seat}); leaveRoom(); }
       token++; turnTok++; stopTimer(); clearSave(); closeGameMenu(); phase = 'end';
       toastAny('Партия отменена'); return show('menu');
     }
