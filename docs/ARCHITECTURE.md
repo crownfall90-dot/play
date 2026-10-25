@@ -22,7 +22,7 @@ flowchart LR
 * **Вся игра — один файл** `web/game.html` (HTML + CSS + JS, без сборщиков). Скрипт `scripts/wrap-web.sh` заворачивает его в `app/src/main/assets/index.html` (шрифты, заметки к версии, конфиг Firebase).
 * **Android-часть тонкая**: WebView, обновления, пуши, отчёты о сбоях (Crashlytics). Логика игры в Java не дублируется.
 * **Сервера своего нет**: онлайн, рейтинг, присутствие и профили — Firebase Realtime Database через REST, вход — Firebase Auth через REST (аноним, почта с паролем, Google).
-* **Вход через Google**: WebView не запускает Google-вход сам, поэтому токен даёт нативная шторка на телефоне (`AndroidApp.googleSignIn` → Credential Manager → `window.onGoogleToken`), дальше игра меняет его на сессию Firebase (`accounts:signInWithIdp`). В веб-сборке кнопку рисует Google Identity Services. Нужен web OAuth-клиент (`client_type` 3) в `google-services.json`.
+* **Вход через Google**: WebView не запускает Google-вход сам, поэтому токен даёт нативная шторка на телефоне (`AndroidApp.googleSignIn` → Credential Manager → `window.onGoogleToken`), дальше игра меняет его на сессию Firebase (`accounts:signInWithIdp`). В веб-сборке кнопку рисует Google Identity Services. Нужен web OAuth-клиент (`client_type` 3) в `google-services.json`. Настройка: Firebase → Authentication → Sign-in method → Google вкл.; в Firebase → Project settings → Your apps добавить SHA-1 ключа подписи (отпечаток `app/release.keystore` и ключа подписи Google Play) — тогда Firebase создаёт Android-клиент; перекачать `google-services.json` (в нём появится web-клиент) и выпустить сборку. GitHub-сборка: `keytool -list -v -keystore app/release.keystore -alias mosaic` (пароль по умолчанию в `app/build.gradle`).
 
 ## Файлы
 
