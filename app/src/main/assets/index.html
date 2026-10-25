@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Когда время хода на исходе (10 секунд) и вы ничего не делаете, края экрана начинают краснеть и мигать, а в последние 5 секунд телефон слегка вибрирует (включается в настройке «Подсветка хода»)"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -938,7 +938,7 @@ const TYPES = {
   wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
   wLake:{e:'wwww',n:2,lake:true,name:'Разлив реки'}, wTee:{e:'wwwf',n:2,lake:true,name:'Заводь с протокой'},
   rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
-  rEnd:{e:'rfff',n:1,end:'barrier',name:'Тупик'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
+  rEnd:{e:'rfff',n:1,end:'cliff',name:'Обрыв'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
 };
 /* Rare pieces: one for every combination of town, road and field edges the regular set lacks,
    so towns and roads can nearly always be finished. Odd river mixes (three or four rivers, a river
@@ -1132,7 +1132,8 @@ function drawTile(id) {
   }
   const r = idx('r');
   if (r.length === 2) { strip(r[0], r[1], ROAD); pebbles(r[0], r[1]); } else r.forEach(d => { strip(d, null, ROAD); pebbles(d, null); });
-  if (def.end) { g.beginPath(); g.ellipse(C[0], C[1], 22, 18, 0, 0, 7); g.fillStyle = '#c7a874'; g.fill(); g.beginPath(); g.ellipse(C[0], C[1], 17, 13, 0, 0, 7); g.fillStyle = '#d9bf88'; g.fill(); }
+  if (def.end === 'cliff') { /* the chasm is painted below */ }
+  else if (def.end) { g.beginPath(); g.ellipse(C[0], C[1], 22, 18, 0, 0, 7); g.fillStyle = '#c7a874'; g.fill(); g.beginPath(); g.ellipse(C[0], C[1], 17, 13, 0, 0, 7); g.fillStyle = '#d9bf88'; g.fill(); }
   else if (r.length >= 3 || (r.length === 1 && !def.fort && !def.bridge)) {
     g.beginPath(); g.arc(C[0], C[1], 15, 0, 7); g.fillStyle = '#7a603b'; g.fill();
     g.beginPath(); g.arc(C[0], C[1], 12, 0, 7); g.fillStyle = '#d9bf88'; g.fill();
@@ -1163,6 +1164,30 @@ function drawTile(id) {
     g.beginPath(); g.moveTo(S * .36, C[1]); g.lineTo(S, C[1]); g.stroke();
     for (const y of [C[1] - 21, C[1] + 15]) { g.fillStyle = '#8f8470'; g.fillRect(S * .34, y, S * .66, 6); g.fillStyle = '#e4dbc6'; g.fillRect(S * .34, y, S * .66, 2); for (let x = S * .34; x < S; x += 12) { g.fillStyle = 'rgba(60,50,40,.35)'; g.fillRect(x, y, 1, 6); } }
     g.fillStyle = '#7d725f'; g.fillRect(S * .33, C[1] - 23, 6, 46);
+  }
+  if (def.end === 'cliff') {
+    // The road runs to the lip of a chasm and stops: crumbling edge, rock ledge, strata, a misty bottom, warning posts.
+    const d0 = r[0], Y = S / 2 - 15, X1 = S / 2 - 11, L = 7;
+    g.save(); g.translate(C[0], C[1]); g.rotate(Math.atan2(-V[d0][1], -V[d0][0]));
+    const lip = []; for (let y = -Y; y <= Y; y += 10) lip.push([L + (R() - .5) * 7 + Math.abs(y) * .1, y]);
+    const pit = new Path2D(); pit.moveTo(lip[0][0], lip[0][1]); lip.forEach(q => pit.lineTo(q[0], q[1]));
+    pit.quadraticCurveTo(X1 + 7, Y, X1, Y * .5); pit.quadraticCurveTo(X1 + 9, 0, X1, -Y * .5); pit.quadraticCurveTo(X1 + 7, -Y, lip[0][0], lip[0][1]); pit.closePath();
+    g.lineJoin = 'round';
+    g.strokeStyle = 'rgba(40,60,25,.45)'; g.lineWidth = 18; g.stroke(pit);
+    g.strokeStyle = '#6b5e48'; g.lineWidth = 13; g.stroke(pit);
+    g.strokeStyle = '#a89c82'; g.lineWidth = 8; g.stroke(pit);
+    g.strokeStyle = '#d4c9ac'; g.lineWidth = 2.2; g.stroke(pit);
+    const ab = g.createLinearGradient(L, 0, X1, 0); ab.addColorStop(0, '#4a3826'); ab.addColorStop(.35, '#241a12'); ab.addColorStop(1, '#07060b');
+    g.fillStyle = ab; g.fill(pit);
+    g.save(); g.clip(pit);
+    for (let i = 0; i < 9; i++) { const x = L + 6 + i * 8 + R() * 3; g.strokeStyle = i % 2 ? 'rgba(0,0,0,.35)' : 'rgba(150,120,80,.2)'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(x, -Y); g.bezierCurveTo(x + (R() - .5) * 12, -Y * .4, x + (R() - .5) * 12, Y * .4, x + (R() - .5) * 6, Y); g.stroke(); }
+    const mist = g.createRadialGradient(X1 - 8, 0, 2, X1 - 8, 0, 46); mist.addColorStop(0, 'rgba(140,150,185,.4)'); mist.addColorStop(1, 'rgba(140,150,185,0)');
+    g.fillStyle = mist; g.fillRect(L, -Y, X1 - L + 8, 2 * Y);
+    g.restore();
+    g.fillStyle = '#6d6252'; lip.forEach(([x, y], k) => { if (k % 2) { g.beginPath(); g.moveTo(x - 3, y - 4); g.lineTo(x + 5 + R() * 3, y); g.lineTo(x - 3, y + 4); g.closePath(); g.fill(); } });
+    for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? '#c7a874' : '#a88a58'; g.save(); g.translate(L + 1 + R() * 14, (R() - .5) * 22); g.rotate(R() * 3); g.fillRect(-2.5, -1.6, 5 + R() * 2, 3.2); g.restore(); }
+    for (const sy of [-17, 17]) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(-14, sy + 1, 5, 12); g.fillStyle = '#f4f1e8'; g.fillRect(-15, sy - 11, 4, 22); g.fillStyle = '#d8402e'; for (let q = -11; q < 11; q += 8) g.fillRect(-15, sy + q, 4, 4); }
+    g.restore();
   }
   const cp = cityPaths(E);
   if (cp) {
@@ -1316,17 +1341,6 @@ function drawSprites() {
     g.strokeStyle = '#6b6b70'; g.lineWidth = .7; g.beginPath(); g.moveTo(16.5, h - 2); g.lineTo(18, h - 9); g.moveTo(23.5, h - 2); g.lineTo(22, h - 9); g.stroke();
     g.strokeStyle = '#6e4a2a'; g.lineWidth = .8; for (let y = h - 3; y > h - 9; y -= 2) { g.beginPath(); g.moveTo(16 + (h - y) * .1, y); g.lineTo(24 - (h - y) * .1, y); g.stroke(); }
     g.fillStyle = '#ffcf5a'; g.beginPath(); g.arc(30, h - 12, 1.3, 0, 7); g.fill(); g.fillStyle = 'rgba(255,210,90,.35)'; g.beginPath(); g.arc(30, h - 12, 3, 0, 7); g.fill();
-  });
-  sprite('barrier', 28, 20, (g, w, h) => {
-    shadow(g, w / 2, h - 1.6, 13, 2);
-    g.fillStyle = '#6e4a2a'; g.fillRect(4, h - 12, 2.2, 11); g.fillRect(w - 6.2, h - 12, 2.2, 11);
-    poly(g, [[2, h - 12], [w - 2, h - 12], [w - 2, h - 9], [2, h - 9]], '#f2efe6', 'rgba(40,30,20,.6)');
-    g.fillStyle = '#d6402f'; for (let x = 2; x < w - 2; x += 6) { g.beginPath(); g.moveTo(x, h - 9); g.lineTo(x + 3, h - 12); g.lineTo(x + 6, h - 12); g.lineTo(x + 3, h - 9); g.fill(); }
-    poly(g, [[2, h - 7], [w - 2, h - 7], [w - 2, h - 5], [2, h - 5]], '#a8743f', 'rgba(40,30,20,.5)');
-    // a sign on a post
-    g.fillStyle = '#6e4a2a'; g.fillRect(w / 2 - .8, 1, 1.6, h - 13);
-    poly(g, [[w / 2 - 5, 1], [w / 2 + 5, 1], [w / 2 + 5, 6], [w / 2 - 5, 6]], '#e8d6a6', 'rgba(60,40,20,.7)');
-    g.fillStyle = '#c0392b'; g.beginPath(); g.arc(w / 2, 3.5, 1.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(w / 2 - 1, 3.2, 2, .6);
   });
   // Roadworks where a road runs out into an empty cell: striped barricade, a cone, a gravel heap and a lamp.
   sprite('works', 38, 26, (g, w, h) => {
@@ -1483,12 +1497,13 @@ function addDecor(el, t, delay) {
     for (let i = 0; i < n; i++) items.push([i === 0 && city.length >= 3 ? 'tower' : HOUSES[(R() * 4) | 0], cx + pts[i][0], cy + pts[i][1]]);
   }
   if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
-  // A road that stops in the middle ends at boulders, a mine or a barrier, just past the centre.
+  // A road that stops in the middle ends at boulders or a mine just past the centre (a cliff is painted on the card itself).
   const end = TYPES[t.type].end;
-  if (end) { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
+  if (end && end !== 'cliff') { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
   if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
   for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
     if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
+    if (TYPES[t.type].end === 'cliff') { const dr = E.indexOf('r'); if (sx * -V[dr][0] + sy * -V[dr][1] > 0) continue; }
     if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.30 + R()*.05) + (R() - .5) * .05, sy * (.30 + R()*.05)]); }
   }
   // Upright pieces on the far edge would stick out over the empty cell behind the tile: pull them towards the middle.
