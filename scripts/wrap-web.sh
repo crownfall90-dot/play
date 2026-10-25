@@ -28,7 +28,9 @@ else:
     g = json.load(open(p))
     info = g['project_info']
     db = info.get('firebase_url') or 'https://%s-default-rtdb.europe-west1.firebasedatabase.app' % info['project_id']
-    print(json.dumps({'apiKey': g['client'][0]['api_key'][0]['current_key'], 'dbUrl': db}))
+    oc = g['client'][0].get('oauth_client') or []
+    gid = next((x['client_id'] for x in oc if x.get('client_type') == 3), '')
+    print(json.dumps({'apiKey': g['client'][0]['api_key'][0]['current_key'], 'dbUrl': db, 'googleClientId': gid}))
 PY
 )
 notes=$(python3 -c 'import json; print(json.dumps(open("release-notes.md", encoding="utf-8").read().strip(), ensure_ascii=False))')

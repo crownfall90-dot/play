@@ -13,7 +13,7 @@ flowchart LR
     N[UpdateNotifier<br/>проверка раз в 12 ч] --> A
   end
   W -- REST + SSE --> DB[(Firebase Realtime Database)]
-  W -- REST --> AU[Firebase Auth<br/>аноним / почта]
+  W -- REST --> AU[Firebase Auth<br/>аноним / почта / Google]
   CI[GitHub Actions] -->|APK + AAB, релиз vNNN| GH[(GitHub Releases)]
   CI -->|push «вышла версия»| FCM[(FCM)] --> P
   U --> GH
@@ -21,7 +21,8 @@ flowchart LR
 
 * **Вся игра — один файл** `web/game.html` (HTML + CSS + JS, без сборщиков). Скрипт `scripts/wrap-web.sh` заворачивает его в `app/src/main/assets/index.html` (шрифты, заметки к версии, конфиг Firebase).
 * **Android-часть тонкая**: WebView, обновления, пуши, отчёты о сбоях (Crashlytics). Логика игры в Java не дублируется.
-* **Сервера своего нет**: онлайн, рейтинг, присутствие и профили — Firebase Realtime Database через REST, вход — Firebase Auth через REST.
+* **Сервера своего нет**: онлайн, рейтинг, присутствие и профили — Firebase Realtime Database через REST, вход — Firebase Auth через REST (аноним, почта с паролем, Google).
+* **Вход через Google**: WebView не запускает Google-вход сам, поэтому токен даёт нативная шторка на телефоне (`AndroidApp.googleSignIn` → Credential Manager → `window.onGoogleToken`), дальше игра меняет его на сессию Firebase (`accounts:signInWithIdp`). В веб-сборке кнопку рисует Google Identity Services. Нужен web OAuth-клиент (`client_type` 3) в `google-services.json`.
 
 ## Файлы
 
@@ -67,7 +68,7 @@ flowchart LR
 | **progress** | Уровень/опыт, задания дня, достижения, рейтинг `/leaders` (кубки только за рейтинговые партии) |
 | **tutorial** | Партия по сценарию: `TUT`, `TUT_DECK`, `TUT_BOT`, шаги ждут действия (`tutEvent`) |
 | **friends** | Только для сохранённых профилей (`registered()`: никнейм + вход по почте; правила требуют почту в токене и запись в `/profiles` у обоих). Код друга `/fcodes`, заявки и приглашения в комнату через `/inbox/{uid}` (живой поток + опрос раз в минуту), список `/friends/{uid}`, в сети / не в сети по `/presence` |
-| **account** | Профиль: никнейм, смена имени (500 золота), вход по почте, облачное сохранение `/profiles/{uid}` |
+| **account** | Профиль: никнейм, смена имени (500 золота), вход по почте или через Google, облачное сохранение `/profiles/{uid}` |
 | **screens / app shell** | `show(name)`, кнопка «Назад» Android, обновления, заставка. `isAndroid` / `isWeb` / `isApp` |
 | **invite links** | `https://…/play/?friend=КОД` и `?room=КОД` (и `puzzlegrad://friend/КОД`): приложение открывается по ссылке (intent-filter в манифесте, `onNewIntent` → `window.onDeepLink`), в браузере Android сначала предлагается «Открыть в приложении». Карточка «X приглашает вас в друзья» (`friendInvite`); принятая заявка несёт `v` = код приглашения, и игра пригласившего принимает её сама. Для автоматического открытия без вопроса нужен свой домен + `assetlinks.json` |
 | **web build** | `SITE_URL`, установка (`installDialog`, `beforeinstallprompt`), «назад» браузера через history, ссылки `?room=` и `?friend=`, service worker |

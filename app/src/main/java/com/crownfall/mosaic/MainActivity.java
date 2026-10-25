@@ -23,6 +23,16 @@ import android.widget.TextView;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
+import androidx.credentials.Credential;
+import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
+import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.GetCredentialException;
+import androidx.credentials.exceptions.NoCredentialException;
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
+
 public class MainActivity extends Activity {
     private static final long RECHECK_MS = 15 * 60 * 1000L;
     /** The open game, if it is on screen; lets an update push show the in-game offer instead of a notification. */
@@ -348,8 +358,62 @@ public class MainActivity extends Activity {
             }
         }
 
-        @JavascriptInterface
+                @JavascriptInterface
         public void logError(String message) { report(new RuntimeException("JS: " + message)); }
+
+        /** Whether this build can offer Google sign-in (a web OAuth client id is configured). */
+        @JavascriptInterface
+        public boolean googleReady() { return !BuildConfig.GOOGLE_CLIENT_ID.isEmpty(); }
+
+        /**
+         * Google sign-in for the WebView, which cannot run Google Identity Services itself.
+         * Uses Credential Manager; the ID token is verified by Firebase in the game page.
+         * Answers through window.onGoogleToken(token) or window.onGoogleError(code).
+         */
+        @JavascriptInterface
+        public void googleSignIn() {
+            runOnUiThread(() -> {
+                if (BuildConfig.GOOGLE_CLIENT_ID.isEmpty()) {
+                    js("window.onGoogleError && window.onGoogleError('not_configured')");
+                    return;
+                }
+                try {
+                    GetGoogleIdOption opt = new GetGoogleIdOption.Builder()
+                            .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
+                            .setFilterByAuthorizedAccounts(false)
+                            .setAutoSelectEnabled(false)
+                            .build();
+                    GetCredentialRequest req = new GetCredentialRequest.Builder().addCredentialOption(opt).build();
+                    CredentialManager cm = CredentialManager.create(MainActivity.this);
+                    java.util.concurrent.Executor exec = new java.util.concurrent.Executor() {
+                        @Override public void execute(Runnable r) { runOnUiThread(r); }
+                    };
+                    CredentialManagerCallback<GetCredentialResponse, GetCredentialException> cb =
+                            new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+                        @Override public void onResult(GetCredentialResponse res) {
+                            try {
+                                Credential cred = res.getCredential();
+                                GoogleIdTokenCredential g = GoogleIdTokenCredential.createFrom(cred.getData());
+                                js("window.onGoogleToken && window.onGoogleToken(" + org.json.JSONObject.quote(g.getIdToken()) + ")");
+                            } catch (Exception e) {
+                                report(e);
+                                js("window.onGoogleError && window.onGoogleError('bad_credential')");
+                            }
+                        }
+                        @Override public void onError(GetCredentialException e) {
+                            // No account chosen / none on the phone is a normal cancel, not an error report.
+                            boolean cancel = e instanceof NoCredentialException || String.valueOf(e.getType()).contains("CANCEL");
+                            if (!cancel) report(e);
+                            js("window.onGoogleError && window.onGoogleError('" + (cancel ? "canceled" : "failed") + "')");
+                        }
+                    };
+                    cm.getCredentialAsync(req, null, exec, cb);
+                } catch (Exception e) {
+                    report(e);
+                    js("window.onGoogleError && window.onGoogleError('failed')");
+                }
+            });
+        }
 
         /** Firebase Analytics event from the game: name and flat JSON params (strings and numbers). */
         @JavascriptInterface

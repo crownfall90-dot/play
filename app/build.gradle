@@ -8,6 +8,17 @@ if (file('google-services.json').exists()) {
 // CI passes -PversionCode=<n>; local builds use 1.
 def vc = (project.findProperty('versionCode') ?: '1') as int
 
+// The web OAuth client id (client_type 3) is the serverClientId Google sign-in on the phone needs;
+// it is read from google-services.json once Google sign-in is enabled in Firebase (Users → Google).
+def googleClientId = ''
+def gsFile = file('google-services.json')
+if (gsFile.exists()) {
+    try {
+        def gs = new groovy.json.JsonSlurper().parse(gsFile)
+        gs.client[0].oauth_client.each { oc -> if (!googleClientId && oc.client_type == 3) googleClientId = oc.client_id }
+    } catch (ignored) { }
+}
+
 android {
     namespace 'com.crownfall.mosaic'
     compileSdk 35
@@ -17,6 +28,7 @@ android {
         targetSdk 35
         versionCode vc
         versionName "1.0.${vc}"
+        buildConfigField 'String', 'GOOGLE_CLIENT_ID', '"' + googleClientId + '"'
     }
     buildFeatures { buildConfig true }
 
@@ -52,7 +64,10 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core:1.13.1'
+        implementation 'androidx.core:core:1.13.1'
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
     playImplementation 'com.google.android.play:app-update:2.1.0'
     implementation platform('com.google.firebase:firebase-bom:33.5.1')
     implementation 'com.google.firebase:firebase-messaging'
