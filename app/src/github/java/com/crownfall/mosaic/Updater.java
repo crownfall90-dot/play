@@ -30,6 +30,8 @@ class Updater {
     private static String get(String url, String accept) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(url).openConnection();
         c.setInstanceFollowRedirects(true);
+        c.setUseCaches(false);
+        c.setRequestProperty("Cache-Control", "no-cache");
         if (accept != null) c.setRequestProperty("Accept", accept);
         c.setConnectTimeout(8000);
         c.setReadTimeout(8000);
@@ -45,10 +47,13 @@ class Updater {
      * no limits); the GitHub API is only a fallback, because without a login it allows just 60
      * requests an hour per address, and players behind one VPN or mobile network share that.
      */
-    private static JSONObject latest() throws Exception {
+    private static JSONObject latest(boolean deep) throws Exception {
+        boolean saidCurrent = false;
         try {
-            JSONObject f = new JSONObject(get("https://github.com/" + BuildConfig.UPDATE_REPO + "/releases/latest/download/latest.json", null));
-            if (f.getInt("code") <= BuildConfig.VERSION_CODE) return null;
+            // The release CDN may serve a stale copy for a few minutes after a release: a changing query dodges it.
+            JSONObject f = new JSONObject(get("https://github.com/" + BuildConfig.UPDATE_REPO + "/releases/latest/download/latest.json?t=" + System.currentTimeMillis(), null));
+            // A check the player asked for double-checks a "no update" answer with the API before saying so.
+            if (f.getInt("code") <= BuildConfig.VERSION_CODE) { if (!deep) return null; saidCurrent = true; throw new java.io.IOException("no newer in latest.json"); }
             JSONObject info = new JSONObject();
             info.put("code", f.getInt("code"));
             info.put("version", f.optString("version", "1.0." + f.getInt("code")));
@@ -58,22 +63,27 @@ class Updater {
         } catch (Exception ignored) {
             // An older release without latest.json, or the download failed: ask the API.
         }
-        JSONObject rel = new JSONObject(get("https://api.github.com/repos/" + BuildConfig.UPDATE_REPO + "/releases/latest", "application/vnd.github+json"));
-        int code = Integer.parseInt(rel.getString("tag_name").replaceAll("[^0-9]", ""));
-        if (code <= BuildConfig.VERSION_CODE) return null;
-        String url = null;
-        JSONArray assets = rel.getJSONArray("assets");
-        for (int i = 0; i < assets.length(); i++) {
-            JSONObject a = assets.getJSONObject(i);
-            if (a.getString("name").endsWith(".apk")) url = a.getString("browser_download_url");
+        try {
+            JSONObject rel = new JSONObject(get("https://api.github.com/repos/" + BuildConfig.UPDATE_REPO + "/releases/latest", "application/vnd.github+json"));
+            int code = Integer.parseInt(rel.getString("tag_name").replaceAll("[^0-9]", ""));
+            if (code <= BuildConfig.VERSION_CODE) return null;
+            String url = null;
+            JSONArray assets = rel.getJSONArray("assets");
+            for (int i = 0; i < assets.length(); i++) {
+                JSONObject a = assets.getJSONObject(i);
+                if (a.getString("name").endsWith(".apk")) url = a.getString("browser_download_url");
+            }
+            if (url == null) return null;
+            JSONObject info = new JSONObject();
+            info.put("code", code);
+            info.put("version", rel.optString("name", "1.0." + code));
+            info.put("notes", rel.optString("body", ""));
+            info.put("url", url);
+            return info;
+        } catch (Exception e) {
+            if (saidCurrent) return null; // the file said this build is current and the API could not be asked
+            throw e;
         }
-        if (url == null) return null;
-        JSONObject info = new JSONObject();
-        info.put("code", code);
-        info.put("version", rel.optString("name", "1.0." + code));
-        info.put("notes", rel.optString("body", ""));
-        info.put("url", url);
-        return info;
     }
 
     /** On launch (and from Settings): offer the newer version in the game. */
@@ -81,7 +91,7 @@ class Updater {
         new Thread(() -> {
             JSONObject info;
             try {
-                info = latest();
+                info = latest(manual);
             } catch (Exception e) {
                 // No internet or GitHub refused: play on; say so only when the player asked.
                 activity.js(manual ? "window.onCheckFailed && window.onCheckFailed()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
@@ -96,7 +106,7 @@ class Updater {
     static void findUpdate(android.content.Context c, UpdateNotifier.Found cb) {
         new Thread(() -> {
             try {
-                JSONObject info = latest();
+                JSONObject info = latest(false);
                 if (info != null) { cb.found(info.getInt("code"), info.getString("version"), info.getString("notes")); return; }
             } catch (Exception ignored) {
             }
