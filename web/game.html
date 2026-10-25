@@ -3038,7 +3038,7 @@ function renderLobby() {
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
   renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
-  if (net.host && invited.code === net.code) {
+  if (invited.code === net.code) {
     seats.forEach(x => {
       if (x.uid && x.uid !== myUid() && invited.uids.has(x.uid) && !invited.joined.has(x.uid)) {
         invited.joined.add(x.uid);
@@ -3740,8 +3740,8 @@ function fillOnline(sec, title, list, show, inRoom, room) {
 function renderLobbyFriends() {
   const ok = FB && registered(), seats = net && net.lobby ? net.lobby.seats : [];
   const inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
-  fillOnline($('#lobbyOnline'), $('#lobbyOnlineTitle'), $('#lobbyOnlineList'), ok && net && !net.quick && !(net.gameId && phase !== 'end'), inRoom, net && net.code);
-  fillOnline($('#mOnline'), $('#mOnlineTitle'), $('#mOnlineList'), ok && !!mm && !(net && net.gameId), inRoom, net && net.quick ? net.code : null);
+  fillOnline($('#lobbyOnline'), $('#lobbyOnlineTitle'), $('#lobbyOnlineList'), ok && net && !net.quick && !(net.gameId && phase !== 'end') && seats.length < roomMax(), inRoom, net && net.code);
+  fillOnline($('#mOnline'), $('#mOnlineTitle'), $('#mOnlineList'), ok && !!mm && !(net && net.gameId) && seats.length < mm.want, inRoom, net && net.quick ? net.code : null);
 }
 function renderFriends() {
   const box = $('#flist'); if (!box || $('#scr-friends').hidden) return;
