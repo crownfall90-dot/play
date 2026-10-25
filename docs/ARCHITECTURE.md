@@ -35,6 +35,7 @@ flowchart LR
 | `app/src/github/.../Updater.java`, `InstallResult.java` | Самообновление из GitHub Releases через PackageInstaller |
 | `app/src/play/.../Updater.java` | Обновление через Google Play (In-App Updates) |
 | `app/src/main/java/.../PushService.java` | FCM: тема `updates-github` / `updates-play` |
+| `app/src/main/java/.../UpdateNotifier.java` | Уведомление «вышло обновление»: одно на версию; если телефон уже получил уведомление о версии, до которой ещё не обновился, следующие молчат (пуш уходит на тему, решает сам телефон) |
 | `app/src/main/java/.../UpdateNotifier.java` | Фоновая проверка версии и уведомление |
 | `.github/workflows/android.yml` | Сборка APK/AAB, релиз `vNNN` (`versionCode = 100 + номер запуска`), пуш игрокам |
 | `.github/workflows/notify.yml` | Ручная отправка пуша о версии |
