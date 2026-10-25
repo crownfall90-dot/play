@@ -708,7 +708,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><button class="ghostbtn wide" id="setupInvite" hidden>👥 Позвать друга в эту игру</button><button class="cta wide" id="start">Начать партию</button></div>
+        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -735,7 +735,11 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           </div>
           <div class="col" id="lbRoom" hidden>
             <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите на код, чтобы скопировать</small>
-              <div class="row2"><button class="chip" id="invite">Пригласить друзей</button><button class="chip" id="copyLink">Скопировать код</button></div></div>
+              <div class="row2"><button class="chip" id="copyLink">🔗 Скопировать код</button></div></div>
+            <div id="lobbyOnline" hidden>
+              <div class="h3" id="lobbyOnlineTitle">Друзья онлайн</div>
+              <ul class="flist" id="lobbyOnlineList"></ul>
+            </div>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
             <p class="shint">Если два игрока выберут один цвет, при старте он достанется одному из них случайно, второму — другой свободный.</p>
@@ -2680,7 +2684,7 @@ function openSetup(mode) {
     if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
   });
   $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
-  $('#setupInvite').hidden = !(FB && (mode === 'online' || mode === 'friends'));
+  // setupInvite removed; friends shown inline in lobby
   colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
 }
@@ -2719,7 +2723,10 @@ function toastAny(t) { const d = document.createElement('div'); d.className = 't
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
 $('#copyLink').onclick = () => track('share', {content_type: 'room'}) || copyText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
-$('#invite').onclick = () => { if (!FB) return $('#copyLink').click(); quickInvite(); };
+$('#lbRoom').addEventListener('click', async e => {
+  const b = e.target.closest('[data-linv]'); if (!b) return;
+  b.disabled = true; await inviteFriend(b.dataset.linv); renderLobbyFriends();
+});
 
 /* ---------------- online ----------------
    Phones in a room share one append-only log of messages named after the room code.
@@ -3008,6 +3015,15 @@ function renderLobby() {
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
   renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
+  if (net.host && invited.code === net.code) {
+    seats.forEach(x => {
+      if (x.uid && x.uid !== myUid() && invited.uids.has(x.uid) && !invited.joined.has(x.uid)) {
+        invited.joined.add(x.uid);
+        const f = friends.find(f => f.uid === x.uid);
+        toastAny(`${f ? f.n : clean(x.name)} принял(а) и присоединился(-ась)`);
+      }
+    });
+  }
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}`;
   $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= roomMax();
@@ -3017,6 +3033,7 @@ function renderLobby() {
   $('#backToGame').hidden = !(net.gameId && phase !== 'end');
   $('#lbRules').style.pointerEvents = net.host ? '' : 'none';
   renderRules();
+  renderLobbyFriends();
 }
 const BOT_NAMES = ['Бот Ёж', 'Бот Сова', 'Бот Лис', 'Бот Барсук'];
 // Everyone may want any colour; a colour wanted by several goes to one of them at random,
@@ -3483,7 +3500,7 @@ document.querySelectorAll('.onlineN').forEach(b => b.addEventListener('click', s
    both lists hold each other. A room invite is /inbox/{uid}/{from}_r with the room code.
    Online / offline comes from /presence. Rules: docs/firebase-rules.json. */
 const FRIEND_MAX = 50, INVITE_TTL = 15 * 60000;
-let friends = [], inbox = {}, inboxEs = null, invited = {code: null, uids: new Set()}, friendsBack = 'menu';
+let friends = [], inbox = {}, inboxEs = null, invited = {code: null, uids: new Set(), joined: new Set()}, friendsBack = 'menu';
 const fbUrl = async path => `${FB.dbUrl}/${path}.json?auth=${await fbToken()}`;
 async function fbGet(path) { const r = await fetch(await fbUrl(path)); if (!r.ok) throw new Error(r.status === 401 ? 'rules' : 'get ' + r.status); return r.json(); }
 async function fbPut(path, v) { const r = await fetch(await fbUrl(path), {method: 'PUT', body: JSON.stringify(v)}); if (!r.ok) throw new Error('put ' + r.status); }
@@ -3619,7 +3636,7 @@ async function inviteFriend(uid) {
   track('friend_invite');
   try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`${f.n} приглашён(а) в комнату ${net.code}`); }
   catch (_) { toastAny('Не получилось — проверьте интернет'); }
-  if (invited.code !== net.code) invited = {code: net.code, uids: new Set()};
+  if (invited.code !== net.code) invited = {code: net.code, uids: new Set(), joined: new Set()};
   invited.uids.add(uid); renderFriends();
 }
 function joinInvite(key) {
@@ -3675,7 +3692,7 @@ function drawQuickInvite(box, loading) {
   const list = box.querySelector('#qList'), sub = box.querySelector('#qSub');
   const on = friends.filter(f => f.on), room = net && !net.quick && !(net.gameId && phase !== 'end') ? net.code : null;
   sub.textContent = loading ? 'Ищем друзей в сети…' : on.length ? 'Нажмите «Позвать» — другу придёт приглашение в комнату' : friends.length ? 'Сейчас никого из друзей нет в сети' : 'У вас пока нет друзей в игре';
-  list.innerHTML = on.map(f => fRow(f, `<button class="chip go" data-qinv="${f.uid}">${room && invited.code === room && invited.uids.has(f.uid) ? '✓ Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('');
+  list.innerHTML = on.map(f => fRow(f, `<button class="chip go" data-qinv="${f.uid}">${room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids.has(f.uid) ? '✓ Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('');
 }
 async function quickInvite() {
   if (!FB || !registered()) { friendsBack = 'menu'; return show('friends'); }
@@ -3700,13 +3717,27 @@ async function quickInvite() {
   if (document.body.contains(box)) drawQuickInvite(box);
 }
 $('#mInvite').onclick = quickInvite;
-$('#setupInvite').onclick = quickInvite;
 function friendsDot() {
   const b = $('#friendsBtn'); if (!b) return;
   b.classList.toggle('hasdot', Object.values(inbox).some(v => v.k === 'f' || v.k === 'r'));
   const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = ''; b.title = n ? `Друзей в сети: ${n}` : '';
 }
 const fRow = (f, btn, sub) => `<li class="lead frow${f.on ? ' on' : ''}"><span class="av" style="--c:${f.c || (f.on ? '#3fc27a' : '#5b6684')}">${(f.n || '?')[0]}</span><span class="fwho"><b>${f.n}</b><small>${sub}</small></span>${btn}</li>`;
+function renderLobbyFriends() {
+  const section = $('#lobbyOnline'); if (!section) return;
+  if (!net || net.quick || (net.gameId && phase !== 'end') || !FB || !registered()) { section.hidden = true; return; }
+  const seats = net.lobby ? net.lobby.seats : [];
+  const inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
+  const on = friends.filter(f => f.on && !inRoom.has(f.uid));
+  section.hidden = on.length === 0;
+  if (!on.length) return;
+  const room = net.code;
+  $('#lobbyOnlineTitle').textContent = `Друзья онлайн · ${on.length}`;
+  $('#lobbyOnlineList').innerHTML = on.map(f => fRow(f, `<button class="chip go" data-linv="${f.uid}">${
+    invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' :
+    invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'
+  }</button>`, STATE_TEXT[f.p && f.p.s] || 'в игре')).join('');
+}
 function renderFriends() {
   const box = $('#flist'); if (!box || $('#scr-friends').hidden) return;
   const gate = !FB || !registered();
@@ -3728,11 +3759,12 @@ function renderFriends() {
   let h = '';
   if (invs.length) h += `<div class="h3">Зовут играть</div><ul class="flist">${invs.map(([k, v]) => fRow({n: clean(v.n), c: '#f2b84b'}, `<button class="chip go" data-fjoin="${k}">Войти</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'комната ' + clean(v.code))).join('')}</ul>`;
   if (reqs.length) h += `<div class="h3">Заявки в друзья</div><ul class="flist">${reqs.map(([k, v]) => fRow({n: clean(v.n), c: '#f2b84b'}, `<button class="chip go" data-facc="${k.slice(0, -2)}">Принять</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'хочет дружить')).join('')}</ul>`;
-  h += `<div class="h3">В сети · ${on.length}</div><ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-finv="${f.uid}">${room && invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('') || '<li class="qnote">Никого из друзей нет в сети</li>'}</ul>`;
+  h += `<div class="h3">В сети · ${on.length}</div><ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-finv="${f.uid}">${room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('') || '<li class="qnote">Никого из друзей нет в сети</li>'}</ul>`;
   if (off.length) h += `<div class="h3">Не в сети · ${off.length}</div><ul class="flist">${off.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Удалить из друзей">✕</button>`, agoText(f.p && f.p.t))).join('')}</ul>`;
   if (wait.length) h += `<div class="h3">Ждут ответа</div><ul class="flist">${wait.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Отменить заявку">✕</button>`, 'заявка отправлена')).join('')}</ul>`;
   if (!friends.length && !reqs.length) h += '<p class="shint">Добавьте друга по его коду или из списка «в сети» на главном экране</p>';
   box.innerHTML = h;
+  renderLobbyFriends();
 }
 let friendsTimer = 0;
 async function openFriends() {
@@ -4262,7 +4294,7 @@ function show(name) {
   if (mm && name !== 'match') stopMatch(name === 'game');
   if (name === 'results') renderResults(phase === 'end');
   if (gameVisible) { applyCam(); if (pendingStart) startTurn(); else pumpRemote(); }
-  if (name === 'lobby') renderLobby();
+  if (name === 'lobby') { renderLobby(); if (FB && registered()) loadFriends().then(renderLobbyFriends).catch(() => {}); }
   if (name === 'shop') renderShop();
   if (name === 'settings') renderPrefs();
   if (name === 'menu') { renderResume(); saveWallet(); presenceCount(); progressDot(); }
