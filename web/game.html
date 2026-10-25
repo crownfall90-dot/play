@@ -1295,6 +1295,26 @@ function drawSprites() {
     poly(g, [[w / 2 - 5, 1], [w / 2 + 5, 1], [w / 2 + 5, 6], [w / 2 - 5, 6]], '#e8d6a6', 'rgba(60,40,20,.7)');
     g.fillStyle = '#c0392b'; g.beginPath(); g.arc(w / 2, 3.5, 1.6, 0, 7); g.fill(); g.fillStyle = '#fff'; g.fillRect(w / 2 - 1, 3.2, 2, .6);
   });
+  // Roadworks where a road runs out into an empty cell: striped barricade, a cone, a gravel heap and a lamp.
+  sprite('works', 38, 26, (g, w, h) => {
+    shadow(g, w / 2, h - 1.6, 17, 2.4, .34);
+    g.fillStyle = '#9c8f78'; g.beginPath(); g.ellipse(6, h - 3, 6, 3.2, 0, 0, 7); g.fill();
+    g.fillStyle = '#b8ab92'; g.beginPath(); g.ellipse(5, h - 4.4, 4, 2.2, 0, 0, 7); g.fill();
+    g.fillStyle = '#6e4a2a'; g.fillRect(12, h - 14, 2.2, 13); g.fillRect(w - 12.2, h - 14, 2.2, 13);
+    for (const y of [h - 15, h - 9]) {
+      poly(g, [[10, y], [w - 10, y], [w - 10, y + 4], [10, y + 4]], '#f4f1e8', 'rgba(40,30,20,.6)');
+      g.save(); g.beginPath(); g.rect(10, y, w - 20, 4); g.clip(); g.fillStyle = '#d8402e';
+      for (let x = 6; x < w - 8; x += 7) { g.beginPath(); g.moveTo(x, y + 4); g.lineTo(x + 3.5, y); g.lineTo(x + 7, y); g.lineTo(x + 3.5, y + 4); g.fill(); }
+      g.restore();
+    }
+    const lg = g.createRadialGradient(w / 2, h - 19, 0, w / 2, h - 19, 6); lg.addColorStop(0, 'rgba(255,220,90,.9)'); lg.addColorStop(1, 'rgba(255,200,60,0)');
+    g.fillStyle = lg; g.beginPath(); g.arc(w / 2, h - 19, 6, 0, 7); g.fill();
+    g.fillStyle = '#ffc93a'; g.strokeStyle = 'rgba(60,40,10,.7)'; g.lineWidth = .5; g.beginPath(); g.arc(w / 2, h - 18.5, 2.1, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = '#5a5a5a'; g.fillRect(w / 2 - 1.6, h - 16.5, 3.2, 1.6);
+    poly(g, [[w - 8, h - 2], [w - 3.5, h - 2], [w - 5, h - 15], [w - 6.5, h - 15]], '#f08a24', 'rgba(60,30,10,.6)');
+    poly(g, [[w - 7.3, h - 9], [w - 4.2, h - 9], [w - 4.6, h - 12], [w - 6.9, h - 12]], '#fff');
+    g.fillStyle = '#4a4a4a'; g.fillRect(w - 9, h - 2.2, 7, 1.6);
+  });
   /* Stone keep: coursed masonry, a shaded right side, battlements with depth, slits, a gate, a flag. */
   sprite('tower', 38, 60, (g) => {
     shadow(g, 19, 58.2, 16, 2.6, .32);
@@ -1459,6 +1479,18 @@ function walls(t, has = (x, y) => tiles.has(key(x, y))) {
     sd[d].hidden = has(t.x + DX[d], t.y + DY[d]);
     // A river that runs off the edge of the kingdom pours down the wall as a waterfall.
     sd[d].classList.toggle('fall', !sd[d].hidden && edgeAt(t, d) === 'w');
+  }
+}
+// Where a road runs out into an empty cell, roadworks stand at the end; they go away once a card is put there.
+function refreshRoadEnds() {
+  for (const t of tiles.values()) {
+    if (!t.el) continue;
+    t.rw = t.rw || {};
+    for (let d = 0; d < 4; d++) {
+      const open = edgeAt(t, d) === 'r' && !at(t.x + DX[d], t.y + DY[d]);
+      if (open && !t.rw[d]) t.rw[d] = addSprite(t.el, 'works', V[d][0] * .4, V[d][1] * .4, '', fast() ? null : .05);
+      else if (!open && t.rw[d]) { t.rw[d].remove(); delete t.rw[d]; }
+    }
   }
 }
 function wallsAround(t) { walls(t); for (let d = 0; d < 4; d++) { const n = at(t.x + DX[d], t.y + DY[d]); if (n) walls(n); } }
@@ -1828,7 +1860,7 @@ async function dropAt(t) {
   ghost.classList.remove('ghost');
   await ghost.animate([{transform: 'translateZ(26px)'}, {transform: 'translateZ(0)'}], {duration: RM || fast() ? 1 : 260, easing: 'cubic-bezier(.5,0,.8,.4)'}).finished;
   ghost.remove(); ghost = null;
-  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); markOwn();
+  t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
   const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
   current = null; sel = null; renderDeck();
@@ -2190,7 +2222,7 @@ function startGame(cfg, replay = []) {
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
   tiles = new Map([[key(0, 0), first]]);
-  first.el = tileEl(first, true, .05); world.append(first.el);
+  first.el = tileEl(first, true, .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
   Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
   $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
@@ -3113,7 +3145,7 @@ async function pumpRemote() {
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
   const mv = queue.splice(i, 1)[0], my = token;
-  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toast('Партия разошлась между телефонами — начните новую'); return; }
+  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toast('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
   phase = 'busy'; applied++;
   if (mv.auto) { if (++players[mv.p].missed === 1 && !fast()) toast(`${players[mv.p].name} пропустил ход — за него играет бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
