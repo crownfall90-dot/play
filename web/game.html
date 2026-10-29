@@ -4306,12 +4306,26 @@ $('#fGate').addEventListener('click', e => {
 $('#fcode').onclick = () => wallet.fcode && copyText(wallet.fcode, `Код ${wallet.fcode} скопирован`);
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
 $('#fCopy').onclick = () => wallet.fcode && copyText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\nМой код друга:\n${wallet.fcode}`, 'Ссылка-приглашение скопирована — отправьте её другу');
+function confirmTextParts(text) {
+  const value = text == null ? '' : String(text);
+  const match = /^([^<>]*)<br\s*\/?><small(?:\s+style="[^"]*")?>([^<>]*)<\/small>$/i.exec(value);
+  return match ? {title: match[1], description: match[2]} : {title: value, description: ''};
+}
 function confirmBox(text, yes, ok) {
   const old = document.getElementById('confirmBox'); if (old && old.dismiss) old.dismiss(false);
   const box = document.createElement('div'); box.id = 'confirmBox'; box.className = 'over'; box.style.position = 'fixed';
   box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'confirmText');
   box.innerHTML = '<div class="ocard"><h3 id="confirmText"></h3><button class="cta wide" data-a="y"></button><button class="ghostbtn" data-a="n">Отмена</button></div>';
-  box.querySelector('h3').textContent = String(text || '');
+  const parts = confirmTextParts(text);
+  box.querySelector('h3').textContent = parts.title;
+  if (parts.description) {
+    const description = document.createElement('p');
+    description.id = 'confirmDescription';
+    description.textContent = parts.description;
+    description.style.cssText = 'font-size:14px;font-weight:500;line-height:1.45;color:var(--muted);margin:8px 0 16px';
+    box.querySelector('h3').after(description);
+    box.setAttribute('aria-describedby', 'confirmDescription');
+  }
   box.querySelector('[data-a=y]').textContent = String(yes || 'Да');
   const previous = document.activeElement;
   document.body.append(box); let done = false;
