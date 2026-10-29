@@ -1,0 +1,36 @@
+name: Apply verified stage 1 lifecycle patch
+on:
+  push:
+    branches: [automation/stage1-lifecycle-20261029]
+permissions:
+  contents: write
+concurrency:
+  group: apply-stage1-lifecycle
+  cancel-in-progress: false
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve reviewed patch
+        run: cp automation/stage1-lifecycle.patch "$RUNNER_TEMP/stage1-lifecycle.patch"
+      - name: Apply only to the verified test branch
+        env:
+          EXPECTED_HEAD: cbc7b50d7f47c5f3f542f03b654eba12be30d95a
+        run: |
+          set -euo pipefail
+          git fetch origin setup/test-environment
+          git checkout -B setup/test-environment origin/setup/test-environment
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          git apply --check "$RUNNER_TEMP/stage1-lifecycle.patch"
+          git apply "$RUNNER_TEMP/stage1-lifecycle.patch"
+          node --test tests/lifecycle.test.cjs
+          git diff --check
+          git config user.name 'Puzzlegrad development automation'
+          git config user.email 'puzzlegrad-automation@users.noreply.github.com'
+          git add .github/workflows/staging.yml tests web/game.html
+          git commit -m 'fix: guard terminal lifecycle and duplicate events in staging'
+          git push origin HEAD:setup/test-environment
