@@ -1,0 +1,50 @@
+name: Test APK (offline)
+on:
+  push:
+    branches: [setup/test-environment, dev]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Remove production Firebase configuration from test workspace
+        run: rm -f app/google-services.json
+      - name: Build isolated offline APK
+        run: |
+          sh scripts/wrap-web.sh
+          chmod +x gradlew
+          ./gradlew -I scripts/staging.init.gradle assembleStagingDebug -PversionCode=${{ github.run_number }} --no-daemon
+      - name: Verify APK isolation
+        run: |
+          APK=app/build/outputs/apk/staging/debug/app-staging-debug.apk
+          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)
+          test -n "$AAPT"
+          "$AAPT" dump badging "$APK" > /tmp/staging-badging.txt
+          grep -q "package: name='com.crownfall.mosaic.test'" /tmp/staging-badging.txt
+          "$AAPT" dump permissions "$APK" > /tmp/staging-permissions.txt
+          if grep -q android.permission.INTERNET /tmp/staging-permissions.txt; then
+            echo 'Unsafe staging APK: INTERNET permission present'
+            exit 1
+          fi
+          printf 'Commit: %s\nRun: %s\nMode: OFFLINE TEST ONLY\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > TEST-BUILD.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Puzzlegrad-Test-${{ github.run_number }}
+          path: |
+            app/build/outputs/apk/staging/debug/app-staging-debug.apk
+            TEST-BUILD.txt
+          if-no-files-found: error
+          retention-days: 14

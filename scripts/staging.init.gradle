@@ -1,0 +1,10 @@
+gradle.beforeProject { p ->
+    p.pluginManager.withPlugin('com.android.application') {
+        p.android.productFlavors.create('staging') {
+            dimension 'store'
+            applicationIdSuffix '.test'
+            versionNameSuffix '-test'
+            buildConfigField 'String', 'PUSH_TOPIC', '"updates-staging"'
+        }
+    }
+}
