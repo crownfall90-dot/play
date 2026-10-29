@@ -1,0 +1,106 @@
+name: Fix confirmation text layout
+on:
+  push:
+    branches: [dev/stage2-account-network-20261029]
+    paths: [.github/workflows/confirm-text-fix.yml]
+permissions:
+  contents: write
+concurrency:
+  group: confirm-text-fix
+  cancel-in-progress: false
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 2}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Apply bounded source change
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 81e4f1e722ac0038e41e698125e841bf34fc89e8
+          test "$(git hash-object web/game.html)" = a6c4f7249220228468a10195708de039fbbde342
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('web/game.html'); s=p.read_text()
+          anchor='function confirmBox(text, yes, ok) {'
+          assert s.count(anchor)==1
+          helper=r'''function confirmTextParts(text) {
+            const value = text == null ? '' : String(text);
+            const match = /^([^<>]*)<br\s*\/?><small(?:\s+style="[^"]*")?>([^<>]*)<\/small>$/i.exec(value);
+            return match ? {title: match[1], description: match[2]} : {title: value, description: ''};
+          }
+          '''
+          s=s.replace(anchor,helper+anchor)
+          old="  box.querySelector('h3').textContent = String(text || '');"
+          assert s.count(old)==1
+          new="""  const parts = confirmTextParts(text);
+            box.querySelector('h3').textContent = parts.title;
+            if (parts.description) {
+              const description = document.createElement('p');
+              description.id = 'confirmDescription';
+              description.textContent = parts.description;
+              description.style.cssText = 'font-size:14px;font-weight:500;line-height:1.45;color:var(--muted);margin:8px 0 16px';
+              box.querySelector('h3').after(description);
+              box.setAttribute('aria-describedby', 'confirmDescription');
+            }"""
+          s=s.replace(old,new); p.write_text(s)
+          p=Path('tests/lifecycle.test.cjs'); t=p.read_text()
+          old=r'assert.match(body,/textContent = String\(text/)'
+          assert t.count(old)==1
+          p.write_text(t.replace(old,r'assert.match(body,/textContent = parts\.title/)'))
+          p=Path('tests/confirm-text.test.cjs'); assert not p.exists()
+          p.write_text(r'''const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+          const html=fs.readFileSync('web/game.html','utf8');
+          function fn(name){const i=html.indexOf('function '+name+'(');assert.ok(i>=0);const b=html.indexOf('{',i);let d=0;for(let j=b;j<html.length;j++){if(html[j]==='{')d++;else if(html[j]==='}'&&!--d)return html.slice(i,j+1);}throw Error(name);}
+          const c={};vm.runInNewContext(fn('confirmTextParts'),c);
+          const explanation='Прогресс сохранится в аккаунте. На этом устройстве начнётся новая игра, а войти можно будет в любой аккаунт';
+          const legacy='Выйти из аккаунта?<br><small style="font-weight:500;color:var(--muted)">'+explanation+'</small>';
+          test('logout legacy message separates title and complete explanation',()=>{const p=c.confirmTextParts(legacy);assert.equal(p.title,'Выйти из аккаунта?');assert.equal(p.description,explanation);});
+          test('plain text and angle brackets are not stripped',()=>{for(const text of ['Выйти?', 'Имя <игрока> & данные', '', null]){const p=c.confirmTextParts(text);assert.equal(p.title,text==null?'':text);assert.equal(p.description,'');}});
+          test('unexpected markup is never interpreted as rich content',()=>{for(const text of ['<img src=x onerror=alert(1)>','Выйти?<br><small onclick="alert(1)">текст</small>','Выйти?<br><small><script>alert(1)</script></small>']){const p=c.confirmTextParts(text);assert.equal(p.title,text);assert.equal(p.description,'');}});
+          test('actual confirmBox creates separate text nodes and preserves one-shot confirmation',()=>{
+            let doc;
+            class El {
+              constructor(){this.style={};this.attrs={};this.listeners={};this.isConnected=true;}
+              setAttribute(k,v){this.attrs[k]=v;}
+              set innerHTML(v){this.template=v;this.h=new El();this.y=new El();this.n=new El();this.h.after=e=>{this.description=e;};}
+              querySelector(q){return q==='h3'?this.h:q==='[data-a=y]'?this.y:this.n;}
+              querySelectorAll(){return [this.y,this.n];}
+              addEventListener(k,v){this.listeners[k]=v;}
+              focus(){doc.activeElement=this;}
+              remove(){this.isConnected=false;if(doc.current===this)doc.current=null;}
+            }
+            doc={current:null,activeElement:new El(),createElement:()=>new El(),getElementById:()=>doc.current,body:{append:b=>{doc.current=b;}},addEventListener(){},removeEventListener(){}};
+            const env={document:doc};vm.runInNewContext(fn('confirmTextParts')+';'+fn('confirmBox'),env);
+            let calls=0;env.confirmBox(legacy,'Выйти',()=>calls++);const box=doc.current;
+            assert.equal(box.h.textContent,'Выйти из аккаунта?');assert.equal(box.description.textContent,explanation);assert.equal(box.attrs['aria-describedby'],'confirmDescription');assert.ok(!box.template.includes(explanation));assert.equal(box.y.textContent,'Выйти');
+            const event={target:{closest:()=>({dataset:{a:'y'}})}};box.listeners.click(event);box.listeners.click(event);assert.equal(calls,1);
+            env.confirmBox('<img src=x onerror=alert(1)>','Да',()=>{});assert.equal(doc.current.h.textContent,'<img src=x onerror=alert(1)>');assert.equal(doc.current.description,undefined);assert.ok(!doc.current.template.includes('onerror'));
+          });
+          ''')
+          PY
+          git diff --check
+      - name: Run all regression tests
+        run: node --test tests/*.test.cjs
+      - name: Build offline Android APK without distribution
+        run: |
+          set -euo pipefail
+          rm -f app/google-services.json
+          sh scripts/wrap-web.sh
+          chmod +x gradlew
+          ./gradlew -I scripts/staging.init.gradle assembleStagingDebug -PversionCode=1 --no-daemon
+      - name: Commit only verified fix and regression tests
+        run: |
+          set -euo pipefail
+          git add web/game.html tests/lifecycle.test.cjs tests/confirm-text.test.cjs
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = 'tests/confirm-text.test.cjs tests/lifecycle.test.cjs web/game.html '
+          git diff --cached --check
+          git config user.name 'Puzzlegrad development automation'
+          git config user.email 'puzzlegrad-automation@users.noreply.github.com'
+          git commit -m 'fix: render legacy confirmation explanation as safe separate text'
+          git push origin HEAD:dev/stage2-account-network-20261029
