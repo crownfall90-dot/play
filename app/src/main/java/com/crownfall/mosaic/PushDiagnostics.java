@@ -2,59 +2,43 @@ package com.crownfall.mosaic;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import androidx.annotation.NonNull;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.messaging.FirebaseMessaging;
 
-/**
- * Records whether the device can request and retain an FCM topic subscription.
- * A completed callback means Firebase accepted the request; it does not prove that
- * Android displayed a later notification on this device.
- */
+/** Local topic-request diagnostics. Success is not proof of notification delivery.
+ * No registration tokens, message bodies or exception messages are persisted. */
 public final class PushDiagnostics {
     private static final String PREFS = "push_diagnostics";
-
     private PushDiagnostics() {}
 
-    public interface Listener {
-        void onResult(@NonNull Result result);
+    public static synchronized void setEnabled(Context context, boolean enabled) {
+        Context app = context.getApplicationContext();
+        SharedPreferences p = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        boolean available = !FirebaseApp.getApps(app).isEmpty();
+        p.edit().putBoolean("configured", available).putBoolean("desiredEnabled", enabled).apply();
+        if (!available) return;
+        request(p, BuildConfig.PUSH_TOPIC, enabled);
+        request(p, PushService.NEWS_TOPIC, enabled);
     }
 
-    public static final class Result {
-        public final boolean requested;
-        public final boolean callbackCompleted;
-        public final String tokenPresent;
-        public final String error;
-
-        Result(boolean requested, boolean callbackCompleted, String tokenPresent, String error) {
-            this.requested = requested;
-            this.callbackCompleted = callbackCompleted;
-            this.tokenPresent = tokenPresent;
-            this.error = error;
-        }
+    private static void request(SharedPreferences p, String topic, boolean enabled) {
+        String key = topic + ".";
+        long revision = p.getLong(key + "revision", 0) + 1;
+        p.edit().putLong(key + "revision", revision).putBoolean(key + "enabled", enabled)
+            .putString(key + "state", "pending").putString(key + "error", "")
+            .putLong(key + "updatedAt", System.currentTimeMillis()).apply();
+        try {
+            FirebaseMessaging fm = FirebaseMessaging.getInstance();
+            Task<Void> task = enabled ? fm.subscribeToTopic(topic) : fm.unsubscribeFromTopic(topic);
+            task.addOnCompleteListener(result -> finish(p, key, revision,
+                result.isSuccessful() ? "success" : "failed", result.isSuccessful() ? "" : "task_failed"));
+        } catch (RuntimeException error) { finish(p, key, revision, "failed", "request_failed"); }
     }
 
-    public static void subscribeAndRecord(Context context, String topic, Listener listener) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        FirebaseMessaging.getInstance().subscribeToTopic(topic)
-            .addOnCompleteListener(task -> {
-                boolean ok = task.isSuccessful();
-                String error = task.getException() == null ? "" : task.getException().getClass().getSimpleName();
-                prefs.edit()
-                    .putBoolean("lastSubscribeRequested", true)
-                    .putBoolean("lastSubscribeCompleted", true)
-                    .putBoolean("lastSubscribeSuccessful", ok)
-                    .putString("lastSubscribeError", error)
-                    .putLong("lastSubscribeAt", System.currentTimeMillis())
-                    .apply();
-                FirebaseMessaging.getInstance().getToken().addOnCompleteListener(tokenTask -> {
-                    String tokenState = tokenTask.isSuccessful() && tokenTask.getResult() != null
-                        ? "present" : "missing";
-                    listener.onResult(new Result(true, true, tokenState, error));
-                });
-            });
-    }
-
-    static SharedPreferences prefs(Context context) {
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    private static synchronized void finish(SharedPreferences p, String key, long revision, String state, String error) {
+        if (p.getLong(key + "revision", 0) != revision) return;
+        p.edit().putString(key + "state", state).putString(key + "error", error)
+            .putLong(key + "updatedAt", System.currentTimeMillis()).apply();
     }
 }
