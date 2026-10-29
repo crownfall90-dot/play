@@ -1,0 +1,69 @@
+name: Build main APK candidate (no publication)
+on:
+  push:
+    branches: [release/lifecycle-apk-20261029]
+    paths: [.github/workflows/build-lifecycle-candidate.yml]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cd3747f9e00b91a3a8228095c194c8657c7485d4
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Lifecycle regressions
+        run: node --test tests/lifecycle.test.cjs
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Build signed production candidate
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          sh scripts/wrap-web.sh
+          chmod +x gradlew
+          ./gradlew assembleGithubRelease -PversionCode=209 --no-daemon
+      - name: Verify signature matches installed release channel
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          trap 'echo "::error::Certificate verification failed at line $LINENO (exit $?)"' ERR
+          curl --fail --location --silent --show-error https://github.com/crownfall90-dot/play/releases/download/v208/Puzzlegrad-1.0.208.apk -o "$RUNNER_TEMP/previous.apk"
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          SIGNER=$(find "$SDK/build-tools" -name apksigner -type f | sort -V | tail -n 1)
+          test -n "$SIGNER" && test -x "$SIGNER"
+          APK=app/build/outputs/apk/github/release/app-github-release.apk
+          test -s "$APK"
+          "$SIGNER" verify --verbose --print-certs "$RUNNER_TEMP/previous.apk" 2>&1 | tee "$RUNNER_TEMP/previous-cert.txt"
+          "$SIGNER" verify --verbose --print-certs "$APK" 2>&1 | tee "$RUNNER_TEMP/candidate-cert.txt"
+          python3 - <<'PY'
+          import os, re
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          def digests(name):
+              text = (root / name).read_text()
+              values = {x.lower() for x in re.findall(r'^.*certificate SHA-256 digest:\s*([0-9a-fA-F]{64})\s*$', text, re.M)}
+              if not values:
+                  raise SystemExit('Certificate SHA-256 parse error: ' + name)
+              return values
+          expected = digests('previous-cert.txt')
+          actual = digests('candidate-cert.txt')
+          print('Expected public certificate SHA-256:', ','.join(sorted(expected)))
+          print('Actual public certificate SHA-256:', ','.join(sorted(actual)))
+          if expected != actual:
+              raise SystemExit('Certificate mismatch: candidate must NOT be published')
+          Path('CANDIDATE.txt').write_text('Source: cd3747f9e00b91a3a8228095c194c8657c7485d4\nCandidate versionCode: 209\nSignature matches v208.\nNot published. Not tested on phone.\n')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Puzzlegrad-main-candidate-209-${{ github.run_id }}
+          path: |
+            app/build/outputs/apk/github/release/app-github-release.apk
+            CANDIDATE.txt
+          if-no-files-found: error
+          retention-days: 7

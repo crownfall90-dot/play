@@ -1,0 +1,46 @@
+name: Notify APK users about 1.0.209
+on:
+  push:
+    branches: [release/lifecycle-apk-20261029]
+    paths: [.github/workflows/notify-release-209.yml]
+permissions:
+  contents: read
+concurrency:
+  group: notify-apk-209
+  cancel-in-progress: false
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cd3747f9e00b91a3a8228095c194c8657c7485d4
+      - name: Verify public release before notification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test '${{ github.run_attempt }}' = 1
+          test "$(gh api repos/crownfall90-dot/play/releases/latest --jq .tag_name)" = v209
+          gh api repos/crownfall90-dot/play/releases/tags/v209 > "$RUNNER_TEMP/release.json"
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads((Path(os.environ['RUNNER_TEMP'])/'release.json').read_text())
+          assert not r['draft'] and not r['prerelease']
+          assert r['target_commitish']=='cd3747f9e00b91a3a8228095c194c8657c7485d4'
+          assert {'latest.json','Puzzlegrad-1.0.209.apk'}.issubset({x['name'] for x in r['assets']})
+          Path('NOTIFY-209.md').write_text('- Исправлено сохранение завершённых партий и повторная обработка игровых событий.\n- Уменьшены эффекты при восстановлении истории ходов.\n- Неподходящие карты пропускаются без лишних уведомлений.\n- Улучшены окна подтверждения и обработка локальных сохранений.')
+          PY
+      - name: Send one update data message
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo '::error::Missing repository secret FIREBASE_SERVICE_ACCOUNT; nothing sent.'
+            exit 1
+          fi
+          python3 scripts/fcm-send.py updates-github 209 1.0.209 NOTIFY-209.md
+          echo 'FCM accepted an update message for updates-github, version 1.0.209. Individual device delivery is not verified.' >> "$GITHUB_STEP_SUMMARY"

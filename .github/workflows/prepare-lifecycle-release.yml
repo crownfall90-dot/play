@@ -1,0 +1,50 @@
+name: Prepare lifecycle release candidate
+on:
+  push:
+    branches: [release/lifecycle-apk-20261029]
+permissions:
+  contents: write
+concurrency:
+  group: prepare-lifecycle-release
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - name: Apply only reviewed gameplay and tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 47e07ddee2deb1b045abffb2b8119e08fbe4a51b
+          git diff cbc7b50d7f47c5f3f542f03b654eba12be30d95a 29d7f594e94c7ef9a063ae5b434963ef75af2c53 -- web/game.html tests/ > "$RUNNER_TEMP/lifecycle.patch"
+          git apply --check "$RUNNER_TEMP/lifecycle.patch"
+          git apply "$RUNNER_TEMP/lifecycle.patch"
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('tests/lifecycle.test.cjs')
+          s = p.read_text()
+          old = "['tests/lifecycle.test.cjs','docs/PROJECT-CONTEXT.md','docs/SECURITY-RESPONSE.md']"
+          assert s.count(old) == 1
+          p.write_text(s.replace(old, "['tests/lifecycle.test.cjs','web/game.html']"))
+          p = Path('release-notes.md')
+          p.write_text(p.read_text().rstrip() + '\n- Завершённая партия больше не сохраняется как активная; добавлена защита повторного завершения и запоздалого досчёта.\n- Уменьшены визуальные эффекты при восстановлении ходов.\n- Карты без допустимого места пропускаются без лишнего уведомления.\n- Исправлены повторные события и окна подтверждения.\n')
+          PY
+          git diff --check
+      - name: Run lifecycle regressions
+        run: node --test tests/lifecycle.test.cjs
+      - name: Commit candidate only, never publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add web/game.html tests/ release-notes.md
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "release-notes.md tests/README.md tests/lifecycle.browser.py tests/lifecycle.test.cjs web/game.html "
+          git config user.name 'Puzzlegrad development automation'
+          git config user.email 'puzzlegrad-automation@users.noreply.github.com'
+          git commit -m 'fix: prepare lifecycle corrections for main APK'
+          git push origin HEAD:release/lifecycle-apk-20261029
+          echo 'Candidate committed. APK build, device tests and publishing are NOT performed.' >> "$GITHUB_STEP_SUMMARY"
