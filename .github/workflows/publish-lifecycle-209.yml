@@ -1,0 +1,75 @@
+name: Publish verified APK 209
+on:
+  push:
+    branches: [release/lifecycle-apk-20261029]
+    paths: [.github/workflows/publish-lifecycle-209.yml]
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: publish-production-apk
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: crownfall90-dot/play
+    steps:
+      - name: Retrieve exact successful candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/$GH_REPO/releases/latest --jq .tag_name)" = v208
+          RUN=$(gh api "repos/$GH_REPO/actions/workflows/build-lifecycle-candidate.yml/runs?head_sha=a15b5875457f78ff110582ff41b2f91feb0948b0&status=success&per_page=10" --jq '.workflow_runs | map(select(.head_sha == "a15b5875457f78ff110582ff41b2f91feb0948b0" and .head_branch == "release/lifecycle-apk-20261029" and .event == "push" and .conclusion == "success")) | sort_by(.id) | last | .id // empty')
+          test -n "$RUN"
+          gh run download "$RUN" --repo "$GH_REPO" --name "Puzzlegrad-main-candidate-209-$RUN" --dir candidate
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          root = Path('candidate')
+          apks = list(root.rglob('*.apk'))
+          manifests = list(root.rglob('CANDIDATE.txt'))
+          assert len(apks) == len(manifests) == 1
+          manifest = manifests[0].read_text()
+          for line in ['Source: cd3747f9e00b91a3a8228095c194c8657c7485d4', 'Candidate versionCode: 209', 'Signature matches v208.']:
+              assert line in manifest.splitlines()
+          data = apks[0].read_bytes()
+          assert data
+          Path('Puzzlegrad-1.0.209.apk').write_bytes(data)
+          Path('Puzzlegrad.apk').write_bytes(data)
+          Path('SHA256SUMS.txt').write_text(hashlib.sha256(data).hexdigest() + '  Puzzlegrad-1.0.209.apk\n')
+          notes = '- Исправлено сохранение завершённых партий и повторная обработка игровых событий.\n- Уменьшены эффекты при восстановлении истории ходов.\n- Неподходящие карты пропускаются без лишних уведомлений.\n- Улучшены окна подтверждения и обработка локальных сохранений.'
+          Path('NOTES.md').write_text(notes)
+          Path('latest.json').write_text(json.dumps({'code':209, 'version':'1.0.209', 'notes':notes, 'url':'https://github.com/crownfall90-dot/play/releases/download/v209/Puzzlegrad-1.0.209.apk'}, ensure_ascii=False))
+          PY
+      - name: Check package identity and version
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          AAPT=$(find "$SDK/build-tools" -name aapt -type f | sort -V | tail -n 1)
+          "$AAPT" dump badging Puzzlegrad-1.0.209.apk > badging.txt
+          curl -fsSL https://github.com/crownfall90-dot/play/releases/download/v208/Puzzlegrad-1.0.208.apk -o previous.apk
+          "$AAPT" dump badging previous.apk > previous-badging.txt
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          def identity(name):
+              s=Path(name).read_text()
+              return re.search(r"^package: name='([^']+)' versionCode='([0-9]+)'",s,re.M).groups()
+          package, code = identity('badging.txt')
+          old_package, old_code = identity('previous-badging.txt')
+          assert package == old_package and not package.endswith('.test')
+          assert int(code) == 209 and int(code) > int(old_code)
+          PY
+      - name: Publish complete release to existing APK updater
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/$GH_REPO/releases/latest --jq .tag_name)" = v208
+          gh release create v209 --repo "$GH_REPO" --draft --target cd3747f9e00b91a3a8228095c194c8657c7485d4 --title 1.0.209 --notes-file NOTES.md
+          gh release upload v209 --repo "$GH_REPO" Puzzlegrad-1.0.209.apk Puzzlegrad.apk latest.json SHA256SUMS.txt
+          gh release edit v209 --repo "$GH_REPO" --draft=false --latest
+          echo 'Public APK release 1.0.209 published. Phone tests NOT performed. Google Play NOT updated.' >> "$GITHUB_STEP_SUMMARY"
