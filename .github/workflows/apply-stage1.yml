@@ -15,10 +15,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
       - name: Preserve reviewed patch
-        run: |
-          sed 's/^ diff --git /diff --git /' automation/stage1-lifecycle.patch > "$RUNNER_TEMP/stage1-lifecycle.patch"
-      - name: Apply only to the verified test branch
+        run: sed 's/^ diff --git /diff --git /' automation/stage1-lifecycle.patch > "$RUNNER_TEMP/stage1-lifecycle.patch"
+      - name: Verify unchanged test branch
         env:
           EXPECTED_HEAD: cbc7b50d7f47c5f3f542f03b654eba12be30d95a
         run: |
@@ -26,12 +28,19 @@ jobs:
           git fetch origin setup/test-environment
           git checkout -B setup/test-environment origin/setup/test-environment
           test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
-          git apply --check "$RUNNER_TEMP/stage1-lifecycle.patch"
-          git apply "$RUNNER_TEMP/stage1-lifecycle.patch"
-          node --test tests/lifecycle.test.cjs
+      - name: Apply application patch only
+        run: |
+          set -euo pipefail
+          git apply --check --exclude=.github/workflows/staging.yml "$RUNNER_TEMP/stage1-lifecycle.patch"
+          git apply --exclude=.github/workflows/staging.yml "$RUNNER_TEMP/stage1-lifecycle.patch"
           git diff --check
+      - name: Verify lifecycle regressions
+        run: node --test tests/lifecycle.test.cjs
+      - name: Commit application and tests to test branch
+        run: |
+          set -euo pipefail
           git config user.name 'Puzzlegrad development automation'
           git config user.email 'puzzlegrad-automation@users.noreply.github.com'
-          git add .github/workflows/staging.yml tests web/game.html
+          git add tests web/game.html
           git commit -m 'fix: guard terminal lifecycle and duplicate events in staging'
           git push origin HEAD:setup/test-environment
