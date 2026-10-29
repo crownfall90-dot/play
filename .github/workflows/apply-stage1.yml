@@ -22,6 +22,12 @@ jobs:
         env: {EXPECTED_HEAD: c863803b7917493a6dfd9f134e9759f9785f2ffd}
         run: |
           set -euo pipefail
+          python3 - <<'PYFIX'
+          from pathlib import Path
+          p=Path("automation/lifecycle-followup.patch.gz.b64")
+          s=p.read_text().strip()
+          p.write_text(s[:725]+"B"+s[725:]+"\n")
+          PYFIX
           base64 --decode automation/lifecycle-followup.patch.gz.b64 | gzip -d > "$RUNNER_TEMP/followup.patch"
           test "$(sha256sum "$RUNNER_TEMP/followup.patch" | cut -d' ' -f1)" = "9c49d9d08bff2422bc07649a95c6373821f31d8925bd7af967dc2a11e6c6417a"
           git fetch origin setup/test-environment
