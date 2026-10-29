@@ -6,22 +6,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.credentials.ClearCredentialStateRequest;
 import androidx.credentials.CredentialManager;
+import androidx.credentials.CredentialManagerCallback;
 import androidx.credentials.GetCredentialRequest;
+import androidx.credentials.GetCredentialResponse;
+import androidx.credentials.exceptions.ClearCredentialException;
 import androidx.credentials.exceptions.GetCredentialException;
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
-import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-/**
- * Local account identity for the Android shell. The Google ID token is retained only as
- * signed-in state; server-side verification and profile synchronization are separate work.
- */
+/** Experimental local cache, not a verified Firebase session. Not wired to the game UI.
+ * The production game continues using MainActivity's token bridge and Firebase auth. */
 public final class AccountIdentity {
     private static final String PREFS = "account_identity";
     private static final Executor IO = Executors.newSingleThreadExecutor();
-
     private AccountIdentity() {}
 
     public interface Listener {
@@ -31,10 +30,7 @@ public final class AccountIdentity {
     }
 
     public static final class Profile {
-        public final String id;
-        public final String name;
-        public final String color;
-
+        public final String id, name, color;
         Profile(String id, String name, String color) {
             this.id = id == null ? "" : id;
             this.name = name == null ? "" : name;
@@ -50,31 +46,30 @@ public final class AccountIdentity {
     }
 
     public static void signIn(Context context, String serverClientId, Listener listener) {
-        if (serverClientId == null || serverClientId.isBlank()) {
+        if (serverClientId == null || serverClientId.trim().isEmpty()) {
             listener.onError("Google sign-in is not configured");
             return;
         }
         try {
             GetGoogleIdOption option = new GetGoogleIdOption.Builder()
-                .setServerClientId(serverClientId)
-                .setFilterByAuthorizedAccounts(false)
-                .build();
+                .setServerClientId(serverClientId).setFilterByAuthorizedAccounts(false).build();
             GetCredentialRequest request = new GetCredentialRequest.Builder().addCredentialOption(option).build();
-            CredentialManager manager = CredentialManager.create(context);
-            manager.getCredentialAsync(context, request, null, IO, result -> {
-                try {
-                    GoogleIdTokenCredential credential = GoogleIdTokenCredential.createFrom(result.getCredential().getData());
-                    Profile profile = new Profile(credential.getId(), credential.getDisplayName(),
-                        prefs(context).getString("color", PlayerColor.DEFAULT));
-                    save(context, profile, true);
-                    listener.onSignedIn(profile);
-                } catch (GetCredentialException | GoogleIdTokenParsingException | IllegalArgumentException e) {
-                    listener.onError(e.getClass().getSimpleName());
-                }
-            });
-        } catch (RuntimeException e) {
-            listener.onError(e.getClass().getSimpleName());
-        }
+            CredentialManager.create(context).getCredentialAsync(context, request, null, IO,
+                new CredentialManagerCallback<GetCredentialResponse, GetCredentialException>() {
+                    @Override public void onResult(@NonNull GetCredentialResponse result) {
+                        try {
+                            GoogleIdTokenCredential credential = GoogleIdTokenCredential.createFrom(result.getCredential().getData());
+                            Profile profile = new Profile(credential.getId(), credential.getDisplayName(),
+                                prefs(context).getString("color", PlayerColor.DEFAULT));
+                            save(context, profile);
+                            listener.onSignedIn(profile);
+                        } catch (Exception e) { listener.onError(e.getClass().getSimpleName()); }
+                    }
+                    @Override public void onError(@NonNull GetCredentialException error) {
+                        listener.onError(error.getClass().getSimpleName());
+                    }
+                });
+        } catch (RuntimeException e) { listener.onError(e.getClass().getSimpleName()); }
     }
 
     public static void setColor(Context context, String color) {
@@ -83,12 +78,12 @@ public final class AccountIdentity {
 
     public static void signOut(Context context, Listener listener) {
         try {
-            CredentialManager.create(context)
-                .clearCredentialStateAsync(new ClearCredentialStateRequest(), null, IO,
-                    result -> finishSignOut(context, listener), error -> finishSignOut(context, listener));
-        } catch (RuntimeException e) {
-            finishSignOut(context, listener);
-        }
+            CredentialManager.create(context).clearCredentialStateAsync(new ClearCredentialStateRequest(), null, IO,
+                new CredentialManagerCallback<Void, ClearCredentialException>() {
+                    @Override public void onResult(@Nullable Void result) { finishSignOut(context, listener); }
+                    @Override public void onError(@NonNull ClearCredentialException error) { finishSignOut(context, listener); }
+                });
+        } catch (RuntimeException e) { finishSignOut(context, listener); }
     }
 
     private static void finishSignOut(Context context, Listener listener) {
@@ -96,13 +91,9 @@ public final class AccountIdentity {
         listener.onSignedOut();
     }
 
-    private static void save(Context context, Profile profile, boolean signedIn) {
-        prefs(context).edit()
-            .putBoolean("signedIn", signedIn)
-            .putString("id", profile.id)
-            .putString("name", profile.name)
-            .putString("color", profile.color)
-            .apply();
+    private static void save(Context context, Profile profile) {
+        prefs(context).edit().putBoolean("signedIn", true).putString("id", profile.id)
+            .putString("name", profile.name).putString("color", profile.color).apply();
     }
 
     private static SharedPreferences prefs(Context context) {
