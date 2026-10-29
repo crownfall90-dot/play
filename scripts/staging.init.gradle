@@ -6,21 +6,28 @@ gradle.beforeProject { p ->
             versionNameSuffix '-test'
             buildConfigField 'String', 'PUSH_TOPIC', '"updates-staging"'
         }
-        def keyPath = System.getenv('STAGING_KEYSTORE_FILE')
-        if (keyPath) {
-            def password = System.getenv('STAGING_STORE_PASSWORD')
-            if (!password || !new File(keyPath).isFile()) {
-                throw new GradleException('Staging signing key or password is missing')
+        p.extensions.getByName('androidComponents').finalizeDsl { androidDsl ->
+            def keyPath = System.getenv('STAGING_KEYSTORE_FILE')
+            if (keyPath) {
+                def password = System.getenv('STAGING_STORE_PASSWORD')
+                def keyFile = new File(keyPath)
+                if (!password || !keyFile.isFile()) {
+                    throw new GradleException('Staging signing key or password is missing')
+                }
+                def signing = androidDsl.signingConfigs.maybeCreate('persistentStaging')
+                signing.setStoreFile(keyFile)
+                signing.setStoreType('PKCS12')
+                signing.setStorePassword(password)
+                signing.setKeyAlias('staging')
+                signing.setKeyPassword(password)
+                androidDsl.buildTypes.getByName('debug').setSigningConfig(signing)
+                if (androidDsl.buildTypes.getByName('debug').signingConfig != signing) {
+                    throw new GradleException('Persistent staging signing was not applied')
+                }
+                p.logger.lifecycle('Staging debug signing: persistentStaging (APK certificate is verified by CI)')
+            } else if (System.getenv('REQUIRE_STAGING_SIGNING') == 'true') {
+                throw new GradleException('Persistent staging signing is required')
             }
-            p.android.signingConfigs.getByName('debug').with {
-                storeFile = new File(keyPath)
-                storeType = 'PKCS12'
-                storePassword = password
-                keyAlias = 'staging'
-                keyPassword = password
-            }
-        } else if (System.getenv('REQUIRE_STAGING_SIGNING') == 'true') {
-            throw new GradleException('Persistent staging signing is required')
         }
     }
 }
