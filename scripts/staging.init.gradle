@@ -3,7 +3,7 @@ gradle.beforeProject { p ->
         p.android.productFlavors.create('staging') {
             dimension 'store'
             applicationIdSuffix '.test'
-            versionNameSuffix '-test'
+            versionNameSuffix '-test.2'
             buildConfigField 'String', 'PUSH_TOPIC', '"updates-staging"'
         }
         p.extensions.getByName('androidComponents').finalizeDsl { androidDsl ->
