@@ -1,3 +1,4 @@
+import base64
 import hashlib
 import os
 from pathlib import Path
@@ -14,6 +15,16 @@ def run(args):
         raise RuntimeError('Tool failed: ' + Path(args[0]).name)
     return result.stdout
 
+def signer_digest(text):
+    blocks = re.findall(r'-----BEGIN CERTIFICATE-----\s*([A-Za-z0-9+/=\s]+?)\s*-----END CERTIFICATE-----', text)
+    certificates = {base64.b64decode(re.sub(r'\s+', '', block), validate=True) for block in blocks}
+    if len(certificates) != 1:
+        raise ValueError('Expected exactly one distinct signing certificate')
+    certificate = next(iter(certificates))
+    if not certificate:
+        raise ValueError('Empty signing certificate')
+    return hashlib.sha256(certificate).hexdigest()
+
 def verify():
     apk = Path('app/build/outputs/apk/staging/debug/app-staging-debug.apk')
     root = Path(os.environ['ANDROID_HOME']) / 'build-tools'
@@ -27,24 +38,25 @@ def verify():
     if 'android.permission.INTERNET' in permissions:
         report['status'] = 'internet_permission_present'
         return False
-    certs = run([str(tools / 'apksigner'), 'verify', '--verbose', '--print-certs', str(apk)])
-    matches = re.findall(r'^Signer #\d+ certificate SHA-256 digest:[ \t]*([0-9a-fA-F:]+)[ \t]*\r?$', certs, re.M)
-    fingerprints = [value.replace(':', '').lower() for value in matches]
-    if len(fingerprints) != 1 or not re.fullmatch(r'[0-9a-f]{64}', fingerprints[0]):
-        report['status'] = 'signer_digest_parse_error'
-        return False
-    report['actual'] = fingerprints[0]
     key = os.environ.get('STAGING_KEYSTORE_FILE')
     if key:
         with tempfile.TemporaryDirectory(dir=os.environ['RUNNER_TEMP']) as temp:
             der = Path(temp) / 'public.der'
             run(['keytool', '-exportcert', '-keystore', key, '-storetype', 'PKCS12', '-alias', 'staging', '-storepass:env', 'STORE_PASSWORD', '-file', str(der)])
             report['expected'] = hashlib.sha256(der.read_bytes()).hexdigest()
-        report['status'] = 'match' if report['actual'] == report['expected'] else 'certificate_mismatch'
-        return report['status'] == 'match'
-    if os.environ.get('REQUIRE_STAGING_SIGNING') == 'true':
+    elif os.environ.get('REQUIRE_STAGING_SIGNING') == 'true':
         report['status'] = 'persistent_key_missing'
         return False
+    certs = run([str(tools / 'apksigner'), 'verify', '--verbose', '--print-certs-pem', str(apk)])
+    try:
+        report['actual'] = signer_digest(certs)
+    except ValueError:
+        report['status'] = 'signer_digest_parse_error'
+        print('PEM certificate extraction failed; signature comparison remains mandatory.')
+        return False
+    if key:
+        report['status'] = 'match' if report['actual'] == report['expected'] else 'certificate_mismatch'
+        return report['status'] == 'match'
     report['status'] = 'temporary_pr_signature'
     return True
 
