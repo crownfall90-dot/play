@@ -973,7 +973,7 @@ const KIND = {c:'Город',r:'Дорога',f:'Крепость'};
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const hash = s => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 let net = null;
-let queue = [], applied = 0, gameLog = null;
+let queue = [], applied = 0, gameLog = null, ending = false;
 // catchUp: moves taken from the history (coming back to a game) are applied at once, without animation, sound or
 // messages; only the last tile is shown (see focusLast).
 let catchUp = false, lastPlaced = null;
@@ -1442,6 +1442,7 @@ function fits(type, r, x, y) {
 function emptyCells() { const m = new Map(); for (const t of tiles.values()) for (let d = 0; d < 4; d++) { const x = t.x + DX[d], y = t.y + DY[d]; if (!at(x, y)) m.set(key(x, y), {x, y}); } return [...m.values()]; }
 const legalRots = (type, x, y) => [0,1,2,3].filter(r => fits(type, r, x, y));
 function allMoves(type) { const out = []; for (const c of emptyCells()) for (const r of legalRots(type, c.x, c.y)) out.push({x: c.x, y: c.y, r}); return out; }
+function hasPlacement(type) { for (const c of emptyCells()) if (legalRots(type, c.x, c.y).length) return true; return false; }
 function groupsOf(t) {
   const by = {c: [], r: []};
   for (let d = 0; d < 4; d++) { const k = edgeAt(t, d); if (by[k === 'b' ? 'r' : k]) by[k === 'b' ? 'r' : k].push(d); }
@@ -1941,7 +1942,7 @@ async function dropAt(t) {
   ghost.remove(); ghost = null; lastPlaced = t;
   t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
-  const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
+  if (!fast()) { const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600); }
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
@@ -2111,7 +2112,8 @@ function focusLast() {
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer();
-  while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
+  // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
+  while (deck.length) { const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; } }
   renderDeck();
   if (!current) return endGame();
   renderTray(); drawFx(); renderPlayers(); turnTok++;
@@ -2237,13 +2239,16 @@ async function aiTurn() {
 async function endGame(reason) {
   if (net) try { localStorage.removeItem('lastGame'); } catch (_) {}
   setTimeout(() => tutEvent('end'), 1800);
-  if (phase === 'end') return;
+  if (phase === 'end' || ending) return;
+  ending = true;
+  markGameFinished(gameKey()); if (!net) clearSave(); historySave(reason, false);
   if (reason) { token++; turnTok++; stopTimer(); if (ghost) { ghost.remove(); ghost = null; } if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; } }
   const my = token;
   phase = 'end'; clearSlots(); renderPlayers(); okBtn.disabled = rotBtn.disabled = true; renderTray();
   if (!reason) {
     setStatus('Стопка закончилась — досчитываем недостроенное');
     await wait(500);
+    if (my !== token) return;
     const seen = new Set();
     for (const m of [...meeples]) {
       if (my !== token) return;
@@ -2252,6 +2257,7 @@ async function endGame(reason) {
       await resolveFeature(c, true);
     }
   }
+  if (my !== token) return;
   if (!net) clearSave();
   const gold = payout(reason);
   if (!tut) try { const me = players.findIndex(isMe), ord = ranked(); track('game_end', {mode: net ? (net.quick ? 'online' : 'friends') : humanCount() > 1 ? 'local' : 'bots', players: players.length, place: me >= 0 ? ord.findIndex(x => x.i === me) + 1 : 0, score: me >= 0 ? players[me].score : 0, rules: gameRules.mode || 'classic', reason: reason || 'deck', length: gameLog ? gameLog.moves.length : 0}); } catch (_) {}
@@ -2269,6 +2275,7 @@ async function endGame(reason) {
   const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
   over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}<button class="cta wide" data-go="results">Подробные итоги</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
+  historySave(reason, true);
   $('#again2').onclick = () => net ? show('lobby') : newGame();
   setStatus('Партия окончена');
 }
@@ -2331,11 +2338,13 @@ function newGame() {
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
+  if (!cfg.online) cfg = {...cfg, localId: cfg.localId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2))};
+  ending = false;
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
-  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = false; lastPlaced = null; markOwn();
+  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = replay.length > 0; lastPlaced = null; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
@@ -2356,7 +2365,7 @@ function startGame(cfg, replay = []) {
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
   tiles = new Map([[key(0, 0), first]]);
-  first.el = tileEl(first, true, .05); world.append(first.el); refreshRoadEnds();
+  first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
   Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
   $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
@@ -2634,9 +2643,35 @@ function confirmBuy(k) {
 }
 
 /* ---------------- saved game (offline) ---------------- */
-function saveGame() { try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {} }
+const FINISHED_GAMES_KEY = 'finishedGames', GAME_HISTORY_KEY = 'gameHistory';
+function gameKey(cfg = gameLog && gameLog.cfg) { return !cfg ? '' : cfg.online ? 'o:' + cfg.online : cfg.localId ? 'l:' + cfg.localId : ''; }
+function jsonRead(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; } catch (_) { return fallback; } }
+function finishedGames() { const a = jsonRead(FINISHED_GAMES_KEY, []); return Array.isArray(a) ? a.filter(x => typeof x === 'string' || (x && typeof x.k === 'string')) : []; }
+function gameFinished(key) { return !!key && finishedGames().some(x => (typeof x === 'string' ? x : x.k) === key); }
+function markGameFinished(key) {
+  if (!key) return;
+  try { const a = finishedGames().filter(x => (typeof x === 'string' ? x : x.k) !== key); a.unshift({k:key,at:Date.now()}); localStorage.setItem(FINISHED_GAMES_KEY, JSON.stringify(a.slice(0, 200))); } catch (_) {}
+}
+function historySave(reason, final) {
+  const id = gameKey(); if (!id) return;
+  const row = {id,at:Date.now(),reason:reason || 'deck',final:!!final,players:players.map(p => ({name:p.name,score:p.score,col:p.col,me:isMe(p)}))};
+  try { const data = jsonRead(GAME_HISTORY_KEY, []), old = Array.isArray(data) ? data.filter(x => x && typeof x.id === 'string') : []; localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify([row, ...old.filter(x => x.id !== id)].slice(0, 50))); } catch (_) {}
+}
+function saveGame() {
+  if (!gameLog || net || tut || phase === 'end' || gameFinished(gameKey())) return;
+  try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {}
+}
 function clearSave() { try { localStorage.removeItem('savedGame'); } catch (_) {} renderResume(); }
-function loadSave() { try { return JSON.parse(localStorage.getItem('savedGame')); } catch (_) { return null; } }
+function loadSave() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('savedGame'));
+    if (!saved) return null;
+    if (!saved.cfg || !Array.isArray(saved.cfg.seats) || saved.cfg.seats.length < 2 || !Array.isArray(saved.cfg.deck) || !Array.isArray(saved.moves) || gameFinished(gameKey(saved.cfg))) {
+      localStorage.removeItem('savedGame'); return null;
+    }
+    return saved;
+  } catch (_) { return null; }
+}
 // An online game this phone took part in during the last 3 hours, if it may still be going.
 function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
 function renderResume() {
@@ -2676,7 +2711,8 @@ function afkKick() {
 document.addEventListener('visibilitychange', () => {
   clearTimeout(afkTimer);
   if (document.hidden) { hiddenAt = Date.now(); afkTimer = setTimeout(afkKick, AFK_MS); return; }
-  if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
+  if (phase === 'end' && !mm) { closeGameMenu(); show('menu'); }
+  else if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
   hiddenAt = 0;
 });
 
@@ -3211,6 +3247,7 @@ function onNet(d) {
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
   if (m.t === 'start') {
+    if (net.gameId === d.id) return;
     // Quick match: a room that started without us is no use — look for another one.
     if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
@@ -3306,11 +3343,11 @@ async function pumpRemote() {
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
   const mv = queue.splice(i, 1)[0], my = token;
+  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
+  phase = 'busy'; applied++; // reserve before yielding: a duplicate delivery is already obsolete
   if (mv.old) catchKeep(); else catchEnd();
   if (catchUp) await new Promise(r => setTimeout(r)); // let the screen breathe while a long history goes in
   if (my !== token) return;
-  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
-  phase = 'busy'; applied++;
   if (mv.auto) { if (++players[mv.p].missed === 1 && !fast()) toast(`${players[mv.p].name} пропустил ход — за него играет бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
   if (my !== token) return;
@@ -4270,10 +4307,26 @@ $('#fcode').onclick = () => wallet.fcode && copyText(wallet.fcode, `Код ${wal
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
 $('#fCopy').onclick = () => wallet.fcode && copyText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\nМой код друга:\n${wallet.fcode}`, 'Ссылка-приглашение скопирована — отправьте её другу');
 function confirmBox(text, yes, ok) {
-  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>${text}</h3><button class="cta wide" data-a="y">${yes}</button><button class="ghostbtn" data-a="n">Отмена</button></div>`;
-  document.body.append(box);
-  box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b && e.target !== box) return; box.remove(); if (b && b.dataset.a === 'y') ok(); };
+  const old = document.getElementById('confirmBox'); if (old && old.dismiss) old.dismiss(false);
+  const box = document.createElement('div'); box.id = 'confirmBox'; box.className = 'over'; box.style.position = 'fixed';
+  box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'confirmText');
+  box.innerHTML = '<div class="ocard"><h3 id="confirmText"></h3><button class="cta wide" data-a="y"></button><button class="ghostbtn" data-a="n">Отмена</button></div>';
+  box.querySelector('h3').textContent = String(text || '');
+  box.querySelector('[data-a=y]').textContent = String(yes || 'Да');
+  const previous = document.activeElement;
+  document.body.append(box); let done = false;
+  const close = run => { if (done) return; done = true; document.removeEventListener('keydown', keys); box.remove(); if (previous && previous.isConnected) previous.focus(); if (run && typeof ok === 'function') ok(); };
+  const keys = e => {
+    if (e.key === 'Escape') { e.preventDefault(); close(false); }
+    else if (e.key === 'Tab') {
+      const buttons = [...box.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
+      e.preventDefault(); buttons[(i + (e.shiftKey ? buttons.length - 1 : 1)) % buttons.length].focus();
+    }
+  };
+  box.dismiss = close;
+  document.addEventListener('keydown', keys);
+  box.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) close(b.dataset.a === 'y'); });
+  box.querySelector('[data-a=n]').focus();
 }
 function openFeedback() {
   if (!FB) { toastAny('Нужно подключение к интернету'); return; }
