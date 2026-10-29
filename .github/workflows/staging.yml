@@ -12,6 +12,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/setup/test-environment' || github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -20,31 +21,70 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Restore dedicated test signing key
+        if: github.event_name != 'pull_request'
+        env:
+          KEY_BASE64: ${{ secrets.STAGING_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.STAGING_STORE_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$KEY_BASE64" ] || [ -z "$STORE_PASSWORD" ]; then
+            echo 'Missing STAGING_KEYSTORE_BASE64 or STAGING_STORE_PASSWORD. See docs/STAGING-SIGNING.md.'
+            exit 1
+          fi
+          umask 077
+          KEY_FILE=$(mktemp "$RUNNER_TEMP/puzzlegrad-staging.XXXXXX.p12")
+          printf '%s' "$KEY_BASE64" | base64 --decode > "$KEY_FILE"
+          keytool -list -keystore "$KEY_FILE" -storetype PKCS12 -alias staging -storepass:env STORE_PASSWORD > /dev/null
+          printf 'STAGING_KEYSTORE_FILE=%s\n' "$KEY_FILE" >> "$GITHUB_ENV"
       - name: Remove production Firebase configuration from test workspace
         run: rm -f app/google-services.json
       - name: Build isolated offline APK
+        env:
+          REQUIRE_STAGING_SIGNING: ${{ github.event_name != 'pull_request' }}
+          STAGING_STORE_PASSWORD: ${{ secrets.STAGING_STORE_PASSWORD }}
         run: |
           sh scripts/wrap-web.sh
           chmod +x gradlew
           ./gradlew -I scripts/staging.init.gradle assembleStagingDebug -PversionCode=${{ github.run_number }} --no-daemon
-      - name: Verify APK isolation
+      - name: Verify APK isolation and signing
+        env:
+          STORE_PASSWORD: ${{ secrets.STAGING_STORE_PASSWORD }}
+        shell: bash
         run: |
+          set -euo pipefail
           APK=app/build/outputs/apk/staging/debug/app-staging-debug.apk
-          AAPT=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)
-          test -n "$AAPT"
-          "$AAPT" dump badging "$APK" > /tmp/staging-badging.txt
+          TOOLS=$(find "$ANDROID_HOME/build-tools" -name aapt -type f | sort -V | tail -n 1)
+          test -n "$TOOLS"
+          TOOLS=$(dirname "$TOOLS")
+          "$TOOLS/aapt" dump badging "$APK" > /tmp/staging-badging.txt
           grep -q "package: name='com.crownfall.mosaic.test'" /tmp/staging-badging.txt
-          "$AAPT" dump permissions "$APK" > /tmp/staging-permissions.txt
+          "$TOOLS/aapt" dump permissions "$APK" > /tmp/staging-permissions.txt
           if grep -q android.permission.INTERNET /tmp/staging-permissions.txt; then
             echo 'Unsafe staging APK: INTERNET permission present'
             exit 1
           fi
+          "$TOOLS/apksigner" verify --verbose --print-certs "$APK" > APK-CERTIFICATE.txt
+          if [ -n "${STAGING_KEYSTORE_FILE:-}" ]; then
+            keytool -exportcert -keystore "$STAGING_KEYSTORE_FILE" -storetype PKCS12 -alias staging -storepass:env STORE_PASSWORD -file "$RUNNER_TEMP/staging-public.der" > /dev/null
+            EXPECTED=$(sha256sum "$RUNNER_TEMP/staging-public.der" | cut -d ' ' -f 1)
+            ACTUAL=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' APK-CERTIFICATE.txt | head -n 1)
+            test "$EXPECTED" = "$ACTUAL" || { echo 'APK signing certificate mismatch'; exit 1; }
+          fi
           printf 'Commit: %s\nRun: %s\nMode: OFFLINE TEST ONLY\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" > TEST-BUILD.txt
+          cat APK-CERTIFICATE.txt >> TEST-BUILD.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: Puzzlegrad-Test-${{ github.run_number }}
+          name: Puzzlegrad-Test-${{ github.event_name == 'pull_request' && 'PR-temporary-key' || 'persistent-key' }}-${{ github.run_number }}
           path: |
             app/build/outputs/apk/staging/debug/app-staging-debug.apk
             TEST-BUILD.txt
           if-no-files-found: error
           retention-days: 14
+      - name: Remove temporary signing files
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${STAGING_KEYSTORE_FILE:-}" ]; then rm -f -- "$STAGING_KEYSTORE_FILE"; fi
+          rm -f -- "$RUNNER_TEMP/staging-public.der"
