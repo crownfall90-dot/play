@@ -16,7 +16,8 @@ jobs:
         with:
           fetch-depth: 0
       - name: Preserve reviewed patch
-        run: cp automation/stage1-lifecycle.patch "$RUNNER_TEMP/stage1-lifecycle.patch"
+        run: |
+          sed 's/^ diff --git /diff --git /' automation/stage1-lifecycle.patch > "$RUNNER_TEMP/stage1-lifecycle.patch"
       - name: Apply only to the verified test branch
         env:
           EXPECTED_HEAD: cbc7b50d7f47c5f3f542f03b654eba12be30d95a
