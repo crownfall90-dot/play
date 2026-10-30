@@ -1302,3 +1302,26 @@
 - Журнал версий: 1.0.219
 - docs(changelog): 1.0.219, clear release notes
 
+## 1.0.221 — 2026-10-31
+
+**Игрокам:**
+- Внутренние улучшения: игра теперь собирается из отдельных частей, это подготовка к новым возможностям. Для игры ничего не меняется
+
+**В коде:**
+- Заметки к выпуску 1.0.221
+- docs(release-notes): 1.0.221 notes
+- docs(handoff): owner decisions: no paid Firebase tier; OAuth origin added
+- Админ-панель: до входа виден только вход
+- docs: record actual account regression and offline build results
+- fix(owner): founder panel is only the sign-in card until an admin has signed in
+- Админ-панель помещается на телефоне
+- docs: record actual account regression and offline build results
+- fix(owner): founder panel fits a phone (cards shrink, buttons wrap, one column, hidden stays hidden)
+- Настройки партии, палитра и режимы в модуле (TASK-008-4)
+- docs: record actual account regression and offline build results
+- refactor(state): seats, palette, modes, rules, settings rows and streak gold to src/state/config.js (TASK-008-4)
+- Бэкап базы: токен сервис-аккаунта в заголовке Authorization
+- fix(backup): service-account token goes in the Authorization header (?auth= answered 401)
+- Журнал версий: 1.0.220
+- docs(changelog): 1.0.220, clear release notes
+
