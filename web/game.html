@@ -4451,11 +4451,20 @@ async function googleTokenAuth(idToken, link) {
   return {j, email: jwtEmail(idToken) || j.email || ''};
 }
 let googleBusy = false;
+let lastGoogleToken = '';
+let lastGoogleTokenTime = 0;
 // After the token is in hand: finish linking or sign in (same steps as the e-mail flow).
 async function finishGoogle(idToken, link, onFail) {
-  if (googleBusy) return; googleBusy = true;
+  if (googleBusy) { if (typeof onFail === 'function') onFail('busy'); return; }
+  if (idToken && idToken === lastGoogleToken && Date.now() - lastGoogleTokenTime < 10000) {
+    if (typeof onFail === 'function') onFail('duplicate');
+    return;
+  }
+  googleBusy = true;
   try {
     const {j, email} = await googleTokenAuth(idToken, link);
+    lastGoogleToken = idToken;
+    lastGoogleTokenTime = Date.now();
     keepAuth(j, email); track(link ? 'sign_up' : 'login', {method: 'google'});
     if (link) {
       await cloudSave(); toastAny('Профиль сохранён'); renderAccount(); presenceMark(true); socialReset();
@@ -4479,8 +4488,18 @@ async function finishGoogle(idToken, link, onFail) {
 // One entry point: the native sheet on the phone, Google's own button in the browser.
 function startGoogle(link, onFail, btn) {
   if (googleAvailable()) {
-    window.onGoogleToken = t => finishGoogle(t, link, onFail);
+    startGoogle.reqId = (startGoogle.reqId || 0) + 1;
+    const reqId = startGoogle.reqId;
+    window.onGoogleToken = t => {
+      if (reqId !== startGoogle.reqId) return;
+      window.onGoogleToken = null;
+      window.onGoogleError = null;
+      finishGoogle(t, link, onFail);
+    };
     window.onGoogleError = c => {
+      if (reqId !== startGoogle.reqId) return;
+      window.onGoogleToken = null;
+      window.onGoogleError = null;
       try {
         if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
       } finally { if (typeof onFail === 'function') onFail(c); }
@@ -4631,7 +4650,7 @@ function accountDialog(mode, prefill) {
   const gbtn = box.querySelector('#accGoogle');
   if (gbtn) {
     if (!googleAvailable() && !googleWebOk()) { gbtn.hidden = true; const or = box.querySelector('#accOr'); if (or) or.hidden = true; }
-    else gbtn.onclick = () => startGoogle(link, null, gbtn);
+    else gbtn.onclick = () => { gbtn.disabled = true; startGoogle(link, () => { gbtn.disabled = false; }, gbtn); };
   }
   // Error text plus a red frame on the field it is about ('both' marks both).
   const err = (t, field) => {
@@ -4662,7 +4681,13 @@ function accountDialog(mode, prefill) {
   };
   passEl.onkeydown = e => { if (e.getModifierState && e.getModifierState('CapsLock')) hint.textContent = '⚠ Включён Caps Lock'; };
   if (prefill) setTimeout(() => passEl.focus(), 200);
-  box.querySelector('#accNo').onclick = () => { box.remove(); if (!link && !wallet.name) askProfile(); };
+  box.querySelector('#accNo').onclick = () => {
+    startGoogle.reqId = (startGoogle.reqId || 0) + 1;
+    window.onGoogleToken = null;
+    window.onGoogleError = null;
+    box.remove();
+    if (!link && !wallet.name) askProfile();
+  };
   const rs = box.querySelector('#accReset');
   if (rs) rs.onclick = async () => {
     const bad = checkAuthInput(mail(), 'x', false); if (bad && bad[1] === 'mail' && !bad[2]) return err(bad[0] === 'Введите почту' ? 'Введите почту, на неё придёт письмо для смены пароля' : bad[0], 'mail');
