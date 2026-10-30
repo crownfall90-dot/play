@@ -1283,3 +1283,22 @@
 - Журнал версий: 1.0.218
 - docs(changelog): 1.0.218, clear release notes
 
+## 1.0.220 — 2026-10-30
+
+**Игрокам:**
+- Промокоды из новых акций теперь активируются (раньше игра не могла их проверить)
+- Если на сервере идут технические работы, экран об этом сам исчезает, когда они заканчиваются
+
+**В коде:**
+- Каталог магазина в модуле (TASK-008-4)
+- docs: record actual account regression and offline build results
+- refactor(state): shop catalogue (figures, locations, chest) to src/state/catalog.js
+- Админ-панель: техработы, промокоды, PIN и отзывы по-настоящему
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- feat(owner): feedback inside the founder panel (one page, one sign-in)
+- docs: record actual account regression and offline build results
+- fix(owner): maintenance, promo codes, tester PIN and live stats actually work
+- Журнал версий: 1.0.219
+- docs(changelog): 1.0.219, clear release notes
+
