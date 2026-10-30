@@ -1442,11 +1442,13 @@ async function redeemPromo(code) {
     'PUZZLESTART': 200
   };
 
-  let reward = BUILTIN_PROMOS[code] || 0;
+  let reward = BUILTIN_PROMOS[code] || 0, offline = false;
   if (!reward && typeof FB !== 'undefined' && FB && FB.dbUrl) {
+    offline = true;
     try {
-      const r = await fetch(`${FB.dbUrl}/promo_codes/${encodeURIComponent(code)}.json`);
+      const r = await fetch(`${FB.dbUrl}/promo_codes/${encodeURIComponent(code)}.json?auth=${await fbToken()}`); // rules: signed-in read
       if (r.ok) {
+        offline = false;
         const data = await r.json();
         if (data && data.active && data.gold) reward = +data.gold;
       }
@@ -1461,7 +1463,7 @@ async function redeemPromo(code) {
     renderShop();
     const inp = $('#promoInput'); if (inp) inp.value = '';
   } else {
-    toastAny('Неверный или неактивный промокод');
+    toastAny(offline ? 'Не удалось проверить промокод — нужен интернет' : 'Неверный или неактивный промокод');
   }
 }
 function renderShop() {
@@ -3647,9 +3649,7 @@ function initStagingGate() {
   const checkPin = () => {
     const input = document.getElementById('stagingGatePin');
     const val = (input ? input.value : '').trim();
-    let savedPin = '2026';
-    try { savedPin = localStorage.getItem('puzzlegrad_tester_pin') || '2026'; } catch (_) {}
-    if (val === savedPin || val === '2026' || val === '7790') {
+    if (val && val === stagingPin) {
       try { sessionStorage.setItem('pg_staging_pin_ok', '1'); } catch (_) {}
       overlay.remove();
       showStagingWatermark();
@@ -3660,6 +3660,9 @@ function initStagingGate() {
     }
   };
 
+  // The PIN is set by the owner in the admin panel (config/testerPin); 2026 until one is set.
+  let stagingPin = '2026';
+  if (typeof FB !== 'undefined' && FB && FB.dbUrl) fetch(`${FB.dbUrl}/config/testerPin.json`).then(r => r.ok ? r.json() : null).then(p => { if (p) stagingPin = String(p); }).catch(() => {});
   const btn = document.getElementById('stagingGateBtn');
   if (btn) btn.onclick = checkPin;
   const pinInput = document.getElementById('stagingGatePin');
@@ -3908,11 +3911,13 @@ async function checkMaintenance() {
     const r = await fetch(`${FB.dbUrl}/config/maintenance.json`);
     if (!r.ok) return;
     const cfg = await r.json();
-    if (cfg && cfg.active) {
-      showMaintenanceScreen(cfg.message || 'Ведутся плановые технические работы. Игра скоро будет доступна.');
-    }
+    if (cfg && cfg.active) showMaintenanceScreen(cfg.message || 'Ведутся плановые технические работы. Игра скоро будет доступна.');
+    else { const box = document.getElementById('maintBox'); if (box) box.remove(); } // switched off: the game is back
   } catch (_) {}
 }
+// Checked at start, on every return to the app, and every minute while the maintenance screen is up.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkMaintenance(); });
+setInterval(() => { if (document.getElementById('maintBox')) checkMaintenance(); }, 60000);
 function showMaintenanceScreen(msg) {
   if (document.getElementById('maintBox')) return;
   const d = document.createElement('div');
