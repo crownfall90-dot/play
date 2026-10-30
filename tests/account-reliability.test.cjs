@@ -313,3 +313,9 @@ test('founder panel writes through the owner sign-in, never pretends', () => {
   for (const path of ["db('config/maintenance', 'PUT'", "db('promo_codes/' + encodeURIComponent(code), 'PUT'", "db('config/testerPin', 'PUT'"]) assert.ok(panel.includes(path), path);
   assert.ok(!/alert\('Режим технических работ активирован/.test(panel), 'no fake success messages');
 });
+
+test('feedback lives in the founder panel; there is no separate feedback page', () => {
+  assert.ok(fs.readFileSync('tools/founder-admin.html', 'utf8').includes("db('feedback')"));
+  assert.ok(!fs.existsSync('tools/feedback-admin.html'));
+  assert.ok(!html.includes('admin/feedback.html'), 'the game links to the one panel');
+});

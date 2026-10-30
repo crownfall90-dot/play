@@ -117,6 +117,13 @@ body {
   font-size: 14px;
 }
 .field:focus { outline: none; border-color: var(--accent); }
+.fb-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.fb-card.done{opacity:.55}
+.fb-msg{font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.fb-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.pill{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#fbList{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto}
 .console {
   background: #000;
   border: 1px solid var(--border);
@@ -268,6 +275,22 @@ body {
     <button class="btn btn-primary" id="btnCreatePromo">✨ Создать и сохранить промокод</button>
     <div style="display:flex;gap:8px"><button class="btn" id="btnDisablePromo" style="flex:1">⏸ Отключить код</button></div>
     <div class="stat-sub">Игроки вводят код в Магазине (нужен интернет). Золото: от 1 до 1000. Код сработает у игрока один раз.</div>
+  </div>
+
+  <!-- 6.5 ОТЗЫВЫ ИГРОКОВ -->
+  <div class="card" id="feedback" style="grid-column: 1 / -1">
+    <div class="card-title">
+      <span>💬 Отзывы игроков</span>
+      <span style="font-size:12px;color:var(--muted)" id="fbCount">—</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="pill on" data-cat="all">Все</button><button class="pill" data-cat="bug">🐛 Баги</button><button class="pill" data-cat="idea">💡 Идеи</button><button class="pill" data-cat="other">💬 Другое</button>
+      <span style="width:10px"></span>
+      <button class="pill" data-st="new">Только новые</button><button class="pill" data-st="done">Готовые</button>
+      <input class="field" id="fbSearch" placeholder="Поиск по тексту" style="max-width:220px;margin-left:auto">
+      <button class="btn" id="btnFbReload">↻</button>
+    </div>
+    <div id="fbList"><div class="stat-sub">Войдите, чтобы увидеть отзывы.</div></div>
   </div>
 
   <!-- 7. ПУШ-НОВОСТИ И ОПОВЕЩЕНИЯ -->
@@ -434,7 +457,36 @@ async function loadVersions() {
   } catch (_) { $('prodStatus').textContent = 'не удалось узнать'; }
 }
 
-function refreshAll() { loadMaint(); loadPin(); loadStats(); }
+/* ---------- feedback (the same sign-in; statuses are the owner's notes, kept in this browser) ---------- */
+const FB_CAT = {bug: '🐛 Баг', idea: '💡 Идея', other: '💬 Другое'};
+let fbItems = [], fbCat = 'all', fbSt = '', fbQ = '';
+const fbStat = () => { try { return JSON.parse(localStorage.getItem('fb_statuses') || '{}'); } catch (_) { return {}; } };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+async function loadFeedback() {
+  try {
+    const data = await db('feedback') || {};
+    fbItems = Object.entries(data).flatMap(([uid, ks]) => Object.entries(ks || {}).filter(([, f]) => f && typeof f === 'object').map(([key, f]) => ({uid, key, k: f.k || 'other', m: String(f.m || ''), v: f.v || '', t: f.t || 0})));
+    fbItems.sort((a, b) => b.t - a.t); renderFeedback();
+  } catch (e) { $('fbList').innerHTML = '<div class="stat-sub">' + esc(e.message) + '</div>'; }
+}
+function renderFeedback() {
+  const st = fbStat(), q = fbQ.toLowerCase();
+  const list = fbItems.filter(f => (fbCat === 'all' || f.k === fbCat) && (!q || f.m.toLowerCase().includes(q)) &&
+    (!fbSt || (fbSt === 'done') === ((st[f.uid + '/' + f.key] || 'new') === 'done')));
+  $('fbCount').textContent = `${list.length} из ${fbItems.length}`;
+  $('fbList').innerHTML = list.length ? list.map(f => {
+    const s = st[f.uid + '/' + f.key] || 'new';
+    return `<div class="fb-card${s === 'done' ? ' done' : ''}"><div class="fb-msg">${esc(f.m)}</div><div class="fb-row"><span>${FB_CAT[f.k] || FB_CAT.other}</span><span>${f.t ? new Date(f.t).toLocaleString('ru-RU') : ''}</span>${f.v ? '<span>v' + esc(f.v) + '</span>' : ''}<span style="opacity:.6">${esc(f.uid.slice(0, 8))}…</span>` +
+      ['new', 'seen', 'done'].map(x => `<button class="pill${s === x ? ' on' : ''}" data-uid="${esc(f.uid)}" data-key="${esc(f.key)}" data-s="${x}">${{new: 'Новое', seen: 'Посмотрено', done: 'Готово'}[x]}</button>`).join('') + '</div></div>';
+  }).join('') : '<div class="stat-sub">Ничего не найдено</div>';
+}
+$('fbList').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; const m = fbStat(); m[b.dataset.uid + '/' + b.dataset.key] = b.dataset.s; try { localStorage.setItem('fb_statuses', JSON.stringify(m)); } catch (_) {} renderFeedback(); });
+document.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-cat]').forEach(x => x.classList.remove('on')); b.classList.add('on'); fbCat = b.dataset.cat; renderFeedback(); });
+document.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { const was = b.classList.contains('on'); document.querySelectorAll('[data-st]').forEach(x => x.classList.remove('on')); if (!was) { b.classList.add('on'); fbSt = b.dataset.st; } else fbSt = ''; renderFeedback(); });
+$('fbSearch').oninput = e => { fbQ = e.target.value; renderFeedback(); };
+$('btnFbReload').onclick = loadFeedback;
+
+function refreshAll() { loadMaint(); loadPin(); loadStats(); loadFeedback(); }
 loadVersions(); loadMaint(); loadPin();
 if (auth) afterSignIn();
 </script>
