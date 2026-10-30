@@ -18,3 +18,15 @@ test('engine/scoring: towns, forts, ties and respect', async () => {
   assert.deepEqual(S.settle(tiles, town(3, [{p: 0}, {p: 1}]), false, 3, 'split', 2), {pts: 6, win: [0, 1], each: 3, helped: true});
   assert.equal(S.settle(tiles, town(3, [{p: 0}, {p: 1}]), false, 3, 'all', 0).each, 6);
 });
+
+test('engine/bots: picks a legal spot; the clock helper prefers finishing its own town', async () => {
+  const B = await import('../src/engine/board.js');
+  const {botPick, helperPick} = await import('../src/engine/bots.js');
+  const t0 = {x: 0, y: 0, type: 'cap', r: 0}, tiles = new Map([[B.key(0, 0), t0]]);
+  const zero = () => 0;
+  const m = botPick(tiles, 'cap', zero);
+  assert.ok(B.fits(tiles, 'cap', m.r, m.x, m.y));
+  const mine = [{p: 1, gid: B.gid(t0, B.groupsOf(t0)[0])}];
+  assert.deepEqual(helperPick(tiles, mine, 'cap', 1, 2, zero), {x: 0, y: -1, r: 2}, 'closes its own town');
+  assert.equal(tiles.size, 1, 'trial placements are removed');
+});

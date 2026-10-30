@@ -2099,37 +2099,9 @@ function handOver() {
   over.hidden = false;
   $('#go').onclick = () => { over.hidden = true; beginHumanTurn(); };
 }
-// Bots like spots with many neighbours, with some randomness.
-function botPick(type) {
-  let best = null, bs = -1e9;
-  for (const m of allMoves(type)) { let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++; const s = n * 1.5 + Math.random() * 2.5; if (s > bs) { bs = s; best = m; } }
-  return best;
-}
-// When a player's clock runs out the card is put down for them: next to their own unfinished objects first
-// (finishing one is best), never to the benefit of an opponent who leads an object, otherwise just somewhere compact.
-function helperPick(type, p) {
-  let best = null, bs = -1e9;
-  for (const m of allMoves(type)) {
-    const t = {x: m.x, y: m.y, type, r: m.r, seed: 1};
-    tiles.set(key(t.x, t.y), t);
-    let s = Math.random() * .6;
-    for (const g of groupsOf(t)) {
-      if (g.kind === 'f') continue;
-      const c = component(t, g);
-      if (!c.meeples.length) continue;
-      const cnt = players.map(() => 0); c.meeples.forEach(x => cnt[x.p]++);
-      const mx = Math.max(...cnt), shared = cnt.filter(n => n === mx).length > 1;
-      const worth = c.complete ? (c.kind === 'c' ? c.tiles.length * 2 : roadPoints(c)) : c.tiles.length * .8;
-      if (cnt[p] === mx) s += 6 + worth * (shared ? .5 : 1.5) + (c.complete ? 8 : 0);
-      else s -= 5 + worth * 1.2 + (c.complete ? 8 : 0);
-    }
-    let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++;
-    tiles.delete(key(t.x, t.y));
-    s += n * .15;
-    if (s > bs) { bs = s; best = m; }
-  }
-  return best || botPick(type);
-}
+// Bot choices live in src/engine/bots.js.
+const botPick = type => PG.engine.bots.botPick(tiles, type, Math.random);
+const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
   setStatus(`Ходит <b>${players[p].name}</b>…`);
