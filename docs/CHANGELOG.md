@@ -1197,3 +1197,24 @@
 - Журнал версий: 1.0.214
 - docs(changelog): 1.0.214, clear release notes
 
+## 1.0.216 — 2026-10-30
+
+**Игрокам:**
+- После окончания партии возврат в игру из другого приложения больше не выкидывает из лобби, итогов или друзей в главное меню
+- Игроки с бирюзовым цветом, который убрали из палитры, получают цвет из новой палитры
+
+**В коде:**
+- Игровая логика в src/engine (TASK-008-2): поле, подсчёт очков, боты
+- docs: record actual account regression and offline build results
+- refactor(engine): bot choices to src/engine/bots.js; TASK-008-2 complete
+- refactor(engine): scoring to src/engine/scoring.js; parse test and fail-fast golden harness
+- refactor(engine): board rules to src/engine/board.js (TASK-008-2)
+- Vite-сборка модулей (008-0), вынос rng и типов карт (008-2), исправления после аудита, журнал 1.0.215
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- refactor(engine): move card types and stack composition to src/engine/tiles.js (TASK-008-2)
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- feat(build): Vite bundles src/ modules into the page (TASK-008-0); first module engine/rng
+- docs: record actual account regression and offline build results
+
