@@ -3437,39 +3437,12 @@ const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && 
 const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false, topSeen: false}, wallet.prog);
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
-const xpNeed = l => 50 + 50 * l;
-const QUESTS = [
-  {id: 'c3', ic: '🏰', t: 'Достройте 3 города', k: 'c', n: 3, g: 15},
-  {id: 'r3', ic: '🛤️', t: 'Достройте 3 дороги', k: 'r', n: 3, g: 10},
-  {id: 'f1', ic: '⛪', t: 'Окружите крепость', k: 'f', n: 1, g: 15},
-  {id: 'w1', ic: '🏆', t: 'Победите в партии', k: 'win', n: 1, g: 20},
-  {id: 'g2', ic: '🎲', t: 'Сыграйте 2 партии', k: 'games', n: 2, g: 10},
-  {id: 's30', ic: '⭐', t: 'Наберите 30 очков за одну партию', k: 's30', n: 1, g: 15},
-  {id: 'o1', ic: '🌍', t: 'Сыграйте онлайн', k: 'online', n: 1, g: 20},
-  {id: 'p50', ic: '💎', t: 'Заработайте 50 очков за день', k: 'pts', n: 50, g: 15},
-];
-const ACH = [
-  {id: 'w1', ic: '🥇', t: 'Первая победа', d: 'Победите в партии', ok: s => s.wins >= 1, g: 20},
-  {id: 'w10', ic: '🏅', t: 'Опытный правитель', d: '10 побед', ok: s => s.wins >= 10, g: 50},
-  {id: 'w50', ic: '👑', t: 'Король Пазлграда', d: '50 побед', ok: s => s.wins >= 50, g: 150},
-  {id: 'g25', ic: '🎲', t: 'Завсегдатай', d: 'Сыграйте 25 партий', ok: s => s.games >= 25, g: 40},
-  {id: 'c10', ic: '🏰', t: 'Градостроитель', d: 'Достройте 10 городов', ok: s => s.c >= 10, g: 30},
-  {id: 'c50', ic: '🏙️', t: 'Архитектор', d: 'Достройте 50 городов', ok: s => s.c >= 50, g: 80},
-  {id: 'r20', ic: '🛤️', t: 'Дорожный мастер', d: 'Достройте 20 дорог', ok: s => s.r >= 20, g: 30},
-  {id: 'f5', ic: '⛪', t: 'Хранитель крепостей', d: 'Окружите 5 крепостей', ok: s => s.f >= 5, g: 30},
-  {id: 'b50', ic: '⭐', t: 'Полсотни', d: '50 очков за одну партию', ok: s => s.best >= 50, g: 40},
-  {id: 'b80', ic: '🌟', t: 'Рекордсмен', d: '80 очков за одну партию', ok: s => s.best >= 80, g: 80},
-  {id: 'o1', ic: '🌍', t: 'Покоритель сети', d: 'Победите в онлайн-партии', ok: s => s.owins >= 1, g: 40},
-  {id: 'l5', ic: '🎖️', t: 'Пятый уровень', d: 'Достигните 5 уровня', ok: () => PROG.lvl >= 5, g: 50},
-  {id: 'l10', ic: '💠', t: 'Десятый уровень', d: 'Достигните 10 уровня', ok: () => PROG.lvl >= 10, g: 100},
-];
+// Level, quest and achievement rules live in src/state/progress.js.
+const {xpNeed, QUESTS, ACH} = PG.state.progress;
 // Three quests a day, the same for the whole day.
 function questsToday() {
   if (PROG.day === today()) return;
-  let h = 0; for (const ch of today()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const pool = QUESTS.slice(), pick = [];
-  while (pick.length < 3) { h = (h * 1103515245 + 12345) >>> 0; pick.push(pool.splice(h % pool.length, 1)[0].id); }
-  PROG.day = today(); PROG.q = pick.map(id => ({id, n: 0, got: false}));
+  PROG.day = today(); PROG.q = PG.state.progress.dailyQuests(PROG.day).map(id => ({id, n: 0, got: false}));
 }
 function progress(d) {
   questsToday();
@@ -3485,21 +3458,20 @@ function gameDone(place, score) {
   PROG.st.best = Math.max(PROG.st.best, score);
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= 30 ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
   const xp = score + 5 + (win ? 25 : 0);
-  PROG.xp += xp; let up = 0;
-  while (PROG.xp >= xpNeed(PROG.lvl)) { PROG.xp -= xpNeed(PROG.lvl); PROG.lvl++; up++; wallet.gold += 20; }
+  const up = PG.state.progress.addXp(PROG, xp); wallet.gold += 20 * up;
   const cups = net && net.quick ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
   if (net && net.quick) { PROG.cups += cups; syncRating(); } // cups: rated games only
   saveWallet(); progressDot();
   setTimeout(() => toastAny(up ? `Новый уровень ${PROG.lvl}! +${20 * up} золота` : `+${xp} опыта`), 1200);
-  const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st));
+  const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st, PROG.lvl));
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
 }
-const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
+const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
 function ptabsDot() {
   questsToday();
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
-  const aDot = ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got');
+  const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
@@ -3527,8 +3499,8 @@ function renderProgress() {
     }).join('') + '<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p>';
   } else if (ptab === 'ach') {
     const rank = (ok, got) => got ? 2 : ok ? 0 : 1;
-    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st), PROG.ach[b.id] === 'got')).map(a => {
-      const ok = a.ok(PROG.st), got = PROG.ach[a.id] === 'got';
+    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
+      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
       return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="cta" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
     }).join('');
   } else renderTop();
@@ -3537,7 +3509,7 @@ $('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) re
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
-  else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
+  else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st, PROG.lvl)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
   else return;
   beep('coin'); saveWallet(); progressDot(); renderProgress();
 });
