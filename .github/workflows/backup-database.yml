@@ -23,9 +23,23 @@ jobs:
           FIREBASE_DB_URL: 'https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app'
         run: |
           python3 scripts/backup-db.py
+      # The repository is public and artifacts of public repositories can be downloaded by any GitHub user:
+      # the dump (players' profiles) is uploaded only encrypted. Decrypt with:
+      #   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in FILE.json.enc -out FILE.json -pass env:BACKUP_PASSPHRASE
+      - name: Encrypt backup
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -eu
+          if [ -z "$BACKUP_PASSPHRASE" ]; then echo "::error::BACKUP_PASSPHRASE secret is missing: refusing to upload an unencrypted dump"; exit 1; fi
+          for f in backups/puzzlegrad_backup_*.json; do
+            openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in "$f" -out "$f.enc" -pass env:BACKUP_PASSPHRASE
+            shred -u "$f" 2>/dev/null || rm -f "$f"
+          done
       - name: Upload backup artifact
         uses: actions/upload-artifact@v4
         with:
           name: puzzlegrad-db-backup-${{ github.run_id }}
-          path: backups/puzzlegrad_backup_*.json
+          path: backups/puzzlegrad_backup_*.json.enc
+          if-no-files-found: error
           retention-days: 90

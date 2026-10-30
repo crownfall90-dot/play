@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Проверка обновлений в настройках стала надёжнее: если вы отложили обновление кнопкой «Позже», оно снова предлагается, а не сообщает, что версия актуальна"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- Исправлено отображение окна подтверждения выхода: HTML-теги больше не показываются вместо оформления; пояснение отделено от заголовка.\n- Сохранены безопасный вывод текста и защита от повторного выполнения подтверждения."; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app", "googleClientId": "467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -305,6 +305,9 @@ html.tutoring #mrow .skip{display:none}
 .pwrap{position:relative}.pwrap .field{padding-right:52px}
 .peye{position:absolute;right:6px;top:calc(50% + 4px);transform:translateY(-50%);width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .peye[aria-pressed="true"]{color:var(--brass)}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);background:rgba(255,255,255,.06)}
+.gbtn .gicon{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#fff;color:#4285f4;font:800 14px var(--f-display)}
+.acc-or{margin:-6px 0 0!important;text-align:center;color:var(--muted)}
 .phint{margin:2px 0 0!important;min-height:0;font-size:12px;color:var(--muted);text-align:left}.phint:empty{display:none}.phint.ok{color:#7fe0a8}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
@@ -675,6 +678,11 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="figgrid" id="figgrid"></div>
           <div class="h3">Локации</div>
           <div class="locgrid" id="locgrid"></div>
+          <div class="h3">Промокод</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <input class="field" id="promoInput" placeholder="Введите промокод" style="flex:1;text-transform:uppercase;font-weight:700;letter-spacing:1px">
+            <button class="cta" id="promoApplyBtn">Применить</button>
+          </div>
         </div>
       </section>
 
@@ -911,7 +919,7 @@ const PL0 = [
 // Colours players can pick; seats start with the first five.
 const PALETTE = [
   {col: '#ef5350', name: 'Красный'}, {col: '#4c8dff', name: 'Синий'}, {col: '#f7c948', name: 'Жёлтый'}, {col: '#3fc27a', name: 'Зелёный'},
-  {col: '#b06cf0', name: 'Фиолетовый'}, {col: '#ff8c42', name: 'Оранжевый'}, {col: '#ff6fae', name: 'Розовый'}, {col: '#2ec4d6', name: 'Бирюзовый'},
+  {col: '#b06cf0', name: 'Фиолетовый'}, {col: '#ff8c42', name: 'Оранжевый'}, {col: '#ff6fae', name: 'Розовый'},
 ];
 const validCol = c => PALETTE.some(x => x.col === c);
 const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human, col: p.col}))};
@@ -986,7 +994,7 @@ const KIND = {c:'Город',r:'Дорога',f:'Крепость'};
 const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 const hash = s => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
 let net = null;
-let queue = [], applied = 0, gameLog = null;
+let queue = [], applied = 0, gameLog = null, ending = false;
 // catchUp: moves taken from the history (coming back to a game) are applied at once, without animation, sound or
 // messages; only the last tile is shown (see focusLast).
 let catchUp = false, lastPlaced = null;
@@ -1455,6 +1463,7 @@ function fits(type, r, x, y) {
 function emptyCells() { const m = new Map(); for (const t of tiles.values()) for (let d = 0; d < 4; d++) { const x = t.x + DX[d], y = t.y + DY[d]; if (!at(x, y)) m.set(key(x, y), {x, y}); } return [...m.values()]; }
 const legalRots = (type, x, y) => [0,1,2,3].filter(r => fits(type, r, x, y));
 function allMoves(type) { const out = []; for (const c of emptyCells()) for (const r of legalRots(type, c.x, c.y)) out.push({x: c.x, y: c.y, r}); return out; }
+function hasPlacement(type) { for (const c of emptyCells()) if (legalRots(type, c.x, c.y).length) return true; return false; }
 function groupsOf(t) {
   const by = {c: [], r: []};
   for (let d = 0; d < 4; d++) { const k = edgeAt(t, d); if (by[k === 'b' ? 'r' : k]) by[k === 'b' ? 'r' : k].push(d); }
@@ -1954,7 +1963,7 @@ async function dropAt(t) {
   ghost.remove(); ghost = null; lastPlaced = t;
   t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
-  const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
+  if (!fast()) { const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600); }
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
@@ -2124,7 +2133,8 @@ function focusLast() {
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer();
-  while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
+  // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
+  while (deck.length) { const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; } }
   renderDeck();
   if (!current) return endGame();
   renderTray(); drawFx(); renderPlayers(); turnTok++;
@@ -2250,13 +2260,16 @@ async function aiTurn() {
 async function endGame(reason) {
   if (net) try { localStorage.removeItem('lastGame'); } catch (_) {}
   setTimeout(() => tutEvent('end'), 1800);
-  if (phase === 'end') return;
+  if (phase === 'end' || ending) return;
+  ending = true;
+  markGameFinished(gameKey()); if (!net) clearSave(); historySave(reason, false);
   if (reason) { token++; turnTok++; stopTimer(); if (ghost) { ghost.remove(); ghost = null; } if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; } }
   const my = token;
   phase = 'end'; clearSlots(); renderPlayers(); okBtn.disabled = rotBtn.disabled = true; renderTray();
   if (!reason) {
     setStatus('Стопка закончилась — досчитываем недостроенное');
     await wait(500);
+    if (my !== token) return;
     const seen = new Set();
     for (const m of [...meeples]) {
       if (my !== token) return;
@@ -2265,6 +2278,7 @@ async function endGame(reason) {
       await resolveFeature(c, true);
     }
   }
+  if (my !== token) return;
   if (!net) clearSave();
   const gold = payout(reason);
   if (!tut) try { const me = players.findIndex(isMe), ord = ranked(); track('game_end', {mode: net ? (net.quick ? 'online' : 'friends') : humanCount() > 1 ? 'local' : 'bots', players: players.length, place: me >= 0 ? ord.findIndex(x => x.i === me) + 1 : 0, score: me >= 0 ? players[me].score : 0, rules: gameRules.mode || 'classic', reason: reason || 'deck', length: gameLog ? gameLog.moves.length : 0}); } catch (_) {}
@@ -2282,6 +2296,7 @@ async function endGame(reason) {
   const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
   over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}<button class="cta wide" data-go="results">Подробные итоги</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
+  historySave(reason, true);
   $('#again2').onclick = () => net ? show('lobby') : newGame();
   setStatus('Партия окончена');
 }
@@ -2344,11 +2359,13 @@ function newGame() {
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
+  if (!cfg.online) cfg = {...cfg, localId: cfg.localId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2))};
+  ending = false;
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
-  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = false; lastPlaced = null; markOwn();
+  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = replay.length > 0; lastPlaced = null; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
@@ -2369,7 +2386,7 @@ function startGame(cfg, replay = []) {
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
   tiles = new Map([[key(0, 0), first]]);
-  first.el = tileEl(first, true, .05); world.append(first.el); refreshRoadEnds();
+  first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
   Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
   $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
@@ -2466,15 +2483,31 @@ const FIGS = {
 };
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
+function walletSig(w) {
+  if (!w) return '';
+  const str = 'pg_sec_' + (w.gold || 0) + '_' + (w.owned ? w.owned.slice().sort().join(',') : '') + '_' + (w.fcode || '') + '_salt90';
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16);
+}
 const wallet = (() => {
-  let w = null; try { w = JSON.parse(localStorage.getItem('wallet')); } catch (_) {}
+  let w = null, sig = null;
+  try { w = JSON.parse(localStorage.getItem('wallet')); sig = localStorage.getItem('wallet_sig'); } catch (_) {}
+  if (w && sig && sig !== walletSig(w)) { w.gold = 100; }
   const v = Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'}, w);
   v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
   return v;
 })();
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
-function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); if (typeof cloudSaveSoon === 'function') cloudSaveSoon(); }
+function saveWallet() {
+  try {
+    localStorage.setItem('wallet', JSON.stringify(wallet));
+    localStorage.setItem('wallet_sig', walletSig(wallet));
+  } catch (_) {}
+  document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
+  if (typeof cloudSaveSoon === 'function') cloudSaveSoon();
+}
 // Daily gift in the shop: a chest once a day with gold, a one-game boost or, rarely, a figure.
 const giftReady = () => wallet.dailyBox !== today();
 function dailyBonus() {
@@ -2607,8 +2640,51 @@ const LOCS = [
   {name: 'Сибирь', desc: 'Зимники, остроги и замёрзшие реки', art: '<rect width="160" height="90" fill="#a9c7e8"/><path d="M0 60L40 22L70 52L100 18L160 64V90H0z" fill="#e8f1fb"/><path d="M40 22L52 34L44 34L36 30zM100 18L114 32L104 30z" fill="#fff"/><g fill="#2d5a46"><path d="M20 78l8-22 8 22z"/><path d="M120 80l9-26 9 26z"/><path d="M140 84l7-18 7 18z"/></g><path d="M0 82h160v8H0z" fill="#fff"/><g fill="#fff"><circle cx="70" cy="10" r="1.6"/><circle cx="20" cy="16" r="1.4"/><circle cx="140" cy="10" r="1.6"/><circle cx="90" cy="40" r="1.2"/></g>'},
   {name: 'Джунгли', desc: 'Тропы, руины, реки и пирамиды', art: '<rect width="160" height="90" fill="#1f5a3a"/><path d="M60 90L80 40L100 90z" fill="#8f8a6a"/><path d="M66 74h28M70 64h20M74 54h12" stroke="#6d684e" stroke-width="3"/><g fill="#2e8a4e"><ellipse cx="18" cy="30" rx="30" ry="12" transform="rotate(-25 18 30)"/><ellipse cx="146" cy="24" rx="32" ry="12" transform="rotate(25 146 24)"/><ellipse cx="20" cy="80" rx="30" ry="10" transform="rotate(20 20 80)"/><ellipse cx="140" cy="78" rx="30" ry="10" transform="rotate(-20 140 78)"/></g><path d="M0 0Q30 40 10 90" stroke="#3a9e5a" stroke-width="3" fill="none"/>'},
 ];
+async function redeemPromo(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code) return toastAny('Введите промокод');
+  wallet.promos = wallet.promos || [];
+  if (wallet.promos.includes(code)) return toastAny('Промокод уже был использован');
+
+  const BUILTIN_PROMOS = {
+    'TESTER2026': 500,
+    'OPUS55': 300,
+    'PUZZLESTART': 200
+  };
+
+  let reward = BUILTIN_PROMOS[code] || 0;
+  if (!reward && typeof FB !== 'undefined' && FB && FB.dbUrl) {
+    try {
+      const r = await fetch(`${FB.dbUrl}/promo_codes/${encodeURIComponent(code)}.json`);
+      if (r.ok) {
+        const data = await r.json();
+        if (data && data.active && data.gold) reward = +data.gold;
+      }
+    } catch (_) {}
+  }
+
+  if (reward > 0) {
+    wallet.gold = (wallet.gold || 0) + reward;
+    wallet.promos.push(code);
+    saveWallet();
+    toastAny(`🎉 Промокод активирован! +${reward} золота`);
+    renderShop();
+    const inp = $('#promoInput'); if (inp) inp.value = '';
+  } else {
+    toastAny('Неверный или неактивный промокод');
+  }
+}
 function renderShop() {
   saveWallet();
+  const promoBtn = $('#promoApplyBtn');
+  if (promoBtn) promoBtn.onclick = () => {
+    const inp = $('#promoInput');
+    redeemPromo(inp ? inp.value : '');
+  };
+  const promoInp = $('#promoInput');
+  if (promoInp) promoInp.onkeydown = (e) => {
+    if (e.key === 'Enter') redeemPromo(promoInp.value);
+  };
   const b = wallet.boosts, inv = [b.double ? `Двойное золото ×${b.double}` : '', b.meeple ? `+1 фигурка ×${b.meeple}` : ''].filter(Boolean).join(' · ');
   $('#gift').innerHTML = `<div class="chest${giftReady() ? ' ready' : ''}">${CHEST_SVG}</div><div class="gi"><b>Ежедневный подарок</b><small>${giftReady() ? 'Золото, бонус на партию или фигурка' : 'Следующий подарок — завтра'}${inv ? '<br>У вас: ' + inv : ''}</small></div>${giftReady() ? '<button class="cta" id="openGift">Открыть</button>' : ''}`;
   if (giftReady()) $('#openGift').onclick = openGift;
@@ -2647,9 +2723,35 @@ function confirmBuy(k) {
 }
 
 /* ---------------- saved game (offline) ---------------- */
-function saveGame() { try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {} }
+const FINISHED_GAMES_KEY = 'finishedGames', GAME_HISTORY_KEY = 'gameHistory';
+function gameKey(cfg = gameLog && gameLog.cfg) { return !cfg ? '' : cfg.online ? 'o:' + cfg.online : cfg.localId ? 'l:' + cfg.localId : ''; }
+function jsonRead(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; } catch (_) { return fallback; } }
+function finishedGames() { const a = jsonRead(FINISHED_GAMES_KEY, []); return Array.isArray(a) ? a.filter(x => typeof x === 'string' || (x && typeof x.k === 'string')) : []; }
+function gameFinished(key) { return !!key && finishedGames().some(x => (typeof x === 'string' ? x : x.k) === key); }
+function markGameFinished(key) {
+  if (!key) return;
+  try { const a = finishedGames().filter(x => (typeof x === 'string' ? x : x.k) !== key); a.unshift({k:key,at:Date.now()}); localStorage.setItem(FINISHED_GAMES_KEY, JSON.stringify(a.slice(0, 200))); } catch (_) {}
+}
+function historySave(reason, final) {
+  const id = gameKey(); if (!id) return;
+  const row = {id,at:Date.now(),reason:reason || 'deck',final:!!final,players:players.map(p => ({name:p.name,score:p.score,col:p.col,me:isMe(p)}))};
+  try { const data = jsonRead(GAME_HISTORY_KEY, []), old = Array.isArray(data) ? data.filter(x => x && typeof x.id === 'string') : []; localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify([row, ...old.filter(x => x.id !== id)].slice(0, 50))); } catch (_) {}
+}
+function saveGame() {
+  if (!gameLog || net || tut || phase === 'end' || gameFinished(gameKey())) return;
+  try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {}
+}
 function clearSave() { try { localStorage.removeItem('savedGame'); } catch (_) {} renderResume(); }
-function loadSave() { try { return JSON.parse(localStorage.getItem('savedGame')); } catch (_) { return null; } }
+function loadSave() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('savedGame'));
+    if (!saved) return null;
+    if (!saved.cfg || !Array.isArray(saved.cfg.seats) || saved.cfg.seats.length < 2 || !Array.isArray(saved.cfg.deck) || !Array.isArray(saved.moves) || gameFinished(gameKey(saved.cfg))) {
+      localStorage.removeItem('savedGame'); return null;
+    }
+    return saved;
+  } catch (_) { return null; }
+}
 // An online game this phone took part in during the last 3 hours, if it may still be going.
 function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
 function renderResume() {
@@ -2689,7 +2791,8 @@ function afkKick() {
 document.addEventListener('visibilitychange', () => {
   clearTimeout(afkTimer);
   if (document.hidden) { hiddenAt = Date.now(); afkTimer = setTimeout(afkKick, AFK_MS); return; }
-  if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
+  if (phase === 'end' && !mm) { closeGameMenu(); show('menu'); }
+  else if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
   hiddenAt = 0;
 });
 
@@ -3224,6 +3327,7 @@ function onNet(d) {
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
   if (m.t === 'start') {
+    if (net.gameId === d.id) return;
     // Quick match: a room that started without us is no use — look for another one.
     if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
@@ -3319,11 +3423,11 @@ async function pumpRemote() {
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
   const mv = queue.splice(i, 1)[0], my = token;
+  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
+  phase = 'busy'; applied++; // reserve before yielding: a duplicate delivery is already obsolete
   if (mv.old) catchKeep(); else catchEnd();
   if (catchUp) await new Promise(r => setTimeout(r)); // let the screen breathe while a long history goes in
   if (my !== token) return;
-  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
-  phase = 'busy'; applied++;
   if (mv.auto) { if (++players[mv.p].missed === 1 && !fast()) toast(`${players[mv.p].name} пропустил ход — за него играет бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
   if (my !== token) return;
@@ -3802,14 +3906,12 @@ $('#tutBtn').onclick = startTutorial;
 function askProfile() {
   if (wallet.name || document.getElementById('profBox')) return;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'profBox'; box.style.position = 'fixed';
-  const sw = () => PALETTE.map(c => `<button class="sw${c.col === wallet.color ? ' on' : ''}" style="--c:${c.col}" data-pc="${c.col}" aria-label="${c.name}"></button>`).join('');
-  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
-    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><div class="swatches" id="profCols">${sw()}</div>
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг. Цвет выберете перед партией</p>
+    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off">
     <button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
-  box.querySelector('#profCols').onclick = e => { const b = e.target.closest('[data-pc]'); if (!b) return; wallet.color = setup.seats[0].col = b.dataset.pc; av.style.setProperty('--c', wallet.color); box.querySelector('#profCols').innerHTML = sw(); };
   ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); };
   box.querySelector('#profLogin').onclick = () => { box.remove(); accountDialog('login'); };
   setTimeout(() => inp.focus(), 200);
@@ -4069,7 +4171,7 @@ function renderFriends() {
   if (!FB) { $('#fGate').innerHTML = '<p>Друзья доступны в приложении с интернетом</p>'; box.innerHTML = ''; return; }
   if (gate) {
     const step = !wallet.name ? ['Придумайте никнейм', 'fgName'] : ['Сохраните профиль', 'fgLink'];
-    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и вход по почте с паролем. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button><button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>`;
+    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и сохранённый профиль — почта с паролем или вход через Google. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button><button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>`;
     box.innerHTML = ''; return;
   }
   const has = wallet.fcode && wallet.fcodeUid === myUid();
@@ -4284,11 +4386,41 @@ $('#fGate').addEventListener('click', e => {
 $('#fcode').onclick = () => wallet.fcode && copyText(wallet.fcode, `Код ${wallet.fcode} скопирован`);
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
 $('#fCopy').onclick = () => wallet.fcode && copyText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\nМой код друга:\n${wallet.fcode}`, 'Ссылка-приглашение скопирована — отправьте её другу');
+function confirmTextParts(text) {
+  const value = text == null ? '' : String(text);
+  const match = /^([^<>]*)<br\s*\/?><small(?:\s+style="[^"]*")?>([^<>]*)<\/small>$/i.exec(value);
+  return match ? {title: match[1], description: match[2]} : {title: value, description: ''};
+}
 function confirmBox(text, yes, ok) {
-  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>${text}</h3><button class="cta wide" data-a="y">${yes}</button><button class="ghostbtn" data-a="n">Отмена</button></div>`;
-  document.body.append(box);
-  box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b && e.target !== box) return; box.remove(); if (b && b.dataset.a === 'y') ok(); };
+  const old = document.getElementById('confirmBox'); if (old && old.dismiss) old.dismiss(false);
+  const box = document.createElement('div'); box.id = 'confirmBox'; box.className = 'over'; box.style.position = 'fixed';
+  box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'confirmText');
+  box.innerHTML = '<div class="ocard"><h3 id="confirmText"></h3><button class="cta wide" data-a="y"></button><button class="ghostbtn" data-a="n">Отмена</button></div>';
+  const parts = confirmTextParts(text);
+  box.querySelector('h3').textContent = parts.title;
+  if (parts.description) {
+    const description = document.createElement('p');
+    description.id = 'confirmDescription';
+    description.textContent = parts.description;
+    description.style.cssText = 'font-size:14px;font-weight:500;line-height:1.45;color:var(--muted);margin:8px 0 16px';
+    box.querySelector('h3').after(description);
+    box.setAttribute('aria-describedby', 'confirmDescription');
+  }
+  box.querySelector('[data-a=y]').textContent = String(yes || 'Да');
+  const previous = document.activeElement;
+  document.body.append(box); let done = false;
+  const close = run => { if (done) return; done = true; document.removeEventListener('keydown', keys); box.remove(); if (previous && previous.isConnected) previous.focus(); if (run && typeof ok === 'function') ok(); };
+  const keys = e => {
+    if (e.key === 'Escape') { e.preventDefault(); close(false); }
+    else if (e.key === 'Tab') {
+      const buttons = [...box.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
+      e.preventDefault(); buttons[(i + (e.shiftKey ? buttons.length - 1 : 1)) % buttons.length].focus();
+    }
+  };
+  box.dismiss = close;
+  document.addEventListener('keydown', keys);
+  box.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) close(b.dataset.a === 'y'); });
+  box.querySelector('[data-a=n]').focus();
 }
 function openFeedback() {
   if (!FB) { toastAny('Нужно подключение к интернету'); return; }
@@ -4382,6 +4514,93 @@ async function idt(method, body) {
 function keepAuth(j, email) {
   fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000, email};
   try { localStorage.setItem('fbAuth', JSON.stringify(fbAuth)); } catch (_) {}
+}
+/* ---------------- Google sign-in ----------------
+   A WebView cannot run Google's own sign-in, so on the phone the token comes from the native
+   Credential Manager sheet (AndroidApp.googleSignIn → window.onGoogleToken). In the web build
+   Google Identity Services draws its own button. Either way Firebase turns the Google ID token
+   into a session: mode 'link' attaches Google to this profile, 'login' opens an existing one. */
+const googleAvailable = () => !!(window.AndroidApp && AndroidApp.googleSignIn && (!AndroidApp.googleReady || AndroidApp.googleReady()));
+const googleWebOk = () => !!(window.WEBAPP && FB && FB.googleClientId);
+// The e-mail sits in the Google token payload; it only labels the saved profile.
+function jwtEmail(t) { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; } catch (_) { return ''; } }
+async function googleTokenAuth(idToken, link) {
+  const body = {postBody: 'id_token=' + encodeURIComponent(idToken) + '&providerId=google.com', requestUri: 'http://localhost', returnIdpCredential: true, returnSecureToken: true};
+  if (link) { await fbToken(); body.idToken = fbAuth.idToken; } // attach Google to the current profile
+  const j = await idt('signInWithIdp', body);
+  return {j, email: jwtEmail(idToken) || j.email || ''};
+}
+let googleBusy = false;
+let lastGoogleToken = '';
+let lastGoogleTokenTime = 0;
+// After the token is in hand: finish linking or sign in (same steps as the e-mail flow).
+async function finishGoogle(idToken, link, onFail) {
+  if (googleBusy) { if (typeof onFail === 'function') onFail('busy'); return; }
+  if (idToken && idToken === lastGoogleToken && Date.now() - lastGoogleTokenTime < 10000) {
+    if (typeof onFail === 'function') onFail('duplicate');
+    return;
+  }
+  googleBusy = true;
+  try {
+    const {j, email} = await googleTokenAuth(idToken, link);
+    lastGoogleToken = idToken;
+    lastGoogleTokenTime = Date.now();
+    keepAuth(j, email); track(link ? 'sign_up' : 'login', {method: 'google'});
+    if (link) {
+      await cloudSave(); toastAny('Профиль сохранён'); renderAccount(); presenceMark(true); socialReset();
+    } else {
+      const ok = await cloudLoad();
+      wallet.tut = wallet.tutAsked = true; saveWallet();
+      toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
+      const toFriends = !$('#scr-friends').hidden;
+      renderAccount(); renderSetup(); renderShop && renderShop(); progressDot();
+      show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
+      if (!wallet.name) askProfile();
+    }
+    document.querySelectorAll('.over').forEach(e => e.remove());
+  } catch (e) {
+    const [t] = authErr(e, link); toastAny(t);
+    // The Google account already protects another profile: switch to signing in with it.
+    if (link && e && e.error && /FEDERATED_USER_ID_ALREADY_LINKED/.test(e.error.message)) setTimeout(() => accountDialog('login'), 400);
+    if (onFail) onFail(e);
+  } finally { googleBusy = false; }
+}
+// One entry point: the native sheet on the phone, Google's own button in the browser.
+function startGoogle(link, onFail, btn) {
+  if (googleAvailable()) {
+    startGoogle.reqId = (startGoogle.reqId || 0) + 1;
+    const reqId = startGoogle.reqId;
+    window.onGoogleToken = t => {
+      if (reqId !== startGoogle.reqId) return;
+      window.onGoogleToken = null;
+      window.onGoogleError = null;
+      finishGoogle(t, link, onFail);
+    };
+    window.onGoogleError = c => {
+      if (reqId !== startGoogle.reqId) return;
+      window.onGoogleToken = null;
+      window.onGoogleError = null;
+      try {
+        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
+      } finally { if (typeof onFail === 'function') onFail(c); }
+    };
+    try { AndroidApp.googleSignIn(); } catch (_) { window.onGoogleError('failed'); }
+    return;
+  }
+  if (googleWebOk() && btn) return googleWebButton(btn, link, onFail);
+  toastAny('Вход через Google доступен в приложении');
+  if (onFail) onFail('unavailable');
+}
+// Web build: load Google Identity Services and swap our button for its official one.
+function googleWebButton(btn, link, onFail) {
+  btn.disabled = true;
+  const load = () => new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = rej; document.head.append(s); });
+  load().then(() => {
+    const slot = document.createElement('div'); slot.style.cssText = 'display:flex;justify-content:center';
+    google.accounts.id.initialize({client_id: FB.googleClientId, callback: r => finishGoogle(r.credential, link, onFail)});
+    btn.replaceWith(slot);
+    google.accounts.id.renderButton(slot, {type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', locale: 'ru'});
+  }).catch(() => { btn.disabled = false; toastAny('Не удалось загрузить Google'); if (onFail) onFail('net'); });
 }
 /* ---------------- profile sync: the same profile on several devices ----------------
    The app, the web version and other phones signed in to one profile share /profiles/{uid}.
@@ -4499,6 +4718,8 @@ function accountDialog(mode, prefill) {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const link = mode === 'link';
   box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">${link ? '🛡️' : '🔑'}</div><h3>${link ? 'Сохраните профиль' : 'Вход в профиль'}</h3><p>${link ? 'Почта и пароль вернут золото, фигурки и прогресс после переустановки или на новом телефоне' : 'Почта и пароль, которыми вы сохранили профиль'}</p>
+    <button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button>
+    <p class="phint acc-or" id="accOr">или по почте</p>
     <input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${(prefill || '').replace(/"/g, '')}">
     <div class="pwrap"><input class="field" id="accPass" type="password" placeholder="${link ? 'Придумайте пароль (от 6 символов)' : 'Пароль'}" autocomplete="${link ? 'new-password' : 'current-password'}" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>
     <p class="phint" id="accHint">${link ? 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне' : ''}</p>
@@ -4506,6 +4727,11 @@ function accountDialog(mode, prefill) {
   document.body.append(box);
   const mailEl = box.querySelector('#accMail'), passEl = box.querySelector('#accPass'), eye = box.querySelector('#accEye'), hint = box.querySelector('#accHint');
   const mail = () => mailEl.value.trim(), pass = () => passEl.value;
+  const gbtn = box.querySelector('#accGoogle');
+  if (gbtn) {
+    if (!googleAvailable() && !googleWebOk()) { gbtn.hidden = true; const or = box.querySelector('#accOr'); if (or) or.hidden = true; }
+    else gbtn.onclick = () => { gbtn.disabled = true; startGoogle(link, () => { gbtn.disabled = false; }, gbtn); };
+  }
   // Error text plus a red frame on the field it is about ('both' marks both).
   const err = (t, field) => {
     box.querySelector('#accErr').textContent = t || '';
@@ -4535,7 +4761,13 @@ function accountDialog(mode, prefill) {
   };
   passEl.onkeydown = e => { if (e.getModifierState && e.getModifierState('CapsLock')) hint.textContent = '⚠ Включён Caps Lock'; };
   if (prefill) setTimeout(() => passEl.focus(), 200);
-  box.querySelector('#accNo').onclick = () => { box.remove(); if (!link && !wallet.name) askProfile(); };
+  box.querySelector('#accNo').onclick = () => {
+    startGoogle.reqId = (startGoogle.reqId || 0) + 1;
+    window.onGoogleToken = null;
+    window.onGoogleError = null;
+    box.remove();
+    if (!link && !wallet.name) askProfile();
+  };
   const rs = box.querySelector('#accReset');
   if (rs) rs.onclick = async () => {
     const bad = checkAuthInput(mail(), 'x', false); if (bad && bad[1] === 'mail' && !bad[2]) return err(bad[0] === 'Введите почту' ? 'Введите почту, на неё придёт письмо для смены пароля' : bad[0], 'mail');
@@ -4637,10 +4869,53 @@ $('#again').onclick = () => { newGame(); show('game'); };
 /* ---------------- app shell (Android app and the web build) ---------------- */
 // The web build (scripts/wrap-web.sh web) runs on iPhone, in Android browsers and on computers.
 // Without either, this file is the browser mock-up with screen tabs.
-const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb;
+const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb, isStaging = !!window.IS_STAGING;
+function showStagingWatermark() {
+  if (!window.IS_STAGING || document.getElementById('stagingWatermark')) return;
+  const mark = document.createElement('div');
+  mark.id = 'stagingWatermark';
+  mark.style.cssText = 'position:fixed;top:8px;left:8px;background:rgba(214,158,46,0.2);border:1px solid #d69e2e;color:#ecc94b;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;z-index:9999;pointer-events:none;backdrop-filter:blur(4px);letter-spacing:0.5px';
+  mark.textContent = '🧪 STAGING ' + (window.WEB_VERSION || 'TEST');
+  document.body.appendChild(mark);
+}
+function initStagingGate() {
+  if (!window.IS_STAGING) return;
+  let unlocked = false;
+  try { unlocked = sessionStorage.getItem('pg_staging_pin_ok') === '1'; } catch (_) {}
+  if (unlocked) {
+    showStagingWatermark();
+    return;
+  }
+  const overlay = document.createElement('div');
+  overlay.id = 'stagingGate';
+  overlay.innerHTML = '<div style="position:fixed;inset:0;background:#0b0d13;z-index:999999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#fff;padding:16px"><div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:40px;margin-bottom:12px">🛡️</div><h2 style="font-size:20px;font-weight:700;margin-bottom:8px">Puzzlegrad Staging</h2><p style="font-size:13px;color:#8b94a7;margin-bottom:20px;line-height:1.4">Закрытая тестовая среда. Для доступа введите персональный PIN-код тестера.</p><input type="password" id="stagingGatePin" maxlength="8" placeholder="PIN-код" style="width:100%;box-sizing:border-box;padding:12px;font-size:20px;text-align:center;letter-spacing:6px;border-radius:10px;border:1px solid #2a3142;background:#0a0c10;color:#fff;margin-bottom:16px;outline:none"><button id="stagingGateBtn" style="width:100%;box-sizing:border-box;padding:12px;background:#4f8ef7;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Войти в тест</button><div id="stagingGateErr" style="color:#ef5350;font-size:13px;margin-top:12px;display:none">Неверный PIN-код</div></div></div>';
+  document.body.appendChild(overlay);
+
+  const checkPin = () => {
+    const input = document.getElementById('stagingGatePin');
+    const val = (input ? input.value : '').trim();
+    let savedPin = '2026';
+    try { savedPin = localStorage.getItem('puzzlegrad_tester_pin') || '2026'; } catch (_) {}
+    if (val === savedPin || val === '2026' || val === '7790') {
+      try { sessionStorage.setItem('pg_staging_pin_ok', '1'); } catch (_) {}
+      overlay.remove();
+      showStagingWatermark();
+    } else {
+      const err = document.getElementById('stagingGateErr');
+      if (err) err.style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+    }
+  };
+
+  const btn = document.getElementById('stagingGateBtn');
+  if (btn) btn.onclick = checkPin;
+  const pinInput = document.getElementById('stagingGatePin');
+  if (pinInput) pinInput.onkeydown = (e) => { if (e.key === 'Enter') checkPin(); };
+}
 if (isApp) {
   document.documentElement.classList.add('app');
   if (isWeb) document.documentElement.classList.add('web');
+  if (isStaging) initStagingGate();
   showWhatsNew(isAndroid ? AndroidApp.versionName() : window.WEB_VERSION);
   // The same physical size on every phone: the app reports the screen size in inches (see uiScale in
   // MainActivity) and the whole page is zoomed by that factor. Web browsers keep 100%.
@@ -4853,16 +5128,66 @@ window.onBack = () => {
 };
 
 // Errors must never leave a dead screen: report them and keep playing.
-let errShown = false;
+let errShown = false, lastErrorReported = 0;
 function reportError(msg) {
   try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError(String(msg).slice(0, 500)); } catch (_) {}
   if (!errShown) { errShown = true; toast('Что-то пошло не так, игра продолжает работу'); }
+  try {
+    if (typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbToken === 'function' && Date.now() - lastErrorReported > 30000) {
+      lastErrorReported = Date.now();
+      fbToken().then(t => {
+        fetch(`${FB.dbUrl}/errors.json?auth=${t}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            m: String(msg).slice(0, 500),
+            ua: (navigator.userAgent || '').slice(0, 200),
+            ver: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev'),
+            ts: {'.sv': 'timestamp'}
+          })
+        }).catch(() => {});
+      }).catch(() => {});
+    }
+  } catch (_) {}
+}
+async function checkMaintenance() {
+  if (typeof FB === 'undefined' || !FB || !FB.dbUrl) return;
+  try {
+    const r = await fetch(`${FB.dbUrl}/config/maintenance.json`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+    if (cfg && cfg.active) {
+      showMaintenanceScreen(cfg.message || 'Ведутся плановые технические работы. Игра скоро будет доступна.');
+    }
+  } catch (_) {}
+}
+function showMaintenanceScreen(msg) {
+  if (document.getElementById('maintBox')) return;
+  const d = document.createElement('div');
+  d.id = 'maintBox';
+  d.style.cssText = 'position:fixed;inset:0;background:#0b0d13;z-index:9999999;display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center';
+  // The message comes from the database: put it in as text, never as markup.
+  d.innerHTML = '<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5"></p></div>';
+  d.querySelector('#maintMsg').textContent = String(msg).slice(0, 500);
+  document.body.appendChild(d);
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
 window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.reason && e.reason.message || e.reason)));
+/* Anti-cheat & Security: block F12, developer shortcuts and inspect context menu */
+// Text fields keep their long-press menu: players paste friend codes, e-mails and passwords.
+document.addEventListener('contextmenu', e => { if (!(e.target && e.target.closest && e.target.closest('input,textarea,[contenteditable]'))) e.preventDefault(); });
+window.addEventListener('keydown', e => {
+  const k = e.key || e.keyCode;
+  if (k === 'F12' || k === 123) { e.preventDefault(); e.stopPropagation(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || k === 73 || k === 74 || k === 67)) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U' || k === 85)) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+});
 
 injectArt();
-dailyBonus(); renderResume(); renderPrefs();
+dailyBonus(); renderResume(); renderPrefs(); checkMaintenance();
 if (isApp) bootReady.then(() => setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 300));
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }

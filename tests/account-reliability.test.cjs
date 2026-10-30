@@ -179,7 +179,9 @@ test('anti-cheat: walletSig detects tampering and protects wallet integrity', ()
 test('anti-cheat: blocks F12, developer shortcuts and context menu', () => {
   assert.ok(html.includes("k === 'F12' || k === 123"));
   assert.ok(html.includes("e.ctrlKey || e.metaKey") && html.includes("e.shiftKey") && html.includes("'I'"));
-  assert.ok(html.includes("document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });"));
+  assert.ok(html.includes("document.addEventListener('contextmenu', e => {"));
+  // Long-press paste must keep working in text fields (friend codes, e-mail, password).
+  assert.ok(html.includes("closest('input,textarea,[contenteditable]')"));
 });
 
 test('staging gate: protects staging web with tester PIN and watermark badge', () => {
@@ -266,16 +268,17 @@ test('features: maintenance screen blocks game view when active', () => {
   const elements = {};
   const mockDoc = {
     getElementById: (id) => elements[id] || null,
-    createElement: () => ({ id: '', style: {}, innerHTML: '' }),
+    createElement: () => { const msg = { textContent: '' }; return { id: '', style: {}, innerHTML: '', msg, querySelector: () => msg }; },
     body: { appendChild: (el) => { elements[el.id] = el; } }
   };
   const env = {
     document: mockDoc
   };
   vm.runInNewContext(fn('showMaintenanceScreen'), env);
-  env.showMaintenanceScreen('Плановые работы');
+  env.showMaintenanceScreen('Плановые работы <img src=x onerror=alert(1)>');
   assert.ok(elements.maintBox, 'maintenance screen must be rendered');
-  assert.ok(elements.maintBox.innerHTML.includes('Плановые работы'));
+  assert.ok(elements.maintBox.msg.textContent.includes('Плановые работы'));
+  assert.ok(!elements.maintBox.innerHTML.includes('<img'), 'the database message must never be inserted as markup');
 });
 
 

@@ -54,7 +54,12 @@ def run_backup():
     out_file = OUT_DIR / f"puzzlegrad_backup_{ts}.json"
 
     print(f"[{ts}] Starting database backup from {DB_URL}...")
-    nodes = ["profiles", "leaders", "fcodes", "presence", "playerNo", "guestN"]
+    if not token:
+        print("[error] no FIREBASE_SERVICE_ACCOUNT / FIREBASE_SECRET: an anonymous read would back up nothing", file=sys.stderr)
+        sys.exit(1)
+    # presence is short-lived online status: nothing to restore from it.
+    nodes = ["profiles", "leaders", "fcodes", "friends", "playerNo", "guestN"]
+    failed = []
     dump = {
         "_backup_meta": {
             "created_at": now.isoformat(),
@@ -71,11 +76,16 @@ def run_backup():
             count = len(data) if isinstance(data, (dict, list)) else 1
             print(f"  ✓ /{node}: {count} records")
         else:
+            failed.append(node)
             print(f"  ✗ /{node}: skipped/failed")
 
     out_file.write_text(json.dumps(dump, ensure_ascii=False, indent=2), encoding="utf-8")
     size_kb = out_file.stat().st_size / 1024
-    print(f"✓ Backup successfully saved to {out_file} ({size_kb:.1f} KB)")
+    print(f"✓ Backup saved to {out_file} ({size_kb:.1f} KB)")
+    if failed:
+        # A green run must mean a complete backup.
+        print(f"[error] nodes not backed up: {', '.join(failed)}", file=sys.stderr)
+        sys.exit(1)
     return out_file
 
 

@@ -5149,13 +5149,16 @@ function showMaintenanceScreen(msg) {
   const d = document.createElement('div');
   d.id = 'maintBox';
   d.style.cssText = 'position:fixed;inset:0;background:#0b0d13;z-index:9999999;display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center';
-  d.innerHTML = `<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p style="color:#8b94a7;font-size:14px;line-height:1.5">${msg}</p></div>`;
+  // The message comes from the database: put it in as text, never as markup.
+  d.innerHTML = '<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5"></p></div>';
+  d.querySelector('#maintMsg').textContent = String(msg).slice(0, 500);
   document.body.appendChild(d);
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
 window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.reason && e.reason.message || e.reason)));
 /* Anti-cheat & Security: block F12, developer shortcuts and inspect context menu */
-document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
+// Text fields keep their long-press menu: players paste friend codes, e-mails and passwords.
+document.addEventListener('contextmenu', e => { if (!(e.target && e.target.closest && e.target.closest('input,textarea,[contenteditable]'))) e.preventDefault(); });
 window.addEventListener('keydown', e => {
   const k = e.key || e.keyCode;
   if (k === 'F12' || k === 123) { e.preventDefault(); e.stopPropagation(); return false; }

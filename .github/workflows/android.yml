@@ -41,7 +41,10 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           ./scripts/wrap-web.sh
-          CODE=$((100 + GITHUB_RUN_NUMBER))
+          # Next version = highest vNNN tag + 1. Several workflows publish releases, so a per-workflow run
+          # counter would repeat or go backwards (Android refuses to install a lower versionCode).
+          LAST=$(git ls-remote --tags origin 'v*' | sed -n 's#.*refs/tags/v\([0-9][0-9]*\)$#\1#p' | sort -n | tail -1)
+          CODE=$(( ${LAST:-100} + 1 ))
           echo "CODE=$CODE" >> "$GITHUB_ENV"
           chmod +x gradlew
           ./gradlew assembleGithubRelease bundlePlayRelease -PversionCode=$CODE --no-daemon
