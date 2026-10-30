@@ -9,7 +9,7 @@ const path = require('path');
 const GAME = path.join(__dirname, '..', '..', 'web', 'game.html');
 const HOOK = `
 window.__pg = {
-  startGame, makeDeck, show,
+  startGame, makeDeck, show, sound,
   state: () => ({phase, applied, players, tiles, gameLog}),
 };
 `;
