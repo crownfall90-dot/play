@@ -1169,7 +1169,9 @@ function startGame(cfg, replay = []) {
   tiles = new Map([[key(0, 0), first]]);
   first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
-  Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
+  // The first card's neighbours sit about 136 px per unit of zoom from the centre; keep them clear of the zoom buttons
+  // on the right edge (48 px) on narrow phones, never above the usual 1.05.
+  Object.assign(cam, {px: 0, py: 0, z: Math.max(.7, Math.min(1.05, (document.documentElement.clientWidth / 2 - 54) / 136)), tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
   $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
   renderPlayers(); renderResults(false);
   if (replay.length || cfg.noIntro) { toast(`Первая карта из стопки: ${TYPES[first.type].name}`); return startTurn(); }

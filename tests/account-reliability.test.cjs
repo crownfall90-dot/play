@@ -341,3 +341,8 @@ test('app text is not selectable by long press, typing fields and codes are', ()
   assert.ok(/html\.app input,html\.app textarea,html\.app a,[^{]*html\.app \.code/.test(css), 'inputs, links and codes stay selectable');
   assert.ok(html.includes('<b>С&nbsp;друзьями</b>'), 'the menu label does not break after «С»');
 });
+
+test('the starting zoom keeps the first card\'s neighbours clear of the zoom buttons on narrow phones', () => {
+  assert.ok(html.includes('(document.documentElement.clientWidth / 2 - 54) / 136'));
+  assert.ok(html.includes('Math.max(.7, Math.min(1.05,'));
+});
