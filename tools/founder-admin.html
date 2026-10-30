@@ -278,17 +278,16 @@ const log = (msg) => {
   el.scrollTop = el.scrollHeight;
 };
 
+// The panel holds no GitHub token: release and backup buttons open the workflow page,
+// where «Run workflow» starts it under the owner's own GitHub login.
+const ACTIONS = 'https://github.com/crownfall90-dot/play/actions/workflows/';
+const openWorkflow = (file, what) => { log('Открываю ' + file + ': нажмите «Run workflow» (ветка main), чтобы ' + what); window.open(ACTIONS + file, '_blank', 'noopener'); };
+
 document.getElementById('btnPromote').onclick = () => {
-  if (confirm('Вы уверены, что хотите запустить сборку и опубликовать проверенную версию в Production для ВСЕХ игроков?')) {
-    log('Triggering promote-production.yml workflow via GitHub Actions API...');
-    alert('Команда на релиз отправлена в GitHub Actions (promote-production.yml).');
-  }
+  if (confirm('Открыть выпуск в Production для ВСЕХ игроков? На странице GitHub нажмите «Run workflow».')) openWorkflow('promote-production.yml', 'выпустить версию для всех игроков');
 };
 
-document.getElementById('btnBackupNow').onclick = () => {
-  log('Starting full database snapshot (/profiles, /leaders, /fcodes)...');
-  setTimeout(() => log('✓ Backup generated: puzzlegrad_backup_' + Date.now() + '.json (saved)'), 1000);
-};
+document.getElementById('btnBackupNow').onclick = () => openWorkflow('backup-database.yml', 'сделать зашифрованный бэкап базы');
 
 document.getElementById('btnEnableMaint').onclick = () => {
   const msg = document.getElementById('maintMessage').value;
