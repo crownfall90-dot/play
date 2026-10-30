@@ -63,6 +63,10 @@ html.web{--it:env(safe-area-inset-top,0px);--ib:env(safe-area-inset-bottom,0px);
 html.web,html.web body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.web body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
 html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
+/* The app is not a document: long-pressing a label must not start a text selection. Typing fields, links and codes people copy stay selectable. */
+html.app body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+html.app input,html.app textarea,html.app a,html.app [contenteditable],html.app .code,html.app .code *,html.app .copyable,html.web a,html.web .code,html.web .code *,html.web .copyable{-webkit-user-select:text;user-select:text}
+
 @supports (height:100dvh){html.web .page{height:100dvh}}
 /* On a computer or tablet the game stays phone-shaped in the middle of the screen. */
 @media (min-width:700px){html.web body{background:#0a0e1a radial-gradient(900px 600px at 50% 0%,#1d2848,transparent 70%)}
