@@ -1055,3 +1055,133 @@
 **В коде:**
 - Надёжная ручная проверка обновлений (GitHub-версия)
 
+## 1.0.207 — 2026-10-25
+
+**Игрокам:**
+- Вход через Google: сохраните профиль и заходите на новом телефоне в один тап кнопкой «Продолжить с Google». Почта с паролем тоже работает
+
+**В коде:**
+- Fix Credential Manager call signature (context first)
+- Sign in with Google (native Credential Manager in the app, GIS button on the web)
+- Журнал версий: 1.0.205
+
+## 1.0.208 — 2026-10-25
+
+**Игрокам:**
+- Вход через Google включён: сохраните профиль или заходите на новом телефоне в один тап кнопкой «Продолжить с Google» (в настройках профиля). Почта с паролем тоже работает
+- Цветов игрока теперь 7 — убрали бирюзовый
+- При создании профиля вводится только никнейм, почта и пароль: цвет выбирается перед партией
+
+**В коде:**
+- Seven player colours; profile creation asks only for a nickname (colour is picked before a game)
+- Enable Google sign-in: embed the web OAuth client id, document the SHA-1 setup
+
+## 1.0.209 — 2026-10-29
+
+**Игрокам:**
+- Вход через Google включён: сохраните профиль или заходите на новом телефоне в один тап кнопкой «Продолжить с Google» (в настройках профиля). Почта с паролем тоже работает
+- Цветов игрока теперь 7 — убрали бирюзовый
+- При создании профиля вводится только никнейм, почта и пароль: цвет выбирается перед партией
+- Завершённая партия больше не сохраняется как активная; добавлена защита повторного завершения и запоздалого досчёта.
+- Уменьшены визуальные эффекты при восстановлении ходов.
+- Карты без допустимого места пропускаются без лишнего уведомления.
+- Исправлены повторные события и окна подтверждения.
+
+**В коде:**
+- fix: prepare lifecycle corrections for main APK
+- ci: prepare production lifecycle candidate without publishing
+
+## 1.0.210 — 2026-10-29
+
+**Игрокам:**
+- Исправлена отметка об уведомлении: если Android запрещает уведомления приложения или канал обновлений отключён, версия не считается уведомлённой.
+- Добавлена защита от одновременной обработки уведомлений об обновлении.
+
+**В коде:**
+- release: authorize verified GitHub APK 1.0.210
+- fix: retain update notification eligibility when Android blocks display
+- ci: prepare guarded notification fix and offline checks
+- fix: harden lifecycle replay and confirmation flow
+- fix: guard terminal lifecycle and duplicate events in staging
+- docs: preserve project context and development requirements
+- Implement isolated staging updater with APK identity and signing checks
+- Implement isolated staging updater with APK identity and signing checks
+- Build second persistently signed staging update for upgrade test
+- Compute staging signer digest from PEM certificate instead of text labels
+- Diagnose staging certificate comparison and report CI status in issue
+- Finalize explicit persistent staging debug signing configuration
+- Use persistent secret-backed signing for staging APKs
+- Add isolated offline staging APK workflow
+
+## 1.0.211 — 2026-10-29
+
+**Игрокам:**
+- Технический выпуск: исправлены ошибки компиляции экспериментального аккаунтного модуля Android.
+- Добавлены регрессионные проверки существующих точек входа Google и сохранения выбранного цвета.
+- Новый интерфейс аккаунта и синхронизация цвета между устройствами в этот выпуск не входят.
+
+**В коде:**
+- release: verified technical update 1.0.211
+- docs: record actual account regression and offline build results
+- fix: correct credential callbacks and verify existing account integration
+- docs: record account source excerpts and offline check results
+- ci: inspect account integration anchors and compile current branch
+- feat: connect account identity and color picker to game UI
+- feat: add Google account identity and persistent player color
+- feat: add FCM subscription diagnostics and verified context
+
+## 1.0.212 — 2026-10-29
+
+**Игрокам:**
+- Подключена локальная диагностика подписки и отписки для уведомлений об обновлениях и новостей.
+- Запоздалые ответы не перезаписывают диагностический результат более новой операции; токены и тексты сообщений не сохраняются.
+- Новый экран диагностики, изменения Google-входа и синхронизация цвета в этот выпуск не входят.
+
+**В коде:**
+- release: verified FCM diagnostics update 1.0.212
+- docs: record actual account regression and offline build results
+- feat: connect push diagnostics with behavioral regression coverage
+
+## 1.0.213 — 2026-10-29
+
+**Игрокам:**
+- Исправлено отображение окна подтверждения выхода: HTML-теги больше не показываются вместо оформления; пояснение отделено от заголовка.
+- Сохранены безопасный вывод текста и защита от повторного выполнения подтверждения.
+
+**В коде:**
+- build: signed APK 1.0.213 candidate for confirmation layout fix
+- fix: render legacy confirmation explanation as safe separate text
+- ci: apply and verify safe confirmation text layout fix
+
+## 1.0.214 — 2026-10-30
+
+**Игрокам:**
+- Вход через Google на Android стал надёжнее: кнопка больше не зависает, при отмене или ошибке игра понятно объясняет, что случилось
+- В магазине появилось поле для промокодов
+- Если на сервере идут технические работы, игра сообщит об этом
+- В полях ввода снова работает долгое нажатие: можно вставить код друга, почту или пароль
+
+**В коде:**
+- Выпуск: Google-вход, промокоды, техработы, безопасность и тесты детерминизма
+- docs: record actual account regression and offline build results
+- test(golden): determinism contract for TASK-008; founder panel opens real workflows
+- docs: record actual account regression and offline build results
+- fix(security): admin-only Firebase rules, safe maintenance text, version codes from tags, encrypted backups
+- build(gradle): add google maven central mirror to pluginManagement
+- docs: record actual account regression and offline build results
+- feat(founder): add maintenance killswitch, promo codes engine, live error reporting, and RTDB rules
+- docs: record actual account regression and offline build results
+- feat(staging): add closed staging web with tester PIN, watermark, and direct APK download
+- docs: record actual account regression and offline build results
+- fix(security): apply anti-cheat wallet checksum and devtools protection
+- feat(infra): add founder command center, promote workflow, nightly backups and update docs
+- docs: record actual account regression and offline build results
+- feat(auth): add duplicate token protection, request-id tracking and dialog guards
+- docs(coordination): record architectural decision to migrate from monolith to Vite/npm modules
+- docs(coordination): update task board with verified CI results for TASK-001
+- docs: record actual account regression and offline build results
+- fix(google-auth): use explicit native Google sign-in and surface recoverable errors
+- docs(coordination): add CLAUDE.md and HANDOFF.md for multi-agent workflow
+- ci: apply and verify explicit Android Google sign-in fix
+- release: publish verified APK 1.0.213 without rebuilding
+
