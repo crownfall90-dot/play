@@ -1234,3 +1234,32 @@
 - Журнал версий: 1.0.216
 - docs(changelog): 1.0.216, clear release notes
 
+## 1.0.218 — 2026-10-30
+
+**Игрокам:**
+- Если вход через Google временно недоступен, игра понятно сообщает об этом и предлагает войти по почте
+- Ежедневные задания стали разнообразнее: раньше задание «Достройте 3 города» выпадало каждый день
+- Вход через Google в приложении работает
+- Одна кнопка «Войти или создать профиль» вместо двух: новая почта или новый Google-аккаунт сразу становятся профилем, золото и прогресс сохраняются
+- Если никнейм уже придуман, при регистрации он остаётся; иначе поле никнейма пустое
+- Исправлены непонятные символы вместо имени при входе через Google
+- В веб-версии кнопка Google срабатывает с одного нажатия
+
+**В коде:**
+- Одна кнопка входа и регистрации, Google в вебе в один тап, никнейм сохраняется
+- docs: record actual account regression and offline build results
+- feat(auth): one button to sign in or register; Google on the web in one tap; nickname kept
+- google-services.json с Android-клиентом OAuth
+- build(firebase): google-services.json with the Android OAuth client for the release signing key
+- docs: record actual account regression and offline build results
+- Прогресс в модуле и исправление заданий дня; тест моста с Android (TASK-008-3)
+- Merge remote dev
+- test(bridge): contract between the Android bridge and the game
+- docs: record actual account regression and offline build results
+- refactor(state): progress rules to src/state/progress.js; fix daily quests always including «3 cities»
+- Google-вход: понятная ошибка, когда подпись приложения не зарегистрирована
+- docs: record actual account regression and offline build results
+- fix(auth): name the Google sign-in setup error instead of a generic failure
+- Журнал версий: 1.0.217
+- docs(changelog): 1.0.217, clear release notes
+
