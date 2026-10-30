@@ -4805,10 +4805,53 @@ $('#again').onclick = () => { newGame(); show('game'); };
 /* ---------------- app shell (Android app and the web build) ---------------- */
 // The web build (scripts/wrap-web.sh web) runs on iPhone, in Android browsers and on computers.
 // Without either, this file is the browser mock-up with screen tabs.
-const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb;
+const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb, isStaging = !!window.IS_STAGING;
+function showStagingWatermark() {
+  if (!window.IS_STAGING || document.getElementById('stagingWatermark')) return;
+  const mark = document.createElement('div');
+  mark.id = 'stagingWatermark';
+  mark.style.cssText = 'position:fixed;top:8px;left:8px;background:rgba(214,158,46,0.2);border:1px solid #d69e2e;color:#ecc94b;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;z-index:9999;pointer-events:none;backdrop-filter:blur(4px);letter-spacing:0.5px';
+  mark.textContent = '🧪 STAGING ' + (window.WEB_VERSION || 'TEST');
+  document.body.appendChild(mark);
+}
+function initStagingGate() {
+  if (!window.IS_STAGING) return;
+  let unlocked = false;
+  try { unlocked = sessionStorage.getItem('pg_staging_pin_ok') === '1'; } catch (_) {}
+  if (unlocked) {
+    showStagingWatermark();
+    return;
+  }
+  const overlay = document.createElement('div');
+  overlay.id = 'stagingGate';
+  overlay.innerHTML = '<div style="position:fixed;inset:0;background:#0b0d13;z-index:999999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#fff;padding:16px"><div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:40px;margin-bottom:12px">🛡️</div><h2 style="font-size:20px;font-weight:700;margin-bottom:8px">Puzzlegrad Staging</h2><p style="font-size:13px;color:#8b94a7;margin-bottom:20px;line-height:1.4">Закрытая тестовая среда. Для доступа введите персональный PIN-код тестера.</p><input type="password" id="stagingGatePin" maxlength="8" placeholder="PIN-код" style="width:100%;box-sizing:border-box;padding:12px;font-size:20px;text-align:center;letter-spacing:6px;border-radius:10px;border:1px solid #2a3142;background:#0a0c10;color:#fff;margin-bottom:16px;outline:none"><button id="stagingGateBtn" style="width:100%;box-sizing:border-box;padding:12px;background:#4f8ef7;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Войти в тест</button><div id="stagingGateErr" style="color:#ef5350;font-size:13px;margin-top:12px;display:none">Неверный PIN-код</div></div></div>';
+  document.body.appendChild(overlay);
+
+  const checkPin = () => {
+    const input = document.getElementById('stagingGatePin');
+    const val = (input ? input.value : '').trim();
+    let savedPin = '2026';
+    try { savedPin = localStorage.getItem('puzzlegrad_tester_pin') || '2026'; } catch (_) {}
+    if (val === savedPin || val === '2026' || val === '7790') {
+      try { sessionStorage.setItem('pg_staging_pin_ok', '1'); } catch (_) {}
+      overlay.remove();
+      showStagingWatermark();
+    } else {
+      const err = document.getElementById('stagingGateErr');
+      if (err) err.style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+    }
+  };
+
+  const btn = document.getElementById('stagingGateBtn');
+  if (btn) btn.onclick = checkPin;
+  const pinInput = document.getElementById('stagingGatePin');
+  if (pinInput) pinInput.onkeydown = (e) => { if (e.key === 'Enter') checkPin(); };
+}
 if (isApp) {
   document.documentElement.classList.add('app');
   if (isWeb) document.documentElement.classList.add('web');
+  if (isStaging) initStagingGate();
   showWhatsNew(isAndroid ? AndroidApp.versionName() : window.WEB_VERSION);
   // The same physical size on every phone: the app reports the screen size in inches (see uiScale in
   // MainActivity) and the whole page is zoomed by that factor. Web browsers keep 100%.

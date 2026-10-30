@@ -220,7 +220,12 @@ body {
         <button class="btn" id="btnSavePin">Сохранить</button>
       </div>
     </div>
-    <div class="stat-sub">Тестовый APK распространяется без уведомления публичных игроков.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a class="btn" href="https://crownfall90-dot.github.io/play/staging/" target="_blank" style="text-decoration:none;text-align:center">🌐 Открыть Staging Web (тест)</a>
+      <a class="btn" href="https://github.com/crownfall90-dot/play/releases/download/staging-latest/Puzzlegrad-Staging.apk" target="_blank" style="text-decoration:none;text-align:center">📲 Скачать Staging APK (для Android)</a>
+      <button class="btn" id="btnCopyInvite">📋 Скопировать ссылку и PIN для тестера</button>
+    </div>
+    <div class="stat-sub">Тестовый APK и веб изолированы от основного сервера и игроков.</div>
   </div>
 
   <!-- 5. ПУШ-НОВОСТИ И ОПОВЕЩЕНИЯ -->
@@ -262,6 +267,20 @@ document.getElementById('btnSavePin').onclick = () => {
   localStorage.setItem('puzzlegrad_tester_pin', pin);
   log('Tester PIN updated to: ' + pin);
   alert('Новый PIN-код сохранён: ' + pin);
+};
+
+document.getElementById('btnCopyInvite').onclick = () => {
+  const pin = document.getElementById('inputTesterPin').value;
+  const msg = '🏰 Приглашение на закрытый тест Puzzlegrad:\n' +
+    '• Тестовая веб-версия: https://crownfall90-dot.github.io/play/staging/\n' +
+    '• PIN-код для входа: ' + pin + '\n' +
+    '• Тестовый APK (Android): https://github.com/crownfall90-dot/play/releases/download/staging-latest/Puzzlegrad-Staging.apk';
+  navigator.clipboard.writeText(msg).then(() => {
+    log('Invite link with PIN copied to clipboard');
+    alert('Приглашение с PIN-кодом скопировано в буфер обмена!\nОтправьте его тестеру в Telegram или Discord.');
+  }).catch(() => {
+    prompt('Скопируйте приглашение вручную:', msg);
+  });
 };
 </script>
 </body>

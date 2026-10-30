@@ -182,3 +182,54 @@ test('anti-cheat: blocks F12, developer shortcuts and context menu', () => {
   assert.ok(html.includes("document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });"));
 });
 
+test('staging gate: protects staging web with tester PIN and watermark badge', () => {
+  assert.ok(html.includes("function initStagingGate()"));
+  assert.ok(html.includes("function showStagingWatermark()"));
+  assert.ok(html.includes("sessionStorage.getItem('pg_staging_pin_ok')"));
+
+  // 1. Production check: when IS_STAGING is not set, gate is inactive
+  let domAppended = false;
+  const mockDocProd = {
+    getElementById: () => null,
+    createElement: () => ({ id: '', style: {}, appendChild() {}, innerHTML: '' }),
+    body: { appendChild: () => { domAppended = true; } }
+  };
+  const envProd = {
+    window: { IS_STAGING: false },
+    document: mockDocProd,
+    sessionStorage: { getItem: () => null }
+  };
+  vm.runInNewContext(fn('showStagingWatermark') + '\n' + fn('initStagingGate'), envProd);
+  envProd.initStagingGate();
+  assert.equal(domAppended, false, 'staging gate must be disabled in production');
+
+  // 2. Staging check: when IS_STAGING is true, overlay is mounted and validates PIN
+  const sessionData = {};
+  const elements = {};
+  const mockDocStaging = {
+    getElementById: (id) => elements[id] || null,
+    createElement: (tag) => {
+      const el = { id: '', style: {}, innerHTML: '', remove: () => {} };
+      return el;
+    },
+    body: {
+      appendChild: (el) => {
+        elements[el.id] = el;
+      }
+    }
+  };
+  const envStaging = {
+    window: { IS_STAGING: true, WEB_VERSION: 'тест 214' },
+    document: mockDocStaging,
+    sessionStorage: {
+      getItem: (k) => sessionData[k] || null,
+      setItem: (k, v) => { sessionData[k] = v; }
+    },
+    localStorage: { getItem: () => '2026' }
+  };
+  vm.runInNewContext(fn('showStagingWatermark') + '\n' + fn('initStagingGate'), envStaging);
+  envStaging.initStagingGate();
+  assert.ok(elements.stagingGate, 'staging overlay must be appended when unauthenticated');
+});
+
+
