@@ -292,3 +292,9 @@ test('finishSignup keeps a nickname made up before and leaves the field empty ot
   assert.ok(src.includes('if (wallet.name)'), 'an existing nickname skips the step');
   assert.ok(!/inp\.value\s*=/.test(src), 'the nickname field starts empty');
 });
+
+test('closing dialogs never removes the game screen\'s own results board (#over)', () => {
+  // #over has class "over" too; removing every .over after a Google sign-in broke the next game's start.
+  assert.ok(html.includes('<div class="over" id="over" hidden></div>'));
+  assert.ok(!/querySelectorAll\('\.over'\)\.forEach\([^)]*\.remove\(\)/.test(html), 'remove dialogs with body > .over only');
+});

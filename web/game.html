@@ -4288,7 +4288,7 @@ async function finishGoogle(idToken, link, onFail) {
     if (!j) j = await googleIdp(idToken, null);
     lastGoogleToken = idToken; lastGoogleTokenTime = Date.now();
     keepAuth(j, email || j.email || '');
-    document.querySelectorAll('.over').forEach(e => e.remove());
+    document.querySelectorAll('body > .over').forEach(e => e.remove()); // dialogs only: #over inside the game screen is the game's own results board
     const loaded = !joined && await cloudLoad();
     if (loaded) {
       track('login', {method: 'google'});
@@ -4307,7 +4307,7 @@ async function finishGoogle(idToken, link, onFail) {
     if (gErr(e, /NEED_CONFIRMATION|EMAIL_EXISTS/)) {
       // This e-mail already has a profile with a password: sign in with it once, Google gets attached to it.
       pendingGoogle = {token: idToken, at: Date.now()};
-      document.querySelectorAll('.over').forEach(x => x.remove());
+      document.querySelectorAll('body > .over').forEach(x => x.remove());
       toastAny('Эта почта уже зарегистрирована с паролем. Войдите по почте один раз — и Google подключится к профилю');
       accountDialog('login', jwtEmail(idToken));
     } else {
