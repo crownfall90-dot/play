@@ -1263,3 +1263,23 @@
 - Журнал версий: 1.0.217
 - docs(changelog): 1.0.217, clear release notes
 
+## 1.0.219 — 2026-10-30
+
+**Игрокам:**
+- Исправлено: после входа через Google не запускалась новая партия (в том числе с ботами)
+
+**В коде:**
+- Ссылки на админ-панель сайта из панели владельца
+- docs(release-notes): owner panel changes stay out of the player-facing notes
+- feat(owner): owner panel links to the site admin pages; admin pages published with the web build
+- Стили и рисование плиток в отдельных модулях (TASK-008-4)
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- refactor(render): tile and sprite art to src/render/art.js (TASK-008-4)
+- refactor(ui): styles to src/ui/styles.css (TASK-008-4)
+- Исправлено: после входа через Google не запускалась новая партия
+- docs: record actual account regression and offline build results
+- fix(auth): Google sign-in removed the game's results board, so no new game could start
+- Журнал версий: 1.0.218
+- docs(changelog): 1.0.218, clear release notes
+
