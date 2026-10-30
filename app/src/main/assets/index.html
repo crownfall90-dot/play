@@ -87,6 +87,10 @@ html.web{--it:env(safe-area-inset-top,0px);--ib:env(safe-area-inset-bottom,0px);
 html.web,html.web body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.web body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
 html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
+/* The app is not a document: long-pressing a label must not start a text selection. Typing fields, links and codes people copy stay selectable. */
+html.app body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+html.app input,html.app textarea,html.app a,html.app [contenteditable],html.app .code,html.app .code *,html.app .copyable,html.web a,html.web .code,html.web .code *,html.web .copyable{-webkit-user-select:text;user-select:text}
+
 @supports (height:100dvh){html.web .page{height:100dvh}}
 /* On a computer or tablet the game stays phone-shaped in the middle of the screen. */
 @media (min-width:700px){html.web body{background:#0a0e1a radial-gradient(900px 600px at 50% 0%,#1d2848,transparent 70%)}
@@ -667,7 +671,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
           <div class="modes">
-            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С друзьями</b><small>Комната по коду</small></button>
+            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С&nbsp;друзьями</b><small>Комната по коду</small></button>
             <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
             <button class="mode" data-mode="local"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
           </div>

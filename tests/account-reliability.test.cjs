@@ -334,3 +334,10 @@ test('founder panel shows only the sign-in card until an admin has signed in', (
   assert.ok(panel.includes("document.body.classList.remove('authed')"));
   assert.ok(!/^loadVersions\(\); loadMaint\(\); loadPin\(\);/m.test(panel), 'nothing loads before sign-in');
 });
+
+test('app text is not selectable by long press, typing fields and codes are', () => {
+  const css = fs.readFileSync('src/ui/styles.css', 'utf8');
+  assert.ok(css.includes('html.app body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}'));
+  assert.ok(/html\.app input,html\.app textarea,html\.app a,[^{]*html\.app \.code/.test(css), 'inputs, links and codes stay selectable');
+  assert.ok(html.includes('<b>С&nbsp;друзьями</b>'), 'the menu label does not break after «С»');
+});
