@@ -2333,29 +2333,12 @@ const FIGS = {
 };
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
-function walletSig(w) {
-  if (!w) return '';
-  const str = 'pg_sec_' + (w.gold || 0) + '_' + (w.owned ? w.owned.slice().sort().join(',') : '') + '_' + (w.fcode || '') + '_salt90';
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  return (h >>> 0).toString(16);
-}
-const wallet = (() => {
-  let w = null, sig = null;
-  try { w = JSON.parse(localStorage.getItem('wallet')); sig = localStorage.getItem('wallet_sig'); } catch (_) {}
-  if (w && sig && sig !== walletSig(w)) { w.gold = 100; }
-  const v = Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'}, w);
-  v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
-  if (!validCol(v.color)) v.color = PALETTE[0].col; // a colour taken out of the palette (turquoise)
-  return v;
-})();
+// The wallet's storage lives in src/state/wallet.js.
+const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col);
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
 function saveWallet() {
-  try {
-    localStorage.setItem('wallet', JSON.stringify(wallet));
-    localStorage.setItem('wallet_sig', walletSig(wallet));
-  } catch (_) {}
+  PG.state.storeWallet(localStorage, wallet);
   document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
   if (typeof cloudSaveSoon === 'function') cloudSaveSoon();
 }
