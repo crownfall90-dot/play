@@ -326,3 +326,11 @@ test('founder panel fits a phone: wrapping buttons, one column, hidden elements 
   assert.ok(panel.includes('[hidden] { display: none !important; }'));
   assert.ok(panel.includes('@media (max-width: 600px)'));
 });
+
+test('founder panel shows only the sign-in card until an admin has signed in', () => {
+  const panel = fs.readFileSync('tools/founder-admin.html', 'utf8');
+  assert.ok(panel.includes('body:not(.authed) main > .card:not(#loginCard) { display: none; }'));
+  assert.ok(panel.includes("document.body.classList.add('authed')"));
+  assert.ok(panel.includes("document.body.classList.remove('authed')"));
+  assert.ok(!/^loadVersions\(\); loadMaint\(\); loadPin\(\);/m.test(panel), 'nothing loads before sign-in');
+});
