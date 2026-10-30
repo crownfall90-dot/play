@@ -291,7 +291,8 @@ html.tutoring #mrow .skip{display:none}
 .peye[aria-pressed="true"]{color:var(--brass)}
 .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);background:rgba(255,255,255,.06)}
 .gbtn .gicon{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#fff;color:#4285f4;font:800 14px var(--f-display)}
-.acc-or{margin:-6px 0 0!important;text-align:center;color:var(--muted)}
+.phint.acc-or{margin:-6px 0 0!important;text-align:center;color:var(--muted)}
+.gisbtn{display:flex;justify-content:center;min-height:44px;width:100%}.gisbtn>div{margin:0 auto}
 .phint{margin:2px 0 0!important;min-height:0;font-size:12px;color:var(--muted);text-align:left}.phint:empty{display:none}.phint.ok{color:#7fe0a8}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
@@ -3888,8 +3889,8 @@ function renderFriends() {
   $('#fGate').hidden = !gate; $('#fMine').hidden = gate; $('#fJoinRow').hidden = gate;
   if (!FB) { $('#fGate').innerHTML = '<p>Друзья доступны в приложении с интернетом</p>'; box.innerHTML = ''; return; }
   if (gate) {
-    const step = !wallet.name ? ['Придумайте никнейм', 'fgName'] : ['Сохраните профиль', 'fgLink'];
-    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и сохранённый профиль — почта с паролем или вход через Google. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button><button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>`;
+    const step = !wallet.name ? ['Придумайте никнейм', 'fgName'] : ['Войти или создать профиль', 'fgLogin'];
+    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и сохранённый профиль — почта с паролем или вход через Google. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button>${wallet.name ? '' : '<button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>'}`;
     box.innerHTML = ''; return;
   }
   const has = wallet.fcode && wallet.fcodeUid === myUid();
@@ -4200,6 +4201,7 @@ const AUTH_ERR = {
   USER_DISABLED: ['Этот профиль отключён. Напишите в поддержку', 'mail'],
   TOO_MANY_ATTEMPTS_TRY_LATER: ['Слишком много попыток подряд. Подождите несколько минут или смените пароль через «Забыли пароль?»', ''],
   CREDENTIAL_TOO_OLD_LOGIN_AGAIN: ['Для этого нужно войти заново', ''],
+  SHORT_OR_WRONG: ['Пароль не подходит. Для нового профиля пароль нужен от 6 символов', 'pass'],
 };
 // Server-side setup problems (sign-in method off, e-mail change blocked…) are not the player's
 // fault: they get a calm message, and the exact answer goes to the crash reports for the owner.
@@ -4241,7 +4243,14 @@ function keepAuth(j, email) {
 const googleAvailable = () => !!(window.AndroidApp && AndroidApp.googleSignIn && (!AndroidApp.googleReady || AndroidApp.googleReady()));
 const googleWebOk = () => !!(window.WEBAPP && FB && FB.googleClientId);
 // The e-mail sits in the Google token payload; it only labels the saved profile.
-function jwtEmail(t) { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; } catch (_) { return ''; } }
+// The token payload is UTF-8 (a Russian name in it): atob gives bytes, TextDecoder turns them into text.
+function jwtPayload(t) {
+  try {
+    const b = atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0))));
+  } catch (_) { return {}; }
+}
+function jwtEmail(t) { return jwtPayload(t).email || ''; }
 // signInWithIdp turns some refusals into HTTP 200 without a session (needConfirmation, errorMessage): those are
 // errors too, never a sign-in — saving them as one left the player "signed in" with no session at all.
 async function googleIdp(idToken, session) {
@@ -4288,11 +4297,11 @@ async function finishGoogle(idToken, link, onFail) {
       const toFriends = !$('#scr-friends').hidden;
       renderAccount(); renderSetup(); renderShop && renderShop(); progressDot();
       show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
-      if (!wallet.name) finishSignup('');
+      if (!wallet.name) finishSignup();
     } else {
       track('sign_up', {method: 'google'});
       await cloudSave(); renderAccount(); presenceMark(true); socialReset();
-      finishSignup(wallet.name || jwtField(idToken, 'given_name'));
+      finishSignup();
     }
   } catch (e) {
     if (gErr(e, /NEED_CONFIRMATION|EMAIL_EXISTS/)) {
@@ -4315,9 +4324,9 @@ async function attachPendingGoogle() {
   try { const j = await googleIdp(g.token, fbAuth.idToken); keepAuth(j, fbAuth.email); toastAny('Google подключён — теперь можно входить в один тап'); }
   catch (e) { authErr(e, true); }
 }
-function jwtField(t, k) { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))[k] || ''; } catch (_) { return ''; } }
-// The last step of a Google registration: the nickname rivals and the rating will see.
-function finishSignup(suggest) {
+// The last step of a registration: a nickname rivals and the rating will see. One made up before is kept.
+function finishSignup() {
+  if (wallet.name) { toastAny(`Профиль сохранён, ${profileName()}!`); return; }
   if (document.getElementById('signupBox')) return;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'signupBox'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard prof"><div class="pav" id="suAv" style="--c:${wallet.color}">?</div><h3>Завершите регистрацию</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
@@ -4325,7 +4334,6 @@ function finishSignup(suggest) {
   document.body.append(box);
   const inp = box.querySelector('#suName'), ok = box.querySelector('#suOk'), av = box.querySelector('#suAv');
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
-  inp.value = clean(suggest || '').slice(0, 12); inp.oninput();
   inp.onkeydown = e => { if (e.key === 'Enter' && !ok.disabled) ok.click(); };
   ok.onclick = async () => {
     if (!setProfileName(inp.value)) return;
@@ -4364,15 +4372,18 @@ function startGoogle(link, onFail, btn) {
   if (onFail) onFail('unavailable');
 }
 // Web build: load Google Identity Services and swap our button for its official one.
+// Web build: Google's own button (Google Identity Services) goes in place of ours as soon as the dialog opens,
+// so one tap signs in. Our button stays as a placeholder while the script loads, or if it cannot load.
+let gisLoad = null;
 function googleWebButton(btn, link, onFail) {
-  btn.disabled = true;
-  const load = () => new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.onload = res; s.onerror = rej; document.head.append(s); });
-  load().then(() => {
-    const slot = document.createElement('div'); slot.style.cssText = 'display:flex;justify-content:center';
-    google.accounts.id.initialize({client_id: FB.googleClientId, callback: r => finishGoogle(r.credential, link, onFail)});
+  gisLoad = gisLoad || new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = res; s.onerror = () => { gisLoad = null; rej(); }; document.head.append(s); });
+  gisLoad.then(() => {
+    if (!btn.isConnected) return;
+    google.accounts.id.initialize({client_id: FB.googleClientId, callback: r => finishGoogle(r.credential, link, onFail), ux_mode: 'popup', itp_support: true});
+    const slot = document.createElement('div'); slot.className = 'gisbtn';
     btn.replaceWith(slot);
-    google.accounts.id.renderButton(slot, {type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', locale: 'ru'});
-  }).catch(() => { btn.disabled = false; toastAny('Не удалось загрузить Google'); if (onFail) onFail('net'); });
+    google.accounts.id.renderButton(slot, {type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', logo_alignment: 'center', locale: 'ru', width: Math.min(400, Math.max(240, slot.clientWidth || 300))});
+  }).catch(() => { btn.onclick = () => toastAny('Не удалось загрузить вход Google — проверьте интернет или войдите по почте'); });
 }
 /* ---------------- profile sync: the same profile on several devices ----------------
    The app, the web version and other phones signed in to one profile share /profiles/{uid}.
@@ -4489,19 +4500,21 @@ function accountDialog(mode, prefill) {
   if (!FB) return toastAny('Профили доступны в приложении');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const link = mode === 'link';
-  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">${link ? '🛡️' : '🔑'}</div><h3>${link ? 'Сохраните профиль' : 'Вход в профиль'}</h3><p>${link ? 'Почта и пароль вернут золото, фигурки и прогресс после переустановки или на новом телефоне' : 'Почта и пароль, которыми вы сохранили профиль'}</p>
-    <button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button>
+  // One form for both: a known e-mail signs in, a new one becomes a profile (gold and progress stay).
+  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход или регистрация</h3><p>Профиль хранит золото, фигурки и прогресс — на любом телефоне и после переустановки. Нет профиля — он создастся</p>
+    <div class="gslot" id="accGSlot"><button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button></div>
     <p class="phint acc-or" id="accOr">или по почте</p>
     <input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${(prefill || '').replace(/"/g, '')}">
-    <div class="pwrap"><input class="field" id="accPass" type="password" placeholder="${link ? 'Придумайте пароль (от 6 символов)' : 'Пароль'}" autocomplete="${link ? 'new-password' : 'current-password'}" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>
-    <p class="phint" id="accHint">${link ? 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне' : ''}</p>
-    <p class="accErr" id="accErr" role="alert"></p><button class="cta wide" id="accGo">${link ? 'Сохранить профиль' : 'Войти'}</button>${link ? '' : '<button class="linkbtn" id="accReset">Забыли пароль?</button>'}<button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
+    <div class="pwrap"><input class="field" id="accPass" type="password" placeholder="Пароль" autocomplete="current-password" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>
+    <p class="phint" id="accHint">Новый профиль: пароль от 6 символов</p>
+    <p class="accErr" id="accErr" role="alert"></p><button class="cta wide" id="accGo">Продолжить</button><button class="linkbtn" id="accReset">Забыли пароль?</button><button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
   document.body.append(box);
   const mailEl = box.querySelector('#accMail'), passEl = box.querySelector('#accPass'), eye = box.querySelector('#accEye'), hint = box.querySelector('#accHint');
   const mail = () => mailEl.value.trim(), pass = () => passEl.value;
   const gbtn = box.querySelector('#accGoogle');
   if (gbtn) {
     if (!googleAvailable() && !googleWebOk()) { gbtn.hidden = true; const or = box.querySelector('#accOr'); if (or) or.hidden = true; }
+    else if (!googleAvailable()) googleWebButton(gbtn, link, null);
     else gbtn.onclick = () => { gbtn.disabled = true; startGoogle(link, () => { gbtn.disabled = false; }, gbtn); };
   }
   // Error text plus a red frame on the field it is about ('both' marks both).
@@ -4529,7 +4542,6 @@ function accountDialog(mode, prefill) {
   mailEl.oninput = () => { mailEl.classList.remove('bad'); typoWarned = ''; if (box.querySelector('#accErr').textContent) err(''); };
   passEl.oninput = () => {
     passEl.classList.remove('bad'); if (box.querySelector('#accErr').textContent) err('');
-    if (link) { const n = pass().length; hint.textContent = n && n < 6 ? `Ещё ${6 - n} ${6 - n === 1 ? 'символ' : 'символа'} — нужно хотя бы 6` : n ? '✓ Подходит. Запомните пароль' : 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне'; hint.classList.toggle('ok', n >= 6); }
   };
   passEl.onkeydown = e => { if (e.getModifierState && e.getModifierState('CapsLock')) hint.textContent = '⚠ Включён Caps Lock'; };
   if (prefill) setTimeout(() => passEl.focus(), 200);
@@ -4548,7 +4560,7 @@ function accountDialog(mode, prefill) {
   };
   box.querySelector('#accGo').onclick = async () => {
     const go = box.querySelector('#accGo');
-    const bad = checkAuthInput(mail(), pass(), link);
+    const bad = checkAuthInput(mail(), pass(), false);
     if (bad && !(bad[2] === 'typo' && typoWarned === mail())) {
       err(bad[0], bad[1]);
       if (bad[2] === 'typo') {
@@ -4563,20 +4575,33 @@ function accountDialog(mode, prefill) {
     }
     go.disabled = true; err('');
     try {
-      if (link) {
-        await fbToken();
-        const j = await idt('update', {idToken: fbAuth.idToken, email: mail(), password: pass(), returnSecureToken: true});
-        keepAuth(j, mail()); await cloudSave(); box.remove(); toastAny('Профиль сохранён'); track('sign_up', {method: 'email'}); renderAccount(); presenceMark(true); socialReset();
+      // Sign in first. An unknown e-mail (Firebase may also answer INVALID_LOGIN_CREDENTIALS for it) becomes a new
+      // profile: a guest's own session gets the e-mail, so the gold and progress on this phone stay.
+      let j = null, created = false;
+      try { j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true}); }
+      catch (e) {
+        if (!(e && e.error && /^(EMAIL_NOT_FOUND|INVALID_LOGIN_CREDENTIALS)/.test(e.error.message))) throw e;
+        if (pass().length < 6) throw {error: {message: 'SHORT_OR_WRONG'}};
+        try {
+          if (fbAuth && fbAuth.email) j = await idt('signUp', {email: mail(), password: pass(), returnSecureToken: true}); // signed in elsewhere: a new account
+          else { await fbToken(); j = await idt('update', {idToken: fbAuth.idToken, email: mail(), password: pass(), returnSecureToken: true}); }
+          created = true;
+        } catch (e2) { throw e2 && e2.error && /^EMAIL_EXISTS/.test(e2.error.message) ? {error: {message: 'INVALID_PASSWORD'}} : e2; }
+      }
+      keepAuth(j, mail());
+      if (created) {
+        track('sign_up', {method: 'email'});
+        await cloudSave(); box.remove(); renderAccount(); presenceMark(true); socialReset();
+        finishSignup();
       } else {
-        const j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true});
-        keepAuth(j, mail()); track('login', {method: 'email'});
+        track('login', {method: 'email'});
         const ok = await cloudLoad(); box.remove();
         attachPendingGoogle();
         wallet.tut = wallet.tutAsked = true; saveWallet();
         toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
         const toFriends = !$('#scr-friends').hidden;
         renderAccount(); renderSetup(); renderShop && renderShop(); progressDot(); show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
-        if (!wallet.name) askProfile();
+        if (!wallet.name) finishSignup();
       }
     } catch (j) { showErr(j); go.disabled = false; }
   };
@@ -4597,9 +4622,8 @@ function renderAccount() {
   const linked = fbAuth && fbAuth.email, lvl = typeof PROG !== 'undefined' && PROG.lvl ? `<small class="plvl">Уровень ${PROG.lvl}</small>` : '';
   const mail = linked ? String(fbAuth.email).replace(/[<>&"]/g, '') : '';
   el.innerHTML = `<div class="prow"><span class="av big" style="--c:${wallet.color}">${profileName()[0]}</span><span class="pwho"><b>${profileName()}</b><small class="pmail">${linked ? mail : 'Профиль не сохранён'}</small>${lvl}</span><button class="chip" id="rnBtn">Сменить <i class="coin" style="display:inline-block;width:11px;height:11px"></i> ${RENAME_PRICE}</button></div>` +
-    (FB ? `<div class="pact">${linked ? '<button class="chip" id="acLogout">Выйти из аккаунта</button>' : '<button class="chip pri" id="acLink">Сохранить профиль</button><button class="chip" id="acLogin">Войти</button>'}</div>` : '');
+    (FB ? `<div class="pact">${linked ? '<button class="chip" id="acLogout">Выйти из аккаунта</button>' : '<button class="chip pri" id="acLogin">Войти или создать профиль</button>'}</div>` : '');
   $('#rnBtn').onclick = renameDialog;
-  if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
   if ($('#acLogin')) $('#acLogin').onclick = () => accountDialog('login');
   if ($('#acLogout')) $('#acLogout').onclick = () => confirmBox('Выйти из аккаунта?<br><small style="font-weight:500;color:var(--muted)">Прогресс сохранится в аккаунте. На этом устройстве начнётся новая игра, а войти можно будет в любой аккаунт</small>', 'Выйти', signOut);
 }

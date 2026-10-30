@@ -115,7 +115,7 @@ test('finishGoogle: a new Google account registers this guest profile and asks f
   const {env, log} = googleEnv(async (tok, session) => ({idToken: 'S', localId: 'anon1'}));
   await env.finishGoogle('tok', false, () => assert.fail('must not fail'));
   assert.deepEqual(log.idp, [['tok', 'link']], 'a guest attaches Google to its own profile');
-  assert.deepEqual(log.signup, ['Гость'], 'registration ends with the nickname step');
+  assert.equal(log.signup.length, 1, 'registration ends with the nickname step (it keeps a nickname made up before)');
 });
 
 test('finishGoogle: a Google account with a profile signs in to it', async () => {
@@ -279,3 +279,16 @@ test('features: maintenance screen blocks game view when active', () => {
 
 
 
+
+test('jwtPayload decodes UTF-8 names (no mojibake)', () => {
+  const env = {atob: s => Buffer.from(s, 'base64').toString('latin1'), TextDecoder, Uint8Array, JSON};
+  vm.runInNewContext(fn('jwtPayload'), env);
+  const payload = Buffer.from(JSON.stringify({given_name: 'Роман', email: 'a@b.ru'})).toString('base64').replace(/=+$/, '');
+  assert.equal(env.jwtPayload('h.' + payload + '.s').given_name, 'Роман');
+});
+
+test('finishSignup keeps a nickname made up before and leaves the field empty otherwise', () => {
+  const src = fn('finishSignup');
+  assert.ok(src.includes('if (wallet.name)'), 'an existing nickname skips the step');
+  assert.ok(!/inp\.value\s*=/.test(src), 'the nickname field starts empty');
+});
