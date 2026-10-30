@@ -23,7 +23,8 @@ function loadPlaywright() {
 const BUNDLE = path.join(__dirname, '..', '..', 'build', 'bundle', 'pg.js');
 function instrumentedCopy() {
   if (!fs.existsSync(BUNDLE)) throw new Error('build/bundle/pg.js is missing: run npm run build (or scripts/wrap-web.sh) first');
-  const html = '<script>' + fs.readFileSync(BUNDLE, 'utf8') + '</script>\n' + fs.readFileSync(GAME, 'utf8');
+  const css = fs.readFileSync(path.join(__dirname, '..', '..', 'src', 'ui', 'styles.css'), 'utf8');
+  const html = '<script>' + fs.readFileSync(BUNDLE, 'utf8') + '</script>\n' + fs.readFileSync(GAME, 'utf8').replace(/^<!-- styles: src\/ui\/styles\.css.*$/m, () => '<style>\n' + css + '</style>');
   const end = html.lastIndexOf('})();');
   if (end < 0) throw new Error('game.html: closing IIFE not found');
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pg-golden-')), 'game.html');
