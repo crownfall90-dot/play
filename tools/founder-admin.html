@@ -58,7 +58,7 @@ body {
 }
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
   gap: 20px;
 }
 .card {
@@ -124,6 +124,22 @@ body {
 .pill{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
 .pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
 #fbList{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto}
+[hidden] { display: none !important; }
+.grid > *, .card > * { min-width: 0; }
+.btn { white-space: normal; text-align: center; }
+.header { flex-wrap: wrap; gap: 12px; }
+.header > div { min-width: 0; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+.pushrow { display: grid; grid-template-columns: 1fr 2fr auto; gap: 12px; }
+.card { overflow-wrap: anywhere; }
+#gSlot { max-width: 100%; overflow: hidden; border-radius: 22px; }
+@media (max-width: 600px) {
+  body { padding: 14px; }
+  .row3, .pushrow { grid-template-columns: 1fr; }
+  .logo { font-size: 18px; }
+  #connStatus { display: block; max-width: 60vw; }
+  .stat-val { font-size: 26px; }
+}
 .console {
   background: #000;
   border: 1px solid var(--border);
@@ -158,12 +174,12 @@ body {
     <div class="card-title"><span>🔑 Вход владельца</span><span style="font-size:12px;color:var(--muted)">аккаунт из списка admins</span></div>
     <p class="stat-sub">Техработы, промокоды, PIN тестеров и статистика работают только после входа: сервер пускает к ним лишь аккаунты из <code>admins</code>.</p>
     <div id="gSlot" style="min-height:44px"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
+    <div class="row3">
       <input class="field" id="loginMail" type="email" placeholder="Почта" autocomplete="email">
       <input class="field" id="loginPass" type="password" placeholder="Пароль" autocomplete="current-password">
       <button class="btn btn-primary" id="btnLogin">Войти</button>
     </div>
-    <button class="btn" id="btnReset" style="width:max-content">Забыли пароль / входили только через Google — прислать письмо для пароля</button>
+    <button class="btn" id="btnReset">Забыли пароль? Прислать письмо для пароля</button>
   </div>
 
   <!-- 1. РЕЛИЗЫ И ВЫКАТКА В ПРОД -->
@@ -298,7 +314,7 @@ body {
     <div class="card-title">
       <span>📢 Рассылка новости / Push-уведомления (FCM)</span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:12px">
+    <div class="pushrow">
       <input class="field" id="pushTitle" placeholder="Заголовок новости...">
       <input class="field" id="pushBody" placeholder="Текст сообщения для всех игроков...">
       <button class="btn btn-primary" id="btnSendPush">Открыть рассылку на GitHub</button>
