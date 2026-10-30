@@ -2,5 +2,6 @@
 import {rng, hash} from './engine/rng.js';
 import {TYPES, normEdge, rareName, deckList} from './engine/tiles.js';
 import * as board from './engine/board.js';
+import * as scoring from './engine/scoring.js';
 
-export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, board};
+export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, board, scoring};

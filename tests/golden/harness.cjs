@@ -42,7 +42,9 @@ async function openGame(browser, file, seed) {
   page.on('pageerror', e => errors.push(e.message));
   await page.route(/^https?:/, r => r.abort()); // fully offline: no fonts, no Firebase
   await page.goto('file://' + file);
-  await page.waitForFunction(() => !!window.__pg);
+  // A script error at start-up (say, a name declared twice) must fail at once and say why, not time out per game.
+  await page.waitForFunction(() => !!window.__pg, null, {timeout: 15000})
+    .catch(() => { throw new Error('the game did not start: ' + (errors.join('; ') || 'no page error reported')); });
   return {ctx, page, errors};
 }
 
