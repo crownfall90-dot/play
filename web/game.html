@@ -2334,7 +2334,8 @@ const FIGS = {
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
 // The wallet's storage lives in src/state/wallet.js.
-const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col);
+// A checksum mismatch is reported, never punished (see walletSig): the gold stays.
+const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', info));
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
 function saveWallet() {
