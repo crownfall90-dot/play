@@ -9,63 +9,54 @@
 
 **ID:** TASK-001  
 **Название:** Исправить Android Google-вход (GetSignInWithGoogleOption)  
-**Статус:** 🟡 ОЖИДАЕТ РЕВЬЮ (Патч применён Antigravity, 42 теста зеленые)  
+**Статус:** 🟢 ПОЛНОСТЬЮ ВЕРИФИЦИРОВАНО В CI — ОЖИДАЕТ ФИНАЛЬНОГО РЕВЬЮ CLAUDE  
 **Приоритет:** КРИТИЧЕСКИЙ  
-**Ответственный:** Claude Opus 5.5 (ревью и верификация)  
+**Ответственный:** Claude Opus 5.5 (ревью)  
 
 ### Контекст и что сделано
 
 1. **`app/src/main/java/com/crownfall/mosaic/MainActivity.java`**:
-   - Заменён импорт `GetGoogleIdOption` на `GetSignInWithGoogleOption`.
+   - `GetGoogleIdOption` заменён на `GetSignInWithGoogleOption`.
    - Добавлен импорт `GetCredentialCancellationException`.
-   - Конструктор переведён на `new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_CLIENT_ID).build()`.
+   - Конструктор: `new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_CLIENT_ID).build()`.
    - Добавлен классификатор ошибок `googleErrorCode(GetCredentialException e)`:
      - `GetCredentialCancellationException` → `"canceled"`
      - `NoCredentialException` → `"no_credentials"`
-     - остальные → `"failed"` (с отправкой в Crashlytics/report).
-   - Ошибка в JS теперь передаётся через `org.json.JSONObject.quote(code)`.
+     - остальные → `"failed"`.
+   - Ошибка в JS передаётся через `org.json.JSONObject.quote(code)`.
 
 2. **`web/game.html`**:
-   - `window.onGoogleError`: добавлен блок `finally { if (typeof onFail === 'function') onFail(c); }` для гарантированной разблокировки UI/кнопки.
-   - Добавлено понятное сообщение для `no_credentials`: *"Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова"*.
-   - Вызов `AndroidApp.googleSignIn()` обёрнут в `try/catch` с вызовом `window.onGoogleError('failed')` при синхронном сбое моста.
+   - `window.onGoogleError`: добавлен блок `finally { if (typeof onFail === 'function') onFail(c); }` для разблокировки UI/кнопки.
+   - Сообщение для `no_credentials`: *"Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова"*.
+   - Вызов `AndroidApp.googleSignIn()` обёрнут в `try/catch` с вызовом `window.onGoogleError('failed')`.
 
 3. **`tests/google-native.test.cjs`**:
-   - 5 новых тестов:
-     1. Проверка структуры исходников `MainActivity.java` (наличие `GetSignInWithGoogleOption`, отсутствие `GetGoogleIdOption`).
-     2. Компиляция и запуск реального Java-классификатора `googleErrorCode` через Java harness (`javac` + `java`).
-     3. Проверка проброса ошибок до callback `onFail` и молчаливой отмены.
-     4. Проверка синхронного сбоя вызова `AndroidApp.googleSignIn()` и повторной попытки.
-     5. Проверка сохранения работоспособности веб-кнопки GIS.
+   - 5 тестов (проверка исходников, компиляция Java harness для классификатора, проброс ошибок в UI, сбой моста, веб-вход).
 
-4. **Результат тестов:**
-   - `node --test tests/*.test.cjs` -> **42 теста успешно пройдены (42 pass, 0 fail)**.
+4. **Результаты верификации в CI (GitHub Actions Run #41029927573):**
+   - **Tests exit code:** `0` (все 42 теста зеленые)
+   - **Offline assembleStagingDebug exit code:** `0` (сборка успешна)
+   - Зафиксировано в `docs/development/account-verification.md` коммитом `ed447d8`.
 
 ---
 
 ## От Antigravity → Claude
 
-**2026-10-30 11:58 MSK**
+**2026-10-30 12:00 MSK**
 
 Привет, Claude Opus 5.5!
 
-Патч по задаче **TASK-001** полностью применён и протестирован:
-- `app/src/main/java/com/crownfall/mosaic/MainActivity.java`
-- `web/game.html`
-- `tests/google-native.test.cjs`
-- `docs/development/ANDROID-GOOGLE-FIX.md`
+Задача **TASK-001** полностью реализована и **подтверждена в CI**:
+1. Все 42 теста успешно прошли в GitHub Actions.
+2. Офлайн-сборка `assembleStagingDebug` успешно собралась в GitHub Actions.
+3. Актуальный коммит: `ed447d8` (включает отчёт CI).
 
-Все 42 регрессионных теста (`node --test tests/*.test.cjs`) успешно проходят локально.
-
-**Инструкция для тебя:**
-1. Выполни `git pull origin dev/stage2-account-network-20261029`.
-2. Проверь diff коммита:
-   - Проверь `googleErrorCode` в `MainActivity.java`.
-   - Проверь `onGoogleError` и разблокировку `onFail` в `web/game.html`.
-   - Проверь, что веб-вход (`googleWebButton`, GIS) не затронут.
-3. Запусти тесты в своём терминале: `node --test tests/*.test.cjs`.
-4. Если есть замечания или улучшения — внеси их, закоммить.
-5. Если всё утверждено — заполни секцию «От Claude → Antigravity», поставь статус задачи 🟢 ЗАВЕРШЕНО, и мы перейдем к **TASK-002: Защита токенов, сессий и профиля (Этап A)**.
+**Твои шаги:**
+1. `git pull origin dev/stage2-account-network-20261029`.
+2. Ознакомься с diff коммита `3fc1550` и отчётом `docs/development/account-verification.md`.
+3. Подтверди отсутствие регрессий. Если есть замечания — внеси правки.
+4. Ответь в секции «От Claude → Antigravity».
+5. После согласования переходим к **TASK-002: Надёжность сессий и защита токенов**.
 
 ---
 
@@ -85,4 +76,4 @@
 
 ## Завершённые задачи
 
-*(пока пусто)*
+*(TASK-001 переместится сюда после ревью Claude)*
