@@ -2462,15 +2462,31 @@ const FIGS = {
 };
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
+function walletSig(w) {
+  if (!w) return '';
+  const str = 'pg_sec_' + (w.gold || 0) + '_' + (w.owned ? w.owned.slice().sort().join(',') : '') + '_' + (w.fcode || '') + '_salt90';
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16);
+}
 const wallet = (() => {
-  let w = null; try { w = JSON.parse(localStorage.getItem('wallet')); } catch (_) {}
+  let w = null, sig = null;
+  try { w = JSON.parse(localStorage.getItem('wallet')); sig = localStorage.getItem('wallet_sig'); } catch (_) {}
+  if (w && sig && sig !== walletSig(w)) { w.gold = 100; }
   const v = Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'}, w);
   v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
   return v;
 })();
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
-function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); if (typeof cloudSaveSoon === 'function') cloudSaveSoon(); }
+function saveWallet() {
+  try {
+    localStorage.setItem('wallet', JSON.stringify(wallet));
+    localStorage.setItem('wallet_sig', walletSig(wallet));
+  } catch (_) {}
+  document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
+  if (typeof cloudSaveSoon === 'function') cloudSaveSoon();
+}
 // Daily gift in the shop: a chest once a day with gold, a one-game boost or, rarely, a figure.
 const giftReady = () => wallet.dailyBox !== today();
 function dailyBonus() {
@@ -5012,6 +5028,18 @@ function reportError(msg) {
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
 window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.reason && e.reason.message || e.reason)));
+/* Anti-cheat & Security: block F12, developer shortcuts and inspect context menu */
+document.addEventListener('contextmenu', e => { e.preventDefault(); return false; });
+window.addEventListener('keydown', e => {
+  const k = e.key || e.keyCode;
+  if (k === 'F12' || k === 123) { e.preventDefault(); e.stopPropagation(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || k === 73 || k === 74 || k === 67)) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U' || k === 85)) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+});
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs();
