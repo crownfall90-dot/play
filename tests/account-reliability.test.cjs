@@ -319,3 +319,10 @@ test('feedback lives in the founder panel; there is no separate feedback page', 
   assert.ok(!fs.existsSync('tools/feedback-admin.html'));
   assert.ok(!html.includes('admin/feedback.html'), 'the game links to the one panel');
 });
+
+test('founder panel fits a phone: wrapping buttons, one column, hidden elements stay hidden', () => {
+  const panel = fs.readFileSync('tools/founder-admin.html', 'utf8');
+  assert.ok(panel.includes('minmax(min(340px, 100%), 1fr)'), 'cards may shrink below 340px');
+  assert.ok(panel.includes('[hidden] { display: none !important; }'));
+  assert.ok(panel.includes('@media (max-width: 600px)'));
+});
