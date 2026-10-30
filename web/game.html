@@ -4381,7 +4381,7 @@ function startGoogle(link, onFail, btn) {
       window.onGoogleToken = null;
       window.onGoogleError = null;
       try {
-        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
+        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'misconfigured' ? 'Вход через Google пока не подключён для этой версии игры. Войдите по почте — профиль тот же' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
       } finally { if (typeof onFail === 'function') onFail(c); }
     };
     try { AndroidApp.googleSignIn(); } catch (_) { window.onGoogleError('failed'); }

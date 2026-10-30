@@ -324,6 +324,10 @@ public class MainActivity extends Activity {
     static String googleErrorCode(GetCredentialException e) {
         if (e instanceof GetCredentialCancellationException) return "canceled";
         if (e instanceof NoCredentialException) return "no_credentials";
+        // Google refuses the token when this app's signing certificate (SHA-1) is not registered for the package in
+        // the Firebase/Google Cloud project: the account picker opens, then this error comes back (code 28444).
+        String m = String.valueOf(e.getMessage());
+        if (m.contains("28444") || m.contains("Developer console")) return "misconfigured";
         return "failed";
     }
 
@@ -406,7 +410,7 @@ public class MainActivity extends Activity {
                         }
                         @Override public void onError(GetCredentialException e) {
                             String code = googleErrorCode(e);
-                            if ("failed".equals(code)) report(e);
+                            if ("failed".equals(code) || "misconfigured".equals(code)) report(e);
                             js("window.onGoogleError && window.onGoogleError(" + org.json.JSONObject.quote(code) + ")");
                         }
                     };
