@@ -662,6 +662,11 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="figgrid" id="figgrid"></div>
           <div class="h3">Локации</div>
           <div class="locgrid" id="locgrid"></div>
+          <div class="h3">Промокод</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <input class="field" id="promoInput" placeholder="Введите промокод" style="flex:1;text-transform:uppercase;font-weight:700;letter-spacing:1px">
+            <button class="cta" id="promoApplyBtn">Применить</button>
+          </div>
         </div>
       </section>
 
@@ -2619,8 +2624,51 @@ const LOCS = [
   {name: 'Сибирь', desc: 'Зимники, остроги и замёрзшие реки', art: '<rect width="160" height="90" fill="#a9c7e8"/><path d="M0 60L40 22L70 52L100 18L160 64V90H0z" fill="#e8f1fb"/><path d="M40 22L52 34L44 34L36 30zM100 18L114 32L104 30z" fill="#fff"/><g fill="#2d5a46"><path d="M20 78l8-22 8 22z"/><path d="M120 80l9-26 9 26z"/><path d="M140 84l7-18 7 18z"/></g><path d="M0 82h160v8H0z" fill="#fff"/><g fill="#fff"><circle cx="70" cy="10" r="1.6"/><circle cx="20" cy="16" r="1.4"/><circle cx="140" cy="10" r="1.6"/><circle cx="90" cy="40" r="1.2"/></g>'},
   {name: 'Джунгли', desc: 'Тропы, руины, реки и пирамиды', art: '<rect width="160" height="90" fill="#1f5a3a"/><path d="M60 90L80 40L100 90z" fill="#8f8a6a"/><path d="M66 74h28M70 64h20M74 54h12" stroke="#6d684e" stroke-width="3"/><g fill="#2e8a4e"><ellipse cx="18" cy="30" rx="30" ry="12" transform="rotate(-25 18 30)"/><ellipse cx="146" cy="24" rx="32" ry="12" transform="rotate(25 146 24)"/><ellipse cx="20" cy="80" rx="30" ry="10" transform="rotate(20 20 80)"/><ellipse cx="140" cy="78" rx="30" ry="10" transform="rotate(-20 140 78)"/></g><path d="M0 0Q30 40 10 90" stroke="#3a9e5a" stroke-width="3" fill="none"/>'},
 ];
+async function redeemPromo(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code) return toastAny('Введите промокод');
+  wallet.promos = wallet.promos || [];
+  if (wallet.promos.includes(code)) return toastAny('Промокод уже был использован');
+
+  const BUILTIN_PROMOS = {
+    'TESTER2026': 500,
+    'OPUS55': 300,
+    'PUZZLESTART': 200
+  };
+
+  let reward = BUILTIN_PROMOS[code] || 0;
+  if (!reward && typeof FB !== 'undefined' && FB && FB.dbUrl) {
+    try {
+      const r = await fetch(`${FB.dbUrl}/promo_codes/${encodeURIComponent(code)}.json`);
+      if (r.ok) {
+        const data = await r.json();
+        if (data && data.active && data.gold) reward = +data.gold;
+      }
+    } catch (_) {}
+  }
+
+  if (reward > 0) {
+    wallet.gold = (wallet.gold || 0) + reward;
+    wallet.promos.push(code);
+    saveWallet();
+    toastAny(`🎉 Промокод активирован! +${reward} золота`);
+    renderShop();
+    const inp = $('#promoInput'); if (inp) inp.value = '';
+  } else {
+    toastAny('Неверный или неактивный промокод');
+  }
+}
 function renderShop() {
   saveWallet();
+  const promoBtn = $('#promoApplyBtn');
+  if (promoBtn) promoBtn.onclick = () => {
+    const inp = $('#promoInput');
+    redeemPromo(inp ? inp.value : '');
+  };
+  const promoInp = $('#promoInput');
+  if (promoInp) promoInp.onkeydown = (e) => {
+    if (e.key === 'Enter') redeemPromo(promoInp.value);
+  };
   const b = wallet.boosts, inv = [b.double ? `Двойное золото ×${b.double}` : '', b.meeple ? `+1 фигурка ×${b.meeple}` : ''].filter(Boolean).join(' · ');
   $('#gift').innerHTML = `<div class="chest${giftReady() ? ' ready' : ''}">${CHEST_SVG}</div><div class="gi"><b>Ежедневный подарок</b><small>${giftReady() ? 'Золото, бонус на партию или фигурка' : 'Следующий подарок — завтра'}${inv ? '<br>У вас: ' + inv : ''}</small></div>${giftReady() ? '<button class="cta" id="openGift">Открыть</button>' : ''}`;
   if (giftReady()) $('#openGift').onclick = openGift;
@@ -5064,10 +5112,45 @@ window.onBack = () => {
 };
 
 // Errors must never leave a dead screen: report them and keep playing.
-let errShown = false;
+let errShown = false, lastErrorReported = 0;
 function reportError(msg) {
   try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError(String(msg).slice(0, 500)); } catch (_) {}
   if (!errShown) { errShown = true; toast('Что-то пошло не так, игра продолжает работу'); }
+  try {
+    if (typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbToken === 'function' && Date.now() - lastErrorReported > 30000) {
+      lastErrorReported = Date.now();
+      fbToken().then(t => {
+        fetch(`${FB.dbUrl}/errors.json?auth=${t}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            m: String(msg).slice(0, 500),
+            ua: (navigator.userAgent || '').slice(0, 200),
+            ver: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev'),
+            ts: {'.sv': 'timestamp'}
+          })
+        }).catch(() => {});
+      }).catch(() => {});
+    }
+  } catch (_) {}
+}
+async function checkMaintenance() {
+  if (typeof FB === 'undefined' || !FB || !FB.dbUrl) return;
+  try {
+    const r = await fetch(`${FB.dbUrl}/config/maintenance.json`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+    if (cfg && cfg.active) {
+      showMaintenanceScreen(cfg.message || 'Ведутся плановые технические работы. Игра скоро будет доступна.');
+    }
+  } catch (_) {}
+}
+function showMaintenanceScreen(msg) {
+  if (document.getElementById('maintBox')) return;
+  const d = document.createElement('div');
+  d.id = 'maintBox';
+  d.style.cssText = 'position:fixed;inset:0;background:#0b0d13;z-index:9999999;display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center';
+  d.innerHTML = `<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p style="color:#8b94a7;font-size:14px;line-height:1.5">${msg}</p></div>`;
+  document.body.appendChild(d);
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
 window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.reason && e.reason.message || e.reason)));
@@ -5085,7 +5168,7 @@ window.addEventListener('keydown', e => {
 });
 
 injectArt();
-dailyBonus(); renderResume(); renderPrefs();
+dailyBonus(); renderResume(); renderPrefs(); checkMaintenance();
 if (isApp) bootReady.then(() => setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 300));
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }

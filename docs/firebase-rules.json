@@ -89,6 +89,25 @@
           ".validate": "newData.hasChildren(['k', 'm', 't']) && newData.child('k').isString() && newData.child('m').isString() && newData.child('m').val().length <= 1000 && newData.child('t').val() === now"
         }
       }
+    },
+    "config": {
+      "maintenance": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null"
+      }
+    },
+    "errors": {
+      "$id": {
+        ".read": "auth != null && auth.token.email != null",
+        ".write": "auth != null",
+        ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length <= 500"
+      }
+    },
+    "promo_codes": {
+      "$code": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.token.email != null"
+      }
     }
   }
 }

@@ -232,4 +232,51 @@ test('staging gate: protects staging web with tester PIN and watermark badge', (
   assert.ok(elements.stagingGate, 'staging overlay must be appended when unauthenticated');
 });
 
+test('features: promo code redemption credits gold, prevents reuse, and signs wallet', async () => {
+  const toasts = [];
+  const env = {
+    wallet: { gold: 100, promos: [] },
+    saveWallet: () => {},
+    renderShop: () => {},
+    toastAny: (m) => toasts.push(m),
+    $: () => null
+  };
+  vm.runInNewContext(fn('redeemPromo'), env);
+
+  // 1. Redeem built-in TESTER2026
+  await env.redeemPromo('TESTER2026');
+  assert.equal(env.wallet.gold, 600, 'gold must increase by 500');
+  assert.deepEqual(env.wallet.promos, ['TESTER2026']);
+  assert.ok(toasts.some(t => t.includes('+500')));
+
+  // 2. Reject duplicate redemption
+  toasts.length = 0;
+  await env.redeemPromo('TESTER2026');
+  assert.equal(env.wallet.gold, 600, 'duplicate code must not grant gold');
+  assert.ok(toasts.some(t => t.includes('уже был использован')));
+
+  // 3. Redeem OPUS55
+  toasts.length = 0;
+  await env.redeemPromo('OPUS55');
+  assert.equal(env.wallet.gold, 900, 'gold must increase by 300');
+  assert.deepEqual(env.wallet.promos, ['TESTER2026', 'OPUS55']);
+});
+
+test('features: maintenance screen blocks game view when active', () => {
+  const elements = {};
+  const mockDoc = {
+    getElementById: (id) => elements[id] || null,
+    createElement: () => ({ id: '', style: {}, innerHTML: '' }),
+    body: { appendChild: (el) => { elements[el.id] = el; } }
+  };
+  const env = {
+    document: mockDoc
+  };
+  vm.runInNewContext(fn('showMaintenanceScreen'), env);
+  env.showMaintenanceScreen('Плановые работы');
+  assert.ok(elements.maintBox, 'maintenance screen must be rendered');
+  assert.ok(elements.maintBox.innerHTML.includes('Плановые работы'));
+});
+
+
 

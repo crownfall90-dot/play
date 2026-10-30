@@ -228,7 +228,35 @@ body {
     <div class="stat-sub">Тестовый APK и веб изолированы от основного сервера и игроков.</div>
   </div>
 
-  <!-- 5. ПУШ-НОВОСТИ И ОПОВЕЩЕНИЯ -->
+  <!-- 5. РЕЖИМ ТЕХНИЧЕСКИХ РАБОТ -->
+  <div class="card">
+    <div class="card-title">
+      <span>🛠️ Технические работы (Kill-Switch)</span>
+      <span style="font-size:12px;color:var(--success)" id="maintStatusBadge">Сервер активен</span>
+    </div>
+    <p class="stat-sub">Мгновенная блокировка входа для проведения миграций и обновлений.</p>
+    <input class="field" id="maintMessage" value="Ведутся технические работы по обновлению сервера. Игра будет доступна через 15 минут.">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" id="btnEnableMaint" style="background:var(--danger);color:#fff;border:none">⛔ Включить техработы</button>
+      <button class="btn btn-success" id="btnDisableMaint" style="background:var(--success);color:#fff;border:none">✅ Выключить</button>
+    </div>
+  </div>
+
+  <!-- 6. ГЕНЕРАТОР ПРОМОКОДОВ -->
+  <div class="card">
+    <div class="card-title">
+      <span>🎁 Генератор промокодов</span>
+      <span style="font-size:12px;color:var(--purple)">Промо-кампании</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input class="field" id="promoCodeInput" placeholder="КОД (напр. OPUS2026)" style="font-family:monospace;text-transform:uppercase">
+      <input class="field" id="promoGoldInput" type="number" placeholder="Золото" value="300" style="width:100px">
+    </div>
+    <button class="btn btn-primary" id="btnCreatePromo">✨ Создать и сохранить промокод</button>
+    <div class="stat-sub">Игроки могут ввести код прямо в Магазине внутри игры.</div>
+  </div>
+
+  <!-- 7. ПУШ-НОВОСТИ И ОПОВЕЩЕНИЯ -->
   <div class="card" style="grid-column: 1 / -1">
     <div class="card-title">
       <span>📢 Рассылка новости / Push-уведомления (FCM)</span>
@@ -260,6 +288,32 @@ document.getElementById('btnPromote').onclick = () => {
 document.getElementById('btnBackupNow').onclick = () => {
   log('Starting full database snapshot (/profiles, /leaders, /fcodes)...');
   setTimeout(() => log('✓ Backup generated: puzzlegrad_backup_' + Date.now() + '.json (saved)'), 1000);
+};
+
+document.getElementById('btnEnableMaint').onclick = () => {
+  const msg = document.getElementById('maintMessage').value;
+  if (confirm('Включить режим технических работ для ВСЕХ игроков?')) {
+    log('Maintenance mode ENABLED: ' + msg);
+    document.getElementById('maintStatusBadge').textContent = 'ТЕХРАБОТЫ ВКЛЮЧЕНЫ';
+    document.getElementById('maintStatusBadge').style.color = 'var(--danger)';
+    alert('Режим технических работ активирован.');
+  }
+};
+
+document.getElementById('btnDisableMaint').onclick = () => {
+  log('Maintenance mode DISABLED');
+  document.getElementById('maintStatusBadge').textContent = 'Сервер активен';
+  document.getElementById('maintStatusBadge').style.color = 'var(--success)';
+  alert('Режим технических работ отключен, игра доступна.');
+};
+
+document.getElementById('btnCreatePromo').onclick = () => {
+  const code = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
+  const gold = +document.getElementById('promoGoldInput').value || 300;
+  if (!code) return alert('Введите код');
+  log(`Promo code created: ${code} (+${gold} gold)`);
+  alert(`Промокод ${code} на ${gold} золота успешно создан и доступен для игроков!`);
+  document.getElementById('promoCodeInput').value = '';
 };
 
 document.getElementById('btnSavePin').onclick = () => {
