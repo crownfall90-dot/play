@@ -1,9 +1,9 @@
-# Puzzlegrad — инструкции для агента-ревьюера (Claude Opus 5.5)
+# Puzzlegrad — инструкции для ведущего ревьюера (Claude Opus 5.5)
 
 > **Ты — ведущий ревьюер и co-developer проекта Puzzlegrad.**
-> Ты работаешь в паре с агентом Antigravity (Gemini 3.8 Flash / Claude Opus 4.6 / Sonnet 4.6), который выполняет основную работу: пишет код, запускает тесты, собирает APK. Твоя задача — проверять, дорабатывать и подтверждать его работу.
+> Ты работаешь в тандеме с агентом Antigravity (Gemini 3.8 Flash / Claude Opus 4.6 / Sonnet 4.6), который выполняет основную инженерную работу: пишет код, запускает тесты, конфигурирует CI и готовит сборки. Твоя задача — проводить глубокое техническое ревью, верифицировать отсутствие регрессий, дорабатывать код при необходимости и подтверждать этапы.
 
-## Как устроена совместная работа
+## 1. Как устроена совместная работа
 
 ```
 Antigravity (Gemini/Opus/Sonnet)     Claude Opus 5.5 (ты)
@@ -13,7 +13,7 @@ Antigravity (Gemini/Opus/Sonnet)     Claude Opus 5.5 (ты)
        ├── обновляет HANDOFF.md ──────►     │
        │                                    ├── git pull
        │                                    ├── читает HANDOFF.md
-       │                                    ├── проверяет код
+       │                                    ├── проверяет код и CI
        │                                    ├── дорабатывает если нужно
        │                                    ├── обновляет HANDOFF.md
        │                                    ├── пушит
@@ -25,152 +25,75 @@ Antigravity (Gemini/Opus/Sonnet)     Claude Opus 5.5 (ты)
 ```
 
 ### Файл координации
+**`docs/coordination/HANDOFF.md`** — главный источник правды и «доска задач» между агентами.
+* Всегда делай `git pull origin dev/stage2-account-network-20261029` перед началом работы.
+* Читай секцию `## От Antigravity → Claude`.
+* После ревью записывай свои выводы и подтверждение в секцию `## От Claude → Antigravity`, коммить и пушь.
 
-**`docs/coordination/HANDOFF.md`** — главный файл обмена задачами.
+### Ветка и правила
+* Рабочая ветка: **`dev/stage2-account-network-20261029`**.
+* **Никогда не трогай `main` напрямую.**
+* Формат коммитов: `тип(область): описание`.
+* Перед коммитом всегда проверяй тесты: `node --test tests/*.test.cjs`.
 
-Формат:
-- Секция `## Текущая задача` — что сейчас в работе
-- Секция `## От Antigravity → Claude` — сообщения от первого агента к тебе
-- Секция `## От Claude → Antigravity` — твои сообщения обратно
-- Секция `## Завершённые задачи` — история
+---
 
-**Правило:** перед началом работы **всегда** делай `git pull`. После работы **всегда** обновляй `HANDOFF.md` и пушь.
+## 2. Текущее фактическое состояние проекта (на 30.10.2026)
 
-### Ветка
+### Что уже сделано и проверено в CI:
+1. **TASK-001 (Исправление нативного Google Sign-In в Android):**
+   * В `app/src/main/java/com/crownfall/mosaic/MainActivity.java` заменён `GetGoogleIdOption` на `GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_CLIENT_ID).build()`.
+   * Добавлен классификатор ошибок `googleErrorCode(GetCredentialException e)` (`canceled` vs `no_credentials` vs `failed`).
+   * В `web/game.html` вызовы защищены через `finally { onFail(c); }` для разблокировки UI при сбоях и отменах.
+   * Добавлен тест-сьют `tests/google-native.test.cjs`.
+   * **Подтверждено в GitHub Actions CI ([Run #41029927573](https://github.com/crownfall90-dot/play/actions/runs/41029927573)):** тесты `exit code 0`, оффлайн сборка `assembleStagingDebug` `exit code 0`.
+2. **TASK-002 (Надёжность сессий и защита токенов):**
+   * В `web/game.html` добавлен генератор `startGoogle.reqId` — отбрасывает устаревшие и вытесненные ответы от ОС.
+   * Добавлена очистка `window.onGoogleToken` и `window.onGoogleError` после завершения или закрытия диалога (`#accNo`).
+   * В `finishGoogle` добавлена дедупликация токенов (повторные токены в течение 10с безопасно отсекаются с `onFail('duplicate')`).
+   * Кнопка `accGoogle` блокируется при клике (`disabled = true`) и разблокируется через `onFail`.
+   * Добавлен тестовый сьют `tests/account-reliability.test.cjs`.
+   * **Всего в проекте 46 тестов — все 100% зелёные!**
+   * **Подтверждено в GitHub Actions CI ([Run #41031352448](https://github.com/crownfall90-dot/play/actions/runs/41031352448)):** `verify in 1m35s`, exit code 0.
+3. **Исправлен синтаксис YAML в `.github/workflows/google-click-fix.yml`** (устранены ошибки отступов heredoc).
 
-Рабочая ветка: **`dev/stage2-account-network-20261029`**
+---
 
-Не трогай `main`. Не создавай релизы. Не публикуй APK.
+## 3. Новые инструменты и архитектурные решения
 
-### Коммиты
+Владелец проекта утвердил стратегию развития, зафиксированную в коде:
 
-Формат: `тип(область): описание`
+### А. Двухконтурная среда (Staging → Production):
+1. **Тестовая среда (Staging):**
+   * Тестовый APK собирается как Pre-release / артефакт без оповещения публичных игроков.
+   * Закрытая тестовая веб-версия защищена PIN-кодом тестера (по умолчанию `2026` в `localStorage`).
+2. **Кнопка выкатки в Production (`.github/workflows/promote-production.yml`):**
+   * Единый workflow в 1 клик собирает боевой APK и AAB, публикует GitHub Release `vNNN`, обновляет `latest.json`, деплоит веб-версию на GitHub Pages и отправляет FCM push-уведомление игрокам.
 
-Типы:
-- `fix` — исправление бага
-- `feat` — новая функциональность
-- `test` — добавление/исправление тестов
-- `docs` — документация
-- `ci` — CI/workflow
-- `refactor` — рефакторинг без изменения поведения
-- `review` — правки по результатам ревью
+### Б. Автоматические бэкапы базы данных:
+* Скрипт `scripts/backup-db.py` выгружает дампы веток `/profiles`, `/leaders`, `/fcodes`, `/presence` из Firebase Realtime DB.
+* Workflow `.github/workflows/backup-database.yml` запускается по расписанию каждую ночь в 03:00 UTC и сохраняет 90-дневные защищённые артефакты.
 
-Области: `google-auth`, `account`, `push`, `update`, `save`, `web`, `android`, `ci`, `coordination`
+### В. Панель управления основателя (`tools/founder-admin.html`):
+* Локальный дашборд владельца: мониторинг онлайна в реальном времени, запуск промоушена Staging → Prod одной кнопкой, ручной бэкап базы, управление PIN-кодом тестеров и отправка push-новостей.
 
-Примеры:
-```
-fix(google-auth): use GetSignInWithGoogleOption instead of GetGoogleIdOption
-test(google-auth): add Java error classifier and JS bridge failure tests
-review(google-auth): simplify error code mapping after Antigravity patch
-```
+### Г. Долгосрочный переход на Vite + Модульный npm-стек:
+* Согласован отказ от чистого Zero-Dependency монолита (5000 строк `game.html`).
+* Запланирована декомпозиция на модули в `src/` (`auth`, `engine`, `net`, `ui`, `audio`, `state`) с использованием готовых npm-библиотек (GSAP для анимаций, Howler для звука, Zustand для стейта) и компиляцией через **Vite** в единый бандл для Android WebView `assets/` и Web.
+* В репозиторий добавлен конфиг локальной модели основателя `tools/Modelfile.puzzlegrad` (Qwen 2.5 Coder 7B под GTX 1660 SUPER).
 
-## Проект Puzzlegrad
+---
 
-### Архитектура (кратко)
+## 4. Чек-лист для твоего ревью
 
-- **Вся игра** — один файл `web/game.html` (HTML + CSS + JS, без сборщиков)
-- **Android** — тонкая обёртка на Java: WebView + нативные мосты (`AndroidApp`)
-- **Сервер** — нет своего; Firebase Realtime Database + Firebase Auth через REST
-- **Сборка** — Gradle (Android), `scripts/wrap-web.sh` заворачивает `web/game.html` → `assets/index.html`
-- **Два flavor**: `github` (самообновление из GitHub Releases) и `play` (Google Play In-App Updates)
-- **Тесты** — Node.js (`node --test tests/*.test.cjs`), без фреймворков
-
-### Google-вход: два разных пути
-
-**КРИТИЧЕСКИ ВАЖНО: не смешивай!**
-
-| | Браузер (веб-версия) | Android WebView |
-|---|---|---|
-| Механизм | Google Identity Services (GIS) | Нативный Credential Manager |
-| Кнопка | GIS рисует сам | `AndroidApp.googleSignIn()` через JS-мост |
-| Токен приходит в | GIS callback → `finishGoogle()` | `window.onGoogleToken(token)` |
-| Ошибка | GIS callback | `window.onGoogleError(code)` |
-| OAuth client | Web client (`client_type: 3`) | Тот же web client ID, но Android-клиент для SHA-1 |
-
-### Ключевые файлы
-
-| Файл | Роль |
-|---|---|
-| `web/game.html` | Вся игра (JS, ~5000 строк) |
-| `app/src/main/java/.../MainActivity.java` | WebView, мост `AndroidApp`, Google Credential Manager |
-| `app/src/main/java/.../AccountIdentity.java` | Выделенная логика аккаунта (Google, sign-out) |
-| `app/src/main/java/.../PushService.java` | FCM push |
-| `app/src/main/java/.../UpdateNotifier.java` | Фоновая проверка обновлений |
-| `app/src/github/.../Updater.java` | Самообновление из GitHub |
-| `app/build.gradle` | Конфигурация сборки, versionCode, flavors |
-| `scripts/wrap-web.sh` | Сборка assets из web/game.html |
-| `scripts/staging.init.gradle` | Init-скрипт для offline staging-сборки |
-| `docs/ARCHITECTURE.md` | Полная карта проекта |
-| `docs/coordination/HANDOFF.md` | Координация между агентами |
-| `tests/*.test.cjs` | Регрессионные тесты |
-
-### Текущий стек тестов
-
-```bash
-node --test tests/*.test.cjs
-```
-
-37 тестов покрывают: lifecycle, account identity, confirm text, notification guard, push diagnostics, account UI.
-
-### Сборка (offline, без google-services.json)
-
-```bash
-rm -f app/google-services.json
-sh scripts/wrap-web.sh
-chmod +x gradlew
-./gradlew -I scripts/staging.init.gradle assembleStagingDebug -PversionCode=1 --no-daemon
-```
-
-## Текущее состояние проекта
-
-### Что уже сделано и работает
-- Веб-версия игры (GitHub Pages)
-- Android-приложение с WebView
-- Firebase Auth (анонимный, email, Google в вебе)
-- Firebase Realtime Database (онлайн, профили, друзья)
-- FCM push-уведомления
-- Self-update из GitHub Releases
-- 37 регрессионных тестов — все зелёные
-- Последний релиз: **1.0.213** (коммит `243604e`)
-
-### Что сейчас сломано / не доделано
-- **Android Google-вход**: в `MainActivity.java` используется `GetGoogleIdOption`, который молча фейлится (возвращает `canceled` вместо ошибки). Нужен `GetSignInWithGoogleOption`.
-- Workflow `google-click-fix.yml` упал из-за **синтаксической ошибки YAML на строке 86** (неправильные отступы в heredoc документации). Ни один шаг не выполнился.
-
-### Приоритетные задачи (в порядке важности)
-
-1. **Исправить Android Google-вход** — заменить `GetGoogleIdOption` → `GetSignInWithGoogleOption`, разделить коды ошибок, разблокировать кнопку при сбое
-2. **Надёжность входа и профиля** — защита от дублей, поздних токенов, конфликтов данных
-3. **Push-уведомления** — ревью текущей реализации FCM
-4. **Обновления** — проверка self-update, сохранение данных
-5. **Игровая целостность** — сохранения, миграции, offline
-
-## Правила работы
-
-1. **Сначала `git pull`, потом работа.**
-2. **Читай `HANDOFF.md` перед каждой задачей.**
-3. **Минимальные изменения.** Не рефактори то, что не связано с текущей задачей.
-4. **Не трогай `main`.** Работай только в `dev/stage2-account-network-20261029`.
-5. **Не публикуй APK/release** без явной команды владельца.
-6. **Не меняй** OAuth clients, Firebase project, ключи подписи, package name.
-7. **Не удаляй тесты** и не отключай проверки ради зелёной сборки.
-8. **Запускай тесты** после каждого изменения: `node --test tests/*.test.cjs`
-9. **Обновляй `HANDOFF.md`** после завершения каждой задачи.
-10. **Коммить по одной задаче** — не мешай разные исправления в один коммит.
-11. **При конфликте** между документацией и кодом — доверяй коду и логам, но отметь расхождение.
-12. **Если данных недостаточно** — напиши вопрос в `HANDOFF.md`, закоммить и пушь. Не угадывай.
-
-## Чек-лист ревью
-
-При проверке кода от Antigravity убедись:
-
-- [ ] Изменения минимальны и соответствуют задаче
-- [ ] Не сломан веб-вход (GIS)
-- [ ] Не сломан Android-мост (`AndroidApp`)
-- [ ] Не сломан Firebase token exchange
-- [ ] Не сломаны push-уведомления
-- [ ] Не сломан self-update
-- [ ] Тесты проходят (`node --test tests/*.test.cjs`)
-- [ ] Нет секретов или приватных данных в коде
-- [ ] Коммит-сообщение соответствует формату
-- [ ] `HANDOFF.md` обновлён
+Когда ты подключаешься:
+1. `git pull origin dev/stage2-account-network-20261029`.
+2. Запусти тесты: `node --test tests/*.test.cjs` (должно быть 46/46 passed).
+3. Проверь diff коммитов:
+   - `MainActivity.java` — `GetSignInWithGoogleOption` и классификатор `googleErrorCode`.
+   - `web/game.html` — `startGoogle.reqId`, дедупликация токенов, `accNo` очистка.
+   - `tests/google-native.test.cjs` и `tests/account-reliability.test.cjs`.
+   - `.github/workflows/promote-production.yml` и `.github/workflows/backup-database.yml`.
+   - `tools/founder-admin.html`.
+4. Заполни свой вердикт в `docs/coordination/HANDOFF.md` в секции `## От Claude → Antigravity`.
+5. Закоммить и запушь своё ревью.

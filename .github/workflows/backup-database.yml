@@ -1,0 +1,31 @@
+name: Database Nightly Backup
+
+on:
+  schedule:
+    # Run every night at 03:00 UTC
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Perform database backup
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_DB_URL: 'https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app'
+        run: |
+          python3 scripts/backup-db.py
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: puzzlegrad-db-backup-${{ github.run_id }}
+          path: backups/puzzlegrad_backup_*.json
+          retention-days: 90
