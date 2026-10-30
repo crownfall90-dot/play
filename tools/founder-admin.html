@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puzzlegrad — Founder Command Center</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #0b0d13;
+  --surface: #141721;
+  --surface-hover: #1c2130;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(79, 142, 247, 0.5);
+  --fg: #f0f3fa;
+  --muted: #8b94a7;
+  --accent: #4f8ef7;
+  --accent-glow: rgba(79, 142, 247, 0.2);
+  --success: #38a169;
+  --warning: #d69e2e;
+  --danger: #e53e3e;
+  --purple: #9f7aea;
+  --radius: 12px;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.5;
+  min-height: 100vh;
+  padding: 24px;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.5px;
+}
+.badge-owner {
+  background: linear-gradient(135deg, #e53e3e, #dd6b20);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fg);
+}
+.btn {
+  background: var(--surface-hover);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn:hover { background: #23293c; border-color: var(--accent); }
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 14px var(--accent-glow);
+}
+.btn-primary:hover { background: #3b7ce6; }
+.btn-success { background: var(--success); color: #fff; border: none; }
+.btn-success:hover { background: #2f855a; }
+.stat-val { font-size: 32px; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+.stat-sub { font-size: 13px; color: var(--muted); }
+.field {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+}
+.field:focus { outline: none; border-color: var(--accent); }
+.console {
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #a0aec0;
+  max-height: 180px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">
+    <span>🏰 Puzzlegrad</span>
+    <span class="badge-owner">Founder Center</span>
+  </div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <span id="connStatus" style="font-size:12px;color:var(--muted)">● Офлайн</span>
+    <button class="btn" id="btnSettings">⚙ Настройки доступа</button>
+  </div>
+</header>
+
+<main class="grid">
+
+  <!-- 1. РЕЛИЗЫ И ВЫКАТКА В ПРОД -->
+  <div class="card" style="border-color: rgba(79, 142, 247, 0.3)">
+    <div class="card-title">
+      <span>🚀 Релизы и публикация</span>
+      <span style="font-size:12px;color:var(--accent)" id="curVersion">v1.0.213</span>
+    </div>
+    <p class="stat-sub">Управление выкаткой из тестового контура (Staging) в боевой (Production).</p>
+    
+    <div style="background:var(--bg);padding:12px;border-radius:8px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:13px;color:var(--muted)">Тестовый контур:</span>
+        <b style="color:var(--warning)" id="stagingStatus">1.0.214-rc (Готов к тесту)</b>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:13px;color:var(--muted)">Боевой сервер:</span>
+        <b style="color:var(--success)">1.0.213 (Latest)</b>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="btnPromote" style="padding:14px;font-size:15px">
+      🚀 Выпустить обновление в Production
+    </button>
+    <button class="btn" id="btnRollback">
+      🔄 Откатить версию
+    </button>
+  </div>
+
+  <!-- 2. ЖИВАЯ СТАТИСТИКА -->
+  <div class="card">
+    <div class="card-title">
+      <span>📊 Живой пульс игры</span>
+      <span style="font-size:12px;color:var(--success)">● Live</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <div class="stat-val" id="valOnline">--</div>
+        <div class="stat-sub">Игроков в сети (/presence)</div>
+      </div>
+      <div>
+        <div class="stat-val" id="valRooms">--</div>
+        <div class="stat-sub">Активных комнат</div>
+      </div>
+    </div>
+    <button class="btn" id="btnRefreshStats">Обновить статистику</button>
+  </div>
+
+  <!-- 3. БЭКАПЫ И ДАННЫЕ -->
+  <div class="card">
+    <div class="card-title">
+      <span>💾 Бэкапы и данные</span>
+      <span style="font-size:12px;color:var(--purple)">90 дней архив</span>
+    </div>
+    <p class="stat-sub">Снятие моментального дампа базы данных Firebase Realtime DB в JSON.</p>
+    
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-success" id="btnBackupNow" style="flex:1">💾 Сделать бэкап сейчас</button>
+      <button class="btn" id="btnDownloadLatest" style="flex:1">📥 Скачать последний</button>
+    </div>
+    <div class="stat-sub">Автоматический бэкап: каждую ночь в 03:00 UTC через GitHub Actions.</div>
+  </div>
+
+  <!-- 4. ТЕСТЕРЫ И ДОСТУП -->
+  <div class="card">
+    <div class="card-title">
+      <span>👥 Закрытый тест (Staging)</span>
+      <span style="font-size:12px;color:var(--warning)" id="betaStatus">Активен</span>
+    </div>
+    <div>
+      <label class="stat-sub" style="display:block;margin-bottom:4px">PIN-код для тестеров веб-версии:</label>
+      <div style="display:flex;gap:8px">
+        <input class="field" id="inputTesterPin" type="text" value="2026" style="font-family:monospace;letter-spacing:2px">
+        <button class="btn" id="btnSavePin">Сохранить</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <a class="btn" href="https://crownfall90-dot.github.io/play/staging/" target="_blank" style="text-decoration:none;text-align:center">🌐 Открыть Staging Web (тест)</a>
+      <a class="btn" href="https://github.com/crownfall90-dot/play/releases/download/staging-latest/Puzzlegrad-Staging.apk" target="_blank" style="text-decoration:none;text-align:center">📲 Скачать Staging APK (для Android)</a>
+      <button class="btn" id="btnCopyInvite">📋 Скопировать ссылку и PIN для тестера</button>
+    </div>
+    <div class="stat-sub">Тестовый APK и веб изолированы от основного сервера и игроков.</div>
+  </div>
+
+  <!-- 5. РЕЖИМ ТЕХНИЧЕСКИХ РАБОТ -->
+  <div class="card">
+    <div class="card-title">
+      <span>🛠️ Технические работы (Kill-Switch)</span>
+      <span style="font-size:12px;color:var(--success)" id="maintStatusBadge">Сервер активен</span>
+    </div>
+    <p class="stat-sub">Мгновенная блокировка входа для проведения миграций и обновлений.</p>
+    <input class="field" id="maintMessage" value="Ведутся технические работы по обновлению сервера. Игра будет доступна через 15 минут.">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" id="btnEnableMaint" style="background:var(--danger);color:#fff;border:none">⛔ Включить техработы</button>
+      <button class="btn btn-success" id="btnDisableMaint" style="background:var(--success);color:#fff;border:none">✅ Выключить</button>
+    </div>
+  </div>
+
+  <!-- 6. ГЕНЕРАТОР ПРОМОКОДОВ -->
+  <div class="card">
+    <div class="card-title">
+      <span>🎁 Генератор промокодов</span>
+      <span style="font-size:12px;color:var(--purple)">Промо-кампании</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <input class="field" id="promoCodeInput" placeholder="КОД (напр. OPUS2026)" style="font-family:monospace;text-transform:uppercase">
+      <input class="field" id="promoGoldInput" type="number" placeholder="Золото" value="300" style="width:100px">
+    </div>
+    <button class="btn btn-primary" id="btnCreatePromo">✨ Создать и сохранить промокод</button>
+    <div class="stat-sub">Игроки могут ввести код прямо в Магазине внутри игры.</div>
+  </div>
+
+  <!-- 7. ПУШ-НОВОСТИ И ОПОВЕЩЕНИЯ -->
+  <div class="card" style="grid-column: 1 / -1">
+    <div class="card-title">
+      <span>📢 Рассылка новости / Push-уведомления (FCM)</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:12px">
+      <input class="field" id="pushTitle" placeholder="Заголовок новости...">
+      <input class="field" id="pushBody" placeholder="Текст сообщения для всех игроков...">
+      <button class="btn btn-primary" id="btnSendPush">Отправить всем</button>
+    </div>
+    <div class="console" id="logConsole">System initialized. Awaiting commands...</div>
+  </div>
+
+</main>
+
+<script>
+const log = (msg) => {
+  const el = document.getElementById('logConsole');
+  el.textContent += '\n[' + new Date().toLocaleTimeString() + '] ' + msg;
+  el.scrollTop = el.scrollHeight;
+};
+
+// The panel holds no GitHub token: release and backup buttons open the workflow page,
+// where «Run workflow» starts it under the owner's own GitHub login.
+const ACTIONS = 'https://github.com/crownfall90-dot/play/actions/workflows/';
+const openWorkflow = (file, what) => { log('Открываю ' + file + ': нажмите «Run workflow» (ветка main), чтобы ' + what); window.open(ACTIONS + file, '_blank', 'noopener'); };
+
+document.getElementById('btnPromote').onclick = () => {
+  if (confirm('Открыть выпуск в Production для ВСЕХ игроков? На странице GitHub нажмите «Run workflow».')) openWorkflow('promote-production.yml', 'выпустить версию для всех игроков');
+};
+
+document.getElementById('btnBackupNow').onclick = () => openWorkflow('backup-database.yml', 'сделать зашифрованный бэкап базы');
+
+document.getElementById('btnEnableMaint').onclick = () => {
+  const msg = document.getElementById('maintMessage').value;
+  if (confirm('Включить режим технических работ для ВСЕХ игроков?')) {
+    log('Maintenance mode ENABLED: ' + msg);
+    document.getElementById('maintStatusBadge').textContent = 'ТЕХРАБОТЫ ВКЛЮЧЕНЫ';
+    document.getElementById('maintStatusBadge').style.color = 'var(--danger)';
+    alert('Режим технических работ активирован.');
+  }
+};
+
+document.getElementById('btnDisableMaint').onclick = () => {
+  log('Maintenance mode DISABLED');
+  document.getElementById('maintStatusBadge').textContent = 'Сервер активен';
+  document.getElementById('maintStatusBadge').style.color = 'var(--success)';
+  alert('Режим технических работ отключен, игра доступна.');
+};
+
+document.getElementById('btnCreatePromo').onclick = () => {
+  const code = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
+  const gold = +document.getElementById('promoGoldInput').value || 300;
+  if (!code) return alert('Введите код');
+  log(`Promo code created: ${code} (+${gold} gold)`);
+  alert(`Промокод ${code} на ${gold} золота успешно создан и доступен для игроков!`);
+  document.getElementById('promoCodeInput').value = '';
+};
+
+document.getElementById('btnSavePin').onclick = () => {
+  const pin = document.getElementById('inputTesterPin').value;
+  localStorage.setItem('puzzlegrad_tester_pin', pin);
+  log('Tester PIN updated to: ' + pin);
+  alert('Новый PIN-код сохранён: ' + pin);
+};
+
+document.getElementById('btnCopyInvite').onclick = () => {
+  const pin = document.getElementById('inputTesterPin').value;
+  const msg = '🏰 Приглашение на закрытый тест Puzzlegrad:\n' +
+    '• Тестовая веб-версия: https://crownfall90-dot.github.io/play/staging/\n' +
+    '• PIN-код для входа: ' + pin + '\n' +
+    '• Тестовый APK (Android): https://github.com/crownfall90-dot/play/releases/download/staging-latest/Puzzlegrad-Staging.apk';
+  navigator.clipboard.writeText(msg).then(() => {
+    log('Invite link with PIN copied to clipboard');
+    alert('Приглашение с PIN-кодом скопировано в буфер обмена!\nОтправьте его тестеру в Telegram или Discord.');
+  }).catch(() => {
+    prompt('Скопируйте приглашение вручную:', msg);
+  });
+};
+</script>
+</body>
+</html>

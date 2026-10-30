@@ -1,0 +1,87 @@
+name: Stage2 notification guard preparation
+on:
+  push:
+    branches: [dev/stage2-account-network-20261029]
+    paths: [.github/workflows/stage2-notification-guard.yml]
+permissions:
+  contents: write
+concurrency:
+  group: stage2-notification-guard
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Apply exact reviewed notification guard
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = 29d7f594e94c7ef9a063ae5b434963ef75af2c53
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('app/src/main/java/com/crownfall/mosaic/UpdateNotifier.java')
+          s=p.read_text()
+          replacements=[
+            ('static void announce(Context c, int code, String version, String notes) {', 'static synchronized void announce(Context c, int code, String version, String notes) {'),
+            ('        show(c, version, notes);\n        prefs(c).edit().putInt("notified", code).apply();', '        if (show(c, version, notes)) prefs(c).edit().putInt("notified", code).apply();'),
+            ('static void show(Context c, String version, String notes) {', 'static boolean show(Context c, String version, String notes) {'),
+            ('        nm.notify(1, b.setSmallIcon(R.drawable.ic_stat_update)', '        try {\n        nm.notify(1, b.setSmallIcon(R.drawable.ic_stat_update)'),
+            ('                .build());\n    }\n\n    /** An announcement', '                .build());\n        return true; // Submitted to Android, not proof of delivery or visibility.\n        } catch (SecurityException denied) { return false; }\n    }\n\n    /** An announcement')
+          ]
+          for old,new in replacements:
+              assert s.count(old)==1, old
+              s=s.replace(old,new)
+          start=s.index('static boolean show(')
+          at=s.index('        if (Build.VERSION.SDK_INT >= 26)', start)
+          s=s[:at]+'''        if (nm == null) return false;
+                  if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) return false;
+                  if (Build.VERSION.SDK_INT >= 33 && c.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                          != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
+          '''.replace('                  ', '        ')+s[at:]
+          old='            nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Обновления игры", NotificationManager.IMPORTANCE_DEFAULT));'
+          assert s.count(old)==1
+          s=s.replace(old,old+'\n            NotificationChannel channel = nm.getNotificationChannel(CHANNEL);\n            if (channel != null && channel.getImportance() == NotificationManager.IMPORTANCE_NONE) return false;')
+          p.write_text(s)
+          t=Path('tests/notification-guard.test.cjs')
+          assert not t.exists()
+          t.write_text('''const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+          const s=fs.readFileSync('app/src/main/java/com/crownfall/mosaic/UpdateNotifier.java','utf8');
+          test('source guard: mark only after Android accepts submission',()=>assert.ok(s.includes('if (show(c, version, notes)) prefs(c).edit().putInt("notified", code).apply();')));
+          test('source guard: concurrent announcements serialized',()=>assert.ok(s.includes('static synchronized void announce(')));
+          test('source guard: permission and disabled channel checked',()=>{for(const q of ['areNotificationsEnabled()', 'POST_NOTIFICATIONS', 'getNotificationChannel(CHANNEL)', 'NotificationManager.IMPORTANCE_NONE']) assert.ok(s.includes(q));});
+          test('source guard: denied notification is not marked',()=>assert.ok(s.includes('catch (SecurityException denied) { return false; }')));
+          ''')
+          p=Path('docs/PROJECT-CONTEXT.md')
+          p.write_text(p.read_text()+'''
+          ## Status update 2026-10-29, stage 2 working branch
+          This section supersedes older planning statuses above. Test base: 29d7f594e94c7ef9a063ae5b434963ef75af2c53. Public APK 1.0.209 was published from cd3747f9e00b91a3a8228095c194c8657c7485d4; main merge is still pending in draft PR 151. Successful candidate CI and FCM acceptance were shown in owner screenshots; phone delivery, upgrade/data preservation and two-client online remain unverified.
+          Current branch: dev/stage2-account-network-20261029. First narrow package guards the notified marker against disabled Android notifications/channel and denied permission, and serializes announcements. It does not establish the cause of the owner's missing notification. No subscription diagnostics, account/color changes, test Firebase setup, phone verification or public release are claimed by this package.
+          Automated checks: existing lifecycle tests plus four source-structure notification checks (NOT Android runtime tests), and offline staging compilation. CI creates a source commit only after these commands pass. Compilation uses a temporary debug signature, uploads no APK and is not an installable persistent test update. Production Firebase configuration is removed only in the CI workspace. No production data access or message send occurs.
+          Stage 1 online/device scenarios remain open. Stage 2 Google login, permanent colors, connection/versioned data sync and owner-role security remain planned. Separate test Firebase is still unconfirmed. Existing signing-key exposure risk remains unresolved; no key rotation is performed.
+          ''')
+          PY
+          git diff --check
+      - name: Lifecycle and source-structure checks
+        run: node --test tests/lifecycle.test.cjs tests/notification-guard.test.cjs
+      - name: Offline compile only (no APK distribution)
+        run: |
+          set -euo pipefail
+          rm -f app/google-services.json
+          sh scripts/wrap-web.sh
+          chmod +x gradlew
+          ./gradlew -I scripts/staging.init.gradle assembleStagingDebug -PversionCode=1 --no-daemon
+      - name: Commit only approved sources and context
+        run: |
+          set -euo pipefail
+          git add app/src/main/java/com/crownfall/mosaic/UpdateNotifier.java tests/notification-guard.test.cjs docs/PROJECT-CONTEXT.md
+          test "$(git diff --cached --name-only | sort | tr '\n' ' ')" = "app/src/main/java/com/crownfall/mosaic/UpdateNotifier.java docs/PROJECT-CONTEXT.md tests/notification-guard.test.cjs "
+          git config user.name 'Puzzlegrad development automation'
+          git config user.email 'puzzlegrad-automation@users.noreply.github.com'
+          git commit -m 'fix: retain update notification eligibility when Android blocks display'
+          git push origin HEAD:dev/stage2-account-network-20261029

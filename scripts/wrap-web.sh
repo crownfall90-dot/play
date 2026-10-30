@@ -3,23 +3,41 @@
 # swaps Google Fonts for the bundled copies in assets/fonts and embeds release-notes.md.
 #   sh scripts/wrap-web.sh          → app/src/main/assets/index.html (Android)
 #   sh scripts/wrap-web.sh web [N]  → build/web/ (the site for iPhone, Android browsers and computers;
-#                                     N is the build number shown as the version)
+#                                     N is the build number shown as the version;
+#                                     also builds build/web/staging/ with tester PIN gate)
 set -e
 cd "$(dirname "$0")/.."
 target=${1:-android}
+
+if python3 -c 'exit(0)' >/dev/null 2>&1; then
+  PY_BIN="python3"
+elif python -c 'exit(0)' >/dev/null 2>&1; then
+  PY_BIN="python"
+else
+  echo "Error: working python not found" >&2
+  exit 1
+fi
+
 if [ "$target" = web ]; then
   site=build/web; out=$site/index.html; webver="веб ${2:-dev}"
-  rm -rf "$site"; mkdir -p "$site"
-  cp -r app/src/main/assets/fonts "$site/fonts"; cp -r web/icons "$site/icons"; cp web/manifest.webmanifest "$site/"
+  rm -rf "$site"; mkdir -p "$site/staging"
+  cp -r app/src/main/assets/fonts "$site/fonts"
+  cp -r app/src/main/assets/fonts "$site/staging/fonts"
+  cp -r web/icons "$site/icons"
+  cp -r web/icons "$site/staging/icons"
+  cp web/manifest.webmanifest "$site/"
+  cp web/manifest.webmanifest "$site/staging/"
   sed "s/__VERSION__/$(echo "${2:-dev}" | tr -cd 'A-Za-z0-9.-')/" web/sw.js > "$site/sw.js"
   touch "$site/.nojekyll"
-  python3 scripts/privacy-page.py "$site/privacy.html"
+  touch "$site/staging/.nojekyll"
+  "$PY_BIN" scripts/privacy-page.py "$site/privacy.html"
 else
   out=app/src/main/assets/index.html
 fi
 mkdir -p "$(dirname "$out")"
+
 # Firebase web config from app/google-services.json, if the project has one.
-firebase=$(python3 - <<'PY'
+firebase=$("$PY_BIN" - <<'PY'
 import json, os
 p = 'app/google-services.json'
 if not os.path.exists(p):
@@ -33,13 +51,18 @@ else:
     print(json.dumps({'apiKey': g['client'][0]['api_key'][0]['current_key'], 'dbUrl': db, 'googleClientId': gid}))
 PY
 )
-notes=$(python3 -c 'import json; print(json.dumps(open("release-notes.md", encoding="utf-8").read().strip(), ensure_ascii=False))')
-{
-  printf '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8">\n'
-  printf '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">\n'
-  printf '<link rel="stylesheet" href="fonts/fonts.css">\n'
-  if [ "$target" = web ]; then
-    cat <<'HEAD'
+notes=$("$PY_BIN" -c 'import json; print(json.dumps(open("release-notes.md", encoding="utf-8").read().strip(), ensure_ascii=False))')
+
+build_page() {
+  dest="$1"
+  staging="$2"
+  vstring="$3"
+  {
+    printf '<!doctype html>\n<html lang="ru"><head><meta charset="utf-8">\n'
+    printf '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">\n'
+    printf '<link rel="stylesheet" href="fonts/fonts.css">\n'
+    if [ "$target" = web ]; then
+      cat <<'HEAD'
 <meta name="theme-color" content="#101729">
 <meta name="description" content="Puzzlegrad — стройте города, дороги и крепости из общей стопки. Играйте онлайн, с друзьями и с ботами.">
 <link rel="manifest" href="manifest.webmanifest">
@@ -59,9 +82,13 @@ notes=$(python3 -c 'import json; print(json.dumps(open("release-notes.md", encod
 })();
 </script>
 HEAD
-    printf '<script>window.WEBAPP = true; window.WEB_VERSION = "%s";</script>\n' "$webver"
-  else
-  cat <<'BOOT'
+      if [ "$staging" = "true" ]; then
+        printf '<script>window.WEBAPP = true; window.IS_STAGING = true; window.WEB_VERSION = "%s";</script>\n' "$vstring"
+      else
+        printf '<script>window.WEBAPP = true; window.IS_STAGING = false; window.WEB_VERSION = "%s";</script>\n' "$vstring"
+      fi
+    else
+      cat <<'BOOT'
 <script>
 /* If the game cannot start (usually an outdated Android System WebView), say how to fix it instead of a blank screen. */
 (function () {
@@ -76,10 +103,18 @@ HEAD
 })();
 </script>
 BOOT
-  fi
-  printf '<script>window.RELEASE_NOTES = %s; window.FIREBASE = %s;</script>\n' "$notes" "$firebase"
-  printf '</head><body>\n'
-  grep -v -e 'fonts.googleapis.com' -e 'fonts.gstatic.com' web/game.html
-  printf '\n</body></html>\n'
-} > "$out"
-echo "wrote $out"
+    fi
+    printf '<script>window.RELEASE_NOTES = %s; window.FIREBASE = %s;</script>\n' "$notes" "$firebase"
+    printf '</head><body>\n'
+    grep -v -e 'fonts.googleapis.com' -e 'fonts.gstatic.com' web/game.html
+    printf '\n</body></html>\n'
+  } > "$dest"
+  echo "wrote $dest"
+}
+
+if [ "$target" = web ]; then
+  build_page "$out" "false" "$webver"
+  build_page "$site/staging/index.html" "true" "тест ${2:-dev}"
+else
+  build_page "$out" "false" ""
+fi

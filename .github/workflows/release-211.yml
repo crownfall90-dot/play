@@ -1,0 +1,95 @@
+name: Verified GitHub release 1.0.211
+on:
+  push:
+    branches: [dev/stage2-account-network-20261029]
+    paths: [.github/workflows/release-211.yml]
+permissions:
+  contents: write
+concurrency:
+  group: puzzlegrad-public-release
+  cancel-in-progress: false
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 2}
+      - name: Guard approved source and version
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = f7ad96213db87884783296adbb190541610e75df
+          test "$(git diff --name-only HEAD^ HEAD | sort | tr '\n' ' ')" = '.github/workflows/release-211.yml release-notes.md '
+          test "$(gh api repos/$GITHUB_REPOSITORY/releases/latest --jq .tag_name)" = v210
+          gh api repos/$GITHUB_REPOSITORY/releases --paginate --jq '.[].tag_name' > /tmp/release-tags
+          if grep -Fxq v211 /tmp/release-tags; then echo 'v211 already exists'; exit 1; fi
+          test -s app/google-services.json
+          test -s app/release.keystore
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('docs/development/account-verification.md').read_text()
+          for text in ['Source: 50d52b49e112faccc85823266848d98232d3d094','Tests exit code: 0','Offline assembleStagingDebug exit code: 0']: assert text in s,text
+          PY
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - name: Repeat all regression checks
+        run: node --test tests/*.test.cjs
+      - name: Build primary GitHub APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          sh scripts/wrap-web.sh
+          chmod +x gradlew
+          ./gradlew assembleGithubRelease -PversionCode=211 --no-daemon
+          cp app/build/outputs/apk/github/release/app-github-release.apk Puzzlegrad-1.0.211.apk
+      - name: Verify previous hash and signature continuity
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/previous-apk
+          gh release download v210 --repo "$GITHUB_REPOSITORY" --pattern Puzzlegrad-1.0.210.apk --dir /tmp/previous-apk
+          printf 'de2b3991dd964a0820f9a78ec3dd1ab003cdd00736b9084d1bea95e8518c731c  /tmp/previous-apk/Puzzlegrad-1.0.210.apk\n' | sha256sum -c -
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          BT="$(find "$SDK/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)"
+          "$BT/apksigner" verify --print-certs /tmp/previous-apk/Puzzlegrad-1.0.210.apk > /tmp/old-cert
+          "$BT/apksigner" verify --print-certs Puzzlegrad-1.0.211.apk > /tmp/new-cert
+          grep 'certificate SHA-256 digest:' /tmp/old-cert | sort > /tmp/old-digests
+          grep 'certificate SHA-256 digest:' /tmp/new-cert | sort > /tmp/new-digests
+          test -s /tmp/old-digests
+          cmp /tmp/old-digests /tmp/new-digests
+          "$BT/aapt" dump badging Puzzlegrad-1.0.211.apk > /tmp/badging
+          grep -q "package: name='com.crownfall.mosaic' versionCode='211' versionName='1.0.211'" /tmp/badging
+      - name: Prepare update metadata
+        run: |
+          set -euo pipefail
+          cp Puzzlegrad-1.0.211.apk Puzzlegrad.apk
+          sha256sum Puzzlegrad-1.0.211.apk Puzzlegrad.apk > SHA256SUMS.txt
+          python3 - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          apk=Path('Puzzlegrad-1.0.211.apk')
+          data={'code':211,'version':'1.0.211','notes':Path('release-notes.md').read_text().strip(),'url':'https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/releases/download/v211/'+apk.name,'sha256':hashlib.sha256(apk.read_bytes()).hexdigest()}
+          Path('latest.json').write_text(json.dumps(data,ensure_ascii=False))
+          PY
+      - name: Upload draft and publish once
+        run: |
+          set -euo pipefail
+          test "$(gh api repos/$GITHUB_REPOSITORY/releases/latest --jq .tag_name)" = v210
+          gh release create v211 Puzzlegrad-1.0.211.apk Puzzlegrad.apk latest.json SHA256SUMS.txt --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title 1.0.211 --notes-file release-notes.md --draft
+          gh release edit v211 --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          gh release view v211 --repo "$GITHUB_REPOSITORY" --json url,tagName,isDraft,assets
+      - name: Send one authorized notification
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          set -euo pipefail
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo '::warning::Release published but FCM account is absent; notification not sent'
+            exit 0
+          fi
+          python3 scripts/fcm-send.py updates-github 211 1.0.211 release-notes.md
