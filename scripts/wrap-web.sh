@@ -35,7 +35,7 @@ if [ "$target" = web ]; then
   # admin-only in the Firebase rules. Kept out of search engines.
   mkdir -p "$site/admin"
   sed 's|<head>|<head><meta name="robots" content="noindex,nofollow">|' tools/founder-admin.html > "$site/admin/index.html"
-  sed 's|<head>|<head><meta name="robots" content="noindex,nofollow">|' tools/feedback-admin.html > "$site/admin/feedback.html"
+  printf '%s\n' '<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0;url=./#feedback"><a href="./#feedback">Отзывы теперь в админ-панели</a>' > "$site/admin/feedback.html"
 else
   out=app/src/main/assets/index.html
 fi

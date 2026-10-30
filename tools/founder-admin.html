@@ -117,6 +117,13 @@ body {
   font-size: 14px;
 }
 .field:focus { outline: none; border-color: var(--accent); }
+.fb-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.fb-card.done{opacity:.55}
+.fb-msg{font-size:14px;line-height:1.45;white-space:pre-wrap;word-break:break-word}
+.fb-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.pill{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:3px 10px;font:inherit;font-size:12px;cursor:pointer}
+.pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
+#fbList{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto}
 .console {
   background: #000;
   border: 1px solid var(--border);
@@ -139,29 +146,42 @@ body {
     <span class="badge-owner">Founder Center</span>
   </div>
   <div style="display:flex;gap:12px;align-items:center">
-    <span id="connStatus" style="font-size:12px;color:var(--muted)">● Офлайн</span>
-    <button class="btn" id="btnSettings">⚙ Настройки доступа</button>
+    <span id="connStatus" style="font-size:12px;color:var(--muted)">● Не выполнен вход</span>
+    <button class="btn" id="btnLogout" hidden>Выйти</button>
   </div>
 </header>
 
 <main class="grid">
 
+  <!-- 0. ВХОД ВЛАДЕЛЬЦА -->
+  <div class="card" id="loginCard" style="grid-column: 1 / -1; border-color: rgba(242, 184, 75, 0.4)">
+    <div class="card-title"><span>🔑 Вход владельца</span><span style="font-size:12px;color:var(--muted)">аккаунт из списка admins</span></div>
+    <p class="stat-sub">Техработы, промокоды, PIN тестеров и статистика работают только после входа: сервер пускает к ним лишь аккаунты из <code>admins</code>.</p>
+    <div id="gSlot" style="min-height:44px"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
+      <input class="field" id="loginMail" type="email" placeholder="Почта" autocomplete="email">
+      <input class="field" id="loginPass" type="password" placeholder="Пароль" autocomplete="current-password">
+      <button class="btn btn-primary" id="btnLogin">Войти</button>
+    </div>
+    <button class="btn" id="btnReset" style="width:max-content">Забыли пароль / входили только через Google — прислать письмо для пароля</button>
+  </div>
+
   <!-- 1. РЕЛИЗЫ И ВЫКАТКА В ПРОД -->
   <div class="card" style="border-color: rgba(79, 142, 247, 0.3)">
     <div class="card-title">
       <span>🚀 Релизы и публикация</span>
-      <span style="font-size:12px;color:var(--accent)" id="curVersion">v1.0.213</span>
+      <span style="font-size:12px;color:var(--accent)" id="curVersion">…</span>
     </div>
     <p class="stat-sub">Управление выкаткой из тестового контура (Staging) в боевой (Production).</p>
     
     <div style="background:var(--bg);padding:12px;border-radius:8px;border:1px solid var(--border)">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px">
         <span style="font-size:13px;color:var(--muted)">Тестовый контур:</span>
-        <b style="color:var(--warning)" id="stagingStatus">1.0.214-rc (Готов к тесту)</b>
+        <b style="color:var(--warning)" id="stagingStatus">…</b>
       </div>
       <div style="display:flex;justify-content:space-between">
         <span style="font-size:13px;color:var(--muted)">Боевой сервер:</span>
-        <b style="color:var(--success)">1.0.213 (Latest)</b>
+        <b style="color:var(--success)" id="prodStatus">…</b>
       </div>
     </div>
 
@@ -202,7 +222,7 @@ body {
     
     <div style="display:flex;gap:10px">
       <button class="btn btn-success" id="btnBackupNow" style="flex:1">💾 Сделать бэкап сейчас</button>
-      <button class="btn" id="btnDownloadLatest" style="flex:1">📥 Скачать последний</button>
+      <button class="btn" id="btnDownloadLatest" style="flex:1">📥 Архив бэкапов</button>
     </div>
     <div class="stat-sub">Автоматический бэкап: каждую ночь в 03:00 UTC через GitHub Actions.</div>
   </div>
@@ -225,7 +245,7 @@ body {
       <a class="btn" href="https://github.com/crownfall90-dot/play/releases/download/staging-latest/Puzzlegrad-Staging.apk" target="_blank" style="text-decoration:none;text-align:center">📲 Скачать Staging APK (для Android)</a>
       <button class="btn" id="btnCopyInvite">📋 Скопировать ссылку и PIN для тестера</button>
     </div>
-    <div class="stat-sub">Тестовый APK и веб изолированы от основного сервера и игроков.</div>
+    <div class="stat-sub">Тестовый APK собирается без интернета. Тестовая веб-версия работает на общем сервере, PIN хранится в базе (<code>config/testerPin</code>).</div>
   </div>
 
   <!-- 5. РЕЖИМ ТЕХНИЧЕСКИХ РАБОТ -->
@@ -253,7 +273,24 @@ body {
       <input class="field" id="promoGoldInput" type="number" placeholder="Золото" value="300" style="width:100px">
     </div>
     <button class="btn btn-primary" id="btnCreatePromo">✨ Создать и сохранить промокод</button>
-    <div class="stat-sub">Игроки могут ввести код прямо в Магазине внутри игры.</div>
+    <div style="display:flex;gap:8px"><button class="btn" id="btnDisablePromo" style="flex:1">⏸ Отключить код</button></div>
+    <div class="stat-sub">Игроки вводят код в Магазине (нужен интернет). Золото: от 1 до 1000. Код сработает у игрока один раз.</div>
+  </div>
+
+  <!-- 6.5 ОТЗЫВЫ ИГРОКОВ -->
+  <div class="card" id="feedback" style="grid-column: 1 / -1">
+    <div class="card-title">
+      <span>💬 Отзывы игроков</span>
+      <span style="font-size:12px;color:var(--muted)" id="fbCount">—</span>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="pill on" data-cat="all">Все</button><button class="pill" data-cat="bug">🐛 Баги</button><button class="pill" data-cat="idea">💡 Идеи</button><button class="pill" data-cat="other">💬 Другое</button>
+      <span style="width:10px"></span>
+      <button class="pill" data-st="new">Только новые</button><button class="pill" data-st="done">Готовые</button>
+      <input class="field" id="fbSearch" placeholder="Поиск по тексту" style="max-width:220px;margin-left:auto">
+      <button class="btn" id="btnFbReload">↻</button>
+    </div>
+    <div id="fbList"><div class="stat-sub">Войдите, чтобы увидеть отзывы.</div></div>
   </div>
 
   <!-- 7. ПУШ-НОВОСТИ И ОПОВЕЩЕНИЯ -->
@@ -264,7 +301,7 @@ body {
     <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:12px">
       <input class="field" id="pushTitle" placeholder="Заголовок новости...">
       <input class="field" id="pushBody" placeholder="Текст сообщения для всех игроков...">
-      <button class="btn btn-primary" id="btnSendPush">Отправить всем</button>
+      <button class="btn btn-primary" id="btnSendPush">Открыть рассылку на GitHub</button>
     </div>
     <div class="console" id="logConsole">System initialized. Awaiting commands...</div>
   </div>
@@ -272,69 +309,186 @@ body {
 </main>
 
 <script>
-const log = (msg) => {
-  const el = document.getElementById('logConsole');
-  el.textContent += '\n[' + new Date().toLocaleTimeString() + '] ' + msg;
-  el.scrollTop = el.scrollHeight;
-};
+// Owner panel. Every change goes to Firebase under the owner's own sign-in; the database rules let only accounts
+// listed in /admins write config and promo codes or read errors and feedback. The page holds no secrets.
+const API_KEY = 'AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw';
+const DB = 'https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app';
+const GOOGLE_CLIENT = '467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com';
+const REPO = 'crownfall90-dot/play';
+const $ = id => document.getElementById(id);
+const log = (msg) => { const el = $('logConsole'); el.textContent += '\n[' + new Date().toLocaleTimeString() + '] ' + msg; el.scrollTop = el.scrollHeight; };
 
-// The panel holds no GitHub token: release and backup buttons open the workflow page,
-// where «Run workflow» starts it under the owner's own GitHub login.
-const ACTIONS = 'https://github.com/crownfall90-dot/play/actions/workflows/';
-const openWorkflow = (file, what) => { log('Открываю ' + file + ': нажмите «Run workflow» (ветка main), чтобы ' + what); window.open(ACTIONS + file, '_blank', 'noopener'); };
-
-document.getElementById('btnPromote').onclick = () => {
-  if (confirm('Открыть выпуск в Production для ВСЕХ игроков? На странице GitHub нажмите «Run workflow».')) openWorkflow('promote-production.yml', 'выпустить версию для всех игроков');
-};
-
-document.getElementById('btnBackupNow').onclick = () => openWorkflow('backup-database.yml', 'сделать зашифрованный бэкап базы');
-
-document.getElementById('btnEnableMaint').onclick = () => {
-  const msg = document.getElementById('maintMessage').value;
-  if (confirm('Включить режим технических работ для ВСЕХ игроков?')) {
-    log('Maintenance mode ENABLED: ' + msg);
-    document.getElementById('maintStatusBadge').textContent = 'ТЕХРАБОТЫ ВКЛЮЧЕНЫ';
-    document.getElementById('maintStatusBadge').style.color = 'var(--danger)';
-    alert('Режим технических работ активирован.');
+/* ---------- sign-in ---------- */
+let auth = null; // {idToken, refreshToken, uid, email, exp}
+try { auth = JSON.parse(sessionStorage.getItem('pgAdminAuth')); } catch (_) {}
+async function idt(method, body) {
+  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${method}?key=${API_KEY}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error((j.error && j.error.message) || 'HTTP ' + r.status); return j;
+}
+function keep(j, email) {
+  if (!j.idToken) throw new Error(j.needConfirmation ? 'Эта почта уже зарегистрирована с паролем — войдите по почте' : (j.errorMessage || 'Нет сессии'));
+  auth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, email: email || j.email || '', exp: Date.now() + (+j.expiresIn || 3600) * 1000 - 60000};
+  try { sessionStorage.setItem('pgAdminAuth', JSON.stringify(auth)); } catch (_) {}
+}
+async function token() {
+  if (!auth) throw new Error('Сначала войдите');
+  if (Date.now() < auth.exp) return auth.idToken;
+  const r = await fetch(`https://securetoken.googleapis.com/v1/token?key=${API_KEY}`, {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: 'grant_type=refresh_token&refresh_token=' + encodeURIComponent(auth.refreshToken)});
+  const j = await r.json(); if (!r.ok) { signOut(); throw new Error('Вход истёк — войдите снова'); }
+  auth.idToken = j.id_token; auth.refreshToken = j.refresh_token; auth.exp = Date.now() + (+j.expires_in || 3600) * 1000 - 60000;
+  try { sessionStorage.setItem('pgAdminAuth', JSON.stringify(auth)); } catch (_) {}
+  return auth.idToken;
+}
+async function db(path, method = 'GET', body) {
+  const r = await fetch(`${DB}/${path}.json?auth=${await token()}`, {method, body: body === undefined ? undefined : JSON.stringify(body)});
+  if (r.status === 401) throw new Error('Нет прав: этот аккаунт не в списке admins');
+  if (!r.ok) throw new Error('База ответила ' + r.status);
+  return r.json();
+}
+// Admin = may read /errors (rules: admins only).
+async function afterSignIn() {
+  try {
+    await db('errors', 'GET', undefined).catch(e => { if (/admins/.test(e.message)) throw e; });
+    $('connStatus').textContent = '● Админ: ' + (auth.email || auth.uid); $('connStatus').style.color = 'var(--success)';
+    $('loginCard').hidden = true; $('btnLogout').hidden = false;
+    log('Вход выполнен: ' + (auth.email || auth.uid));
+    refreshAll();
+  } catch (e) {
+    $('connStatus').textContent = '● Нет прав админа'; $('connStatus').style.color = 'var(--danger)';
+    log(e.message + '. UID этого аккаунта: ' + auth.uid + ' — добавьте его в базе: admins/' + auth.uid + ' = true');
+    $('btnLogout').hidden = false;
   }
+}
+function signOut() { auth = null; try { sessionStorage.removeItem('pgAdminAuth'); } catch (_) {} $('loginCard').hidden = false; $('btnLogout').hidden = true; $('connStatus').textContent = '● Не выполнен вход'; $('connStatus').style.color = 'var(--muted)'; }
+$('btnLogout').onclick = () => { signOut(); log('Вы вышли'); };
+$('btnLogin').onclick = async () => {
+  const email = $('loginMail').value.trim(), pass = $('loginPass').value;
+  if (!email || !pass) return log('Введите почту и пароль');
+  try { keep(await idt('signInWithPassword', {email, password: pass, returnSecureToken: true}), email); afterSignIn(); }
+  catch (e) { log('Вход не удался: ' + (/INVALID|PASSWORD|EMAIL_NOT_FOUND/.test(e.message) ? 'почта или пароль не подходят' : e.message)); }
+};
+$('btnReset').onclick = async () => {
+  const email = $('loginMail').value.trim(); if (!email) return log('Введите почту — на неё придёт письмо');
+  try { await idt('sendOobCode', {requestType: 'PASSWORD_RESET', email}); log('Письмо для установки пароля отправлено на ' + email); }
+  catch (e) { log('Не удалось отправить письмо: ' + e.message); }
+};
+// Google: needs this site in the web OAuth client's Authorized JavaScript origins.
+(function googleButton() {
+  const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true;
+  s.onload = () => {
+    google.accounts.id.initialize({client_id: GOOGLE_CLIENT, ux_mode: 'popup', callback: async r => {
+      try { keep(await idt('signInWithIdp', {postBody: 'id_token=' + encodeURIComponent(r.credential) + '&providerId=google.com', requestUri: location.origin, returnIdpCredential: true, returnSecureToken: true})); afterSignIn(); }
+      catch (e) { log('Вход через Google не удался: ' + e.message); }
+    }});
+    google.accounts.id.renderButton($('gSlot'), {theme: 'filled_black', size: 'large', text: 'signin_with', shape: 'pill', locale: 'ru'});
+  };
+  document.head.append(s);
+})();
+
+/* ---------- maintenance ---------- */
+async function loadMaint() {
+  const r = await fetch(`${DB}/config/maintenance.json`); const m = r.ok ? await r.json() : null;
+  const on = !!(m && m.active);
+  $('maintStatusBadge').textContent = on ? 'ТЕХРАБОТЫ ВКЛЮЧЕНЫ' : 'Сервер активен';
+  $('maintStatusBadge').style.color = on ? 'var(--danger)' : 'var(--success)';
+  if (m && m.message) $('maintMessage').value = m.message;
+}
+$('btnEnableMaint').onclick = async () => {
+  const message = $('maintMessage').value.trim().slice(0, 500);
+  if (!confirm('Включить режим технических работ для ВСЕХ игроков?')) return;
+  try { await db('config/maintenance', 'PUT', {active: true, message}); log('Техработы включены'); loadMaint(); } catch (e) { log('Не удалось: ' + e.message); }
+};
+$('btnDisableMaint').onclick = async () => {
+  try { await db('config/maintenance', 'PUT', {active: false, message: $('maintMessage').value.trim().slice(0, 500)}); log('Техработы выключены'); loadMaint(); } catch (e) { log('Не удалось: ' + e.message); }
 };
 
-document.getElementById('btnDisableMaint').onclick = () => {
-  log('Maintenance mode DISABLED');
-  document.getElementById('maintStatusBadge').textContent = 'Сервер активен';
-  document.getElementById('maintStatusBadge').style.color = 'var(--success)';
-  alert('Режим технических работ отключен, игра доступна.');
+/* ---------- promo codes ---------- */
+const promoCode = () => ($('promoCodeInput').value || '').trim().toUpperCase().replace(/[^A-ZА-ЯЁ0-9_-]/g, '');
+$('btnCreatePromo').onclick = async () => {
+  const code = promoCode(), gold = Math.round(+$('promoGoldInput').value);
+  if (!code) return log('Введите код (буквы и цифры)');
+  if (!(gold >= 1 && gold <= 1000)) return log('Золото: от 1 до 1000');
+  try { await db('promo_codes/' + encodeURIComponent(code), 'PUT', {active: true, gold}); log(`Промокод ${code} создан: +${gold} золота`); $('promoCodeInput').value = ''; } catch (e) { log('Не удалось: ' + e.message); }
+};
+$('btnDisablePromo').onclick = async () => {
+  const code = promoCode(); if (!code) return log('Введите код, который отключить');
+  try { const cur = await db('promo_codes/' + encodeURIComponent(code)); if (!cur) return log('Такого кода нет');
+    await db('promo_codes/' + encodeURIComponent(code), 'PUT', {active: false, gold: cur.gold}); log(`Промокод ${code} отключён`); } catch (e) { log('Не удалось: ' + e.message); }
 };
 
-document.getElementById('btnCreatePromo').onclick = () => {
-  const code = (document.getElementById('promoCodeInput').value || '').trim().toUpperCase();
-  const gold = +document.getElementById('promoGoldInput').value || 300;
-  if (!code) return alert('Введите код');
-  log(`Promo code created: ${code} (+${gold} gold)`);
-  alert(`Промокод ${code} на ${gold} золота успешно создан и доступен для игроков!`);
-  document.getElementById('promoCodeInput').value = '';
+/* ---------- tester PIN (staging web) ---------- */
+$('btnSavePin').onclick = async () => {
+  const pin = $('inputTesterPin').value.trim();
+  if (!/^\d{4,8}$/.test(pin)) return log('PIN: от 4 до 8 цифр');
+  try { await db('config/testerPin', 'PUT', pin); log('PIN тестеров сохранён'); } catch (e) { log('Не удалось: ' + e.message); }
+};
+async function loadPin() { const r = await fetch(`${DB}/config/testerPin.json`); const p = r.ok ? await r.json() : null; if (p) $('inputTesterPin').value = p; }
+$('btnCopyInvite').onclick = () => {
+  const msg = '🏰 Приглашение на закрытый тест Puzzlegrad:\n• Тестовая веб-версия: https://crownfall90-dot.github.io/play/staging/\n• PIN-код: ' + $('inputTesterPin').value +
+    '\n• Тестовый APK (Android, без интернета): https://github.com/' + REPO + '/releases/download/staging-latest/Puzzlegrad-Staging.apk';
+  navigator.clipboard.writeText(msg).then(() => log('Приглашение скопировано')).catch(() => prompt('Скопируйте вручную:', msg));
 };
 
-document.getElementById('btnSavePin').onclick = () => {
-  const pin = document.getElementById('inputTesterPin').value;
-  localStorage.setItem('puzzlegrad_tester_pin', pin);
-  log('Tester PIN updated to: ' + pin);
-  alert('Новый PIN-код сохранён: ' + pin);
-};
+/* ---------- live stats ---------- */
+async function loadStats() {
+  try {
+    const pres = await db('presence') || {}, now = Date.now();
+    $('valOnline').textContent = Object.values(pres).filter(p => p && p.s !== 'off' && now - (p.t || 0) < 3 * 60 * 1000).length;
+    const rooms = await fetch(`${DB}/rooms.json?shallow=true&auth=${await token()}`).then(r => r.ok ? r.json() : null);
+    $('valRooms').textContent = rooms ? Object.keys(rooms).length : 0;
+  } catch (e) { log('Статистика: ' + e.message); }
+}
+$('btnRefreshStats').onclick = loadStats;
 
-document.getElementById('btnCopyInvite').onclick = () => {
-  const pin = document.getElementById('inputTesterPin').value;
-  const msg = '🏰 Приглашение на закрытый тест Puzzlegrad:\n' +
-    '• Тестовая веб-версия: https://crownfall90-dot.github.io/play/staging/\n' +
-    '• PIN-код для входа: ' + pin + '\n' +
-    '• Тестовый APK (Android): https://github.com/crownfall90-dot/play/releases/download/staging-latest/Puzzlegrad-Staging.apk';
-  navigator.clipboard.writeText(msg).then(() => {
-    log('Invite link with PIN copied to clipboard');
-    alert('Приглашение с PIN-кодом скопировано в буфер обмена!\nОтправьте его тестеру в Telegram или Discord.');
-  }).catch(() => {
-    prompt('Скопируйте приглашение вручную:', msg);
-  });
-};
+/* ---------- releases and GitHub workflows (run under the owner's own GitHub login) ---------- */
+const ACTIONS = `https://github.com/${REPO}/actions/workflows/`;
+const openWorkflow = (file, what) => { log('Открываю ' + file + ': нажмите «Run workflow» (ветка main), чтобы ' + what); window.open(ACTIONS + file, '_blank', 'noopener'); };
+$('btnPromote').onclick = () => { if (confirm('Открыть выпуск для ВСЕХ игроков? На странице GitHub нажмите «Run workflow».')) openWorkflow('promote-production.yml', 'выпустить версию'); };
+$('btnRollback').onclick = () => openWorkflow('android.yml', 'выпустить старую версию заново (поле «Вернуть версию», например v217)');
+$('btnBackupNow').onclick = () => openWorkflow('backup-database.yml', 'сделать зашифрованный бэкап базы');
+$('btnDownloadLatest').onclick = () => window.open(ACTIONS + 'backup-database.yml', '_blank', 'noopener');
+$('btnSendPush').onclick = () => openWorkflow('news.yml', 'разослать новость (заголовок и текст вводятся там же)');
+async function loadVersions() {
+  try {
+    const rel = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=10`).then(r => r.json());
+    const prod = rel.find(r => !r.prerelease && /^v\d+$/.test(r.tag_name)), stg = rel.find(r => r.tag_name === 'staging-latest');
+    if (prod) { $('curVersion').textContent = prod.name; $('prodStatus').textContent = prod.name + ' · ' + new Date(prod.published_at).toLocaleString(); }
+    $('stagingStatus').textContent = stg ? stg.name.replace(/^.*#/, 'сборка #').replace(/\)$/, '') + ' · ' + new Date(stg.published_at).toLocaleString() : 'нет';
+  } catch (_) { $('prodStatus').textContent = 'не удалось узнать'; }
+}
+
+/* ---------- feedback (the same sign-in; statuses are the owner's notes, kept in this browser) ---------- */
+const FB_CAT = {bug: '🐛 Баг', idea: '💡 Идея', other: '💬 Другое'};
+let fbItems = [], fbCat = 'all', fbSt = '', fbQ = '';
+const fbStat = () => { try { return JSON.parse(localStorage.getItem('fb_statuses') || '{}'); } catch (_) { return {}; } };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+async function loadFeedback() {
+  try {
+    const data = await db('feedback') || {};
+    fbItems = Object.entries(data).flatMap(([uid, ks]) => Object.entries(ks || {}).filter(([, f]) => f && typeof f === 'object').map(([key, f]) => ({uid, key, k: f.k || 'other', m: String(f.m || ''), v: f.v || '', t: f.t || 0})));
+    fbItems.sort((a, b) => b.t - a.t); renderFeedback();
+  } catch (e) { $('fbList').innerHTML = '<div class="stat-sub">' + esc(e.message) + '</div>'; }
+}
+function renderFeedback() {
+  const st = fbStat(), q = fbQ.toLowerCase();
+  const list = fbItems.filter(f => (fbCat === 'all' || f.k === fbCat) && (!q || f.m.toLowerCase().includes(q)) &&
+    (!fbSt || (fbSt === 'done') === ((st[f.uid + '/' + f.key] || 'new') === 'done')));
+  $('fbCount').textContent = `${list.length} из ${fbItems.length}`;
+  $('fbList').innerHTML = list.length ? list.map(f => {
+    const s = st[f.uid + '/' + f.key] || 'new';
+    return `<div class="fb-card${s === 'done' ? ' done' : ''}"><div class="fb-msg">${esc(f.m)}</div><div class="fb-row"><span>${FB_CAT[f.k] || FB_CAT.other}</span><span>${f.t ? new Date(f.t).toLocaleString('ru-RU') : ''}</span>${f.v ? '<span>v' + esc(f.v) + '</span>' : ''}<span style="opacity:.6">${esc(f.uid.slice(0, 8))}…</span>` +
+      ['new', 'seen', 'done'].map(x => `<button class="pill${s === x ? ' on' : ''}" data-uid="${esc(f.uid)}" data-key="${esc(f.key)}" data-s="${x}">${{new: 'Новое', seen: 'Посмотрено', done: 'Готово'}[x]}</button>`).join('') + '</div></div>';
+  }).join('') : '<div class="stat-sub">Ничего не найдено</div>';
+}
+$('fbList').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; const m = fbStat(); m[b.dataset.uid + '/' + b.dataset.key] = b.dataset.s; try { localStorage.setItem('fb_statuses', JSON.stringify(m)); } catch (_) {} renderFeedback(); });
+document.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { document.querySelectorAll('[data-cat]').forEach(x => x.classList.remove('on')); b.classList.add('on'); fbCat = b.dataset.cat; renderFeedback(); });
+document.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { const was = b.classList.contains('on'); document.querySelectorAll('[data-st]').forEach(x => x.classList.remove('on')); if (!was) { b.classList.add('on'); fbSt = b.dataset.st; } else fbSt = ''; renderFeedback(); });
+$('fbSearch').oninput = e => { fbQ = e.target.value; renderFeedback(); };
+$('btnFbReload').onclick = loadFeedback;
+
+function refreshAll() { loadMaint(); loadPin(); loadStats(); loadFeedback(); }
+loadVersions(); loadMaint(); loadPin();
+if (auth) afterSignIn();
 </script>
 </body>
 </html>

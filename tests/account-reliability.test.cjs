@@ -298,3 +298,24 @@ test('closing dialogs never removes the game screen\'s own results board (#over)
   assert.ok(html.includes('<div class="over" id="over" hidden></div>'));
   assert.ok(!/querySelectorAll\('\.over'\)\.forEach\([^)]*\.remove\(\)/.test(html), 'remove dialogs with body > .over only');
 });
+
+test('promo codes from the database are read signed in (rules: auth != null)', () => {
+  assert.match(fn('redeemPromo'), /promo_codes\/\$\{encodeURIComponent\(code\)\}\.json\?auth=\$\{await fbToken\(\)\}/);
+});
+
+test('maintenance screen goes away once switched off, and is re-checked on return to the app', () => {
+  assert.match(fn('checkMaintenance'), /getElementById\('maintBox'\); if \(box\) box\.remove\(\)/);
+  assert.ok(html.includes("document.addEventListener('visibilitychange', () => { if (!document.hidden) checkMaintenance(); });"));
+});
+
+test('founder panel writes through the owner sign-in, never pretends', () => {
+  const panel = fs.readFileSync('tools/founder-admin.html', 'utf8');
+  for (const path of ["db('config/maintenance', 'PUT'", "db('promo_codes/' + encodeURIComponent(code), 'PUT'", "db('config/testerPin', 'PUT'"]) assert.ok(panel.includes(path), path);
+  assert.ok(!/alert\('Режим технических работ активирован/.test(panel), 'no fake success messages');
+});
+
+test('feedback lives in the founder panel; there is no separate feedback page', () => {
+  assert.ok(fs.readFileSync('tools/founder-admin.html', 'utf8').includes("db('feedback')"));
+  assert.ok(!fs.existsSync('tools/feedback-admin.html'));
+  assert.ok(!html.includes('admin/feedback.html'), 'the game links to the one panel');
+});
