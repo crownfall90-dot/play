@@ -15,7 +15,7 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app", "googleClientId": "467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com"};</script>
+<script>window.RELEASE_NOTES = "- Вход через Google исправлен: если почта уже зарегистрирована с паролем, игра попросит один раз войти по почте и подключит Google к профилю\n- Новый Google-аккаунт сразу становится вашим профилем: золото и прогресс сохраняются, остаётся придумать никнейм"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app", "googleClientId": "467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com"};</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -4524,16 +4524,23 @@ const googleAvailable = () => !!(window.AndroidApp && AndroidApp.googleSignIn &&
 const googleWebOk = () => !!(window.WEBAPP && FB && FB.googleClientId);
 // The e-mail sits in the Google token payload; it only labels the saved profile.
 function jwtEmail(t) { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).email || ''; } catch (_) { return ''; } }
-async function googleTokenAuth(idToken, link) {
+// signInWithIdp turns some refusals into HTTP 200 without a session (needConfirmation, errorMessage): those are
+// errors too, never a sign-in — saving them as one left the player "signed in" with no session at all.
+async function googleIdp(idToken, session) {
   const body = {postBody: 'id_token=' + encodeURIComponent(idToken) + '&providerId=google.com', requestUri: 'http://localhost', returnIdpCredential: true, returnSecureToken: true};
-  if (link) { await fbToken(); body.idToken = fbAuth.idToken; } // attach Google to the current profile
+  if (session) body.idToken = session;
   const j = await idt('signInWithIdp', body);
-  return {j, email: jwtEmail(idToken) || j.email || ''};
+  if (!j.idToken) throw {error: {message: j.needConfirmation ? 'NEED_CONFIRMATION' : String(j.errorMessage || 'NO_SESSION')}};
+  return j;
 }
+const gErr = (e, re) => !!(e && e.error && re.test(String(e.error.message || '')));
 let googleBusy = false;
 let lastGoogleToken = '';
 let lastGoogleTokenTime = 0;
-// After the token is in hand: finish linking or sign in (same steps as the e-mail flow).
+// A Google token for an e-mail that already has a password profile: it is attached after the password sign-in.
+let pendingGoogle = null;
+// One button for both cases. A Google account the game has not seen becomes a registration of THIS profile (gold,
+// figures and progress stay; then a nickname finishes it). A Google account that already has a profile signs in to it.
 async function finishGoogle(idToken, link, onFail) {
   if (googleBusy) { if (typeof onFail === 'function') onFail('busy'); return; }
   if (idToken && idToken === lastGoogleToken && Date.now() - lastGoogleTokenTime < 10000) {
@@ -4542,28 +4549,73 @@ async function finishGoogle(idToken, link, onFail) {
   }
   googleBusy = true;
   try {
-    const {j, email} = await googleTokenAuth(idToken, link);
-    lastGoogleToken = idToken;
-    lastGoogleTokenTime = Date.now();
-    keepAuth(j, email); track(link ? 'sign_up' : 'login', {method: 'google'});
-    if (link) {
-      await cloudSave(); toastAny('Профиль сохранён'); renderAccount(); presenceMark(true); socialReset();
-    } else {
-      const ok = await cloudLoad();
+    const email = jwtEmail(idToken), wasRegistered = registered();
+    let j = null, joined = false;
+    if (link || !wasRegistered) {
+      try { await fbToken(); j = await googleIdp(idToken, fbAuth.idToken); joined = true; }
+      catch (e) {
+        // Already the key of another profile: sign in to that one (a saved profile asking to link is told so instead).
+        if (!gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED/) || (link && wasRegistered)) throw e;
+      }
+    }
+    if (!j) j = await googleIdp(idToken, null);
+    lastGoogleToken = idToken; lastGoogleTokenTime = Date.now();
+    keepAuth(j, email || j.email || '');
+    document.querySelectorAll('.over').forEach(e => e.remove());
+    const loaded = !joined && await cloudLoad();
+    if (loaded) {
+      track('login', {method: 'google'});
       wallet.tut = wallet.tutAsked = true; saveWallet();
-      toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
+      toastAny(`С возвращением, ${profileName()}!`);
       const toFriends = !$('#scr-friends').hidden;
       renderAccount(); renderSetup(); renderShop && renderShop(); progressDot();
       show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
-      if (!wallet.name) askProfile();
+      if (!wallet.name) finishSignup('');
+    } else {
+      track('sign_up', {method: 'google'});
+      await cloudSave(); renderAccount(); presenceMark(true); socialReset();
+      finishSignup(wallet.name || jwtField(idToken, 'given_name'));
     }
-    document.querySelectorAll('.over').forEach(e => e.remove());
   } catch (e) {
-    const [t] = authErr(e, link); toastAny(t);
-    // The Google account already protects another profile: switch to signing in with it.
-    if (link && e && e.error && /FEDERATED_USER_ID_ALREADY_LINKED/.test(e.error.message)) setTimeout(() => accountDialog('login'), 400);
+    if (gErr(e, /NEED_CONFIRMATION|EMAIL_EXISTS/)) {
+      // This e-mail already has a profile with a password: sign in with it once, Google gets attached to it.
+      pendingGoogle = {token: idToken, at: Date.now()};
+      document.querySelectorAll('.over').forEach(x => x.remove());
+      toastAny('Эта почта уже зарегистрирована с паролем. Войдите по почте один раз — и Google подключится к профилю');
+      accountDialog('login', jwtEmail(idToken));
+    } else {
+      const [t] = authErr(e, link); toastAny(t);
+      if (link && gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED/)) setTimeout(() => accountDialog('login'), 400);
+    }
     if (onFail) onFail(e);
   } finally { googleBusy = false; }
+}
+// After a password sign-in: attach the Google account that was waiting for it (the token lives an hour).
+async function attachPendingGoogle() {
+  const g = pendingGoogle; pendingGoogle = null;
+  if (!g || Date.now() - g.at > 50 * 60 * 1000) return;
+  try { const j = await googleIdp(g.token, fbAuth.idToken); keepAuth(j, fbAuth.email); toastAny('Google подключён — теперь можно входить в один тап'); }
+  catch (e) { authErr(e, true); }
+}
+function jwtField(t, k) { try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')))[k] || ''; } catch (_) { return ''; } }
+// The last step of a Google registration: the nickname rivals and the rating will see.
+function finishSignup(suggest) {
+  if (document.getElementById('signupBox')) return;
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'signupBox'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="suAv" style="--c:${wallet.color}">?</div><h3>Завершите регистрацию</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
+    <input class="field" id="suName" maxlength="12" placeholder="Никнейм" autocomplete="off"><button class="cta wide" id="suOk" disabled>Готово</button></div>`;
+  document.body.append(box);
+  const inp = box.querySelector('#suName'), ok = box.querySelector('#suOk'), av = box.querySelector('#suAv');
+  inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
+  inp.value = clean(suggest || '').slice(0, 12); inp.oninput();
+  inp.onkeydown = e => { if (e.key === 'Enter' && !ok.disabled) ok.click(); };
+  ok.onclick = async () => {
+    if (!setProfileName(inp.value)) return;
+    box.remove(); toastAny(`Профиль создан. Привет, ${profileName()}!`);
+    renderAccount(); renderSetup(); presenceMark(true);
+    try { await cloudSave(); syncRating(); } catch (_) {}
+  };
+  setTimeout(() => inp.focus(), 200);
 }
 // One entry point: the native sheet on the phone, Google's own button in the browser.
 function startGoogle(link, onFail, btn) {
@@ -4571,12 +4623,14 @@ function startGoogle(link, onFail, btn) {
     startGoogle.reqId = (startGoogle.reqId || 0) + 1;
     const reqId = startGoogle.reqId;
     window.onGoogleToken = t => {
+      track('google_token', {stale: reqId !== startGoogle.reqId ? 1 : 0}); // shows in Analytics whether the phone got a token at all
       if (reqId !== startGoogle.reqId) return;
       window.onGoogleToken = null;
       window.onGoogleError = null;
       finishGoogle(t, link, onFail);
     };
     window.onGoogleError = c => {
+      track('google_error', {code: String(c)});
       if (reqId !== startGoogle.reqId) return;
       window.onGoogleToken = null;
       window.onGoogleError = null;
@@ -4799,6 +4853,7 @@ function accountDialog(mode, prefill) {
         const j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true});
         keepAuth(j, mail()); track('login', {method: 'email'});
         const ok = await cloudLoad(); box.remove();
+        attachPendingGoogle();
         wallet.tut = wallet.tutAsked = true; saveWallet();
         toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
         const toFriends = !$('#scr-friends').hidden;
