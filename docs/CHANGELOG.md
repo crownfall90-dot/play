@@ -1218,3 +1218,19 @@
 - feat(build): Vite bundles src/ modules into the page (TASK-008-0); first module engine/rng
 - docs: record actual account regression and offline build results
 
+## 1.0.217 — 2026-10-30
+
+**Игрокам:**
+- Золото больше не может сброситься до 100 после возврата на предыдущую версию игры
+
+**В коде:**
+- Кошелёк: несовпадение подписи не сбрасывает золото
+- docs: record actual account regression and offline build results
+- fix(wallet): a checksum mismatch is reported, never resets the gold
+- Звук и кошелёк в модулях (TASK-008-3)
+- docs: record actual account regression and offline build results
+- refactor(state): wallet storage to src/state/wallet.js (TASK-008-3)
+- refactor(audio): synthesised effects and music to src/audio/sound.js (TASK-008-3)
+- Журнал версий: 1.0.216
+- docs(changelog): 1.0.216, clear release notes
+
