@@ -1399,52 +1399,16 @@ function injectArt() {
 /* ---------------- rules ---------------- */
 let tiles = new Map(), deck = [], meeples = [], players = [], turn = 0, phase = 'idle', current = null, sel = null;
 let ghost = null, ghostDeg = 0, trayDeg = 0, slotEls = [], token = 0, gameVisible = true, pendingStart = false;
-const key = (x, y) => x + ',' + y;
+// Board rules live in src/engine/board.js; these wrappers pass it the current game state.
+const B = PG.engine.board, key = B.key, edgeAt = B.edgeAt, groupsOf = B.groupsOf, gid = B.gid;
 const at = (x, y) => tiles.get(key(x, y));
-const edgeAt = (t, d) => TYPES[t.type].e[(d - t.r + 4) % 4];
-function fits(type, r, x, y) {
-  if (at(x, y)) return false;
-  let n = 0;
-  for (let d = 0; d < 4; d++) { const nb = at(x + DX[d], y + DY[d]); if (!nb) continue; n++; if (normEdge(edgeAt(nb, (d + 2) % 4)) !== normEdge(TYPES[type].e[(d - r + 4) % 4])) return false; }
-  return n > 0;
-}
-function emptyCells() { const m = new Map(); for (const t of tiles.values()) for (let d = 0; d < 4; d++) { const x = t.x + DX[d], y = t.y + DY[d]; if (!at(x, y)) m.set(key(x, y), {x, y}); } return [...m.values()]; }
-const legalRots = (type, x, y) => [0,1,2,3].filter(r => fits(type, r, x, y));
-function allMoves(type) { const out = []; for (const c of emptyCells()) for (const r of legalRots(type, c.x, c.y)) out.push({x: c.x, y: c.y, r}); return out; }
-function hasPlacement(type) { for (const c of emptyCells()) if (legalRots(type, c.x, c.y).length) return true; return false; }
-function groupsOf(t) {
-  const by = {c: [], r: []};
-  for (let d = 0; d < 4; d++) { const k = edgeAt(t, d); if (by[k === 'b' ? 'r' : k]) by[k === 'b' ? 'r' : k].push(d); }
-  const gs = [];
-  if (by.c.length) gs.push({kind: 'c', edges: by.c});
-  if (by.r.length === 2) gs.push({kind: 'r', edges: by.r}); else by.r.forEach(d => gs.push({kind: 'r', edges: [d]}));
-  if (TYPES[t.type].fort) gs.push({kind: 'f', edges: []});
-  return gs;
-}
-const gid = (t, g) => key(t.x, t.y) + '|' + g.kind + g.edges.join('');
-function fortComp(t) {
-  const ts = [];
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); if (n) ts.push(n); }
-  const id = key(t.x, t.y) + '|f';
-  return {kind: 'f', tiles: ts, complete: ts.length === 9, ids: new Set([id]), meeples: meeples.filter(m => m.gid === id)};
-}
-function component(t, g) {
-  if (g.kind === 'f') return fortComp(t);
-  const ids = new Set(), ts = new Set(), st = [[t, g]];
-  let open = false;
-  while (st.length) {
-    const [a, ag] = st.pop(), id = gid(a, ag);
-    if (ids.has(id)) continue;
-    ids.add(id); ts.add(a);
-    for (const d of ag.edges) {
-      const nb = at(a.x + DX[d], a.y + DY[d]);
-      if (!nb) { open = true; continue; }
-      const ng = groupsOf(nb).find(q => q.kind === ag.kind && q.edges.includes((d + 2) % 4));
-      if (ng) st.push([nb, ng]);
-    }
-  }
-  return {kind: g.kind, tiles: [...ts], complete: !open, ids, meeples: meeples.filter(m => ids.has(m.gid))};
-}
+const fits = (type, r, x, y) => B.fits(tiles, type, r, x, y);
+const emptyCells = () => B.emptyCells(tiles);
+const legalRots = (type, x, y) => B.legalRots(tiles, type, x, y);
+const allMoves = type => B.allMoves(tiles, type);
+const hasPlacement = type => B.hasPlacement(tiles, type);
+const fortComp = t => B.fortComp(tiles, meeples, t);
+const component = (t, g) => B.component(tiles, meeples, t, g);
 function groupPos(t, g) {
   if (g.kind === 'f') return [0.24, 0.18];
   if (g.kind === 'c') {
@@ -1456,8 +1420,8 @@ function groupPos(t, g) {
   if (g.edges.length === 2) { const b = V[g.edges[1]]; return [(a[0]*.4225 + b[0]*.1225) * .5, (a[1]*.4225 + b[1]*.1225) * .5]; }
   return [a[0] * .3, a[1] * .3];
 }
-const claimable = t => groupsOf(t).filter(g => { const c = component(t, g); return c.meeples.length === 0 && !c.complete; });
-const claimableAll = () => { const r = []; for (const t of tiles.values()) for (const g of claimable(t)) r.push({t, g}); return r; };
+const claimable = t => B.claimable(tiles, meeples, t);
+const claimableAll = () => B.claimableAll(tiles, meeples);
 const label = g => g.kind === 'r' && g.edges.length === 1 ? 'Дорога ' + ARROW[g.edges[0]] : KIND[g.kind];
 
 /* ---------------- dom: world ---------------- */
