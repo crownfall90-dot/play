@@ -19,8 +19,11 @@ function loadPlaywright() {
 }
 
 // The game script is one strict IIFE: the hook goes just before its closing line.
+// The modules bundle (npm run build) goes in front, the way scripts/wrap-web.sh builds the real page.
+const BUNDLE = path.join(__dirname, '..', '..', 'build', 'bundle', 'pg.js');
 function instrumentedCopy() {
-  const html = fs.readFileSync(GAME, 'utf8');
+  if (!fs.existsSync(BUNDLE)) throw new Error('build/bundle/pg.js is missing: run npm run build (or scripts/wrap-web.sh) first');
+  const html = '<script>' + fs.readFileSync(BUNDLE, 'utf8') + '</script>\n' + fs.readFileSync(GAME, 'utf8');
   const end = html.lastIndexOf('})();');
   if (end < 0) throw new Error('game.html: closing IIFE not found');
   const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'pg-golden-')), 'game.html');

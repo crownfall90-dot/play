@@ -193,6 +193,11 @@ tests/
 
 **Статус 008-1 (Claude): ✅ ГОТОВО.** `tests/golden.test.cjs` + `tests/golden/games.json` (24 записанные партии ботов: classic/fast/epic, 2–5 игроков, реки/без рек, 3 фишки). Каждая партия переигрывается из `cfg + moves` (путь возврата в онлайн-партию) и должна дать те же очки, фишки и доску. Перезапись эталонов — только при намеренной смене правил: `node scripts/golden-record.cjs`. Тест идёт ~4 мин и требует playwright (без него пропускается — в CI ставить `npx playwright install chromium`).
 
+**Статус 008-0 (Claude): ✅ ГОТОВО.** `package.json` (vite 6.3.5), `vite.config.js` (IIFE `window.PG`, es2019). `scripts/wrap-web.sh` сам делает `npm ci` (если нет `node_modules`) и `vite build`, и вставляет `build/bundle/pg.js` перед `game.html`, страница остаётся одним файлом. Первый вынесенный модуль — `src/engine/rng.js` (`rng`, `hash`), в `game.html`: `const {rng, hash} = PG.engine;`. Тест `tests/engine-rng.test.cjs` + golden 24/24. Открывать «сырой» `web/game.html` в браузере больше нельзя — только собранную страницу.
+**Следующий шаг 008-2:** выносить в `src/engine/` чистые функции по одной группе (TYPES/edges/fits → board → scoring), после каждой — golden-тесты.
+
+**Аудит выпусков v206–v213 (Claude):** Java-часть в порядке (`AccountIdentity`, `PlayerColor` — мёртвый код, не подключён). Исправлено в `game.html`: возврат из фона после конца партии выкидывал в меню с любого экрана (лобби, итоги, друзья) — теперь только с экрана партии; бирюзовый цвет убран из палитры — игрокам с ним выставляется цвет из палитры.
+
 **Не делать в TASK-008:** менять протокол сообщений, порядок колоды / RNG, ключи localStorage (`wallet`, `savedGame`, `fbAuth`…) — иначе игроки потеряют данные после обновления.
 
 ---

@@ -15,7 +15,7 @@ test('remote move reserves its number before catch-up yield',()=>{const body=fn(
 test('network queue rejects old and duplicate move numbers',()=>{const body=fn('onMove');assert.match(body,/m\.n < applied/);assert.match(body,/queue\.some\(q => q\.n === m\.n\)/)});
 test('duplicate start message has an explicit guard',()=>assert.match(script,/if \(m\.t === 'start'\) \{\s*if \(net\.gameId === d\.id\) return;/));
 test('terminal marker precedes asynchronous final scoring',()=>{const body=fn('endGame');assert.ok(body.indexOf('markGameFinished')<body.indexOf('await wait'));assert.ok(body.indexOf('historySave(reason, false)')<body.indexOf('await wait'));assert.match(body,/phase === 'end' \|\| ending/)});
-test('return from background routes terminal game home',()=>assert.match(script,/if \(phase === 'end' && !mm\) \{ closeGameMenu\(\); show\('menu'\); \}/));
+test('return from background routes terminal game home',()=>assert.match(script,/if \(phase === 'end' && !mm && gameVisible\) \{ closeGameMenu\(\); show\('menu'\); \}/));
 test('confirmation dialog is singleton and actions are one-shot',()=>{const body=fn('confirmBox');assert.match(body,/getElementById\('confirmBox'\)/);assert.match(body,/let done = false/);assert.match(body,/if \(done\) return/);assert.match(body,/alertdialog/)});
 test('test source does not contain secret material',()=>{for(const p of ['tests/lifecycle.test.cjs','docs/PROJECT-CONTEXT.md','docs/SECURITY-RESPONSE.md']){const s=fs.readFileSync(p,'utf8');assert.doesNotMatch(s,/-----BEGIN (?:RSA )?PRIVATE KEY-----/)}});
 
