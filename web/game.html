@@ -392,7 +392,14 @@ function addDecor(el, t, delay) {
   // Upright pieces on the far edge would stick out over the empty cell behind the tile: pull them towards the middle.
   items.forEach(it => { if (it[2] < -.2 && !['rock', 'boulders', 'hay', 'bush'].includes(it[0])) { it[2] = -.2 + (it[2] + .2) * .35; it[3] = 1; } });
   items.sort((p, q) => p[2] - q[2]);
-  items.forEach((it, i) => addSprite(el, it[0], it[1], it[2], '', delay == null ? null : delay + i * .05, (it[0] === 'tower' && city.length ? .8 : 1) * (it[3] && /^house|^tower/.test(it[0]) ? .85 : 1)));
+  // Decor sits right after the card face, under the cliff pit, gravel and figures added later.
+  const box = document.createDocumentFragment();
+  items.forEach((it, i) => addSprite(box, it[0], it[1], it[2], 'dc', delay == null ? null : delay + i * .05, (it[0] === 'tower' && city.length ? .8 : 1) * (it[3] && /^house|^tower/.test(it[0]) ? .85 : 1)));
+  el.querySelector('.face').after(box);
+}
+// Switching graphics redraws the decor of the cards already on the table; the game itself stays as it is.
+function redecorate() {
+  for (const t of tiles.values()) if (t.el) { t.el.querySelectorAll('.bb.dc').forEach(b => b.remove()); addDecor(t.el, t, null); }
 }
 function tileEl(t, decor, delay) {
   const el = document.createElement('div'); el.className = 'tile';
@@ -1593,7 +1600,7 @@ $('#prefs').addEventListener('click', e => {
   if (r.k === 'notify' && window.AndroidApp && AndroidApp.setUpdateNotifications) AndroidApp.setUpdateNotifications(wallet.notify);
   if (r.k === 'view') setView(wallet.view);
   if (r.k === 'zones') { markOwn(); updateOwnership(); }
-  if (r.k === 'gfx') { applyGfx(); toastAny('Новые карты появятся в выбранной графике'); }
+  if (r.k === 'gfx') { applyGfx(); redecorate(); }
 });
 
 // Only the label changes: replacing the button's text would wipe its icon and arrow.
