@@ -30,7 +30,8 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 import androidx.credentials.exceptions.NoCredentialException;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 public class MainActivity extends Activity {
@@ -320,6 +321,12 @@ public class MainActivity extends Activity {
         }
     }
 
+    static String googleErrorCode(GetCredentialException e) {
+        if (e instanceof GetCredentialCancellationException) return "canceled";
+        if (e instanceof NoCredentialException) return "no_credentials";
+        return "failed";
+    }
+
     private class Bridge {
         @JavascriptInterface
         public String versionName() { return BuildConfig.VERSION_NAME; }
@@ -378,10 +385,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 try {
-                    GetGoogleIdOption opt = new GetGoogleIdOption.Builder()
-                            .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
-                            .setFilterByAuthorizedAccounts(false)
-                            .setAutoSelectEnabled(false)
+                    GetSignInWithGoogleOption opt = new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_CLIENT_ID)
                             .build();
                     GetCredentialRequest req = new GetCredentialRequest.Builder().addCredentialOption(opt).build();
                     CredentialManager cm = CredentialManager.create(MainActivity.this);
@@ -401,10 +405,9 @@ public class MainActivity extends Activity {
                             }
                         }
                         @Override public void onError(GetCredentialException e) {
-                            // No account chosen / none on the phone is a normal cancel, not an error report.
-                            boolean cancel = e instanceof NoCredentialException || String.valueOf(e.getType()).contains("CANCEL");
-                            if (!cancel) report(e);
-                            js("window.onGoogleError && window.onGoogleError('" + (cancel ? "canceled" : "failed") + "')");
+                            String code = googleErrorCode(e);
+                            if ("failed".equals(code)) report(e);
+                            js("window.onGoogleError && window.onGoogleError(" + org.json.JSONObject.quote(code) + ")");
                         }
                     };
                     cm.getCredentialAsync(MainActivity.this, req, null, exec, cb);

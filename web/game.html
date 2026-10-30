@@ -4480,8 +4480,13 @@ async function finishGoogle(idToken, link, onFail) {
 function startGoogle(link, onFail, btn) {
   if (googleAvailable()) {
     window.onGoogleToken = t => finishGoogle(t, link, onFail);
-    window.onGoogleError = c => { if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Вход через Google ещё настраивается' : 'Не получилось войти через Google'); };
-    AndroidApp.googleSignIn(); return;
+    window.onGoogleError = c => {
+      try {
+        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
+      } finally { if (typeof onFail === 'function') onFail(c); }
+    };
+    try { AndroidApp.googleSignIn(); } catch (_) { window.onGoogleError('failed'); }
+    return;
   }
   if (googleWebOk() && btn) return googleWebButton(btn, link, onFail);
   toastAny('Вход через Google доступен в приложении');
