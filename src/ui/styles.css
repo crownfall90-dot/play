@@ -605,3 +605,4 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 .plist:empty{display:none}
 .lead.me{border-radius:0}
 #ptab>.lead{border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:10px 14px;min-height:56px;box-sizing:border-box}
+.devlink{display:grid;place-items:center;text-decoration:none}

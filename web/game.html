@@ -2942,6 +2942,8 @@ function devPanel() {
       <input class="field" id="devTok" type="password" placeholder="github_pat_…" autocomplete="off">
       <button class="cta wide" id="devSave">Сохранить</button><p class="shint" id="devState"></p>`}
       <button class="ghostbtn" id="devStats">📊 Статистика игры</button>
+      <a class="ghostbtn devlink" href="${SITE_URL}admin/" target="_blank" rel="noopener">🛠 Админ-панель на сайте</a>
+      <a class="ghostbtn devlink" href="${SITE_URL}admin/feedback.html" target="_blank" rel="noopener">💬 Отзывы игроков</a>
       <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
     if (tok) devStatus(box.querySelector('#devState'));
   };
