@@ -29,6 +29,7 @@ test('startGoogle uses request-id to drop superseded or late callbacks', () => {
     toastAny: () => {},
     finishGoogle: (t) => tokens.push(t)
   };
+  env.track = env.track || (() => {});
   vm.runInNewContext(fn('startGoogle'), env);
 
   // First request: reqId = 1
@@ -60,6 +61,7 @@ test('startGoogle cleans up window callbacks after error', () => {
     toastAny: () => {},
     finishGoogle: () => {}
   };
+  env.track = env.track || (() => {});
   vm.runInNewContext(fn('startGoogle'), env);
 
   env.startGoogle(false, c => failures.push(c), {});
@@ -71,61 +73,76 @@ test('startGoogle cleans up window callbacks after error', () => {
   assert.equal(env.window.onGoogleError, null, 'onGoogleError must be nulled after error');
 });
 
-test('finishGoogle guards against duplicate tokens and concurrent in-flight requests', async () => {
-  const authCalls = [];
-  const failures = [];
+// A sandbox for finishGoogle: idp(token, session) plays Firebase's signInWithIdp.
+function googleEnv(idp, {registered = false, profile = null} = {}) {
+  const log = {idp: [], toasts: [], signup: [], login: [], keep: []};
   const env = {
-    googleBusy: false,
-    lastGoogleToken: '',
-    lastGoogleTokenTime: 0,
-    googleTokenAuth: async (tok) => {
-      authCalls.push(tok);
-      return { j: { uid: 'u1' }, email: 'test@example.com' };
-    },
-    authErr: () => ['auth error'],
-    keepAuth: () => {},
-    track: () => {},
-    cloudLoad: async () => true,
-    cloudSave: async () => true,
-    toastAny: () => {},
-    profileName: () => 'Player',
-    wallet: { name: 'Player' },
-    saveWallet: () => {},
-    renderAccount: () => {},
-    renderSetup: () => {},
-    renderShop: () => {},
-    progressDot: () => {},
-    show: () => {},
-    presenceMark: () => {},
-    syncRating: () => {},
-    socialReset: () => {},
-    askProfile: () => {},
-    $: () => ({ hidden: true }),
-    document: { querySelectorAll: () => [] },
-    setTimeout: () => {}
+    googleIdp: async (tok, session) => { log.idp.push([tok, session ? 'link' : 'signin']); return idp(tok, session); },
+    jwtEmail: () => 'player@gmail.com', jwtField: () => 'Иван',
+    registered: () => registered, fbToken: async () => 'ANON', fbAuth: {idToken: 'ANON'},
+    authErr: () => ['auth error'], keepAuth: (j) => log.keep.push(j), track: () => {},
+    cloudLoad: async () => !!profile, cloudSave: async () => true,
+    toastAny: (t) => log.toasts.push(t), profileName: () => 'Player',
+    wallet: {name: 'Гость'}, saveWallet: () => {}, renderAccount: () => {}, renderSetup: () => {}, renderShop: () => {},
+    progressDot: () => {}, show: () => {}, presenceMark: () => {}, syncRating: () => {}, socialReset: () => {},
+    finishSignup: (n) => log.signup.push(n), accountDialog: (m, mail) => log.login.push([m, mail]),
+    $: () => ({hidden: true}), document: {querySelectorAll: () => []}, setTimeout: () => {}, Date,
   };
-
   vm.runInNewContext(
-    'let googleBusy = false; let lastGoogleToken = ""; let lastGoogleTokenTime = 0;\n' +
-    fn('finishGoogle'),
-    env
-  );
+    'let googleBusy = false; let lastGoogleToken = ""; let lastGoogleTokenTime = 0; let pendingGoogle = null;\n' +
+    "const gErr = (e, re) => !!(e && e.error && re.test(String(e.error.message || '')));\n" +
+    fn('finishGoogle') + '\nthis.pending = () => pendingGoogle;', env);
+  return {env, log};
+}
+const fail = m => { throw {error: {message: m}}; };
 
-  // 1. Initial valid call
+test('finishGoogle: duplicate tokens and concurrent requests are refused', async () => {
+  const {env, log} = googleEnv(async () => ({idToken: 'S', localId: 'u1'}));
+  const failures = [];
   await env.finishGoogle('id-tok-123', false, c => failures.push(c));
-  assert.equal(authCalls.length, 1);
+  assert.equal(log.idp.length, 1);
   assert.equal(failures.length, 0);
-
-  // 2. Duplicate call with identical token within 10s is blocked
   await env.finishGoogle('id-tok-123', false, c => failures.push(c));
-  assert.equal(authCalls.length, 1, 'duplicate token must not trigger googleTokenAuth again');
+  assert.equal(log.idp.length, 1, 'duplicate token must not reach Firebase again');
   assert.deepEqual(failures, ['duplicate']);
-
-  // 3. Different token is allowed
   failures.length = 0;
   await env.finishGoogle('id-tok-456', false, c => failures.push(c));
-  assert.equal(authCalls.length, 2);
+  assert.equal(log.idp.length, 2);
   assert.equal(failures.length, 0);
+});
+
+test('finishGoogle: a new Google account registers this guest profile and asks for a nickname', async () => {
+  const {env, log} = googleEnv(async (tok, session) => ({idToken: 'S', localId: 'anon1'}));
+  await env.finishGoogle('tok', false, () => assert.fail('must not fail'));
+  assert.deepEqual(log.idp, [['tok', 'link']], 'a guest attaches Google to its own profile');
+  assert.deepEqual(log.signup, ['Гость'], 'registration ends with the nickname step');
+});
+
+test('finishGoogle: a Google account with a profile signs in to it', async () => {
+  const {env, log} = googleEnv(async (tok, session) => session ? fail('FEDERATED_USER_ID_ALREADY_LINKED') : {idToken: 'S', localId: 'g1'}, {profile: {}});
+  await env.finishGoogle('tok', false, () => assert.fail('must not fail'));
+  assert.deepEqual(log.idp, [['tok', 'link'], ['tok', 'signin']]);
+  assert.equal(log.signup.length, 0);
+  assert.ok(log.toasts.some(t => t.startsWith('С возвращением')));
+});
+
+test('finishGoogle: a 200 answer without a session is never taken for a sign-in', async () => {
+  // E-mail already registered with a password: signInWithIdp says needConfirmation and gives no idToken.
+  const {env, log} = googleEnv(async (tok, session) => session ? fail('EMAIL_EXISTS') : fail('NEED_CONFIRMATION'));
+  const failures = [];
+  await env.finishGoogle('tok', false, c => failures.push(c));
+  assert.equal(log.keep.length, 0, 'no empty session may be saved');
+  assert.deepEqual(log.login, [['login', 'player@gmail.com']], 'the player is sent to the password sign-in');
+  assert.equal(env.pending().token, 'tok', 'Google waits to be attached after that sign-in');
+  assert.equal(failures.length, 1);
+});
+
+test('googleIdp: needConfirmation and errorMessage answers are errors', async () => {
+  for (const [answer, code] of [[{needConfirmation: true}, 'NEED_CONFIRMATION'], [{errorMessage: 'FEDERATED_USER_ID_ALREADY_LINKED'}, 'FEDERATED_USER_ID_ALREADY_LINKED']]) {
+    const env = {idt: async () => answer};
+    vm.runInNewContext(fn('googleIdp'), env);
+    await assert.rejects(env.googleIdp('tok', null), e => e.error.message === code);
+  }
 });
 
 test('source check: accountDialog wires disabled state and cancel invalidation', () => {

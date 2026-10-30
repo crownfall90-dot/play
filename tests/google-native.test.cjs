@@ -37,6 +37,7 @@ function nativeEnv(failBridge = false) {
     toastAny: m => messages.push(m),
     finishGoogle: (...a) => tokens.push(a)
   };
+  env.track = env.track || (() => {});
   vm.runInNewContext(fn('startGoogle'), env);
   env.startGoogle(false, c => failures.push(c), {});
   return { env, messages, failures, tokens };
@@ -109,6 +110,7 @@ test('existing browser entry still selects Google web button', () => {
       called++;
     }
   };
+  env.track = env.track || (() => {});
   vm.runInNewContext(fn('startGoogle'), env);
   env.startGoogle(true, () => {}, button);
   assert.equal(called, 1);
