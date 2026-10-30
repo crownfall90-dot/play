@@ -31,6 +31,11 @@ if [ "$target" = web ]; then
   touch "$site/.nojekyll"
   touch "$site/staging/.nojekyll"
   "$PY_BIN" scripts/privacy-page.py "$site/privacy.html"
+  # Owner pages (the in-game owner panel links here). No secrets inside: the data behind them is
+  # admin-only in the Firebase rules. Kept out of search engines.
+  mkdir -p "$site/admin"
+  sed 's|<head>|<head><meta name="robots" content="noindex,nofollow">|' tools/founder-admin.html > "$site/admin/index.html"
+  sed 's|<head>|<head><meta name="robots" content="noindex,nofollow">|' tools/feedback-admin.html > "$site/admin/feedback.html"
 else
   out=app/src/main/assets/index.html
 fi
