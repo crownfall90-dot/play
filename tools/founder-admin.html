@@ -125,6 +125,8 @@ body {
 .pill.on{background:var(--accent);border-color:var(--accent);color:#fff}
 #fbList{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto}
 [hidden] { display: none !important; }
+/* Until an admin has signed in, the page is only the sign-in card. */
+body:not(.authed) main > .card:not(#loginCard) { display: none; }
 .grid > *, .card > * { min-width: 0; }
 .btn { white-space: normal; text-align: center; }
 .header { flex-wrap: wrap; gap: 12px; }
@@ -179,6 +181,7 @@ body {
       <input class="field" id="loginPass" type="password" placeholder="Пароль" autocomplete="current-password">
       <button class="btn btn-primary" id="btnLogin">Войти</button>
     </div>
+    <p class="stat-sub" id="loginMsg" role="status" style="min-height:1.4em"></p>
     <button class="btn" id="btnReset">Забыли пароль? Прислать письмо для пароля</button>
   </div>
 
@@ -332,7 +335,7 @@ const DB = 'https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app';
 const GOOGLE_CLIENT = '467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com';
 const REPO = 'crownfall90-dot/play';
 const $ = id => document.getElementById(id);
-const log = (msg) => { const el = $('logConsole'); el.textContent += '\n[' + new Date().toLocaleTimeString() + '] ' + msg; el.scrollTop = el.scrollHeight; };
+const log = (msg) => { if (!document.body.classList.contains('authed')) $('loginMsg').textContent = msg; const el = $('logConsole'); el.textContent += '\n[' + new Date().toLocaleTimeString() + '] ' + msg; el.scrollTop = el.scrollHeight; };
 
 /* ---------- sign-in ---------- */
 let auth = null; // {idToken, refreshToken, uid, email, exp}
@@ -367,6 +370,7 @@ async function afterSignIn() {
     await db('errors', 'GET', undefined).catch(e => { if (/admins/.test(e.message)) throw e; });
     $('connStatus').textContent = '● Админ: ' + (auth.email || auth.uid); $('connStatus').style.color = 'var(--success)';
     $('loginCard').hidden = true; $('btnLogout').hidden = false;
+    document.body.classList.add('authed'); $('loginMsg').textContent = '';
     log('Вход выполнен: ' + (auth.email || auth.uid));
     refreshAll();
   } catch (e) {
@@ -375,7 +379,7 @@ async function afterSignIn() {
     $('btnLogout').hidden = false;
   }
 }
-function signOut() { auth = null; try { sessionStorage.removeItem('pgAdminAuth'); } catch (_) {} $('loginCard').hidden = false; $('btnLogout').hidden = true; $('connStatus').textContent = '● Не выполнен вход'; $('connStatus').style.color = 'var(--muted)'; }
+function signOut() { document.body.classList.remove('authed'); auth = null; try { sessionStorage.removeItem('pgAdminAuth'); } catch (_) {} $('loginCard').hidden = false; $('btnLogout').hidden = true; $('connStatus').textContent = '● Не выполнен вход'; $('connStatus').style.color = 'var(--muted)'; }
 $('btnLogout').onclick = () => { signOut(); log('Вы вышли'); };
 $('btnLogin').onclick = async () => {
   const email = $('loginMail').value.trim(), pass = $('loginPass').value;
@@ -502,8 +506,7 @@ document.querySelectorAll('[data-st]').forEach(b => b.onclick = () => { const wa
 $('fbSearch').oninput = e => { fbQ = e.target.value; renderFeedback(); };
 $('btnFbReload').onclick = loadFeedback;
 
-function refreshAll() { loadMaint(); loadPin(); loadStats(); loadFeedback(); }
-loadVersions(); loadMaint(); loadPin();
+function refreshAll() { loadVersions(); loadMaint(); loadPin(); loadStats(); loadFeedback(); }
 if (auth) afterSignIn();
 </script>
 </body>
