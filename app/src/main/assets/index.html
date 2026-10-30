@@ -16,7 +16,7 @@
 })();
 </script>
 <script>window.RELEASE_NOTES = ""; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app", "googleClientId": "467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com"};</script>
-<script>var PG=(function(M){"use strict";const G=n=>()=>{n|=0,n=n+1831565813|0;let e=Math.imul(n^n>>>15,1|n);return e=e+Math.imul(e^e>>>7,61|e)^e,((e^e>>>14)>>>0)/4294967296},H=n=>[...n].reduce((e,t)=>e*31+t.charCodeAt(0)|0,7),d={cap:{e:"cfff",n:5,name:"Край города"},capRS:{e:"crfr",n:4,name:"Город и дорога"},capRL:{e:"cfrr",n:3,name:"Город и поворот"},capRR:{e:"crrf",n:3,name:"Город и поворот"},c2:{e:"ccff",n:3,name:"Угол города"},c2r:{e:"ccrr",n:3,name:"Угол города с дорогой"},band:{e:"fcfc",n:2,name:"Городская улица"},c3:{e:"cccf",n:3,name:"Большой город"},c3r:{e:"cccr",n:2,name:"Город с воротами"},c4:{e:"cccc",n:1,name:"Центр города"},rS:{e:"rfrf",n:6,name:"Прямая дорога"},rC:{e:"ffrr",n:6,name:"Поворот дороги"},r3:{e:"frrr",n:3,name:"Развилка"},r4:{e:"rrrr",n:1,name:"Перекрёсток"},fort:{e:"ffff",n:3,fort:!0,name:"Крепость"},fortR:{e:"ffrf",n:2,fort:!0,name:"Крепость с дорогой"},wS:{e:"wfwf",n:2,name:"Река"},wC:{e:"wwff",n:2,name:"Излучина реки"},wBr:{e:"wrwr",n:2,name:"Мост через реку"},brHalf:{e:"fbfr",n:2,bridge:!0,name:"Половина большого моста"},wCity:{e:"wcwf",n:1,name:"Город у реки"},wEnd:{e:"wfff",n:2,name:"Исток реки"},wRC:{e:"wwrr",n:1,name:"Излучина и дорога"},wLake:{e:"wwww",n:2,lake:!0,name:"Разлив реки"},wTee:{e:"wwwf",n:2,lake:!0,name:"Заводь с протокой"},rRock:{e:"rfff",n:2,end:"boulders",name:"Тупик у валунов"},rMine:{e:"rfff",n:2,end:"mine",name:"Вход в шахту"},rEnd:{e:"rfxf",n:1,end:"cliff",name:"Дорога к обрыву"},rocks:{e:"ffff",n:2,rocks:!0,name:"Валуны"}},v=n=>n;(()=>{const n=o=>[0,1,2,3].map(r=>[0,1,2,3].map(c=>o[(c-r+4)%4]).join("")),e=new Set;for(const o in d)n([...d[o].e].map(v).join("")).forEach(r=>e.add(r));const t="crf";for(const o of t)for(const r of t)for(const c of t)for(const f of t){const s=o+r+c+f;e.has(s)||(n(s).forEach(i=>e.add(i)),d["x"+s]={e:s,n:1,rare:!0,name:A(s)})}})();function A(n){const e=r=>[...n].filter(c=>c===r).length,t=[];e("c")&&t.push("город"),e("w")&&t.push(e("w")>=3?"слияние рек":"река"),e("r")&&t.push(e("r")>=3?"развилка":"дорога");const o=t.length>1?t.slice(0,-1).join(", ")+" и "+t[t.length-1]:t[0]||"поле";return o[0].toUpperCase()+o.slice(1)}function K(n){const e=[],t=n.mode==="epic"?2:1;for(const o in d){const r=d[o];if(!(!n.rivers&&r.e.includes("w"))&&!(n.mode==="fast"&&r.rare))for(let c=0;c<r.n*(r.rare?1:t);c++)e.push(o)}return e}const w=[0,1,0,-1],y=[-1,0,1,0],m=(n,e)=>n+","+e,b=(n,e,t)=>n.get(m(e,t)),k=(n,e)=>d[n.type].e[(e-n.r+4)%4];function T(n,e,t,o,r){if(b(n,o,r))return!1;let c=0;for(let f=0;f<4;f++){const s=b(n,o+w[f],r+y[f]);if(s&&(c++,v(k(s,(f+2)%4))!==v(d[e].e[(f-t+4)%4])))return!1}return c>0}function _(n){const e=new Map;for(const t of n.values())for(let o=0;o<4;o++){const r=t.x+w[o],c=t.y+y[o];b(n,r,c)||e.set(m(r,c),{x:r,y:c})}return[...e.values()]}const j=(n,e,t,o)=>[0,1,2,3].filter(r=>T(n,e,r,t,o));function P(n,e){const t=[];for(const o of _(n))for(const r of j(n,e,o.x,o.y))t.push({x:o.x,y:o.y,r});return t}function N(n,e){for(const t of _(n))if(j(n,e,t.x,t.y).length)return!0;return!1}function g(n){const e={c:[],r:[]};for(let o=0;o<4;o++){const r=k(n,o);e[r==="b"?"r":r]&&e[r==="b"?"r":r].push(o)}const t=[];return e.c.length&&t.push({kind:"c",edges:e.c}),e.r.length===2?t.push({kind:"r",edges:e.r}):e.r.forEach(o=>t.push({kind:"r",edges:[o]})),d[n.type].fort&&t.push({kind:"f",edges:[]}),t}const E=(n,e)=>m(n.x,n.y)+"|"+e.kind+e.edges.join("");function z(n,e,t){const o=[];for(let c=-1;c<=1;c++)for(let f=-1;f<=1;f++){const s=b(n,t.x+f,t.y+c);s&&o.push(s)}const r=m(t.x,t.y)+"|f";return{kind:"f",tiles:o,complete:o.length===9,ids:new Set([r]),meeples:e.filter(c=>c.gid===r)}}function x(n,e,t,o){if(o.kind==="f")return z(n,e,t);const r=new Set,c=new Set,f=[[t,o]];let s=!1;for(;f.length;){const[i,l]=f.pop(),u=E(i,l);if(!r.has(u)){r.add(u),c.add(i);for(const h of l.edges){const a=b(n,i.x+w[h],i.y+y[h]);if(!a){s=!0;continue}const p=g(a).find(S=>S.kind===l.kind&&S.edges.includes((h+2)%4));p&&f.push([a,p])}}}return{kind:o.kind,tiles:[...c],complete:!s,ids:r,meeples:e.filter(i=>r.has(i.gid))}}const D=(n,e,t)=>g(t).filter(o=>{const r=x(n,e,t,o);return r.meeples.length===0&&!r.complete}),U=Object.freeze(Object.defineProperty({__proto__:null,DX:w,DY:y,allMoves:P,claimable:D,claimableAll:(n,e)=>{const t=[];for(const o of n.values())for(const r of D(n,e,o))t.push({t:o,g:r});return t},component:x,edgeAt:k,emptyCells:_,fits:T,fortComp:z,gid:E,groupsOf:g,hasPlacement:N,key:m,legalRots:j},Symbol.toStringTag,{value:"Module"})),C=(n,e,t)=>n.get(m(e,t));function O(n,e){const t=e.tiles.filter(r=>d[r.type].bridge);return t.some(r=>{const c=[0,1,2,3].find(s=>k(r,s)==="b"),f=C(n,r.x+w[c],r.y+y[c]);return f&&k(f,(c+2)%4)==="b"})?(e.tiles.length-t.length)*2+t.length:e.tiles.length}const L=(n,e,t)=>e.kind==="c"?e.tiles.length*(t?1:2):e.kind==="f"?t?e.tiles.length:9:O(n,e);function X(n,e,t,o,r,c){const f=L(n,e,t),s=Array.from({length:o},()=>0);e.meeples.forEach(a=>s[a.p]++);const i=Math.max(...s);if(!i)return{pts:f,win:[],each:0,helped:!1};const l=s.map((a,p)=>a===i?p:-1).filter(a=>a>=0),u=l.length>1&&r==="split"?Math.floor(f/l.length):f,h=!t&&c!=null&&!l.includes(c);return{pts:f,win:l,each:u,helped:h}}function $(n,e,t){const o=[],r=new Set,c=(f,s)=>{if(r.has(E(f,s)))return;const i=x(n,e,f,s);i.ids.forEach(l=>r.add(l)),i.complete&&o.push(i)};g(t).forEach(f=>f.kind!=="f"&&c(t,f));for(let f=-1;f<=1;f++)for(let s=-1;s<=1;s++){const i=C(n,t.x+s,t.y+f);i&&d[i.type].fort&&c(i,{kind:"f",edges:[]})}return o}function I(n,e,t,o){const r=[],c=new Set,f=(s,i)=>{if(c.has(E(s,i)))return;const l=x(n,e,s,i);l.ids.forEach(u=>c.add(u)),l.complete&&!l.meeples.length&&l.tiles.every(u=>u.by===o)&&r.push({t:s,g:i,c:l})};g(t).forEach(s=>s.kind!=="f"&&f(t,s));for(let s=-1;s<=1;s++)for(let i=-1;i<=1;i++){const l=C(n,t.x+i,t.y+s),u=l&&d[l.type].fort&&g(l).find(h=>h.kind==="f");u&&f(l,u)}return r}const J=Object.freeze(Object.defineProperty({__proto__:null,completedAround:$,doneMine:I,featurePoints:L,roadPoints:O,settle:X},Symbol.toStringTag,{value:"Module"})),B=(n,e)=>{let t=0;for(let o=0;o<4;o++)n.get(m(e.x+w[o],e.y+y[o]))&&t++;return t};function Y(n,e,t){let o=null,r=-1e9;for(const c of P(n,e)){const f=B(n,c)*1.5+t()*2.5;f>r&&(r=f,o=c)}return o}function Q(n,e,t,o,r,c){let f=null,s=-1e9;for(const i of P(n,t)){const l={x:i.x,y:i.y,type:t,r:i.r,seed:1};n.set(m(l.x,l.y),l);let u=c()*.6;for(const h of g(l)){if(h.kind==="f")continue;const a=x(n,e,l,h);if(!a.meeples.length)continue;const p=Array.from({length:r},()=>0);a.meeples.forEach(R=>p[R.p]++);const S=Math.max(...p),W=p.filter(R=>R===S).length>1,F=a.complete?a.kind==="c"?a.tiles.length*2:O(n,a):a.tiles.length*.8;p[o]===S?u+=6+F*(W?.5:1.5)+(a.complete?8:0):u-=5+F*1.2+(a.complete?8:0)}n.delete(m(l.x,l.y)),u+=B(n,i)*.15,u>s&&(s=u,f=i)}return f||Y(n,t,c)}const V={rng:G,hash:H,TYPES:d,normEdge:v,rareName:A,deckList:K,board:U,scoring:J,bots:Object.freeze(Object.defineProperty({__proto__:null,botPick:Y,helperPick:Q},Symbol.toStringTag,{value:"Module"}))};return M.engine=V,Object.defineProperty(M,Symbol.toStringTag,{value:"Module"}),M})({});
+<script>var PG=(function(j){"use strict";const $=n=>()=>{n|=0,n=n+1831565813|0;let t=Math.imul(n^n>>>15,1|n);return t=t+Math.imul(t^t>>>7,61|t)^t,((t^t>>>14)>>>0)/4294967296},Z=n=>[...n].reduce((t,e)=>t*31+e.charCodeAt(0)|0,7),x={cap:{e:"cfff",n:5,name:"Край города"},capRS:{e:"crfr",n:4,name:"Город и дорога"},capRL:{e:"cfrr",n:3,name:"Город и поворот"},capRR:{e:"crrf",n:3,name:"Город и поворот"},c2:{e:"ccff",n:3,name:"Угол города"},c2r:{e:"ccrr",n:3,name:"Угол города с дорогой"},band:{e:"fcfc",n:2,name:"Городская улица"},c3:{e:"cccf",n:3,name:"Большой город"},c3r:{e:"cccr",n:2,name:"Город с воротами"},c4:{e:"cccc",n:1,name:"Центр города"},rS:{e:"rfrf",n:6,name:"Прямая дорога"},rC:{e:"ffrr",n:6,name:"Поворот дороги"},r3:{e:"frrr",n:3,name:"Развилка"},r4:{e:"rrrr",n:1,name:"Перекрёсток"},fort:{e:"ffff",n:3,fort:!0,name:"Крепость"},fortR:{e:"ffrf",n:2,fort:!0,name:"Крепость с дорогой"},wS:{e:"wfwf",n:2,name:"Река"},wC:{e:"wwff",n:2,name:"Излучина реки"},wBr:{e:"wrwr",n:2,name:"Мост через реку"},brHalf:{e:"fbfr",n:2,bridge:!0,name:"Половина большого моста"},wCity:{e:"wcwf",n:1,name:"Город у реки"},wEnd:{e:"wfff",n:2,name:"Исток реки"},wRC:{e:"wwrr",n:1,name:"Излучина и дорога"},wLake:{e:"wwww",n:2,lake:!0,name:"Разлив реки"},wTee:{e:"wwwf",n:2,lake:!0,name:"Заводь с протокой"},rRock:{e:"rfff",n:2,end:"boulders",name:"Тупик у валунов"},rMine:{e:"rfff",n:2,end:"mine",name:"Вход в шахту"},rEnd:{e:"rfxf",n:1,end:"cliff",name:"Дорога к обрыву"},rocks:{e:"ffff",n:2,rocks:!0,name:"Валуны"}},B=n=>n;(()=>{const n=o=>[0,1,2,3].map(r=>[0,1,2,3].map(i=>o[(i-r+4)%4]).join("")),t=new Set;for(const o in x)n([...x[o].e].map(B).join("")).forEach(r=>t.add(r));const e="crf";for(const o of e)for(const r of e)for(const i of e)for(const a of e){const s=o+r+i+a;t.has(s)||(n(s).forEach(f=>t.add(f)),x["x"+s]={e:s,n:1,rare:!0,name:H(s)})}})();function H(n){const t=r=>[...n].filter(i=>i===r).length,e=[];t("c")&&e.push("город"),t("w")&&e.push(t("w")>=3?"слияние рек":"река"),t("r")&&e.push(t("r")>=3?"развилка":"дорога");const o=e.length>1?e.slice(0,-1).join(", ")+" и "+e[e.length-1]:e[0]||"поле";return o[0].toUpperCase()+o.slice(1)}function ee(n){const t=[],e=n.mode==="epic"?2:1;for(const o in x){const r=x[o];if(!(!n.rivers&&r.e.includes("w"))&&!(n.mode==="fast"&&r.rare))for(let i=0;i<r.n*(r.rare?1:e);i++)t.push(o)}return t}const O=[0,1,0,-1],R=[-1,0,1,0],v=(n,t)=>n+","+t,q=(n,t,e)=>n.get(v(t,e)),P=(n,t)=>x[n.type].e[(t-n.r+4)%4];function J(n,t,e,o,r){if(q(n,o,r))return!1;let i=0;for(let a=0;a<4;a++){const s=q(n,o+O[a],r+R[a]);if(s&&(i++,B(P(s,(a+2)%4))!==B(x[t].e[(a-e+4)%4])))return!1}return i>0}function I(n){const t=new Map;for(const e of n.values())for(let o=0;o<4;o++){const r=e.x+O[o],i=e.y+R[o];q(n,r,i)||t.set(v(r,i),{x:r,y:i})}return[...t.values()]}const L=(n,t,e,o)=>[0,1,2,3].filter(r=>J(n,t,r,e,o));function F(n,t){const e=[];for(const o of I(n))for(const r of L(n,t,o.x,o.y))e.push({x:o.x,y:o.y,r});return e}function ne(n,t){for(const e of I(n))if(L(n,t,e.x,e.y).length)return!0;return!1}function M(n){const t={c:[],r:[]};for(let o=0;o<4;o++){const r=P(n,o);t[r==="b"?"r":r]&&t[r==="b"?"r":r].push(o)}const e=[];return t.c.length&&e.push({kind:"c",edges:t.c}),t.r.length===2?e.push({kind:"r",edges:t.r}):t.r.forEach(o=>e.push({kind:"r",edges:[o]})),x[n.type].fort&&e.push({kind:"f",edges:[]}),e}const G=(n,t)=>v(n.x,n.y)+"|"+t.kind+t.edges.join("");function W(n,t,e){const o=[];for(let i=-1;i<=1;i++)for(let a=-1;a<=1;a++){const s=q(n,e.x+a,e.y+i);s&&o.push(s)}const r=v(e.x,e.y)+"|f";return{kind:"f",tiles:o,complete:o.length===9,ids:new Set([r]),meeples:t.filter(i=>i.gid===r)}}function V(n,t,e,o){if(o.kind==="f")return W(n,t,e);const r=new Set,i=new Set,a=[[e,o]];let s=!1;for(;a.length;){const[f,l]=a.pop(),d=G(f,l);if(!r.has(d)){r.add(d),i.add(f);for(const m of l.edges){const p=q(n,f.x+O[m],f.y+R[m]);if(!p){s=!0;continue}const T=M(p).find(A=>A.kind===l.kind&&A.edges.includes((m+2)%4));T&&a.push([p,T])}}}return{kind:o.kind,tiles:[...i],complete:!s,ids:r,meeples:t.filter(f=>r.has(f.gid))}}const X=(n,t,e)=>M(e).filter(o=>{const r=V(n,t,e,o);return r.meeples.length===0&&!r.complete}),te=Object.freeze(Object.defineProperty({__proto__:null,DX:O,DY:R,allMoves:F,claimable:X,claimableAll:(n,t)=>{const e=[];for(const o of n.values())for(const r of X(n,t,o))e.push({t:o,g:r});return e},component:V,edgeAt:P,emptyCells:I,fits:J,fortComp:W,gid:G,groupsOf:M,hasPlacement:ne,key:v,legalRots:L},Symbol.toStringTag,{value:"Module"})),N=(n,t,e)=>n.get(v(t,e));function z(n,t){const e=t.tiles.filter(r=>x[r.type].bridge);return e.some(r=>{const i=[0,1,2,3].find(s=>P(r,s)==="b"),a=N(n,r.x+O[i],r.y+R[i]);return a&&P(a,(i+2)%4)==="b"})?(t.tiles.length-e.length)*2+e.length:t.tiles.length}const Y=(n,t,e)=>t.kind==="c"?t.tiles.length*(e?1:2):t.kind==="f"?e?t.tiles.length:9:z(n,t);function oe(n,t,e,o,r,i){const a=Y(n,t,e),s=Array.from({length:o},()=>0);t.meeples.forEach(p=>s[p.p]++);const f=Math.max(...s);if(!f)return{pts:a,win:[],each:0,helped:!1};const l=s.map((p,T)=>p===f?T:-1).filter(p=>p>=0),d=l.length>1&&r==="split"?Math.floor(a/l.length):a,m=!e&&i!=null&&!l.includes(i);return{pts:a,win:l,each:d,helped:m}}function re(n,t,e){const o=[],r=new Set,i=(a,s)=>{if(r.has(G(a,s)))return;const f=V(n,t,a,s);f.ids.forEach(l=>r.add(l)),f.complete&&o.push(f)};M(e).forEach(a=>a.kind!=="f"&&i(e,a));for(let a=-1;a<=1;a++)for(let s=-1;s<=1;s++){const f=N(n,e.x+s,e.y+a);f&&x[f.type].fort&&i(f,{kind:"f",edges:[]})}return o}function ce(n,t,e,o){const r=[],i=new Set,a=(s,f)=>{if(i.has(G(s,f)))return;const l=V(n,t,s,f);l.ids.forEach(d=>i.add(d)),l.complete&&!l.meeples.length&&l.tiles.every(d=>d.by===o)&&r.push({t:s,g:f,c:l})};M(e).forEach(s=>s.kind!=="f"&&a(e,s));for(let s=-1;s<=1;s++)for(let f=-1;f<=1;f++){const l=N(n,e.x+f,e.y+s),d=l&&x[l.type].fort&&M(l).find(m=>m.kind==="f");d&&a(l,d)}return r}const ie=Object.freeze(Object.defineProperty({__proto__:null,completedAround:re,doneMine:ce,featurePoints:Y,roadPoints:z,settle:oe},Symbol.toStringTag,{value:"Module"})),K=(n,t)=>{let e=0;for(let o=0;o<4;o++)n.get(v(t.x+O[o],t.y+R[o]))&&e++;return e};function Q(n,t,e){let o=null,r=-1e9;for(const i of F(n,t)){const a=K(n,i)*1.5+e()*2.5;a>r&&(r=a,o=i)}return o}function se(n,t,e,o,r,i){let a=null,s=-1e9;for(const f of F(n,e)){const l={x:f.x,y:f.y,type:e,r:f.r,seed:1};n.set(v(l.x,l.y),l);let d=i()*.6;for(const m of M(l)){if(m.kind==="f")continue;const p=V(n,t,l,m);if(!p.meeples.length)continue;const T=Array.from({length:r},()=>0);p.meeples.forEach(E=>T[E.p]++);const A=Math.max(...T),D=T.filter(E=>E===A).length>1,y=p.complete?p.kind==="c"?p.tiles.length*2:z(n,p):p.tiles.length*.8;T[o]===A?d+=6+y*(D?.5:1.5)+(p.complete?8:0):d-=5+y*1.2+(p.complete?8:0)}n.delete(v(l.x,l.y)),d+=K(n,f)*.15,d>s&&(s=d,a=f)}return a||Q(n,e,i)}const ae=Object.freeze(Object.defineProperty({__proto__:null,botPick:Q,helperPick:se},Symbol.toStringTag,{value:"Module"}));function fe({sfxOn:n,musicLevel:t}){let e=null,o=null,r=null;function i(){if(!e){e=new(window.AudioContext||window.webkitAudioContext);const c=e.createDynamicsCompressor();c.connect(e.destination),o=e.createGain(),o.gain.value=.9,o.connect(c),r=e.createGain(),r.gain.value=0,r.connect(c)}return e.state==="suspended"&&!document.hidden&&e.resume(),e}function a(c,u,h,k,S){c.gain.setValueAtTime(1e-4,u),c.gain.exponentialRampToValueAtTime(h,u+k),c.gain.exponentialRampToValueAtTime(1e-4,u+k+S)}function s(c,u,h,k,S,b=o,w){const g=e.createOscillator(),_=e.createGain();g.type=k,g.frequency.setValueAtTime(u,c),w&&g.frequency.exponentialRampToValueAtTime(w,c+h),a(_,c,S,.008,h),g.connect(_).connect(b),g.start(c),g.stop(c+h+.05)}let f=null;function l(c,u,h,k,S=o){if(!f){f=e.createBuffer(1,e.sampleRate*.5,e.sampleRate);const _=f.getChannelData(0);for(let C=0;C<_.length;C++)_[C]=Math.random()*2-1}const b=e.createBufferSource(),w=e.createBiquadFilter(),g=e.createGain();b.buffer=f,w.type="bandpass",w.frequency.value=h,w.Q.value=1.2,a(g,c,k,.004,u),b.connect(w).connect(g).connect(S),b.start(c),b.stop(c+u+.05)}function d(c,u,h,k,S=o){const b=e.createOscillator(),w=e.createOscillator(),g=e.createBiquadFilter(),_=e.createGain();b.type="triangle",w.type="sawtooth",b.frequency.value=u,w.frequency.value=u*1.002,g.type="lowpass",g.frequency.setValueAtTime(u*6,c),g.frequency.exponentialRampToValueAtTime(u*1.2,c+h);const C=e.createGain();C.gain.value=.25,b.connect(g),w.connect(C).connect(g),g.connect(_).connect(S),a(_,c,k,.005,h),b.start(c),w.start(c),b.stop(c+h+.05),w.stop(c+h+.05)}const m=c=>440*Math.pow(2,(c-69)/12),p={place:c=>{s(c,180,.16,"sine",.5,o,70),l(c,.07,700,.35)},rotate:c=>l(c,.035,2600,.12),meeple:c=>{s(c,440,.09,"sine",.25,o,880),s(c+.06,990,.12,"sine",.15)},score:c=>[76,79,83].forEach((u,h)=>d(c+h*.08,m(u),.45,.16)),big:c=>{[72,76,79,84].forEach((u,h)=>d(c+h*.1,m(u),.6,.18)),d(c+.42,m(88),1,.14)},turn:c=>{s(c,m(81),.45,"sine",.12),s(c+.1,m(86),.55,"sine",.09)},coin:c=>{s(c,1319,.06,"square",.04),s(c+.06,1760,.16,"square",.04)},tap:c=>l(c,.02,3200,.06),win:c=>{[[72,0],[76,.14],[79,.28],[84,.42],[79,.62],[84,.76]].forEach(([u,h])=>d(c+h,m(u),.7,.18)),s(c+.76,m(60),1.4,"triangle",.1)},lose:c=>[[76,0],[74,.22],[72,.44],[71,.7]].forEach(([u,h])=>d(c+h,m(u),.8,.13))};function T(c){if(!(!p[c]||!n()))try{i(),p[c](e.currentTime+.01)}catch{}}const A=[[50,57,62,65],[48,55,60,64],[46,53,58,62],[48,55,60,67]],D=[62,64,65,67,69,71,72,74,76,77,79];let y={on:!1,timer:0,next:0,step:0,note:4};function E(){if(!e||!r)return;const c=t();r.gain.cancelScheduledValues(e.currentTime),r.gain.setTargetAtTime(c,e.currentTime,.6),c&&!y.on?ge():!c&&y.on&&setTimeout(()=>{t()||ye()},2500)}function ge(){if(y.on)return;y.on=!0,y.next=e.currentTime+.1;const c=60/76/2;y.timer=setInterval(()=>{for(;y.next<e.currentTime+.6;){const u=y.next,h=Math.floor(y.step/8)%A.length,k=y.step%8,S=A[h];k===0&&(s(u,m(S[0]-12),c*7,"triangle",.5,r),S.slice(1).forEach(b=>{const w=e.createOscillator(),g=e.createGain();w.type="sine",w.frequency.value=m(b),g.gain.setValueAtTime(1e-4,u),g.gain.linearRampToValueAtTime(.09,u+c*2),g.gain.linearRampToValueAtTime(1e-4,u+c*8),w.connect(g).connect(r),w.start(u),w.stop(u+c*8+.1)})),k===4&&d(u,m(S[1]),c*3,.2,r),Math.random()<(k%2?.35:.7)&&(y.note=Math.max(0,Math.min(D.length-1,y.note+[-2,-1,-1,0,1,1,2][Math.random()*7|0])),d(u,m(D[y.note]),c*2.2,.26,r)),y.next+=c,y.step++}},150)}function ye(){clearInterval(y.timer),y.on=!1}return document.addEventListener("pointerdown",()=>{try{i(),E()}catch{}},{once:!0,capture:!0}),document.addEventListener("visibilitychange",()=>{e&&(document.hidden?(E(),e.suspend()):(e.resume(),E()))}),{audio:i,beep:T,musicUpdate:E}}const le=()=>({gold:100,owned:["classic"],fig:"classic",daily:"",dailyBox:"",paid:[],sound:!0,color:"#ef5350"});function U(n){if(!n)return"";const t="pg_sec_"+(n.gold||0)+"_"+(n.owned?n.owned.slice().sort().join(","):"")+"_"+(n.fcode||"")+"_salt90";let e=2166136261;for(let o=0;o<t.length;o++)e^=t.charCodeAt(o),e=Math.imul(e,16777619);return(e>>>0).toString(16)}function ue(n,t,e){let o=null,r=null;try{o=JSON.parse(n.getItem("wallet")),r=n.getItem("wallet_sig")}catch{}o&&r&&r!==U(o)&&(o.gold=100);const i=Object.assign(le(),o);return i.boosts=Object.assign({double:0,meeple:0},i.boosts),t(i.color)||(i.color=e),i}function de(n,t){try{n.setItem("wallet",JSON.stringify(t)),n.setItem("wallet_sig",U(t))}catch{}}const me={rng:$,hash:Z,TYPES:x,normEdge:B,rareName:H,deckList:ee,board:te,scoring:ie,bots:ae},pe={createSound:fe},he={walletSig:U,loadWallet:ue,storeWallet:de};return j.audio=pe,j.engine=me,j.state=he,Object.defineProperty(j,Symbol.toStringTag,{value:"Module"}),j})({});
 </script>
 </head><body>
 <title>Puzzlegrad</title>
@@ -2351,29 +2351,12 @@ const FIGS = {
 };
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
-function walletSig(w) {
-  if (!w) return '';
-  const str = 'pg_sec_' + (w.gold || 0) + '_' + (w.owned ? w.owned.slice().sort().join(',') : '') + '_' + (w.fcode || '') + '_salt90';
-  let h = 0x811c9dc5;
-  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193); }
-  return (h >>> 0).toString(16);
-}
-const wallet = (() => {
-  let w = null, sig = null;
-  try { w = JSON.parse(localStorage.getItem('wallet')); sig = localStorage.getItem('wallet_sig'); } catch (_) {}
-  if (w && sig && sig !== walletSig(w)) { w.gold = 100; }
-  const v = Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'}, w);
-  v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
-  if (!validCol(v.color)) v.color = PALETTE[0].col; // a colour taken out of the palette (turquoise)
-  return v;
-})();
+// The wallet's storage lives in src/state/wallet.js.
+const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col);
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
 function saveWallet() {
-  try {
-    localStorage.setItem('wallet', JSON.stringify(wallet));
-    localStorage.setItem('wallet_sig', walletSig(wallet));
-  } catch (_) {}
+  PG.state.storeWallet(localStorage, wallet);
   document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
   if (typeof cloudSaveSoon === 'function') cloudSaveSoon();
 }
@@ -2667,100 +2650,10 @@ document.addEventListener('visibilitychange', () => {
 });
 
 /* ---------------- sound ---------------- */
-let actx = null;
-/* Sound effects and music are synthesised with Web Audio: no audio files, nothing to load.
-   Effects go through sfxOut, music through musicOut; each has its own switch in Settings. */
-let sfxOut = null, musicOut = null;
-function audio() {
-  if (!actx) {
-    actx = new (window.AudioContext || window.webkitAudioContext)();
-    const comp = actx.createDynamicsCompressor(); comp.connect(actx.destination);
-    sfxOut = actx.createGain(); sfxOut.gain.value = .9; sfxOut.connect(comp);
-    musicOut = actx.createGain(); musicOut.gain.value = 0; musicOut.connect(comp);
-  }
-  if (actx.state === 'suspended' && !document.hidden) actx.resume();
-  return actx;
-}
-function env(g, t, peak, a, d) { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); }
-function tone(t, f, d, type, peak, out = sfxOut, f2) {
-  const o = actx.createOscillator(), g = actx.createGain();
-  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
-  env(g, t, peak, .008, d); o.connect(g).connect(out); o.start(t); o.stop(t + d + .05);
-}
-let noiseBuf = null;
-function noise(t, d, freq, peak, out = sfxOut) {
-  if (!noiseBuf) { noiseBuf = actx.createBuffer(1, actx.sampleRate * .5, actx.sampleRate); const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; }
-  const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
-  n.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
-  env(g, t, peak, .004, d); n.connect(f).connect(g).connect(out); n.start(t); n.stop(t + d + .05);
-}
-// A plucked string (lute-like): a bright attack that mellows quickly.
-function pluck(t, f, d, peak, out = sfxOut) {
-  const o = actx.createOscillator(), o2 = actx.createOscillator(), lp = actx.createBiquadFilter(), g = actx.createGain();
-  o.type = 'triangle'; o2.type = 'sawtooth'; o.frequency.value = f; o2.frequency.value = f * 1.002;
-  lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * 6, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + d);
-  const g2 = actx.createGain(); g2.gain.value = .25;
-  o.connect(lp); o2.connect(g2).connect(lp); lp.connect(g).connect(out);
-  env(g, t, peak, .005, d); o.start(t); o2.start(t); o.stop(t + d + .05); o2.stop(t + d + .05);
-}
-const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);
-const SFX = {
-  place: t => { tone(t, 180, .16, 'sine', .5, sfxOut, 70); noise(t, .07, 700, .35); },  // wooden knock on the table
-  rotate: t => noise(t, .035, 2600, .12),
-  meeple: t => { tone(t, 440, .09, 'sine', .25, sfxOut, 880); tone(t + .06, 990, .12, 'sine', .15); },
-  score: t => [76, 79, 83].forEach((n, i) => pluck(t + i * .08, NOTE(n), .45, .16)),
-  big: t => { [72, 76, 79, 84].forEach((n, i) => pluck(t + i * .1, NOTE(n), .6, .18)); pluck(t + .42, NOTE(88), 1, .14); },
-  turn: t => { tone(t, NOTE(81), .45, 'sine', .12); tone(t + .1, NOTE(86), .55, 'sine', .09); },
-  coin: t => { tone(t, 1319, .06, 'square', .04); tone(t + .06, 1760, .16, 'square', .04); },
-  tap: t => noise(t, .02, 3200, .06),
-  win: t => { [[72, 0], [76, .14], [79, .28], [84, .42], [79, .62], [84, .76]].forEach(([n, d]) => pluck(t + d, NOTE(n), .7, .18)); tone(t + .76, NOTE(60), 1.4, 'triangle', .1); },
-  lose: t => [[76, 0], [74, .22], [72, .44], [71, .7]].forEach(([n, d]) => pluck(t + d, NOTE(n), .8, .13)),
-};
-function beep(kind) {
-  if (!wallet.sound || !SFX[kind] || fast()) return;
-  try { audio(); SFX[kind](actx.currentTime + .01); } catch (_) {}
-}
-
-/* Background music: a calm medieval tune made up on the fly — a soft drone, a bass on the
-   first beat and a lute picking notes of the D dorian scale over a four-chord loop. */
-const CHORDS = [[50, 57, 62, 65], [48, 55, 60, 64], [46, 53, 58, 62], [48, 55, 60, 67]];
-const SCALE = [62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79];
-let music = {on: false, timer: 0, next: 0, step: 0, note: 4};
+// Synthesised effects and music live in src/audio/sound.js.
 function musicLevel() { return !wallet.music ? 0 : document.hidden ? 0 : gameVisible ? .045 : .075; }
-function musicUpdate() {
-  if (!actx || !musicOut) return;
-  const v = musicLevel();
-  musicOut.gain.cancelScheduledValues(actx.currentTime);
-  musicOut.gain.setTargetAtTime(v, actx.currentTime, .6);
-  if (v && !music.on) musicStart(); else if (!v && music.on) setTimeout(() => { if (!musicLevel()) musicStop(); }, 2500);
-}
-function musicStart() {
-  if (music.on) return;
-  music.on = true; music.next = actx.currentTime + .1;
-  const beat = 60 / 76 / 2; // eighth notes at 76 bpm
-  music.timer = setInterval(() => {
-    while (music.next < actx.currentTime + .6) {
-      const t = music.next, bar = Math.floor(music.step / 8) % CHORDS.length, pos = music.step % 8, ch = CHORDS[bar];
-      if (pos === 0) {
-        tone(t, NOTE(ch[0] - 12), beat * 7, 'triangle', .5, musicOut);
-        ch.slice(1).forEach(n => { const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = NOTE(n); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.09, t + beat * 2); g.gain.linearRampToValueAtTime(.0001, t + beat * 8); o.connect(g).connect(musicOut); o.start(t); o.stop(t + beat * 8 + .1); });
-      }
-      if (pos === 4) pluck(t, NOTE(ch[1]), beat * 3, .2, musicOut);
-      if (Math.random() < (pos % 2 ? .35 : .7)) {
-        music.note = Math.max(0, Math.min(SCALE.length - 1, music.note + [-2, -1, -1, 0, 1, 1, 2][(Math.random() * 7) | 0]));
-        pluck(t, NOTE(SCALE[music.note]), beat * 2.2, .26, musicOut);
-      }
-      music.next += beat; music.step++;
-    }
-  }, 150);
-}
-function musicStop() { clearInterval(music.timer); music.on = false; }
-// Browsers start audio only after a touch; the first one also starts the music.
-document.addEventListener('pointerdown', () => { try { audio(); musicUpdate(); } catch (_) {} }, {once: true, capture: true});
-document.addEventListener('visibilitychange', () => {
-  if (!actx) return;
-  if (document.hidden) { musicUpdate(); actx.suspend(); } else { actx.resume(); musicUpdate(); }
-});
+const sound = PG.audio.createSound({sfxOn: () => !!wallet.sound && !fast(), musicLevel});
+const {audio, beep, musicUpdate} = sound;
 // A quiet click on menu buttons.
 document.addEventListener('click', e => { if (e.target.closest('button') && !e.target.closest('#scr-game .board')) beep('tap'); });
 /* ---------------- settings ---------------- */

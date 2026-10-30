@@ -152,45 +152,23 @@ test('source check: accountDialog wires disabled state and cancel invalidation',
   assert.ok(html.includes("window.onGoogleError = null;"));
 });
 
-test('anti-cheat: walletSig detects tampering and protects wallet integrity', () => {
-  const env = {};
-  vm.runInNewContext(fn('walletSig'), env);
-  const w1 = { gold: 500, owned: ['classic', 'forest'], fcode: 'ABCDEF' };
-  const sig1 = env.walletSig(w1);
+test('anti-cheat: walletSig detects tampering; a mismatched wallet loses its gold (src/state/wallet.js)', async () => {
+  const W = await import('../src/state/wallet.js');
+  const w1 = {gold: 500, owned: ['classic', 'forest'], fcode: 'ABCDEF'};
+  const sig1 = W.walletSig(w1);
   assert.ok(typeof sig1 === 'string' && sig1.length > 0);
-
-  // Altering gold must change signature
-  const wTampered = { gold: 999999, owned: ['classic', 'forest'], fcode: 'ABCDEF' };
-  const sigTampered = env.walletSig(wTampered);
-  assert.notEqual(sig1, sigTampered, 'tampering gold must yield different signature');
-
-  // Verify wallet init logic with tampering
-  const store = {
-    wallet: JSON.stringify(wTampered),
-    wallet_sig: sig1 // stale/mismatched signature
-  };
-  const mockStorage = {
-    getItem: (k) => store[k] || null,
-    setItem: (k, v) => { store[k] = v; }
-  };
-  const envInit = {
-    localStorage: mockStorage,
-    FIGS: { classic: {} }
-  };
-  vm.runInNewContext(
-    fn('walletSig') + '\n' +
-    'var randomFig = () => "classic";\n' +
-    'var today = () => "2026-10-30";\n' +
-    'var wallet = (() => {\n' +
-    '  let w = null, sig = null;\n' +
-    '  try { w = JSON.parse(localStorage.getItem("wallet")); sig = localStorage.getItem("wallet_sig"); } catch (_) {}\n' +
-    '  if (w && sig && sig !== walletSig(w)) { w.gold = 100; }\n' +
-    '  const v = Object.assign({gold: 100, owned: ["classic"], fig: "classic"}, w);\n' +
-    '  return v;\n' +
-    '})();',
-    envInit
-  );
-  assert.equal(envInit.wallet.gold, 100, 'tampered gold with mismatched signature must be reset to 100');
+  const wTampered = {gold: 999999, owned: ['classic', 'forest'], fcode: 'ABCDEF'};
+  assert.notEqual(sig1, W.walletSig(wTampered), 'tampering gold must yield a different signature');
+  const store = {wallet: JSON.stringify(wTampered), wallet_sig: sig1};
+  const storage = {getItem: k => store[k] || null, setItem: (k, v) => { store[k] = v; }};
+  const ok = () => true;
+  assert.equal(W.loadWallet(storage, ok, '#ef5350').gold, 100, 'tampered gold with a mismatched signature is reset to 100');
+  W.storeWallet(storage, w1);
+  assert.equal(W.loadWallet(storage, ok, '#ef5350').gold, 500, 'a wallet saved by the game loads as it is');
+  store.wallet = JSON.stringify({gold: 300, color: '#2ec4d6'}); delete store.wallet_sig;
+  const old = W.loadWallet(storage, c => c !== '#2ec4d6', '#ef5350');
+  assert.equal(old.gold, 300, 'a wallet from before the checksum keeps its gold');
+  assert.equal(old.color, '#ef5350', 'a colour removed from the palette is replaced');
 });
 
 test('anti-cheat: blocks F12, developer shortcuts and context menu', () => {
