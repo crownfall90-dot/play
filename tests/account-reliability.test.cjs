@@ -152,7 +152,7 @@ test('source check: accountDialog wires disabled state and cancel invalidation',
   assert.ok(html.includes("window.onGoogleError = null;"));
 });
 
-test('anti-cheat: walletSig detects tampering; a mismatched wallet loses its gold (src/state/wallet.js)', async () => {
+test('walletSig: a mismatch is reported, the gold is kept (src/state/wallet.js)', async () => {
   const W = await import('../src/state/wallet.js');
   const w1 = {gold: 500, owned: ['classic', 'forest'], fcode: 'ABCDEF'};
   const sig1 = W.walletSig(w1);
@@ -161,8 +161,9 @@ test('anti-cheat: walletSig detects tampering; a mismatched wallet loses its gol
   assert.notEqual(sig1, W.walletSig(wTampered), 'tampering gold must yield a different signature');
   const store = {wallet: JSON.stringify(wTampered), wallet_sig: sig1};
   const storage = {getItem: k => store[k] || null, setItem: (k, v) => { store[k] = v; }};
-  const ok = () => true;
-  assert.equal(W.loadWallet(storage, ok, '#ef5350').gold, 100, 'tampered gold with a mismatched signature is reset to 100');
+  const ok = () => true, reports = [];
+  assert.equal(W.loadWallet(storage, ok, '#ef5350', r => reports.push(r)).gold, 999999, 'a mismatch never takes gold away (a rollback writes no checksum)');
+  assert.deepEqual(reports, [{gold: 999999}], 'the mismatch is reported');
   W.storeWallet(storage, w1);
   assert.equal(W.loadWallet(storage, ok, '#ef5350').gold, 500, 'a wallet saved by the game loads as it is');
   store.wallet = JSON.stringify({gold: 300, color: '#2ec4d6'}); delete store.wallet_sig;

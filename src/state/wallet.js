@@ -3,8 +3,9 @@
 
 const DEFAULTS = () => ({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'});
 
-/** Checksum of what a hand edit would change (gold, figures, friend code). Not a real protection: it is computed
- *  in public code; it only catches a stray edit of localStorage. */
+/** Checksum of what a hand edit would change (gold, figures, friend code). Not a protection: it is computed in public
+ *  code. A mismatch is only reported (onMismatch), never punished: an older version of the game (a rollback) saves the
+ *  wallet without updating the checksum, and resetting the gold then would take it from an honest player. */
 export function walletSig(w) {
   if (!w) return '';
   const str = 'pg_sec_' + (w.gold || 0) + '_' + (w.owned ? w.owned.slice().sort().join(',') : '') + '_' + (w.fcode || '') + '_salt90';
@@ -14,13 +15,13 @@ export function walletSig(w) {
 }
 
 /**
- * Reads the wallet. A checksum that does not match resets the gold to 100.
- * colorOk(c) tells a colour of the current palette; others become fallbackColor.
+ * Reads the wallet. colorOk(c) tells a colour of the current palette; others become fallbackColor.
+ * onMismatch({gold}) is called when the checksum does not match (the wallet is kept as it is).
  */
-export function loadWallet(storage, colorOk, fallbackColor) {
+export function loadWallet(storage, colorOk, fallbackColor, onMismatch) {
   let w = null, sig = null;
   try { w = JSON.parse(storage.getItem('wallet')); sig = storage.getItem('wallet_sig'); } catch (_) {}
-  if (w && sig && sig !== walletSig(w)) { w.gold = 100; }
+  if (w && sig && sig !== walletSig(w) && onMismatch) { try { onMismatch({gold: +w.gold || 0}); } catch (_) {} }
   const v = Object.assign(DEFAULTS(), w);
   v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
   if (!colorOk(v.color)) v.color = fallbackColor; // a colour taken out of the palette (turquoise)
