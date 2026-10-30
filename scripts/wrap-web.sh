@@ -36,6 +36,11 @@ else
 fi
 mkdir -p "$(dirname "$out")"
 
+# Modules from src/ (TASK-008): Vite bundles them into one script, window.PG, inlined before game.html,
+# so the page stays a single file (the Android WebView loads it from file://).
+if [ ! -x node_modules/.bin/vite ]; then npm ci --no-audit --no-fund >/dev/null; fi
+node_modules/.bin/vite build --logLevel error
+
 # Firebase web config from app/google-services.json, if the project has one.
 firebase=$("$PY_BIN" - <<'PY'
 import json, os
@@ -105,6 +110,7 @@ HEAD
 BOOT
     fi
     printf '<script>window.RELEASE_NOTES = %s; window.FIREBASE = %s;</script>\n' "$notes" "$firebase"
+    printf '<script>'; cat build/bundle/pg.js; printf '</script>\n'
     printf '</head><body>\n'
     grep -v -e 'fonts.googleapis.com' -e 'fonts.gstatic.com' web/game.html
     printf '\n</body></html>\n'

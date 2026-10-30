@@ -1185,3 +1185,15 @@
 - ci: apply and verify explicit Android Google sign-in fix
 - release: publish verified APK 1.0.213 without rebuilding
 
+## 1.0.215 — 2026-10-30
+
+**Игрокам:**
+- Вход через Google исправлен: если почта уже зарегистрирована с паролем, игра попросит один раз войти по почте и подключит Google к профилю
+- Новый Google-аккаунт сразу становится вашим профилем: золото и прогресс сохраняются, остаётся придумать никнейм
+
+**В коде:**
+- Вход через Google: без пустой сессии, регистрация нового аккаунта с никнеймом
+- fix(auth): Google sign-in never keeps an empty session; new Google accounts register with a nickname
+- Журнал версий: 1.0.214
+- docs(changelog): 1.0.214, clear release notes
+
