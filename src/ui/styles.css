@@ -528,6 +528,7 @@ html.lowgfx .tile .sd.n,html.lowgfx .tile .sd.e,html.lowgfx .tile .sd.w{display:
 html.lowgfx .tile .sd.s{display:block}
 .tile.ghost{transform:translateZ(18px);animation:hov 1.8s ease-in-out infinite}
 .tile.ghost .face{box-shadow:0 0 0 2.5px var(--brass),0 0 26px rgba(242,184,75,.65)}
+.tile.peek{pointer-events:none;opacity:.78}.tile.peek .face{box-shadow:0 0 0 2.5px var(--pc,var(--brass)),0 0 22px color-mix(in srgb,var(--pc,#f2b84b) 60%,transparent)}
 .tile.shake{animation:shk .35s}
 @keyframes hov{50%{transform:translateZ(26px)}}
 @keyframes shk{25%{transform:translateZ(18px) translateX(-5px)}75%{transform:translateZ(18px) translateX(5px)}}

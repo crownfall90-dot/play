@@ -776,6 +776,7 @@ function setRot(nr) {
   trayDeg += delta * 90; ghostDeg += delta * 90; current.r = nr;
   tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg');
   if (ghost) ghost.querySelector('.face').style.setProperty('--r', ghostDeg + 'deg');
+  peekSend();
 }
 // Hint frames are plain, unanimated 3D squares in empty cells: animating each of them
 // (or merging them into one big layer that standing houses and trees cut through)
@@ -802,7 +803,7 @@ function selectSlot(x, y) {
   sel = {x, y};
   setRot(rots.includes(current.r) ? current.r : rots[0]);
   slotEls.forEach(s => s.classList.toggle('sel', +s.dataset.x === x && +s.dataset.y === y));
-  placeGhost(); okBtn.disabled = false;
+  placeGhost(); okBtn.disabled = false; peekSend();
   setStatus(rots.length > 1 ? 'Поверните карту или нажмите <b>«Поставить»</b>' : 'Здесь карта встаёт только так · <b>«Поставить»</b>');
 }
 function rotate() {
@@ -885,6 +886,7 @@ function tap(x, y) {
   const s = el.closest('.slot'); if (s) selectSlot(+s.dataset.x, +s.dataset.y);
 }
 async function dropAt(t) {
+  peekClear();
   sel = {x: t.x, y: t.y};
   if (!ghost) placeGhost();
   ghost.classList.remove('ghost');
@@ -2238,9 +2240,34 @@ function onNet(d) {
   if (m.g !== net.gameId || !players[m.p] || phase === 'end') return;
   if (m.t === 'resign') return onResign(m.p);
   if (m.t === 'here') { players[m.p].missed = 0; return renderPlayers(); }
+  if (m.t === 'peek') return live && showPeek(m);
   if (m.t === 'say') return live && showSay(m.p, m.i);
   if (m.t === 'draw') return onDrawOffer(m);
   if (m.t === 'drawReply') return onDrawReply(m);
+}
+/* Others see where you are about to put the card, before you confirm it: while the card is held, its place and
+   turn are sent (at most ~3 times a second, only when they change) and shown to the rest as a tinted, unconfirmed card. */
+let peekT = 0, peekLast = '', peekEl = null, peekDeg = 0;
+function peekSend() {
+  if (!net || !net.gameId || tut || phase !== 'place' || !sel || !current || !isLocal(turn)) return;
+  const msg = {t: 'peek', g: net.gameId, p: turn, n: applied, x: sel.x, y: sel.y, r: current.r}, key = msg.n + ':' + msg.x + ',' + msg.y + ',' + msg.r;
+  if (key === peekLast || peekT) return;
+  peekT = setTimeout(() => {
+    peekT = 0;
+    if (!net || phase !== 'place' || !sel || !current) return;
+    const k = applied + ':' + sel.x + ',' + sel.y + ',' + current.r; if (k === peekLast) return;
+    peekLast = k; TRANSPORT.send(net.code, {...msg, n: applied, x: sel.x, y: sel.y, r: current.r}).catch(() => {});
+  }, 350);
+}
+function peekClear() { if (peekEl) { peekEl.remove(); peekEl = null; } clearTimeout(peekT); peekT = 0; peekLast = ''; }
+function showPeek(m) {
+  if (phase !== 'remote' || !current || m.n !== applied || m.p !== turn || isLocal(m.p) || !Number.isInteger(m.x) || !Number.isInteger(m.y) || !(m.r >= 0 && m.r < 4)) return;
+  if (tiles.has(key(m.x, m.y)) || Math.abs(m.x) > 80 || Math.abs(m.y) > 80) return;
+  if (!peekEl) { peekDeg = m.r * 90; peekEl = tileEl({x: m.x, y: m.y, type: current.type, r: m.r}, false); peekEl.classList.add('ghost', 'peek'); world.append(peekEl); }
+  else peekDeg += (((m.r * 90 - peekDeg) % 360) + 540) % 360 - 180; // turn the short way
+  peekEl.style.setProperty('--pc', players[m.p].col);
+  peekEl.style.left = (m.x * T - T / 2) + 'px'; peekEl.style.top = (m.y * T - T / 2) + 'px';
+  const f = peekEl.querySelector('.face'); if (f) f.style.setProperty('--r', peekDeg + 'deg');
 }
 function onMove(m) {
   if (m.g !== net.gameId || m.n < applied || queue.some(q => q.n === m.n)) return;
@@ -2250,7 +2277,7 @@ function onMove(m) {
   if (phase === 'remote') pumpRemote();
 }
 function cancelTurn() {
-  turnTok++; stopTimer(); clearSlots();
+  peekClear(); turnTok++; stopTimer(); clearSlots();
   if (ghost) { ghost.remove(); ghost = null; }
   $('#over').hidden = true; phase = 'remote';
 }
@@ -2315,7 +2342,7 @@ async function pumpRemote() {
   if (phase !== 'remote' || !gameVisible) return;
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
-  const mv = queue.splice(i, 1)[0], my = token;
+  const mv = queue.splice(i, 1)[0], my = token; peekClear();
   if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
   phase = 'busy'; applied++; // reserve before yielding: a duplicate delivery is already obsolete
   if (mv.old) catchKeep(); else catchEnd();
