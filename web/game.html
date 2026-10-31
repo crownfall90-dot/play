@@ -2534,7 +2534,11 @@ function renderMenuProfile() {
 function renderProgress() {
   questsToday();
   const need = xpNeed(PROG.lvl), name = profileName();
-  $('#profile').innerHTML = `<div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><b>${name}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков</small></div>`;
+  // One card: avatar, nickname and e-mail with the edit button, then level and experience; the account buttons
+  // (#acct, below) join it.
+  const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
+  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков · <i class="coin"></i> ${wallet.gold}</small></div></div>`;
+  $('#profEdit').onclick = editProfile;
   const st = PROG.st;
   $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
@@ -2576,6 +2580,18 @@ async function openPlayer(uid, name, col) {
   const st = box.querySelector('#plStat'); if (st) st.textContent = [`🏆 ${lead && +lead.r || 0} кубков`, lead && lead.w ? `${+lead.w} побед онлайн` : '', seen].filter(Boolean).join(' · ');
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (b && !e.target.closest('button.chip')) openPlayer(b.dataset.pl, b.dataset.n, b.dataset.c); });
+// Edit the profile: colour (free, any time) and nickname (the usual rename).
+function editProfile() {
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="epAv" style="--c:${wallet.color}">${(profileName()[0] || '?').toUpperCase()}</div><h3>Редактировать профиль</h3><p>Цвет игрока — в профиле и по умолчанию в партиях</p><span id="epAnchor"></span>
+    <button class="cta wide" id="epName">Сменить никнейм · <i class="coin" style="display:inline-block;width:12px;height:12px"></i> ${RENAME_PRICE}</button><button class="ghostbtn" id="epOk">Готово</button></div>`;
+  document.body.append(box);
+  colorPick(box.querySelector('#epAnchor'), box.querySelector('#epAv'));
+  const done = () => { box.remove(); renderProgress(); renderAccount(); renderMenuProfile(); };
+  box.querySelector('#epOk').onclick = done;
+  box.querySelector('#epName').onclick = () => { done(); renameDialog(); };
+  box.onclick = e => { if (e.target === box) done(); };
+}
 function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
