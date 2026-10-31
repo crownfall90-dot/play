@@ -736,3 +736,16 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .pclvl .lvl{position:relative;flex:0 0 auto;width:58px;height:58px;display:grid;place-items:center}.pclvl .lvl svg{position:absolute;inset:0}.pclvl .lvl b{position:relative;font:800 20px var(--f-display)}
 .pclvl .pl1{display:block;font:800 14px var(--f-display);margin-bottom:5px}.pclvl .xpbar{margin-bottom:5px}
 .pchips{display:flex;gap:8px;flex-wrap:wrap}.pchips span{flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:12.5px;color:var(--muted);white-space:nowrap}.pchips b{color:var(--ink);font:800 15px var(--f-display);font-variant-numeric:tabular-nums}.pchips .coin{width:15px;height:15px;display:inline-block}
+
+/* how to play: tabs, goal card, numbered steps */
+.seg.rtabs,#rtabs{grid-template-columns:repeat(4,1fr)}
+#rtabs button{font:800 13px var(--f-display);padding:0 2px}
+.rpane{display:flex;flex-direction:column;gap:10px}.rpane[hidden]{display:none}
+.rgoal{display:flex;gap:14px;align-items:center;padding:16px;border-radius:20px;background:linear-gradient(160deg,rgba(242,184,75,.2),rgba(255,255,255,.04));border:1px solid rgba(242,184,75,.35)}
+.rgoal>span{font-size:38px}.rgoal b{font:800 15px var(--f-display)}.rgoal p{margin:4px 0 0;font-size:13.5px;line-height:1.45;color:#dbe2f4}.rgoal p b{color:var(--brass);font:inherit;font-weight:800}
+.rsteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rsteps li{position:relative;display:grid;grid-template-columns:50px 1fr;gap:12px;align-items:center;padding:12px 12px 12px 14px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid var(--line)}
+.rsteps li>i{position:absolute;left:-1px;top:-1px;width:24px;height:24px;border-radius:18px 0 12px 0;display:grid;place-items:center;font:800 12px var(--f-display);font-style:normal;background:var(--brass);color:var(--brass-ink)}
+.rsteps .ric{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:27px;background:rgba(255,255,255,.07)}
+.rsteps b{font:700 14px var(--f-display)}.rsteps p{margin:3px 0 0;font-size:12.5px;line-height:1.4;color:#d5dcf0}
+.tutcard .tgo{margin-left:auto;font:800 28px var(--f-display);font-style:normal;opacity:.7}
