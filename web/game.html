@@ -1144,15 +1144,9 @@ function beginHumanTurn() {
   if (players[turn].missed >= 1) return setStatus('За вас ходит бот <button class="chip" id="imHere">Вернуться</button>');
   if (!coachTurn()) setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
-// Several people on one phone: hide the board until the next player takes it.
-function handOver() {
-  phase = 'handover'; okBtn.disabled = rotBtn.disabled = true;
-  setStatus(`Ход: <b>${players[turn].name}</b>`);
-  const over = $('#over'), p = players[turn];
-  over.innerHTML = `<div class="ocard"><span class="av" style="--c:${p.col};width:44px;height:44px;margin:0 auto;font-size:18px">${p.init}</span><h3>Ход: ${p.name}</h3><p>Передайте телефон этому игроку</p><button class="cta wide" id="go">Начать ход</button></div>`;
-  over.hidden = false;
-  $('#go').onclick = () => { over.hidden = true; beginHumanTurn(); };
-}
+// Several people on one phone: the next player simply gets the turn (the status line and the player strip show whose it is);
+// there is no "pass the phone" screen over the board any more.
+function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // Bot choices live in src/engine/bots.js.
 const botPick = type => PG.engine.bots.botPick(tiles, type, Math.random);
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
