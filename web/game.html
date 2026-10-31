@@ -117,7 +117,7 @@
             <div><i>🧩</i><b>Приложите</b><small>края совпадают</small></div><em>→</em>
             <div><i>🧍</i><b>Фишка</b><small>по желанию</small></div>
           </div>
-          <p class="rnote">💡 Не знаете, куда положить карту? Нажмите лампочку справа от поля — игра подскажет лучший ход и объяснит почему</p>
+          <p class="rnote">💡 Подсказки: на вашем ходу игра подсвечивает лучшее место и пишет, сколько очков даст город или дорога и сколько краёв осталось закрыть. Лампочка справа от поля сразу ставит карту на это место. В настройках: «Всегда», «По кнопке» или «Выкл»</p>
           <div class="h3">Очки за достроенное</div>
           <div class="ptsgrid">
             <div><span class="rimg t-rS"></span><b>1</b><small>за карту дороги</small></div>
@@ -794,11 +794,22 @@ rotBtn.onclick = rotate;
 // The hint button: on your own turn (not online, not in the tutorial, when the table plays with hints) it picks the
 // best spot for the card, turns the card to fit and says why. The choice lives in src/engine/bots.js.
 const tipBtn = $('#tip');
-const tipOk = () => phase === 'place' && !!current && !net && !tut && gameRules.hints !== false && isLocal(turn) && !(players[turn].missed >= 1);
+const coachOn = () => !net && !tut && gameRules.hints !== false && wallet.coach !== 'off';
+const tipOk = () => phase === 'place' && !!current && coachOn() && isLocal(turn) && !(players[turn].missed >= 1);
+const tipFor = () => PG.engine.bots.hintPick(tiles, meeples, current.type, turn, players.length, players[turn].meeples > 0);
+// "Always" coach: at the start of your turn the best spot glows and the reason is written above the card;
+// nothing is chosen for you.
+function coachTurn() {
+  if (wallet.coach !== 'on' || !tipOk()) return false;
+  const m = tipFor(); if (!m) return false;
+  const el = slotEls.find(e => +e.dataset.x === m.x && +e.dataset.y === m.y); if (el) el.classList.add('tip');
+  setStatus(`💡 ${m.why}. Место подсвечено`);
+  return true;
+}
 const showTip = () => { tipBtn.hidden = !tipOk(); };
 tipBtn.onclick = () => {
   if (!tipOk()) return;
-  const m = PG.engine.bots.hintPick(tiles, meeples, current.type, turn, players.length, players[turn].meeples > 0);
+  const m = tipFor();
   if (!m) return;
   selectSlot(m.x, m.y); setRot(m.r); ensureVisible(m.x, m.y);
   setStatus(`💡 ${m.why} · <b>«Поставить»</b>`);
@@ -840,7 +851,8 @@ function askMeeple(mainTile, opts, p) {
     mrow.innerHTML = '<button class="chip skip" data-i="-1">Без фишки</button>';
     setStatus(`Фишка вернулась! Нажмите на место на поле или «Без фишки». Осталось <b>${players[p].meeples}</b>`);
   } else {
-    mrow.innerHTML = opts.map((o, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(o.g)}${o.done ? ' · очки сразу' : ''}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
+    const note = o => coachOn() && isLocal(p) ? PG.engine.bots.featureNote(tiles, meeples, o.t, o.g) : '';
+    mrow.innerHTML = opts.map((o, i) => `<button class="chip" data-i="${i}">${meepleImg(p)}${label(o.g)}${o.done ? ' · очки сразу' : ''}${note(o) && !o.done ? `<small class="cnote">${note(o)}</small>` : ''}</button>`).join('') + '<button class="chip skip" data-i="-1">Без фишки</button>';
     setStatus(`Поставить фишку? Осталось <b>${players[p].meeples}</b>. Очки придут, когда объект достроят`);
   }
   prow.hidden = true; mrow.hidden = false;
@@ -1041,7 +1053,7 @@ function beginHumanTurn() {
   beep('turn'); turnAlert();
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer(); showTip();
   if (players[turn].missed >= 1) return setStatus('За вас ходит бот <button class="chip" id="imHere">Вернуться</button>');
-  setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
+  if (!coachTurn()) setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
 // Several people on one phone: hide the board until the next player takes it.
 function handOver() {
@@ -1584,7 +1596,7 @@ document.addEventListener('click', e => { if (e.target.closest('button') && !e.t
 /* ---------------- settings ---------------- */
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
-Object.assign(wallet, Object.assign({music: true, notify: true, view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
+Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'on', view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
 const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
 applyGfx();
 function renderPrefs() {

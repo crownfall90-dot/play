@@ -509,6 +509,8 @@ html.lowgfx .tile .sd.s{display:block}
 .slot::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--pc,#f2b84b);opacity:.2;pointer-events:none}
 .slot::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);background:linear-gradient(var(--pc,var(--brass)),var(--pc,var(--brass))) center/100% 3px no-repeat,linear-gradient(var(--pc,var(--brass)),var(--pc,var(--brass))) center/3px 100% no-repeat;opacity:.95}
 .slot.sel{opacity:0}
+/* coach: the advised spot, gold and solid (static: animated slots made weak phones stutter) */
+.slot.tip{border:3px solid #ffd75e;background:rgba(255,215,94,.22);box-shadow:0 0 0 3px rgba(255,215,94,.25),0 0 26px rgba(255,215,94,.55)}.slot.tip::after{background:linear-gradient(#ffd75e,#ffd75e) center/100% 3px no-repeat,linear-gradient(#ffd75e,#ffd75e) center/3px 100% no-repeat}
 .bb{position:absolute;background-size:100% 100%;transform-origin:50% 100%;transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1));pointer-events:none}
 .bb.pop{animation:bbpop .45s cubic-bezier(.3,1.6,.5,1) both;animation-delay:var(--d,0s)}
 @keyframes bbpop{from{transform:translate(-50%,-100%) rotateZ(calc(var(--rot,0deg) * -1)) rotateX(calc(var(--tilt) * -1)) scale(.1)}}
@@ -542,6 +544,7 @@ html.lowgfx .tile .sd.s{display:block}
 .cta.wide{width:100%}
 .mrow{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .chip{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 13px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.07);font:600 13px var(--f-body);cursor:pointer}
+.mrow .chip:has(.cnote){height:auto;min-height:40px;flex-wrap:wrap;padding:6px 13px;max-width:100%;justify-content:center}.cnote{flex-basis:100%;text-align:center;font:500 11px/1.25 var(--f-body);color:#ffe7a3}
 .chip svg{width:14px;height:15px} .chip.skip{color:var(--muted)} .chip.sel{background:rgba(76,141,255,.2);border-color:rgba(76,141,255,.6);color:#a8c8ff}
 .ocard.fin{max-width:340px;position:relative;overflow:hidden}
 .ocard.fin>*{flex-shrink:0}

@@ -18,6 +18,11 @@ test('hint button: on your turn it suggests a legal move with a reason', {skip: 
     await page.evaluate(c => { window.__pg.startGame(c, []); window.__pg.show('game'); }, cfg);
     for (let turn = 0; turn < 3; turn++) {
       await page.waitForFunction(() => window.__pg.state().phase === 'place' && !document.querySelector('#tip').hidden, null, {timeout: 20000});
+      // "always" (the default): the advised spot glows and the reason is already written, nothing chosen yet
+      const auto = await page.evaluate(() => ({status: document.querySelector('#status').textContent, glow: document.querySelectorAll('#world .slot.tip').length, ok: !document.querySelector('#ok').disabled}));
+      assert.match(auto.status, /^💡 .+Место подсвечено$/);
+      assert.equal(auto.glow, 1);
+      assert.equal(auto.ok, false, 'the coach does not move for you');
       await page.click('#tip');
       const st = await page.evaluate(() => ({status: document.querySelector('#status').textContent, ok: !document.querySelector('#ok').disabled, sel: !!document.querySelector('#world .slot.sel')}));
       assert.match(st.status, /^💡 \S/, 'the reason is shown');
@@ -29,6 +34,17 @@ test('hint button: on your turn it suggests a legal move with a reason', {skip: 
       await page.waitForFunction(() => window.__pg.state().phase !== 'busy', null, {timeout: 20000}).catch(() => {});
       await page.evaluate(() => { const b = [...document.querySelectorAll('#mrow button')].find(x => /Без фишки/.test(x.textContent)); if (b) b.click(); });
     }
+    // switched off for experienced players: no button, no advice
+    await page.waitForFunction(() => window.__pg.state().phase === 'place', null, {timeout: 20000});
+    await page.evaluate(() => document.querySelector('#prefs [data-pref=coach] button[data-i="2"]').click());
+    await page.click('#world .slot');
+    await page.click('#ok');
+    await page.waitForTimeout(1200);
+    await page.evaluate(() => { const b = [...document.querySelectorAll('#mrow button')].find(x => /Без фишки/.test(x.textContent)); if (b) b.click(); });
+    await page.waitForFunction(() => window.__pg.state().phase === 'place', null, {timeout: 20000});
+    const off = await page.evaluate(() => ({tip: document.querySelector('#tip').hidden, glow: document.querySelectorAll('#world .slot.tip').length, status: document.querySelector('#status').textContent}));
+    assert.deepEqual([off.tip, off.glow], [true, 0]);
+    assert.ok(!off.status.includes('💡'));
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });

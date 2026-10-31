@@ -11,7 +11,7 @@ test('config: palette, modes, rules and settings keep their keys', async () => {
   assert.deepEqual(Object.keys(C.MODES), ['fast', 'classic', 'epic']);
   assert.deepEqual(C.RULES.map(r => r.k), ['mode', 'deck', 'rivers', 'meeples', 'timer', 'hints', 'tie']);
   const keys = C.PREFS.map(r => r.k);
-  for (const k of ['sound', 'music', 'view', 'speed', 'alert', 'zones', 'gfx', 'notify']) assert.ok(keys.includes(k), 'setting ' + k);
+  for (const k of ['sound', 'music', 'coach', 'view', 'speed', 'alert', 'zones', 'gfx', 'notify']) assert.ok(keys.includes(k), 'setting ' + k);
   for (const [, ks] of C.PREF_GROUPS) for (const k of ks) assert.ok(keys.includes(k), 'group member ' + k);
   assert.equal(C.STREAK_GOLD.length, 7);
 });

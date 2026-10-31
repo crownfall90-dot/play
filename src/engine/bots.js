@@ -39,13 +39,22 @@ export function helperPick(tiles, meeples, type, p, players, random) {
 }
 
 const NOUN = {c: 'ваш город', r: 'вашу дорогу', f: 'вашу крепость'};
-const CLAIM = {c: 'Город без хозяина — поставьте на него фишку', r: 'Дорога без хозяина — поставьте на неё фишку', f: 'Крепость — поставьте на неё фишку'};
-const points = n => n % 10 === 1 && n % 100 !== 11 ? 'очко' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'очка' : 'очков';
+const FREE = {c: 'Город без хозяина', r: 'Дорога без хозяина', f: 'Крепость'};
+const plural = (n, one, few, many) => n % 10 === 1 && n % 100 !== 11 ? one : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? few : many;
+const pts = n => `${n} ${plural(n, 'очко', 'очка', 'очков')}`;
+/** What is still missing: open sides of a town or road, empty cells round a fort. */
+function missing(tiles, c) {
+  if (c.kind === 'f') return 9 - c.tiles.length;
+  let open = 0;
+  for (const t of c.tiles) for (const g of groupsOf(t)) if (c.ids.has(t.x + ',' + t.y + '|' + g.kind + g.edges.join(''))) for (const d of g.edges) if (!tiles.get(key(t.x + DX[d], t.y + DY[d]))) open++;
+  return open;
+}
+const left = (kind, n) => kind === 'f' ? `осталось окружить ${n} ${plural(n, 'клетку', 'клетки', 'клеток')}` : `осталось закрыть ${n} ${plural(n, 'край', 'края', 'краёв')}`;
 
-/** The "hint" button: the best spot for player p's card, and why, in words a player understands. Deterministic
- *  (the same board always gives the same advice). Finishing your own town or road counts most, then growing it,
- *  then a fresh feature you can claim (only with a figure in hand); handing points to an opponent counts against.
- *  Returns {x, y, r, why} or null when the card fits nowhere. */
+/** The coach: the best spot for player p's card, and why, in words a player understands, with the points at stake
+ *  and what is left to finish. Deterministic (the same board always gives the same advice). Finishing your own town
+ *  or road counts most, then growing it, then a fresh feature you can claim (only with a figure in hand); handing
+ *  points to an opponent counts against. Returns {x, y, r, why} or null when the card fits nowhere. */
 export function hintPick(tiles, meeples, type, p, players, haveFigure) {
   let best = null;
   for (const m of allMoves(tiles, type)) {
@@ -54,21 +63,27 @@ export function hintPick(tiles, meeples, type, p, players, haveFigure) {
     let s = neighbours(tiles, m) * .4, why = null, wv = 0;
     const say = (v, text) => { if (v > wv) { wv = v; why = text; } };
     for (const g of groupsOf(t)) {
-      const c = component(tiles, meeples, t, g), pts = featurePoints(tiles, c, false);
+      const c = component(tiles, meeples, t, g), v0 = featurePoints(tiles, c, false), miss = c.complete ? 0 : missing(tiles, c);
       if (!c.meeples.length) {
         // a figure can only go on a feature nobody holds, on the card just placed
-        if (haveFigure && !c.complete) { const v = 2.5 + Math.min(pts, 12) * .25; s += v; say(v, CLAIM[g.kind]); }
+        if (haveFigure && !c.complete) { const v = 2.5 + Math.min(v0, 12) * .25; s += v; say(v, `${FREE[g.kind]} — поставьте фишку: достроите — +${pts(v0)} или больше, ${left(g.kind, miss)}`); }
         continue;
       }
       const cnt = Array.from({length: players}, () => 0); c.meeples.forEach(x => cnt[x.p]++);
       const mx = Math.max(...cnt), mine = cnt[p] === mx;
-      if (mine && c.complete) { const v = 10 + pts * 1.5; s += v; say(v, `Достроит ${NOUN[g.kind]} — +${pts} ${points(pts)}`); }
-      else if (mine) { const v = 2 + c.tiles.length * .4; s += v; say(v, `Продолжит ${NOUN[g.kind]}`); }
-      else s -= c.complete ? 3 + pts : 1 + c.tiles.length * .3;
+      if (mine && c.complete) { const v = 10 + v0 * 1.5; s += v; say(v, `Достроит ${NOUN[g.kind]} — +${pts(v0)} прямо сейчас`); }
+      else if (mine) { const v = 2 + c.tiles.length * .4 + (miss <= 1 ? 2 : 0); s += v; say(v, `Продолжит ${NOUN[g.kind]}: достроите — +${pts(v0)}, ${left(g.kind, miss)}`); }
+      else s -= c.complete ? 3 + v0 : 1 + c.tiles.length * .3;
     }
     tiles.delete(key(t.x, t.y));
     if (!best || s > best.s) best = {x: m.x, y: m.y, r: m.r, s, why};
   }
   if (!best) return null;
-  return {x: best.x, y: best.y, r: best.r, why: best.why || 'Здесь карта удобно ляжет рядом с другими'};
+  return {x: best.x, y: best.y, r: best.r, why: best.why || 'Своих объектов рядом нет — здесь карта удобно ляжет рядом с другими'};
+}
+
+/** Coach text for one figure option: what this town / road / fort is worth and what is left to finish it. */
+export function featureNote(tiles, meeples, t, g) {
+  const c = component(tiles, meeples, t, g), v0 = featurePoints(tiles, c, false);
+  return c.complete ? `+${pts(v0)} сразу` : `достроите — +${pts(v0)}, ${left(g.kind, missing(tiles, c))}`;
 }
