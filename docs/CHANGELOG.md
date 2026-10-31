@@ -1709,3 +1709,20 @@
 - Merge pull request #214 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.239
 
+## 1.0.241 — 2026-11-01
+
+**Игрокам:**
+- Первые партии против лёгких ботов, потом против выбранных; после партии — крупная кнопка «Ещё партию» и полоска опыта до следующего уровня; после первой победы предложение сохранить прогресс
+- Исправлено: на дорогу или город, достроенные вашими картами вместе со стартовой картой, теперь можно сразу поставить фишку за очки
+
+**В коде:**
+- Merge pull request #217 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(coordination): очередь заданий для агентов-исполнителей и протокол ревью
+- docs: record actual account regression and offline build results
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- fix(engine): стартовая карта не мешает поставить фишку на достроенную свою дорогу
+- docs: record actual account regression and offline build results
+- feat(retention): первые 5 минут — мягкий старт, «Ещё партию», сохранение прогресса, события воронки, вечерний пуш
+- Merge pull request #216 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.240; ручной запуск объявления в Telegram
+
