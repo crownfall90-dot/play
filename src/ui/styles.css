@@ -245,16 +245,16 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .topbtn.hasdot::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
 .topbtn{position:relative}
 /* bottom navigation: the main sections; it fades in from the screen above, with no edge line */
-.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;padding:0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.5))}
+.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:0;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
 .bnav[hidden]{display:none}
-.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 7px;border:0;border-radius:15px;background:linear-gradient(180deg,#2c3a70,#1a2350);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -2px 0 rgba(0,0,0,.25);color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
+.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 7px;border:0;border-radius:15px;background:none;color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
 /* puzzle pieces: each one carries a knob that fits into the notch of the next */
-.bnav .sm,.bnav .kn{position:absolute;border-radius:50%;pointer-events:none}
-.bnav .sm{z-index:1;width:26px;height:26px;right:-14.5px;top:calc(50% - 13px);background:#0b1230;clip-path:inset(0 0 0 50%)}
-.bnav .kn{z-index:2;width:19px;height:19px;right:-11px;top:calc(50% - 9.5px);background:#243163;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
-.bnav button.on .kn{background:#f2b84b;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.bnav .bnpz{position:absolute;left:-16px;top:0;z-index:0;pointer-events:none;overflow:visible}
+.bnav .bnpz path{fill:url(#bnG1);stroke:rgba(255,255,255,.16);stroke-width:1}
+.bnav .bnpz path.on{fill:url(#bnG2);stroke:rgba(255,236,170,.7)}
+.bnav button{z-index:1}
 .bnav button svg{width:23px;height:23px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
-.bnav button.on{color:var(--brass-ink);background:linear-gradient(180deg,#ffd877,#f2b84b 60%,#e5a53a);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(0,0,0,.12)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
+.bnav button.on{color:var(--brass-ink)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
 .bnav button:active{transform:scale(.93)}
 .bnav button.hasdot::after{content:"";position:absolute;top:5px;right:calc(50% - 19px);width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #1c2650;box-shadow:0 0 8px rgba(239,83,80,.7)}
 .bnav .fnum{bottom:auto;top:20px;right:calc(50% - 18px);border-color:#1c2650}
