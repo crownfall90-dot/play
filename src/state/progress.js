@@ -9,7 +9,7 @@ export const QUESTS = [
   {id: 'f1', ic: '⛪', t: 'Окружите крепость', k: 'f', n: 1, g: 15},
   {id: 'w1', ic: '🏆', t: 'Победите в партии', k: 'win', n: 1, g: 20},
   {id: 'g2', ic: '🎲', t: 'Сыграйте 2 партии', k: 'games', n: 2, g: 10},
-  {id: 's30', ic: '⭐', t: 'Наберите 30 очков за одну партию', k: 's30', n: 1, g: 15},
+  {id: 's30', ic: '⭐', t: 'Наберите 30 очков за партию (20 в быстрой)', k: 's30', n: 1, g: 15},
   {id: 'o1', ic: '🌍', t: 'Сыграйте онлайн', k: 'online', n: 1, g: 20},
   {id: 'p50', ic: '💎', t: 'Заработайте 50 очков за день', k: 'pts', n: 50, g: 15},
 ];
@@ -29,6 +29,34 @@ export const ACH = [
   {id: 'l5', ic: '🎖️', t: 'Пятый уровень', d: 'Достигните 5 уровня', ok: (s, lvl) => lvl >= 5, g: 50},
   {id: 'l10', ic: '💠', t: 'Десятый уровень', d: 'Достигните 10 уровня', ok: (s, lvl) => lvl >= 10, g: 100},
 ];
+
+/** Weekly goals (R-7) and the big weekly chest reward. */
+export const WEEKLY_QUESTS = [
+  {id: 'w_win5', ic: '🏆', t: '5 побед за неделю', k: 'win', n: 5, g: 50},
+  {id: 'w_games10', ic: '🎲', t: '10 партий за неделю', k: 'games', n: 10, g: 40},
+  {id: 'w_c20', ic: '🏰', t: 'Достройте 20 городов за неделю', k: 'c', n: 20, g: 60},
+];
+export const WEEKLY_CHEST_GOLD = 100;
+
+/** ISO-like week identifier: 'YYYY-Www' */
+export function weekId(d = new Date()) {
+  const target = new Date(typeof d === 'string' || typeof d === 'number' ? d : d.getTime());
+  target.setHours(0, 0, 0, 0);
+  target.setDate(target.getDate() + 3 - (target.getDay() + 6) % 7);
+  const week1 = new Date(target.getFullYear(), 0, 4);
+  const w = 1 + Math.round(((target.getTime() - week1.getTime()) / 864e5 - 3 + (week1.getDay() + 6) % 7) / 7);
+  return target.getFullYear() + '-W' + String(w).padStart(2, '0');
+}
+
+/** Returns true if a missed day can be saved by the weekly streak freeze (R-12). */
+export function canFreezeStreak(st, todayStr, curWeek) {
+  if (!st || !st.last || !st.n || st.n < 1) return false;
+  if (st.freezeWeek && st.freezeWeek === curWeek) return false;
+  const d0 = new Date(st.last + 'T00:00:00Z').getTime();
+  const d1 = new Date(todayStr + 'T00:00:00Z').getTime();
+  const diffDays = Math.round((d1 - d0) / 864e5);
+  return diffDays === 2;
+}
 
 /** Three quests a day, the same on every phone for that date (day: 'YYYY-MM-DD').
  *  The pick uses the high bits of the generator: its low bits repeat with a short period, and taking them made

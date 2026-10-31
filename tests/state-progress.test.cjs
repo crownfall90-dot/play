@@ -24,3 +24,10 @@ test('progress: three different daily quests, every quest comes up evenly over a
   // 3 of 8 a day: about 137 days each. The old pick gave «3 cities» all 365 days.
   for (const id of P.QUESTS.map(q => q.id)) assert.ok(seen[id] > 90 && seen[id] < 190, `${id}: ${seen[id]} days`);
 });
+
+test('progress: quest thresholds adjusted for fast 30-card mode', async () => {
+  const P = await import('../src/state/progress.js');
+  const s30 = P.QUESTS.find(q => q.id === 's30');
+  assert.ok(s30, 's30 quest exists');
+  assert.ok(s30.t.includes('20 в быстрой'), 's30 mentions 20 points for fast mode');
+});

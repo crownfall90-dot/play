@@ -1,168 +1,178 @@
 # Account verification
-Source: 4d57e28aee6a6b84d60fd97b05d69c1493ebb830
+Source: 9377cd5290339ea8106eeb8b70f303b63606dfd1
 Tests exit code: 0
 Offline assembleStagingDebug exit code: 0
 No APK publication, FCM send, production Firebase access, main change or signing-key rotation.
 ## tests
 ```text
-is not installed (npm ci)
+ before host can start
   ---
-  duration_ms: 1.86181
+  duration_ms: 3.89784
   ...
-# Subtest: net/firebase: a guest gets an anonymous account once, saved under fbAuth
-ok 86 - net/firebase: a guest gets an anonymous account once, saved under fbAuth
+# Subtest: room header: cups game with friends displays рейтинговая игра under room
+ok 101 - room header: cups game with friends displays рейтинговая игра under room
   ---
-  duration_ms: 15.871055
+  duration_ms: 2.52787
   ...
-# Subtest: net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
-ok 87 - net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
+# Subtest: android workflow: announces update in telegram and pushes via FCM
+ok 102 - android workflow: announces update in telegram and pushes via FCM
   ---
-  duration_ms: 1.20698
-  ...
-# Subtest: net/firebase: errors keep their old meaning
-ok 88 - net/firebase: errors keep their old meaning
-  ---
-  duration_ms: 0.940594
-  ...
-# Subtest: net/firebase: game.html takes the session from the module, with no second copy
-ok 89 - net/firebase: game.html takes the session from the module, with no second copy
-  ---
-  duration_ms: 3.429983
-  ...
-# Subtest: online flag: the start message says online or friends' room, so the header and the rewards are right everywhere
-ok 90 - online flag: the start message says online or friends' room, so the header and the rewards are right everywhere # SKIP playwright is not installed (npm ci)
-  ---
-  duration_ms: 2.539664
-  ...
-# Subtest: peek: others see the card the mover holds, the mover sends it
-ok 91 - peek: others see the card the mover holds, the mover sends it # SKIP playwright is not installed (npm ci)
-  ---
-  duration_ms: 1.688017
-  ...
-# Subtest: connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting"
-ok 92 - connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting" # SKIP playwright is not installed (npm ci)
-  ---
-  duration_ms: 2.710512
+  duration_ms: 0.276055
   ...
 # Subtest: source guard: mark only after Android accepts submission
-ok 93 - source guard: mark only after Android accepts submission
+ok 103 - source guard: mark only after Android accepts submission
   ---
-  duration_ms: 1.964882
+  duration_ms: 1.200014
   ...
 # Subtest: source guard: concurrent announcements serialized
-ok 94 - source guard: concurrent announcements serialized
+ok 104 - source guard: concurrent announcements serialized
   ---
-  duration_ms: 0.254565
+  duration_ms: 0.141002
   ...
 # Subtest: source guard: permission and disabled channel checked
-ok 95 - source guard: permission and disabled channel checked
+ok 105 - source guard: permission and disabled channel checked
   ---
-  duration_ms: 0.253873
+  duration_ms: 0.129315
   ...
 # Subtest: source guard: denied notification is not marked
-ok 96 - source guard: denied notification is not marked
+ok 106 - source guard: denied notification is not marked
   ---
-  duration_ms: 0.259994
+  duration_ms: 0.104076
   ...
 # Subtest: owner panel in the game: only for admins
-ok 97 - owner panel in the game: only for admins # SKIP playwright is not installed (npm ci)
+ok 107 - owner panel in the game: only for admins # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.689859
+  duration_ms: 1.36998
   ...
 # Subtest: web/game.html: the game script parses
-ok 98 - web/game.html: the game script parses
+ok 108 - web/game.html: the game script parses
   ---
-  duration_ms: 16.993436
+  duration_ms: 10.134596
   ...
 # Subtest: player log: events leave in a batch, with no addresses
-ok 99 - player log: events leave in a batch, with no addresses # SKIP playwright is not installed (npm ci)
+ok 109 - player log: events leave in a batch, with no addresses # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.810234
+  duration_ms: 1.229469
   ...
 # Subtest: actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
-ok 100 - actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
+ok 110 - actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
   ---
-  duration_ms: 3461.762101
+  duration_ms: 1828.534696
   ...
 # Subtest: production subscription path uses diagnostics without persisting tokens (source check)
-ok 101 - production subscription path uses diagnostics without persisting tokens (source check)
+ok 111 - production subscription path uses diagnostics without persisting tokens (source check)
   ---
-  duration_ms: 0.290521
+  duration_ms: 0.237377
   ...
 # Subtest: reinstall: a release signed with another key opens the step-by-step reinstall, not the normal update
-ok 102 - reinstall: a release signed with another key opens the step-by-step reinstall, not the normal update # SKIP playwright is not installed (npm ci)
+ok 112 - reinstall: a release signed with another key opens the step-by-step reinstall, not the normal update # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.710698
+  duration_ms: 1.279505
   ...
 # Subtest: art module exports what the game uses, and the game takes it from the bundle
-ok 103 - art module exports what the game uses, and the game takes it from the bundle
+ok 113 - art module exports what the game uses, and the game takes it from the bundle
   ---
-  duration_ms: 3.338924
+  duration_ms: 2.791498
+  ...
+# Subtest: retention & funnel (H-1, H-2): game logs funnel events and sends retention markers in presence
+ok 114 - retention & funnel (H-1, H-2): game logs funnel events and sends retention markers in presence
+  ---
+  duration_ms: 3.054264
+  ...
+# Subtest: retention panel (H-2): founder-admin displays D1/D7 metrics and cohort breakdown
+ok 115 - retention panel (H-2): founder-admin displays D1/D7 metrics and cohort breakdown
+  ---
+  duration_ms: 0.520213
+  ...
+# Subtest: R-5: menu quest banner exists and is wired in game.html
+ok 116 - R-5: menu quest banner exists and is wired in game.html
+  ---
+  duration_ms: 2.682926
+  ...
+# Subtest: R-12: streak freeze preserves streak on 1 missed day per week
+ok 117 - R-12: streak freeze preserves streak on 1 missed day per week
+  ---
+  duration_ms: 8.594746
+  ...
+# Subtest: R-7: weekly quests and chest reward tracking
+ok 118 - R-7: weekly quests and chest reward tracking
+  ---
+  duration_ms: 0.456927
+  ...
+# Subtest: R-8: rating friends scope filter and R-6 season tag
+ok 119 - R-8: rating friends scope filter and R-6 season tag
+  ---
+  duration_ms: 1.838405
   ...
 # Subtest: catalog: figure keys and prices are stable; one free figure; locations have art
-ok 104 - catalog: figure keys and prices are stable; one free figure; locations have art
+ok 120 - catalog: figure keys and prices are stable; one free figure; locations have art
   ---
-  duration_ms: 9.712414
+  duration_ms: 9.27556
   ...
 # Subtest: config: palette, modes, rules and settings keep their keys
-ok 105 - config: palette, modes, rules and settings keep their keys
+ok 121 - config: palette, modes, rules and settings keep their keys
   ---
-  duration_ms: 10.80422
+  duration_ms: 9.61441
   ...
 # Subtest: config: game sizes keep the playing time (fast ≈ 9, classic ≈ 15, big ≈ 30 minutes)
-ok 106 - config: game sizes keep the playing time (fast ≈ 9, classic ≈ 15, big ≈ 30 minutes)
+ok 122 - config: game sizes keep the playing time (fast ≈ 9, classic ≈ 15, big ≈ 30 minutes)
   ---
-  duration_ms: 3.169368
+  duration_ms: 2.505068
   ...
 # Subtest: progress: levels and achievements
-ok 107 - progress: levels and achievements
+ok 123 - progress: levels and achievements
   ---
-  duration_ms: 10.43485
+  duration_ms: 8.741897
   ...
 # Subtest: progress: three different daily quests, every quest comes up evenly over a year
-ok 108 - progress: three different daily quests, every quest comes up evenly over a year
+ok 124 - progress: three different daily quests, every quest comes up evenly over a year
   ---
-  duration_ms: 2.777307
+  duration_ms: 2.53373
+  ...
+# Subtest: progress: quest thresholds adjusted for fast 30-card mode
+ok 125 - progress: quest thresholds adjusted for fast 30-card mode
+  ---
+  duration_ms: 0.270747
   ...
 # Subtest: section title bar sticks to the top in the app too
-ok 109 - section title bar sticks to the top in the app too # SKIP playwright is not installed (npm ci)
+ok 126 - section title bar sticks to the top in the app too # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.624848
+  duration_ms: 1.313255
   ...
 # Subtest: telegram: message lists changes, escapes HTML, links
-ok 110 - telegram: message lists changes, escapes HTML, links
+ok 127 - telegram: message lists changes, escapes HTML, links
   ---
-  duration_ms: 58.712632
+  duration_ms: 72.664101
   ...
 # Subtest: telegram: without secrets it skips quietly and never leaks
-ok 111 - telegram: without secrets it skips quietly and never leaks
+ok 128 - telegram: without secrets it skips quietly and never leaks
   ---
-  duration_ms: 53.301806
+  duration_ms: 53.758102
   ...
 # Subtest: tutorial: all steps, from the first card to the win
-ok 112 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
+ok 129 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.838577
+  duration_ms: 1.83519
   ...
 # Subtest: water edges: every water side has the river mouth, every pair lines up in all turns
-ok 113 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
+ok 130 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.731607
+  duration_ms: 1.565624
   ...
-1..113
-# tests 113
+1..130
+# tests 130
 # suites 0
-# pass 95
+# pass 112
 # fail 0
 # cancelled 0
 # skipped 18
 # todo 0
-# duration_ms 4401.661523
+# duration_ms 3084.890723
 
 ```
 ## build
 ```text
 
-BUILD SUCCESSFUL in 1m 30s
+BUILD SUCCESSFUL in 1m 19s
 33 actionable tasks: 33 executed
 ```
