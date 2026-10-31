@@ -6,10 +6,11 @@
 2. **[MODES-AND-SETTINGS.md](MODES-AND-SETTINGS.md)** — как устроены режимы, правила, настройки и почему именно так (длительность партий, сложность ботов).
 3. **[RETENTION.md](RETENTION.md)** — стратегия удержания игроков: что уже есть, что строить и в каком порядке.
 4. **[AUDIT-2026-10-31.md](AUDIT-2026-10-31.md)** — известные баги, изъяны и ненадёжные места (безопасность, надёжность, долги).
-5. **[BACKLOG.md](BACKLOG.md)** — очередь задач с приоритетами, критериями приёмки и указателями на код.
-6. **[../design/STYLE.md](../design/STYLE.md)** — визуальный язык «Пазл-мозаика».
-7. **[../coordination/HANDOFF.md](../coordination/HANDOFF.md)** — журнал передачи между агентами (что сделано и проверено).
-8. **[../ARCHITECTURE.md](../ARCHITECTURE.md)**, **[../TESTING.md](../TESTING.md)** — код и тесты.
+5. **[MONOLITH-PLAN.md](MONOLITH-PLAN.md)** — как разбирать `web/game.html` на модули (порядок, рецепт, критерии).
+6. **[BACKLOG.md](BACKLOG.md)** — очередь задач с приоритетами, критериями приёмки и указателями на код.
+7. **[../design/STYLE.md](../design/STYLE.md)** — визуальный язык «Пазл-мозаика».
+8. **[../coordination/HANDOFF.md](../coordination/HANDOFF.md)** — журнал передачи между агентами (что сделано и проверено).
+9. **[../ARCHITECTURE.md](../ARCHITECTURE.md)**, **[../TESTING.md](../TESTING.md)** — код и тесты.
 
 ## Коротко о проекте
 
