@@ -669,3 +669,6 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 #scr-progress #acct:empty{display:none}
 .pctop{display:flex;align-items:center;justify-content:flex-start;gap:12px}.pctop .pwho{display:flex;flex-direction:column;align-items:flex-start}.pctop .av.big{width:56px;height:56px;font-size:23px;flex:0 0 auto}.pctop .pwho{flex:1;min-width:0}.pctop .pwho b{font:800 18px var(--f-display)}
 .pclvl{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line)}.pclvl .pi{flex:1;min-width:0}.pclvl small{color:var(--muted);font-size:12px}
+.cupsbadge{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;margin:10px 0 2px;padding:11px 14px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);text-align:left;font:inherit}
+.cupsbadge b{font:700 14px var(--f-display)}.cupsbadge small{color:var(--muted);font-size:12px}.cupsbadge.on{background:linear-gradient(160deg,rgba(242,184,75,.22),rgba(242,184,75,.06));border-color:rgba(242,184,75,.5)}.cupsbadge.host{cursor:pointer}.cupsbadge:disabled{opacity:1;cursor:default}
+.invsheet{max-height:80vh;overflow:auto}.invsheet .flist{margin:8px 0 12px;text-align:left}.chip.pri{background:var(--brass);color:var(--brass-ink);border-color:transparent}

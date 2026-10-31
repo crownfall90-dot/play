@@ -180,7 +180,7 @@
           <div class="mclock" id="mClock">0:00</div>
           <ul class="mseats" id="mSeats"></ul>
           <div class="monline" id="mOnline" hidden><div class="h3" id="mOnlineTitle">Друзья онлайн</div><ul class="flist" id="mOnlineList"></ul></div>
-          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
+          <div class="mact"><button class="cta wide alt" id="mInvite">👥 Пригласить друзей</button><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
         </div>
       </section>
 
@@ -196,7 +196,8 @@
           </div>
           <div class="col" id="lbRoom" hidden>
             <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите на код, чтобы скопировать</small>
-              <div class="row2"><button class="chip" id="copyLink">🔗 Скопировать код</button></div></div>
+              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить друзей</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
+            <button class="cupsbadge" id="lbCups"></button>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
             <p class="shint">Если два игрока выберут один цвет, при старте он достанется одному из них случайно, второму — другой свободный.</p>
@@ -1903,6 +1904,24 @@ async function shareText(txt, done) {
 }
 $('#copyLink').onclick = () => track('share', {content_type: 'room'}) || shareText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
+$('#lbCups').onclick = () => { if (!net || !net.host || net.gameId) return; setup.rules.cups = !setup.rules.cups; saveSetup(); if (net.lobby) publishLobby(net.lobby.seats); renderLobby(); renderRules(); };
+// Inviting friends, one sheet for the room and for the online search: friends online now with "Call" (they get a card
+// with one-tap join), and the share sheet for anyone else.
+function inviteSheet(fresh) {
+  const old = document.getElementById('invBox'); if (old) old.remove();
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'invBox'; box.style.position = 'fixed';
+  const ok = FB && registered(), seats = net && net.lobby ? net.lobby.seats : [], inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
+  const on = ok ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];
+  box.innerHTML = `<div class="ocard invsheet"><h3>Пригласить друзей</h3>${!ok ? '<p>Звать друзей из списка могут сохранённые профили</p>' : on.length ? `<ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-linv="${f.uid}">${invited.uids.has(f.uid) && invited.code === (net && net.code) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p && f.p.s] || 'в сети')).join('')}</ul>` : '<p>Сейчас никого из друзей нет в сети — отправьте ссылку</p>'}
+    <button class="cta wide" id="invShare">🔗 Отправить ссылку</button><button class="ghostbtn" id="invNo">Закрыть</button></div>`;
+  document.body.append(box);
+  box.onclick = e => { if (e.target === box || e.target.id === 'invNo') box.remove(); else if (e.target.closest('[data-linv]')) setTimeout(() => { const b = e.target.closest('[data-linv]'); if (b) b.textContent = '✓ Позвали'; }, 50); };
+  box.querySelector('#invShare').onclick = () => { if (net && net.code) $('#copyLink').click(); else if (wallet.fcode) $('#fCopy').click(); };
+  // the list is drawn at once from what is known, then once more with fresh online marks
+  if (ok && fresh !== true) loadFriends().then(() => { if (box.isConnected) { box.remove(); inviteSheet(true); } }).catch(() => {});
+}
+$('#lbInvite').onclick = () => inviteSheet();
+$('#mInvite').onclick = () => inviteSheet();
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-linv]'); if (!b) return;
   b.disabled = true; await inviteFriend(b.dataset.linv); renderLobbyFriends();
@@ -2225,6 +2244,10 @@ function renderLobby() {
   $('#lbJoin').hidden = !!net; $('#lbRoom').hidden = !net;
   if (!net) return;
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
+  // "for cups" is seen by everyone in the room; the creator switches it here with one tap
+  const cups = !!(net.lobby && net.lobby.rules ? net.lobby.rules.cups : setup.rules.cups), cb = $('#lbCups');
+  cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : ''); cb.disabled = !net.host || !!net.gameId;
+  cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? 'Нажмите, чтобы ' + (cups ? 'выключить' : 'включить') : cups ? 'Победа даст кубки в рейтинг' : 'Дружеская партия, рейтинг не меняется'}</small>`;
   renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
   if (invited.code === net.code) {
