@@ -34,11 +34,16 @@ test('tutorial: all steps, from the first card to the win', {skip: !pw && 'playw
     await waitCoach(/фишку на дорогу/);
     await tap('#mrow .chip:not(.skip)'); await waitCoach(/Закройте второй конец/, 15000);
     await tap('#world .slot'); await waitCoach(/Нажмите «Поставить»/);
-    await tap('#ok'); await waitCoach(/Вы победили/, 20000);
+    await tap('#ok');
+    // the finale is one card: the results board with a single button; the lesson card steps aside
+    await page.waitForSelector('#over #tutNext', {timeout: 30000});
+    assert.equal(await page.evaluate(() => document.querySelector('#coach').hidden), true, 'no lesson card over the results');
+    assert.equal(await page.evaluate(() => document.querySelectorAll('#over .fin button').length), 1, 'one button on the results board');
+    assert.equal(await page.evaluate(() => document.querySelector('.tray').classList.contains('ended')), true, 'no turn controls under the results');
     const s = await page.evaluate(() => window.__pg.state().players.map(p => p.score));
     assert.ok(s[0] > s[1], `the player wins (${s})`);
-    await tap('#tutNext');
-    await page.waitForFunction(() => document.querySelector('#coach').hidden);
+    await page.click('#over #tutNext');
+    await page.waitForSelector('#profBox', {timeout: 5000}); // then the nickname
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });
