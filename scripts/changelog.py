@@ -10,7 +10,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 
 
 def sh(cmd):
-    return subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=ROOT).stdout
+    return subprocess.run(cmd, shell=True, capture_output=True, text=True, cwd=ROOT, encoding='utf-8', errors='replace').stdout
 
 
 # Releases whose tag history is not the code that was built (see the rollback in docs/ARCHITECTURE.md).
@@ -21,7 +21,7 @@ MANUAL = {
 
 
 def main():
-    tags = sorted([t for t in sh("git tag -l 'v*'").split() if t[1:].isdigit()], key=lambda t: int(t[1:]))
+    tags = sorted([t for t in sh('git tag -l "v*"').split() if t[1:].isdigit()], key=lambda t: int(t[1:]))
     out = ["# Журнал версий", "",
            "Каждая версия: что увидят игроки (текст из `release-notes.md` в момент выпуска) и что изменилось в коде "
            "(заголовки слияний в main). Создаётся `scripts/changelog.py` из тегов релизов; при каждом выпуске "
@@ -31,7 +31,7 @@ def main():
            "по команде.", ""]
     for i, t in enumerate(tags):
         date = sh(f"git log -1 --format=%ad --date=short {t}").strip()
-        notes = sh(f"git show {t}:release-notes.md 2>/dev/null").strip()
+        notes = sh(f"git show {t}:release-notes.md").strip()
         rng = f"{tags[i - 1]}..{t}" if i else t
         subjects = [s for s in sh(f"git log --format=%s {rng}").splitlines() if s.strip()]
         out += [f"## 1.0.{t[1:]} — {date}", "", "**Игрокам:**"]
