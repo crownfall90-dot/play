@@ -816,3 +816,11 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 @keyframes bootbar{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
 #boot.withupd .bbar{display:none}
 @media (prefers-reduced-motion:reduce){#boot .bp,#boot b{animation:none;opacity:1;transform:none}#boot .bootpz{animation:none}#boot .bbar i{animation:none;width:100%}}
+/* boot: meeple drops onto the road, sheen sweeps over the assembled map, golden glow behind */
+#boot::before{content:"";position:absolute;left:50%;top:50%;width:360px;height:360px;margin:-230px 0 0 -180px;border-radius:50%;background:radial-gradient(circle,rgba(242,184,75,.30),rgba(242,184,75,0) 68%);opacity:0;animation:bootglow 1.6s ease-out 1.5s forwards;pointer-events:none}
+#boot .mp{opacity:0;animation:bootmeeple .7s cubic-bezier(.3,1.6,.5,1) 1.95s forwards}
+#boot .sh{animation:bootsheen 1s ease-in-out 1.75s both}
+@keyframes bootglow{0%{opacity:0;transform:scale(.7)}60%{opacity:1}100%{opacity:.75;transform:scale(1)}}
+@keyframes bootmeeple{0%{opacity:0;transform:translate(100px,45px) translateY(-46px) scale(1.15)}100%{opacity:1;transform:translate(100px,45px)}}
+@keyframes bootsheen{0%{transform:skewX(-18deg) translateX(0)}100%{transform:skewX(-18deg) translateX(260px)}}
+@media (prefers-reduced-motion:reduce){#boot .mp{animation:none;opacity:1}#boot .sh,#boot::before{animation:none;opacity:0}}
