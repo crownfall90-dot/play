@@ -901,7 +901,7 @@ async function afterPlace(t, p, forced) {
   // Score completed groups FIRST — so we can detect if this player's meeple returned.
   t.by = p;
   const meeplesBefore = players[p].meeples;
-  const mine = players[p].meeples > 0 && !tut ? doneMine(t, p) : [];
+  const mine = players[p].meeples > 0 ? doneMine(t, p) : [];
   await scoreAfter(t, p, new Set(mine.flatMap(m => [...m.c.ids])));
   if (my !== token) return;
   const meepleReturned = players[p].meeples > meeplesBefore;
@@ -1219,6 +1219,8 @@ function startGame(cfg, replay = []) {
   deck = cfg.deck.slice();
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
+  // Tutorial: the first piece counts as the player's own, so the town they close on move one can take a figure at once.
+  if (cfg.tut) first.by = 0;
   tiles = new Map([[key(0, 0), first]]);
   first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
@@ -1879,7 +1881,17 @@ document.addEventListener('click', e => {
   if (net && net.host && net.lobby && !net.gameId) publishLobby(net.lobby.seats);
 });
 renderRules();
-function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on ftoast'; d.style.position = 'fixed'; d.style.top = 'auto'; d.style.bottom = 'calc(28px + var(--ib, 0px))'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); }
+// Results and warnings: one card in the middle of the screen (above the bottom bar and any dialog), in the game's own
+// style, with a sign for success, a problem or plain news. Tap it to close; long texts stay longer.
+const NOTE_BAD = /^(Не |Нет |Неверн|Ошибка|Сначала|Это ваш)|уже был|не удалось|не хватает|не найден|недоступ/i, NOTE_OK = /^🎉|^✅|активирован|добавлен|сохранён|отправлен|ваша|ваш!|Привет|С возвращением|скопирован/i;
+function toastAny(t, kind) {
+  const old = document.getElementById('note'); if (old) old.remove();
+  const text = String(t || ''), k = kind || (NOTE_BAD.test(text) ? 'bad' : NOTE_OK.test(text) ? 'ok' : 'info');
+  const d = document.createElement('div'); d.id = 'note'; d.className = 'note ' + k; d.setAttribute('role', k === 'bad' ? 'alert' : 'status');
+  d.innerHTML = `<i>${k === 'bad' ? '!' : k === 'ok' ? '✓' : 'i'}</i><span></span>`; d.querySelector('span').textContent = text.replace(/^(🎉|✅)\s*/, '');
+  document.body.append(d); d.onclick = () => d.remove();
+  setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 260); }, Math.min(5000, 1800 + text.length * 35));
+}
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
 // Invites: the phone's own share sheet (pick the messenger); copying is the fallback. On Android in the browser the
 // text also carries the APK link, since the app is not in a store yet.
@@ -2677,6 +2689,9 @@ function tutShow() {
   c.innerHTML = `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
   c.hidden = false; c.style.top = (playersEl.offsetTop + playersEl.offsetHeight + 8) + 'px';
   if (phase === 'place' && current) renderSlots();
+  // the spot to tap is brought to the middle: after the pan and zoom lessons it may be off the screen
+  // (after the zoom button's own animation, which would cancel this one)
+  if (s.only) { const i = tut.i; setTimeout(() => { if (tut && tut.i === i) tweenCam({px: -s.only[0] * T, py: -s.only[1] * T}, 450); }, 350); }
   requestAnimationFrame(() => {
     if (s.hl) document.querySelectorAll(s.hl).forEach(h => h.classList.add('tutpulse'));
     if (s.only) document.querySelectorAll('.slot').forEach(h => h.classList.add('tutpulse'));
