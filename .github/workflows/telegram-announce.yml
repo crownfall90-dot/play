@@ -1,0 +1,33 @@
+name: Announce release in Telegram
+
+# Manual re-send of the release announcement (e.g. if the secret was added after the release).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (empty = latest), e.g. v240'
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  announce:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '@diarydevelopment' }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send
+        run: |
+          test -n "$TELEGRAM_BOT_TOKEN" || { echo "Secret TELEGRAM_BOT_TOKEN is not set (Settings > Secrets and variables > Actions > Repository secrets)"; exit 1; }
+          if [ -z "$TAG" ]; then TAG=$(gh release view --json tagName -q .tagName); fi
+          CODE="${TAG#v}"
+          gh release view "$TAG" --json body -q .body > notes.md
+          python3 scripts/telegram-notify.py "1.0.$CODE" notes.md \
+            "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/" \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/Puzzlegrad-1.0.${CODE}.apk"

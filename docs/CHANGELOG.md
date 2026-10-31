@@ -1684,3 +1684,28 @@
 - docs(release): журнал изменений 1.0.237–1.0.238 (#212)
 - docs(release): журнал изменений 1.0.237–1.0.238
 
+## 1.0.240 — 2026-10-31
+
+**Игрокам:**
+- Загрузочный экран как сама игра: карты с городом, дорогой, рекой, домиками и деревьями слетаются в одну картинку, на дорогу прыгает фишка, по картам пробегает блик
+- Новая иконка приложения: один большой пазл с игровой картой внутри — город, дорога с фишкой, река, деревья и золотая кромка
+
+**В коде:**
+- Merge pull request #215 from crownfall90-dot/dev/stage2-account-network-20261029
+- feat(release): канал @diarydevelopment по умолчанию для объявлений в Telegram
+- feat(release): объявление об обновлении в Telegram-канале после выпуска
+- docs(product): общий промт агента — всё оставшееся (ключ B, баланс, безопасность, дизайн, монолит, задачи владельца)
+- feat(brand): иконка — один большой пазл с игровой картой
+- docs(product): стартовый промт для агента (AGENT-PROMPT.md)
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- feat(brand): новая иконка приложения — пазл из четырёх игровых карт
+- docs: record actual account regression and offline build results
+- fix(ui): на загрузочном экране нет домов и деревьев на реке
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- feat(ui): загрузочный экран — город, фишка на дороге, блик и свечение
+- docs: record actual account regression and offline build results
+- feat(ui): загрузочный экран с игровыми картами — трава, дорога, река, дома
+- docs(product): план успеха игры и задачи H-1…H-5 для других агентов
+- Merge pull request #214 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.239
+
