@@ -1,28 +1,44 @@
-# Puzzlegrad
+<p align="center"><img src="store/icon-512.png" width="112" alt="Puzzlegrad"></p>
 
-Вертикальная Android-игра: игроки по очереди тянут карты из общей стопки и строят города, дороги, реки и крепости. Очки дают достроенные объекты, побеждает тот, у кого больше очков, когда стопка закончится.
+<h1 align="center">Puzzlegrad</h1>
 
-- `web/game.html` — вся игра (HTML/JS, поле в 3D через CSS). Открывается и как макет в браузере.
-- `app/` — Android-оболочка (WebView) с автообновлением.
-- `scripts/wrap-web.sh` — копирует игру в `app/src/main/assets/index.html`.
+<p align="center"><b>Стройте города, дороги и крепости из общей стопки карт-пазлов.</b><br>
+Короткие партии на 8–30 минут: с ботами, на одном телефоне, онлайн на кубки и в комнатах с друзьями.</p>
 
-Карта проекта — [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), планы — [docs/ROADMAP.md](docs/ROADMAP.md).
+<p align="center">
+  <a href="https://crownfall90-dot.github.io/play/"><b>▶ Играть в браузере</b></a> ·
+  <a href="https://github.com/crownfall90-dot/play/releases/latest/download/Puzzlegrad.apk"><b>⬇ Скачать для Android</b></a> ·
+  <a href="docs/privacy-policy.md">Политика конфиденциальности</a>
+</p>
 
-## Как выходят обновления
+<p align="center"><img src="store/screenshots/1-menu.png" width="200" alt="Главное меню"> <img src="store/screenshots/2-game.png" width="200" alt="Партия"> <img src="store/screenshots/5-results.png" width="200" alt="Итоги"></p>
 
-1. Меняете игру, пишете список изменений в `release-notes.md`.
-2. Пушите в `main`. GitHub Actions собирает APK и публикует релиз `v<номер>`.
-3. При запуске приложение спрашивает у GitHub последний релиз. Если номер больше установленного, показывает «Что нового» и по кнопке «Обновить» скачивает и ставит APK.
+## Об игре
+- **Партия за 8–30 минут.** «Быстрая» — 30 карт, «Классика» — 50, «Большая» — 100.
+- **Онлайн на кубки**: быстрый поиск соперников, рейтинг, карта соперника видна ещё до его хода.
+- **С друзьями**: комната по коду или приглашение в один тап.
+- **С ботами трёх уровней** и **на одном телефоне** — без интернета.
+- **Подсказки-тренер**: сколько очков даст город или дорога и что осталось достроить.
+- **Профиль на всех устройствах**: телефон, приложение и браузер — один прогресс.
 
-Все сборки подписаны одним ключом `app/release.keystore`, иначе Android не даст поставить обновление поверх. Пароль можно переопределить секретами `KEYSTORE_PASSWORD`/`KEY_PASSWORD`.
+## Установка
+- **Android:** скачайте [Puzzlegrad.apk](https://github.com/crownfall90-dot/play/releases/latest/download/Puzzlegrad.apk) и откройте файл. Приложение обновляется само.
+- **iPhone и компьютер:** откройте [веб-версию](https://crownfall90-dot.github.io/play/) и добавьте на главный экран.
 
-## Локальная сборка
+## Поддержка
+Нашли ошибку или есть идея — «Настройки → Написать разработчику» в игре. Уязвимости безопасности — по правилам в [SECURITY.md](SECURITY.md).
 
-```sh
-./scripts/wrap-web.sh
-./gradlew assembleRelease
-```
+## Права
+© 2026 Crownfall. Все права защищены. Код, графика, звуки и тексты игры — собственность автора; копирование, распространение и использование в своих проектах без письменного разрешения запрещены. Подробно — [LICENSE](LICENSE).
 
-## Google Play
+---
 
-Сборка `play` (AAB) — для магазина, обновляется через Google Play. Сборка `github` (APK) обновляет себя из GitHub Releases. Инструкция и тексты для магазина: [docs/google-play.md](docs/google-play.md).
+<details>
+<summary>Для разработчиков проекта</summary>
+
+Это рабочий репозиторий команды Puzzlegrad. Начните с [docs/product/README.md](docs/product/README.md) (видение, режимы, удержание, очередь задач, аудит), затем [docs/coordination/HANDOFF.md](docs/coordination/HANDOFF.md).
+
+- `web/game.html` + `src/` — игра (модули собираются Vite в `build/bundle/pg.js`), `app/` — Android-оболочка, `scripts/` — сборка и обслуживание, `tests/` — тесты (`npm run build && node --test tests/*.test.cjs`).
+- Выпуск — только по команде владельца через «Promote to Production»; заметки для игроков — `release-notes.md`.
+- Подпись приложения — [docs/SIGNING-KEY-ROTATION.md](docs/SIGNING-KEY-ROTATION.md); безопасность репозитория — [docs/REPO-SECURITY.md](docs/REPO-SECURITY.md).
+</details>
