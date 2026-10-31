@@ -992,11 +992,7 @@ async function afterPlace(t, p, forced) {
     else {
       // Bot: always use placed tile only, even in anyMode.
       const botOpts = anyMode ? claimable(t).map(g => ({t, g})) : opts;
-      if (botLevel() !== 'easy') choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
-      else if (botOpts.length && Math.random() < .55) {
-        const cs = botOpts.filter(o => o.g.kind !== 'r');
-        choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : botOpts[(Math.random() * botOpts.length) | 0];
-      }
+      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
     }
   }
   if (my !== token) return;
@@ -1214,10 +1210,10 @@ async function endGame(reason) {
   const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
   // After the first win a guest is offered to keep the progress (a profile with sign-in), once.
   const saveCard = won && FB && !fbAuth && PROG.st.wins === 1 && !wallet.saveAsked ? `<button class="ghostbtn savecard" id="saveProg"><b>☁️ Сохранить прогресс</b><small>Войдите, чтобы золото и уровень не пропали при смене телефона</small></button>` : '';
-  over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}${xpLine()}${saveCard}<button class="cta wide" id="again2">Ещё партию</button><button class="ghostbtn" data-go="results">Подробные итоги</button></div>`;
+  over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}${xpLine()}${saveCard}<button class="cta wide" id="again2">${net ? 'Реванш' : 'Ещё партию'}</button><button class="ghostbtn" data-go="results">Подробные итоги</button></div>`;
   over.hidden = false;
   historySave(reason, true);
-  $('#again2').onclick = () => net ? show('lobby') : newGame();
+  $('#again2').onclick = () => rematchClick();
   const sp = $('#saveProg'); if (sp) sp.onclick = () => { wallet.saveAsked = true; saveWallet(); over.hidden = true; track('save_prompt_tap'); wallet.name ? accountDialog('link') : askProfile(); };
   if (saveCard) { wallet.saveAsked = true; saveWallet(); }
   setStatus('Партия окончена'); $('.tray').classList.add('ended');
@@ -1392,6 +1388,7 @@ function renderResults(final, gold) {
   $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
   const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
   $('#sumline').innerHTML = `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
+  const ag = $('#again'); if (ag) { ag.textContent = net ? 'Реванш' : 'Ещё партию'; ag.disabled = false; }
 }
 
 /* ---------------- gold, figures, shop ----------------
@@ -1404,7 +1401,7 @@ const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() *
 const today = () => new Date().toISOString().slice(0, 10);
 // The wallet's storage lives in src/state/wallet.js.
 // A checksum mismatch is reported, never punished (see walletSig): the gold stays.
-const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', 'first_open', 'first_game_done', 'second_game_done', 'third_game_done', 'save_prompt_tap', 'return_d1', 'return_d3', 'return_d7', info));
+const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', info));
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) {
   try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {}
@@ -1412,7 +1409,12 @@ function track(name, params) {
 }
 /* Event log for the owner's panel: the few events that explain what happened to a player (sign-in, games, drops, errors,
    purchases) go to /logs/{uid}, in batches, at most 80 a day per phone. No e-mails and no texts typed by the player. */
-const LOG_KINDS = new Set(['reinstall_offer', 'reinstall_download', 'reinstall_remove', 'open', 'login', 'sign_up', 'logout', 'game_start', 'game_end', 'net_down', 'net_back', 'google_error', 'google_redirect', 'spend_virtual_currency', 'tutorial_begin', 'tutorial_complete', 'wallet_sig_mismatch', 'friend_invite', 'error', 'maintenance']);
+const LOG_KINDS = new Set([
+  'reinstall_offer', 'reinstall_download', 'reinstall_remove', 'open', 'login', 'sign_up', 'logout',
+  'game_start', 'game_end', 'net_down', 'net_back', 'google_error', 'google_redirect', 'spend_virtual_currency',
+  'tutorial_begin', 'tutorial_complete', 'wallet_sig_mismatch', 'friend_invite', 'error', 'maintenance',
+  'first_open', 'first_game_done', 'second_game_done', 'third_game_done', 'save_prompt_tap', 'return_d1', 'return_d3', 'return_d7'
+]);
 const logBuf = [];
 let logTimer = 0;
 function plog(kind, detail) {
@@ -2128,8 +2130,9 @@ async function presenceMark(on) {
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
     const vs = versionSeen(), di = devInfo(), dev = {p: installKind(), v: vs.v, u: vs.t, ...(di.m ? {m: di.m, i: di.i} : {})};
-    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0, ...dev})});
-    else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off', ...dev})});
+    const ret = {fs: wallet.firstSeen || today(), d1: (wallet.rd && wallet.rd[1]) ? 1 : 0, d7: (wallet.rd && wallet.rd[7]) ? 1 : 0};
+    if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0, ...dev, ...ret})});
+    else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off', ...dev, ...ret})});
   } catch (_) {}
 }
 // For the owner's stats: where this copy came from (github = APK, play, web) and when this device
@@ -2312,6 +2315,15 @@ function onNet(d) {
     if (m.t === 'upd') { if (live) { updOpen(m.c); if (appCode() >= m.c) updAnnounce(); } return; }
     if (m.t === 'ver') { if (live && net.upd && typeof m.c === 'number' && m.c >= net.upd.c) { net.upd.ready.add(m.o); updCheck(); } return; }
     if (m.t === 'upresume') { if (live && net.upd && m.c >= net.upd.c) updEnd('Партия продолжается'); return; }
+  }
+  if (m.t === 'rematch') {
+    if (net && net.host) {
+      toastAny(`${clean(m.name) || 'Соперник'} предлагает реванш!`);
+      const b1 = $('#again'), b2 = $('#again2');
+      if (b1) { b1.textContent = 'Принять реванш'; b1.disabled = false; }
+      if (b2) { b2.textContent = 'Принять реванш'; b2.disabled = false; }
+    }
+    return;
   }
   if (m.g !== net.gameId || !players[m.p] || phase === 'end') return;
   if (m.t === 'resign') return onResign(m.p);
@@ -2502,6 +2514,24 @@ const ratedRules = mode => ({mode, ...MODES[mode].set, rivers: true, timer: 60, 
 function startOnline(seats) {
   const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
   netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
+}
+function rematchClick() {
+  if (!net) { newGame(); show('game'); return; }
+  const meIdx = players.findIndex(isMe);
+  if (net.host) {
+    startRematch();
+  } else {
+    netSend({t: 'rematch', p: meIdx >= 0 ? meIdx : 0, name: profileName()});
+    toastAny('Запрос на реванш отправлен');
+    const b1 = $('#again'), b2 = $('#again2');
+    if (b1) { b1.textContent = 'Ждём хоста…'; b1.disabled = true; }
+    if (b2) { b2.textContent = 'Ждём хоста…'; b2.disabled = true; }
+  }
+}
+function startRematch() {
+  if (!net || !net.host) return;
+  const seats = players.map(p => ({name: p.name, owner: p.owner || null, uid: p.uid || null, fig: p.fig || 'classic', col: p.col}));
+  startOnline(seats);
 }
 renderLobby();
 renderSetup();
@@ -3430,8 +3460,17 @@ async function statsDialog() {
     const app = v => v.p === 'github' || v.p === 'play';
     const tile = (num, label) => `<div class="stt"><b>${num}</b><small>${label}</small></div>`;
     const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
+    let eligD1 = 0, retD1 = 0, eligD7 = 0, retD7 = 0;
+    P.forEach(v => {
+      const fs = v.fs; if (!fs || !/^\d{4}-\d{2}-\d{2}$/.test(fs)) return;
+      const fsMs = Date.parse(fs + 'T00:00:00Z'), age = Math.floor((now - fsMs) / D);
+      if (age >= 1) { eligD1++; if (v.d1 != null ? v.d1 === 1 : (v.t - fsMs >= D)) retD1++; }
+      if (age >= 7) { eligD7++; if (v.d7 != null ? v.d7 === 1 : (v.t - fsMs >= 7 * D)) retD7++; }
+    });
+    const d1Str = eligD1 ? Math.round(retD1 / eligD1 * 100) + '%' : '—';
+    const d7Str = eligD7 ? Math.round(retD7 / eligD7 * 100) + '%' : '—';
     out.innerHTML = `<div class="stgrid">${tile(P.length, 'игроков заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
-      ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(n(v => ago(v) < 30 * D), 'за месяц')}${tile(lead ? Object.keys(lead).length : 0, 'в рейтинге')}
+      ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(d1Str, 'удержание D1')}${tile(d7Str, 'удержание D7')}
       ${tile(n(app), 'с приложением')}${tile(n(v => app(v) && now - (v.u || 0) < D), 'обновились за сутки')}${tile(n(v => v.p === 'web'), 'в веб-версии')}${tile(relOk ? rels.length : '—', 'версий вышло')}</div>
       <p class="shint">Игрок — телефон или браузер, где открывали игру и у которого есть имя. «С профилем» считается после обновления игроков до новых версий. «С приложением» — устройства, где стоит APK (или версия из Google Play): одно устройство считается один раз, сколько бы обновлений оно ни скачало. «Обновились за сутки» — сколько из них за последние 24 часа перешли на новую версию. Эти три плитки начнут заполняться, когда игроки откроют новую версию</p>`;
   } catch (_) { out.innerHTML = '<p class="shint">Не получилось загрузить — проверьте интернет</p>'; }
@@ -4178,7 +4217,7 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-tab],[data-go]'); if (!b) return;
   show(b.dataset.tab || b.dataset.go);
 });
-$('#again').onclick = () => { newGame(); show('game'); };
+$('#again').onclick = () => rematchClick();
 
 /* ---------------- app shell (Android app and the web build) ---------------- */
 // The web build (scripts/wrap-web.sh web) runs on iPhone, in Android browsers and on computers.
