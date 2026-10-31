@@ -3306,7 +3306,32 @@ function startGoogle(link, onFail, btn) {
 // Web build: Google's own button (Google Identity Services) goes in place of ours as soon as the dialog opens,
 // so one tap signs in. Our button stays as a placeholder while the script loads, or if it cannot load.
 let gisLoad = null;
+// On iPhone and iPad Google's pop-up often never reports back to the page (above all when the game is on the home
+// screen), so there the button goes to Google's own page and Google sends the player back here with the sign-in in the
+// address (#id_token=…). The page's address must be among the client's authorised redirect URIs.
+const iosWeb = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const googleBack = () => location.origin + location.pathname.replace(/index\.html$/, '');
+function googleRedirect(link) {
+  const rnd = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+  const go = {state: rnd(), nonce: rnd(), link: !!link, at: Date.now()};
+  try { localStorage.setItem('gRedirect', JSON.stringify(go)); } catch (_) {}
+  track('google_redirect');
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + new URLSearchParams({client_id: FB.googleClientId, redirect_uri: googleBack(), response_type: 'id_token', scope: 'openid email profile', nonce: go.nonce, state: go.state, prompt: 'select_account'});
+}
+// Back from Google's page: take the sign-in out of the address, check it is the answer to our own request, sign in.
+function googleReturn() {
+  if (!/(^|[#&])(id_token|error)=/.test(location.hash)) return;
+  const q = new URLSearchParams(location.hash.slice(1));
+  history.replaceState(null, '', location.pathname + location.search);
+  let go = null; try { go = JSON.parse(localStorage.getItem('gRedirect')); localStorage.removeItem('gRedirect'); } catch (_) {}
+  if (!go || go.state !== q.get('state') || Date.now() - go.at > 15 * 60000) return;
+  if (q.get('error')) { if (q.get('error') !== 'access_denied') toastAny('Не удалось войти через Google. Попробуйте ещё раз или войдите по почте'); return; }
+  const tok = q.get('id_token');
+  if (!tok || (jwtPayload(tok) || {}).nonce !== go.nonce) return toastAny('Не удалось войти через Google. Попробуйте ещё раз');
+  finishGoogle(tok, go.link, null);
+}
 function googleWebButton(btn, link, onFail) {
+  if (iosWeb()) { btn.onclick = () => { btn.disabled = true; googleRedirect(link); }; return; }
   gisLoad = gisLoad || new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = res; s.onerror = () => { gisLoad = null; rej(); }; document.head.append(s); });
   gisLoad.then(() => {
     if (!btn.isConnected) return;
@@ -3919,6 +3944,9 @@ window.addEventListener('keydown', e => {
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs(); checkMaintenance();
+if (window.WEBAPP && FB && FB.googleClientId) googleReturn();
+// back from Google's page with the browser's Back button: the page comes from the cache with the button still pressed
+addEventListener('pageshow', e => { if (e.persisted) document.querySelectorAll('#accGoogle').forEach(b => { b.disabled = false; }); });
 if (isApp) bootReady.then(() => setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 300));
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }
