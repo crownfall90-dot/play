@@ -74,6 +74,15 @@ build_page() {
     if [ "$target" = web ]; then
       cat <<'HEAD'
 <meta name="theme-color" content="#101729">
+<script>
+// iPhone: the same physical size as in the Android app (which zooms by the screen diagonal). Safari has no
+// diagonal, so the narrow side in points stands in for it: a wider layout, scaled down to fit the screen.
+(function () {
+  if (!/iP(hone|od)/.test(navigator.userAgent)) return;
+  var w = Math.min(screen.width, screen.height), z = Math.max(.82, Math.min(1, w / 460));
+  if (z < .995) document.querySelector('meta[name=viewport]').setAttribute('content', 'width=' + Math.round(w / z) + ',viewport-fit=cover,user-scalable=no');
+})();
+</script>
 <meta name="description" content="Puzzlegrad — стройте города, дороги и крепости из общей стопки. Играйте онлайн, с друзьями и с ботами.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
