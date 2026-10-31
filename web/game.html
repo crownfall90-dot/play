@@ -3457,19 +3457,22 @@ function openFeedback() {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const first = !wallet.feedbackSent;
   const CATS = [{k:'bug',ic:'🐛',t:'Баг'},{k:'idea',ic:'💡',t:'Идея'},{k:'other',ic:'💬',t:'Другое'}];
-  box.innerHTML = `<div class="ocard" style="width:min(340px,92vw)">
-    <h3>Написать разработчику</h3>
-    <p style="color:var(--muted);font-size:13.5px;margin:0 0 12px">Пожелания, идеи, баги — всё пойдёт в дело${first ? '.<br><b style="color:#f2b84b">+10 золота</b> за первое сообщение' : ''}</p>
-    <div style="display:flex;gap:6px;margin-bottom:12px">${CATS.map(c => `<button class="chip fb-cat${c.k==='idea'?' sel':''}" data-cat="${c.k}" style="flex:1;justify-content:center">${c.ic} ${c.t}</button>`).join('')}</div>
-    <textarea id="fbText" rows="4" placeholder="Расскажите что думаете…" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:inherit;font:14px var(--f-body);padding:10px 12px;resize:vertical;outline:none;min-height:80px"></textarea>
-    <button class="cta wide" id="fbSend" style="margin-top:10px">Отправить${first ? ' (+10 золота)' : ''}</button>
-    <button class="ghostbtn" id="fbCancel" style="margin-top:6px">Отмена</button>
+  const CC = {bug: '#ef5350', idea: '#f2994a', other: '#4c8dff'};
+  box.innerHTML = `<div class="ocard fbcard">
+    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Написать разработчику</b><p>Пожелания, идеи, баги — всё пойдёт в дело</p></div></div></div>
+    ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
+    <div class="jig fbcats" id="fbCats">${CATS.map((c, i) => `<button class="fbcat fb-cat${c.k === 'idea' ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === 'idea' ? 'gold' : CC[c.k]}" data-je="${i < 2 ? 'r:tab' : ''}${i === 1 ? ',l:notch' : ''}${i === 2 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`).join('')}</div>
+    <textarea id="fbText" class="fbtext" rows="4" placeholder="Расскажите, что думаете…"></textarea>
+    <button class="cta wide" id="fbSend">Отправить${first ? ' (+10 золота)' : ''}</button>
+    <button class="ghostbtn" id="fbCancel">Отмена</button>
   </div>`;
   document.body.append(box);
+  jigsawFrame(box.querySelector('#fbHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
+  jigsawFrame(box.querySelector('#fbCats'), {R: 14, GAP: 6, NECK: 4.5, BR: 7.5, BULB: 5});
   let cat = 'idea';
   box.querySelectorAll('.fb-cat').forEach(b => b.addEventListener('click', () => {
     cat = b.dataset.cat;
-    box.querySelectorAll('.fb-cat').forEach(x => x.classList.toggle('sel', x === b));
+    box.querySelectorAll('.fb-cat').forEach(x => { x.classList.toggle('sel', x === b); x.dataset.jc = x === b ? 'gold' : CC[x.dataset.cat]; });
   }));
   box.querySelector('#fbCancel').onclick = () => box.remove();
   box.onclick = e => { if (e.target === box) box.remove(); };
