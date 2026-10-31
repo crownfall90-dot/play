@@ -64,24 +64,51 @@ function drawTile(id) {
   const cub = (p0, p1, p2, p3, t) => { const a = lerp(p0, p1, t), b = lerp(p1, p2, t), c2 = lerp(p2, p3, t), d = lerp(a, b, t), e = lerp(b, c2, t); return [lerp(d, e, t), [e[0] - d[0], e[1] - d[1]]]; };
   const riverPath = (a, b) => {
     const A = mid[a], ia = [-V[a][0], -V[a][1]];
-    if (b == null) { const M = [C[0] + (R() - .5) * 16, C[1] + (R() - .5) * 16]; return [[A, [A[0] + ia[0] * S * .22 + ia[1] * S * .12, A[1] + ia[1] * S * .22 - ia[0] * S * .12], [M[0] - ia[0] * 10, M[1] - ia[1] * 10], M]]; }
+    if (b == null) { const M = [C[0] + (R() - .5) * 16, C[1] + (R() - .5) * 16]; return [[A, [A[0] + ia[0] * S * .22, A[1] + ia[1] * S * .22], [M[0] - ia[0] * 22 + ia[1] * S * .12, M[1] - ia[1] * 22 - ia[0] * S * .12], M]]; }
     const B = mid[b], ib = [-V[b][0], -V[b][1]];
     const M = id === 'wBr' ? [C[0], C[1]] : [C[0] + (R() - .5) * S * .24, C[1] + (R() - .5) * S * .24];
     let tx = B[0] - A[0] + (ib[0] - ia[0]) * 0, ty = B[1] - A[1]; const L = Math.hypot(tx, ty) || 1; tx = tx / L * S * .2; ty = ty / L * S * .2;
     return [[A, [A[0] + ia[0] * S * .26, A[1] + ia[1] * S * .26], [M[0] - tx, M[1] - ty], M], [M, [M[0] + tx, M[1] + ty], [B[0] + ib[0] * S * .26, B[1] + ib[1] * S * .26], B]];
   };
   const strokeSegs = (segs, w, col, dash) => { g.beginPath(); g.moveTo(...segs[0][0]); segs.forEach(q => g.bezierCurveTo(...q[1], ...q[2], ...q[3])); g.lineWidth = w; g.strokeStyle = col; g.lineCap = 'butt'; g.lineJoin = 'round'; g.setLineDash(dash || []); g.stroke(); g.setLineDash([]); };
-  const along = (segs, fn) => segs.forEach(q => { for (let t = .06; t < .96; t += .08) { const [pt, d] = cub(...q, t), L = Math.hypot(...d) || 1; fn(pt, [-d[1] / L, d[0] / L]); } });
+  const along = (segs, fn) => segs.forEach((q, i) => { for (let t = .06; t < .96; t += .08) { const [pt, d] = cub(...q, t), L = Math.hypot(...d) || 1; fn(pt, [-d[1] / L, d[0] / L], (i + t) / segs.length); } });
+  // Something drawn sharp, then laid down soft: shrunk and blown back up (works on every WebView, unlike ctx.filter).
+  const soft = (draw, k = 4) => {
+    const [t, tg] = cv(S, S, 1); tg.setTransform(g.getTransform()); draw(tg);
+    const [m, mg] = cv(S / 2, S / 2, 1); mg.drawImage(t, 0, 0, S / 2, S / 2);
+    const [n, ng] = cv(S / k, S / k, 1); ng.drawImage(m, 0, 0, S / k, S / k);
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.imageSmoothingQuality = 'high'; g.drawImage(n, 0, 0, S, S); g.restore();
+  };
+  // A river: grass darkened by the damp, a sandy bank, a thin line of foam, clear shallows by the banks and a deep
+  // channel in the middle; glints run with the current, reeds and stones line the banks.
   const water = segs => {
-    strokeSegs(segs, 40, '#b9b07a'); strokeSegs(segs, 34, '#cdbf86'); strokeSegs(segs, 28, '#2f7cc2'); strokeSegs(segs, 18, '#4a9fe3'); strokeSegs(segs, 7, 'rgba(140,205,250,.75)');
-    strokeSegs(segs, 2, 'rgba(225,245,255,.8)', [6, 13]);
-    along(segs, ([x, y], [nx, ny]) => {
+    // The river is a ribbon, not a pipe: each bank swells and narrows on its own, but both ends are exactly the
+    // standard mouth (and leave the edge straight), so every neighbour still joins.
+    const ph = [R() * 6.28, R() * 6.28, R() * 6.28, R() * 6.28], amp = id === 'wBr' ? .12 : .32;
+    const swell = (t, k) => 1 + amp * Math.sin(Math.PI * t) ** 2 * (.55 + .45 * Math.sin(ph[k] + t * 7.3) * Math.sin(ph[k + 2] + t * 3.1));
+    const P = []; segs.forEach((q, i) => { for (let k = i ? 1 : 0; k <= 28; k++) { const t = k / 28, [pt, d] = cub(...q, t), L = Math.hypot(...d) || 1; P.push([pt, [-d[1] / L, d[0] / L], (i + t) / segs.length]); } });
+    const ribbon = (q, h, col) => {
+      q.beginPath();
+      P.forEach(([[x, y], [nx, ny], t], k) => { const f = swell(t, 0); q[k ? 'lineTo' : 'moveTo'](x + nx * h * f, y + ny * h * f); });
+      for (let k = P.length - 1; k >= 0; k--) { const [[x, y], [nx, ny], t] = P[k], f = swell(t, 1); q.lineTo(x - nx * h * f, y - ny * h * f); }
+      q.closePath(); q.fillStyle = col; q.fill();
+    };
+    water.half = (t, sd) => swell(t, sd > 0 ? 0 : 1);
+    soft(q => ribbon(q, 25, 'rgba(30,70,20,.45)'));
+    for (const [h, col] of [[20, '#a8975f'], [18.5, '#d6c48e'], [16.5, '#bba872'], [15, 'rgba(240,252,255,.8)'], [14, '#46b3d3'], [11.5, '#2f93c8'], [8, '#2276b8'], [4.5, '#1c64a6']]) ribbon(g, h, col);
+    soft(q => ribbon(q, 4, 'rgba(120,205,240,.55)'), 2);
+    along(segs, ([x, y], [nx, ny], gt) => {
+      const tx = ny, ty = -nx;
       for (const sd of [-1, 1]) {
-        const r1 = R();
-        if (r1 < .35) { const bx = x + nx * sd * 21, by = y + ny * sd * 21; g.strokeStyle = r1 < .2 ? '#3f7d2c' : '#56932f'; g.lineWidth = 1.4; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(bx + k * 1.5, by + 3); g.lineTo(bx + k * 2.6, by - 4 - R() * 3); g.stroke(); } }
-        else if (r1 < .45) { g.fillStyle = '#9c968a'; g.beginPath(); g.ellipse(x + nx * sd * 15, y + ny * sd * 15, 2.6, 1.8, R(), 0, 7); g.fill(); }
+        const r1 = R(), f = water.half(gt, sd);
+        if (r1 < .35) { const bx = x + nx * sd * 21 * f, by = y + ny * sd * 21 * f; g.strokeStyle = r1 < .2 ? '#3f7d2c' : '#56932f'; g.lineWidth = 1.4; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(bx + k * 1.5, by + 3); g.lineTo(bx + k * 2.6, by - 4 - R() * 3); g.stroke(); } }
+        else if (r1 < .45) { const ex = x + nx * sd * 16 * f, ey = y + ny * sd * 16 * f, rr = R(); g.fillStyle = 'rgba(0,0,0,.25)'; g.beginPath(); g.ellipse(ex + .8, ey + 1, 2.8, 2, rr, 0, 7); g.fill(); g.fillStyle = '#9c968a'; g.beginPath(); g.ellipse(ex, ey, 2.6, 1.8, rr, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(ex - .7, ey - .6, 1.1, .7, rr, 0, 7); g.fill(); }
       }
-      if (R() < .25) { g.strokeStyle = 'rgba(230,248,255,.55)'; g.lineWidth = 1; g.beginPath(); g.arc(x + (R() - .5) * 10, y + (R() - .5) * 10, 3 + R() * 2, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
+      // glints along the current, more of them in the fast middle
+      const o = (R() - .5) * 16, L = 3 + R() * 5, gx = x + nx * o, gy = y + ny * o;
+      g.strokeStyle = `rgba(235,250,255,${(.35 + R() * .4).toFixed(2)})`; g.lineWidth = 1.3; g.lineCap = 'round';
+      g.beginPath(); g.moveTo(gx - tx * L, gy - ty * L); g.quadraticCurveTo(gx + nx * 1.2, gy + ny * 1.2, gx + tx * L, gy + ty * L); g.stroke(); g.lineCap = 'butt';
+      if (R() < .3) { g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(x + nx * (R() - .5) * 18, y + ny * (R() - .5) * 18, .9, 0, 7); g.fill(); }
     });
   };
   // Roads keep their shape (the owner colouring follows it) but get verges, two wheel ruts and pebbles.
@@ -98,7 +125,7 @@ function drawTile(id) {
     // damp bank around the pool
     g.fillStyle = 'rgba(70,110,40,.35)'; g.beginPath(); g.ellipse(...at(-4, 0), 40, 34, 0, 0, 7); g.fill();
     // pool: sandy rim, deep water, bright centre
-    [[30,'#d8cf9c'],[27,'#b9ae78'],[24,'#2468ad'],[19,'#3f95dc'],[12,'#6fbdf0']].forEach(([r, col]) => { g.beginPath(); g.ellipse(...at(-8, 0), r, r * .9, 0, 0, 7); g.fillStyle = col; g.fill(); });
+    [[31,'#a8975f'],[29.5,'#d6c48e'],[27,'#bba872'],[25.5,'rgba(240,252,255,.85)'],[24,'#46b3d3'],[19,'#2f93c8'],[13,'#2276b8'],[7,'#1b5c9c']].forEach(([r, col]) => { g.beginPath(); g.ellipse(...at(-8, 0), r, r * .9, 0, 0, 7); g.fillStyle = col; g.fill(); });
     g.strokeStyle = 'rgba(235,250,255,.8)'; g.lineWidth = 1.4; [5, 10, 15].forEach((r, k) => { g.globalAlpha = 1 - k * .25; g.beginPath(); g.ellipse(...at(-8, 0), r, r * .88, 0, 0, 7); g.stroke(); }); g.globalAlpha = 1;
     // bubbles and sparkles
     g.fillStyle = 'rgba(255,255,255,.85)'; [[-12,-4,2.4],[-3,2,1.8],[-9,5,1.4],[-14,2,1.2],[-5,-7,1.2]].forEach(([f, o, r]) => { g.beginPath(); g.arc(...at(f, o), r, 0, 7); g.fill(); });
@@ -115,27 +142,48 @@ function drawTile(id) {
     // side of the three-way lake) stay as land with a sandy shore, reeds and stones. Flow streaks run out to every
     // river, lily pads and lotuses float on the water.
     const base = document.createElement('canvas'); base.width = S; base.height = S; base.getContext('2d').drawImage(c, 0, 0);
-    const dead = [0, 1, 2, 3].filter(d => E[d] !== 'w'), RR = 50, rot = dead.length ? dead[0] * Math.PI / 2 : 0;
-    const deep = g.createRadialGradient(C[0], C[1], 8, C[0], C[1], 125); deep.addColorStop(0, '#74c6f4'); deep.addColorStop(.5, '#3f95dc'); deep.addColorStop(1, '#2468ad');
+    const dead = [0, 1, 2, 3].filter(d => E[d] !== 'w'), RR = 50, MOUTH = 20, LIP = 24, rot = dead.length ? dead[0] * Math.PI / 2 : 0;
+    const deep = g.createRadialGradient(C[0] - 10, C[1] - 12, 6, C[0], C[1], 120); deep.addColorStop(0, '#1b5c9c'); deep.addColorStop(.45, '#2276b8'); deep.addColorStop(.8, '#2f93c8'); deep.addColorStop(1, '#46b3d3');
     g.fillStyle = deep; g.fillRect(0, 0, S, S);
-    // current: curved streaks from the middle out to every river
-    for (const d of w) {
-      const A = mid[d], ux = V[d][0], uy = V[d][1];
-      for (let k = -3; k <= 3; k++) {
-        const off = k * 9, sx = C[0] - uy * off * .45 + ux * 6, sy = C[1] + ux * off * .45 + uy * 6;
-        g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo((sx + A[0]) / 2 - uy * off * .4, (sy + A[1]) / 2 + ux * off * .4, A[0] - uy * off * .55, A[1] + ux * off * .55);
-        g.lineWidth = 1.5; g.strokeStyle = k % 2 ? 'rgba(230,248,255,.4)' : 'rgba(230,248,255,.68)'; g.setLineDash([10, 12]); g.lineDashOffset = k * 5; g.stroke();
-      }
-    }
-    g.setLineDash([]);
-    g.strokeStyle = 'rgba(225,245,255,.34)'; g.lineWidth = 1;
+    g.strokeStyle = 'rgba(225,245,255,.28)'; g.lineWidth = 1.2; g.lineCap = 'round';
     for (let k = 0; k < 10; k++) { const x = 20 + R() * (S - 40), y = 20 + R() * (S - 40); g.beginPath(); g.ellipse(x, y, 8 + R() * 9, 3 + R() * 3, (R() - .5) * .5, Math.PI * 1.05, Math.PI * 1.95); g.stroke(); }
     g.fillStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 14; k++) { g.beginPath(); g.arc(14 + R() * (S - 28), 14 + R() * (S - 28), .8 + R() * .9, 0, 7); g.fill(); }
-    // is a point on open water? (undo the card's rotation first, then test the corner coves and the closed-side strip)
+    // The land, in the card's own frame turned so that a closed side is on top: one piece between every two river
+    // mouths, running along the card's edge outside and round the corner (or along the closed side) inside. Every
+    // mouth is as wide as a plain river (water 28, banks 40 across) so a neighbouring river runs straight in.
+    const W = [0, 1, 2, 3].filter(e => E[(e + (dead.length ? dead[0] : 0)) % 4] === 'w'), M = [[S / 2, 0], [S, S / 2], [S / 2, S], [0, S / 2]];
+    const loc = (e, u, v) => { const t = V[(e + 1) % 4]; return [M[e][0] + t[0] * u - V[e][0] * v, M[e][1] + t[1] * u - V[e][1] * v]; };
+    const corner = e => loc(e, S / 2, 0); // the corner after side e, going round clockwise
+    const quad = (p0, p1, p2, n) => Array.from({length: n}, (_, k) => { const t = (k + 1) / n, u = 1 - t; return [u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0], u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]]; });
+    const spline = P => { const out = []; for (let i = 0; i < P.length - 1; i++) { const p0 = P[Math.max(0, i - 1)], p1 = P[i], p2 = P[i + 1], p3 = P[Math.min(P.length - 1, i + 2)]; for (let k = 1; k <= 8; k++) { const t = k / 8, t2 = t * t, t3 = t2 * t; out.push([0, 1].map(j => .5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3))); } } return out; };
+    const land = new Path2D(), pieces = [];
+    W.forEach((a, i) => {
+      const b = W[(i + 1) % W.length], sides = []; for (let e = (a + 1) % 4; e !== b; e = (e + 1) % 4) sides.push(e);
+      const outer = [loc(a, MOUTH, -6), ...[a, ...sides].map(e => { const [x, y] = corner(e); return [x + Math.sign(x - C[0]) * 9, y + Math.sign(y - C[1]) * 9]; }), loc(b, -MOUTH, -6)];
+      // inside, from mouth b back to mouth a along a round shore: about 80 px from the middle, drawn in towards a
+      // closed side, with a gentle wobble so it never looks ruled
+      const ang = q => Math.atan2(q[1] - C[1], q[0] - C[0]), from = loc(b, -MOUTH - 9, LIP + 4), to = loc(a, MOUTH + 9, LIP + 4);
+      let tb = ang(from), ta = ang(to); while (tb <= ta) tb += 2 * Math.PI;
+      const closedAt = [0, 1, 2, 3].filter(e => !W.includes(e)).map(e => Math.atan2(V[e][1], V[e][0]));
+      const radius = th => 80 - closedAt.reduce((m, c) => Math.max(m, 30 * Math.max(0, Math.cos(th - c)) ** 1.5), 0) + 3.5 * Math.sin(th * 5 + a * 1.7);
+      const n = Math.max(2, Math.ceil((tb - ta) / .32)), pts = [];
+      for (let k = 1; k < n; k++) { const th = tb - (tb - ta) * k / n; pts.push([C[0] + Math.cos(th) * radius(th), C[1] + Math.sin(th) * radius(th)]); }
+      // each mouth leaves the edge straight for a few pixels, then opens out like a funnel into the lake
+      const inner = [loc(b, -MOUTH, 0), ...spline([loc(b, -MOUTH, 0), loc(b, -MOUTH, 8), from, ...pts, to, loc(a, MOUTH, 8), loc(a, MOUTH, 0)])];
+      const all = [...outer, ...inner]; land.moveTo(...all[0]); all.slice(1).forEach(q => land.lineTo(...q)); land.closePath();
+      pieces.push({inner, mid: outer.reduce((m, q) => [m[0] + q[0] / outer.length, m[1] + q[1] / outer.length], [0, 0])});
+    });
+    // clear turquoise shallows along every shore, the bank's shadow on the water, a soft light from the sky
+    const inLand = q => { q.translate(C[0], C[1]); q.rotate(rot); q.translate(-C[0], -C[1]); };
+    soft(q => { inLand(q); q.lineJoin = 'round'; q.lineWidth = 46; q.strokeStyle = 'rgba(95,205,222,.85)'; q.stroke(land); });
+    soft(q => { q.fillStyle = 'rgba(255,255,255,.22)'; q.beginPath(); q.ellipse(C[0] - 22, C[1] - 26, 34, 14, -.5, 0, 7); q.fill(); });
+    soft(q => { q.translate(2, 4); inLand(q); q.fillStyle = 'rgba(8,40,70,.55)'; q.fill(land); }, 8);
+    // is a point on open water, well clear of the land and of the mouths? (undo the card's rotation first)
+    const probe = document.createElement('canvas').getContext('2d');
     const onWater = (x, y) => {
       const dx = x - C[0], dy = y - C[1], cx = dx * Math.cos(rot) + dy * Math.sin(rot) + C[0], cy = -dx * Math.sin(rot) + dy * Math.cos(rot) + C[1];
-      const cor = dead.length ? [[S, S], [0, S]] : [[0, 0], [S, 0], [S, S], [0, S]];
-      return cor.every(([px, py]) => Math.hypot(cx - px, cy - py) > RR + 12) && (!dead.length || cy > RR * 1.15 + 14);
+      const offMouths = w.every(d => { const v = (x - mid[d][0]) * -V[d][0] + (y - mid[d][1]) * -V[d][1], u = Math.abs((x - mid[d][0]) * V[d][1] - (y - mid[d][1]) * V[d][0]); return v > LIP + 22 || u < MOUTH - 8; });
+      return offMouths && [[0, 0], [16, 0], [-16, 0], [0, 16], [0, -16], [11, 11], [-11, 11], [11, -11], [-11, -11]].every(([ox, oy]) => !probe.isPointInPath(land, cx + ox, cy + oy));
     };
     const clearOfRivers = (x, y) => w.every(d => { const ax = mid[d][0] - C[0], ay = mid[d][1] - C[1], L = Math.hypot(ax, ay), t = Math.max(0, Math.min(1, ((x - C[0]) * ax + (y - C[1]) * ay) / (L * L))); return Math.hypot(x - C[0] - ax * t, y - C[1] - ay * t) > 15; });
     let pads = 0;
@@ -157,21 +205,27 @@ function drawTile(id) {
       }
       pads++;
     }
-    // the land goes back: corner coves (and the closed side), then a sandy shore along their edge
+    // the land goes back (built above), then a sandy shore along its edge
     g.save(); g.translate(C[0], C[1]); g.rotate(rot); g.translate(-C[0], -C[1]);
-    const land = new Path2D();
-    (dead.length ? [[S, S], [0, S]] : [[0, 0], [S, 0], [S, S], [0, S]]).forEach(([x, y]) => { land.moveTo(x + RR, y); land.arc(x, y, RR, 0, 7); });
-    if (dead.length) {
-      land.moveTo(-6, -6); land.lineTo(S + 6, -6); land.lineTo(S + 6, RR * .95);
-      land.bezierCurveTo(S * .82, RR * 1.2, S * .64, RR * .78, S * .5, RR * 1.0); land.bezierCurveTo(S * .36, RR * 1.22, S * .18, RR * .8, -6, RR * .95); land.closePath();
-    }
-    g.save(); g.clip(land); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(base, 0, 0); g.restore();
+    // the bank, as on a river (dark edge, dry sand, wet sand, foam): stroked on the line, then the grass laid back
+    // over its land half so only the water half shows
     g.lineJoin = 'round';
-    for (const [lw, col] of [[16, 'rgba(50,80,30,.35)'], [11, '#b9b07a'], [7, '#cdbf86'], [2, 'rgba(255,255,255,.4)']]) { g.lineWidth = lw; g.strokeStyle = col; g.stroke(land); }
+    for (const [lw, col] of [[12, 'rgba(240,252,255,.85)'], [10, '#bba872'], [7, '#d6c48e'], [3, '#a8975f']]) { g.lineWidth = lw; g.strokeStyle = col; g.stroke(land); }
+    g.save(); g.clip(land); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(base, 0, 0); g.restore();
+    // damp, darker grass right by the water
+    g.save(); g.clip(land); soft(q => { q.lineWidth = 16; q.strokeStyle = 'rgba(30,70,20,.5)'; q.stroke(land); }, 4); g.restore();
+    g.restore();
     // reeds, cattails and stones along the shore
     const shore = [];
-    (dead.length ? [[S, S, Math.PI, 1.5 * Math.PI], [0, S, 1.5 * Math.PI, 2 * Math.PI]] : [[0, 0, 0, Math.PI / 2], [S, 0, Math.PI / 2, Math.PI], [S, S, Math.PI, 1.5 * Math.PI], [0, S, 1.5 * Math.PI, 2 * Math.PI]]).forEach(([cx, cy, a0, a1]) => { for (let k = 0; k < 9; k++) { const an = a0 + (a1 - a0) * (.08 + .84 * R()); shore.push([cx + Math.cos(an) * (RR + 7), cy + Math.sin(an) * (RR + 7)]); } });
-    if (dead.length) for (let k = 0; k < 11; k++) { const x = 14 + R() * (S - 28); shore.push([x, RR * (.98 + Math.sin(x / S * 6.28) * .1) + 8]); }
+    for (const {inner, mid: m} of pieces) for (let k = 0; k < 10; k++) {
+      // a point on the shore, pushed 7 px out over the water (away from the land's middle)
+      const i = 1 + ((R() * (inner.length - 2)) | 0), [x, y] = inner[i], [x0, y0] = inner[i - 1], [x1, y1] = inner[i + 1];
+      let nx = y1 - y0, ny = x0 - x1; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+      if (nx * (x - m[0]) + ny * (y - m[1]) < 0) { nx = -nx; ny = -ny; }
+      // reeds stand upright on the card as drawn, so turn the point back into the card's frame
+      const px = x + nx * 7 - C[0], py = y + ny * 7 - C[1];
+      shore.push([px * Math.cos(rot) - py * Math.sin(rot) + C[0], px * Math.sin(rot) + py * Math.cos(rot) + C[1]]);
+    }
     for (const [bx, by] of shore) {
       if (bx < 4 || by < 4 || bx > S - 4 || by > S - 4) continue;
       const lean = (R() - .5) * 5, tall = 12 + R() * 9;
@@ -181,7 +235,16 @@ function drawTile(id) {
     }
     g.lineCap = 'butt';
     for (let k = 0; k < 14; k++) { const [bx, by] = shore[(R() * shore.length) | 0]; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(bx + (R() - .5) * 10, by + 6 + R() * 4, 3.5 + R() * 2, 2.4, R(), 0, 7); g.fill(); }
-    g.restore();
+    // the mouths: the plain river's own bands right at the edge, its channel melting softly into the lake
+    const BANDS = [[40, '#a8975f', 4], [37, '#d6c48e', 4], [33, '#bba872', 4], [30, 'rgba(240,252,255,.8)', 4], [28, 'rgba(70,179,211,1)', LIP + 4], [23, 'rgba(47,147,200,1)', LIP + 12], [16, 'rgba(34,118,184,1)', LIP + 18], [9, 'rgba(28,100,166,1)', LIP + 22]];
+    const mouth = (d, q, cut) => {
+      const A = mid[d], ix = -V[d][0], iy = -V[d][1], at = v => [A[0] + ix * v, A[1] + iy * v];
+      const fade = (q, col, v) => { const gr = q.createLinearGradient(...A, ...at(v)); gr.addColorStop(0, col); gr.addColorStop(.3, col); gr.addColorStop(1, col.replace(/[\d.]+\)$/, '0)')); return gr; };
+      const band = (q, lw, col, v, cut) => { q.beginPath(); q.moveTo(...A); q.lineTo(...at(cut ? Math.min(v, cut) : v)); q.lineWidth = lw; q.lineCap = 'butt'; q.strokeStyle = col.startsWith('#') ? col : fade(q, col, v); q.stroke(); };
+      (cut ? BANDS : BANDS.slice(4)).forEach(([lw, col, v]) => band(q, lw, col, v, cut));
+    };
+    soft(q => w.forEach(d => mouth(d, q)), 4);
+    w.forEach(d => mouth(d, g, 5));
   }
   const r = idx('r');
   if (r.length === 2) { strip(r[0], r[1], ROAD); pebbles(r[0], r[1]); } else r.forEach(d => { strip(d, null, ROAD); pebbles(d, null); });
