@@ -11,6 +11,7 @@ const HOOK = `
 window.__pg = {
   startGame, makeDeck, show, sound,
   state: () => ({phase, applied, players, tiles, gameLog}),
+  myId, selectSlot, rotate, net: () => net, turnNow: () => turn,
 };
 `;
 

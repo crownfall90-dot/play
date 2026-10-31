@@ -24,9 +24,9 @@
       <div class="sbar"><span>9:41</span><span class="cam"></span><span>▾ ◢ 87%</span></div>
 
       <nav class="bnav" id="bnav" hidden aria-label="Разделы">
-        <button data-nav="menu" aria-label="Главная"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V19a1 1 0 001 1h3.5v-5h3v5H17a1 1 0 001-1V9.5"/></svg><span>Главная</span></button>
-        <button data-nav="progress" id="progBtn" aria-label="Профиль, задания и достижения"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/></svg><span>Профиль</span></button>
-        <button data-nav="friends" id="friendsBtn" aria-label="Друзья"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><path d="M18 8v6M15 11h6"/></svg><em class="fnum" hidden>0</em><span>Друзья</span></button>
+        <button data-nav="menu" aria-label="Главная"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V19a1 1 0 001 1h3.5v-5h3v5H17a1 1 0 001-1V9.5"/></svg><span>Главная</span><i class="sm"></i><i class="kn"></i></button>
+        <button data-nav="progress" id="progBtn" aria-label="Профиль, задания и достижения"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/></svg><span>Профиль</span><i class="sm"></i><i class="kn"></i></button>
+        <button data-nav="friends" id="friendsBtn" aria-label="Друзья"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><path d="M18 8v6M15 11h6"/></svg><em class="fnum" hidden>0</em><span>Друзья</span><i class="sm"></i><i class="kn"></i></button>
         <button data-nav="shop" id="navShop" aria-label="Магазин"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg><span>Магазин</span></button>
       </nav>
       <section class="screen" id="scr-menu" hidden>
@@ -776,6 +776,7 @@ function setRot(nr) {
   trayDeg += delta * 90; ghostDeg += delta * 90; current.r = nr;
   tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg');
   if (ghost) ghost.querySelector('.face').style.setProperty('--r', ghostDeg + 'deg');
+  peekSend();
 }
 // Hint frames are plain, unanimated 3D squares in empty cells: animating each of them
 // (or merging them into one big layer that standing houses and trees cut through)
@@ -793,6 +794,7 @@ function renderSlots() {
 }
 function placeGhost() {
   if (!ghost) { ghostDeg = current.r * 90; ghost = tileEl({x: sel.x, y: sel.y, type: current.type, r: current.r}, false); ghost.classList.add('ghost'); world.append(ghost); }
+  ghost.style.setProperty('--pc', players[turn].col);
   ghost.style.left = (sel.x * T - T / 2) + 'px'; ghost.style.top = (sel.y * T - T / 2) + 'px';
 }
 function selectSlot(x, y) {
@@ -802,7 +804,7 @@ function selectSlot(x, y) {
   sel = {x, y};
   setRot(rots.includes(current.r) ? current.r : rots[0]);
   slotEls.forEach(s => s.classList.toggle('sel', +s.dataset.x === x && +s.dataset.y === y));
-  placeGhost(); okBtn.disabled = false;
+  placeGhost(); okBtn.disabled = false; peekSend();
   setStatus(rots.length > 1 ? 'Поверните карту или нажмите <b>«Поставить»</b>' : 'Здесь карта встаёт только так · <b>«Поставить»</b>');
 }
 function rotate() {
@@ -885,6 +887,7 @@ function tap(x, y) {
   const s = el.closest('.slot'); if (s) selectSlot(+s.dataset.x, +s.dataset.y);
 }
 async function dropAt(t) {
+  peekClear();
   sel = {x: t.x, y: t.y};
   if (!ghost) placeGhost();
   ghost.classList.remove('ghost');
@@ -2238,9 +2241,34 @@ function onNet(d) {
   if (m.g !== net.gameId || !players[m.p] || phase === 'end') return;
   if (m.t === 'resign') return onResign(m.p);
   if (m.t === 'here') { players[m.p].missed = 0; return renderPlayers(); }
+  if (m.t === 'peek') return live && showPeek(m);
   if (m.t === 'say') return live && showSay(m.p, m.i);
   if (m.t === 'draw') return onDrawOffer(m);
   if (m.t === 'drawReply') return onDrawReply(m);
+}
+/* Others see where you are about to put the card, before you confirm it: while the card is held, its place and
+   turn are sent (at most ~3 times a second, only when they change) and shown to the rest as a tinted, unconfirmed card. */
+let peekT = 0, peekLast = '', peekEl = null, peekDeg = 0;
+function peekSend() {
+  if (!net || !net.gameId || tut || !['place', 'ai'].includes(phase) || !sel || !current || !(isLocal(turn) || (net.host && !players[turn].human))) return; // own card, or a bot the room creator runs
+  const msg = {t: 'peek', g: net.gameId, p: turn, n: applied, x: sel.x, y: sel.y, r: current.r}, key = msg.n + ':' + msg.x + ',' + msg.y + ',' + msg.r;
+  if (key === peekLast || peekT) return;
+  peekT = setTimeout(() => {
+    peekT = 0;
+    if (!net || !['place', 'ai'].includes(phase) || !sel || !current) return;
+    const k = applied + ':' + sel.x + ',' + sel.y + ',' + current.r; if (k === peekLast) return;
+    peekLast = k; TRANSPORT.send(net.code, {...msg, n: applied, x: sel.x, y: sel.y, r: current.r}).catch(() => {});
+  }, 350);
+}
+function peekClear() { if (peekEl) { peekEl.remove(); peekEl = null; } clearTimeout(peekT); peekT = 0; peekLast = ''; }
+function showPeek(m) {
+  if (phase !== 'remote' || !current || m.n !== applied || m.p !== turn || isLocal(m.p) || !Number.isInteger(m.x) || !Number.isInteger(m.y) || !(m.r >= 0 && m.r < 4)) return;
+  if (tiles.has(key(m.x, m.y)) || Math.abs(m.x) > 80 || Math.abs(m.y) > 80) return;
+  if (!peekEl) { peekDeg = m.r * 90; peekEl = tileEl({x: m.x, y: m.y, type: current.type, r: m.r}, false); peekEl.classList.add('ghost', 'peek'); world.append(peekEl); }
+  else peekDeg += (((m.r * 90 - peekDeg) % 360) + 540) % 360 - 180; // turn the short way
+  peekEl.style.setProperty('--pc', players[m.p].col);
+  peekEl.style.left = (m.x * T - T / 2) + 'px'; peekEl.style.top = (m.y * T - T / 2) + 'px';
+  const f = peekEl.querySelector('.face'); if (f) f.style.setProperty('--r', peekDeg + 'deg');
 }
 function onMove(m) {
   if (m.g !== net.gameId || m.n < applied || queue.some(q => q.n === m.n)) return;
@@ -2250,7 +2278,7 @@ function onMove(m) {
   if (phase === 'remote') pumpRemote();
 }
 function cancelTurn() {
-  turnTok++; stopTimer(); clearSlots();
+  peekClear(); turnTok++; stopTimer(); clearSlots();
   if (ghost) { ghost.remove(); ghost = null; }
   $('#over').hidden = true; phase = 'remote';
 }
@@ -2315,7 +2343,7 @@ async function pumpRemote() {
   if (phase !== 'remote' || !gameVisible) return;
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
-  const mv = queue.splice(i, 1)[0], my = token;
+  const mv = queue.splice(i, 1)[0], my = token; peekClear();
   if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
   phase = 'busy'; applied++; // reserve before yielding: a duplicate delivery is already obsolete
   if (mv.old) catchKeep(); else catchEnd();
