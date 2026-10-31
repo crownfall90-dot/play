@@ -748,7 +748,8 @@ function setClock(who, left, low) {
   const c = playersEl.children[who]; if (!c) return;
   let el = c.querySelector('.clk');
   if (!el) { el = document.createElement('span'); el.className = 'clk'; c.append(el); }
-  el.textContent = clock(left); el.classList.toggle('low', low);
+  const t = clock(left); if (el.textContent !== t) el.textContent = t; // ticks 4 times a second: touch the page once a second
+  if (el.classList.contains('low') !== !!low) el.classList.toggle('low', !!low);
 }
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
@@ -1035,7 +1036,17 @@ function focusLast() {
   ensureVisible(t.x, t.y);
   t.el.classList.add('glow'); setTimeout(() => t.el.classList.remove('glow'), 1500);
 }
+/* Calm: the water keeps flowing only while something is going on. A few seconds after the last touch or move the
+   ambient animations are paused (no repainting, so the phone can cool down) and wake up on the next touch or turn. */
+let calmT = 0, calmAt = 0;
+function wake(force) {
+  const now = Date.now(); if (!force && now - calmAt < 400) return; calmAt = now;
+  const root = document.documentElement; if (root.classList.contains('calm')) root.classList.remove('calm');
+  clearTimeout(calmT); calmT = setTimeout(() => root.classList.add('calm'), 3500);
+}
+['pointerdown', 'pointermove', 'wheel', 'keydown'].forEach(ev => document.addEventListener(ev, () => wake(), {passive: true, capture: true}));
 function startTurn() {
+  wake(true);
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer(); tipBtn.hidden = true;
   // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
