@@ -42,13 +42,14 @@ export function completedAround(tiles, meeples, t) {
   return evs;
 }
 
-/** Features finished by card t that player p built entirely alone and nobody holds: p may put a free figure there. */
+/** Features finished by card t that player p built entirely alone and nobody holds: p may put a free figure there.
+ *  The starting card belongs to nobody (no `by`), so a road or town through it still counts as built alone. */
 export function doneMine(tiles, meeples, t, p) {
   const out = [], seen = new Set();
   const consider = (tt, g) => {
     if (seen.has(gid(tt, g))) return;
     const c = component(tiles, meeples, tt, g); c.ids.forEach(i => seen.add(i));
-    if (c.complete && !c.meeples.length && c.tiles.every(x => x.by === p)) out.push({t: tt, g, c});
+    if (c.complete && !c.meeples.length && c.tiles.every(x => x.by === p || x.by == null)) out.push({t: tt, g, c});
   };
   groupsOf(t).forEach(g => g.kind !== 'f' && consider(t, g));
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(tiles, t.x + dx, t.y + dy); const g = n && TYPES[n.type].fort && groupsOf(n).find(x => x.kind === 'f'); if (g) consider(n, g); }
