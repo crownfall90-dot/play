@@ -1,15 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
-  <defs>
-    <radialGradient id="bg" cx="50%" cy="38%" r="70%">
-      <stop offset="0" stop-color="#4a63a6"/><stop offset=".55" stop-color="#25335f"/><stop offset="1" stop-color="#121a33"/>
-    </radialGradient>
-    <linearGradient id="grass" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9ad86a"/><stop offset="1" stop-color="#4f9636"/>
-    </linearGradient>
-    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe08a"/><stop offset="1" stop-color="#e9a52e"/>
-    </linearGradient>
-    <clipPath id="piece"><path d="M27,34 H46 a8,8 0 1,1 16,0 H81 V51 a8,8 0 1,1 0,16 V84 H27 Z"/></clipPath>
-  </defs>
-  <rect width="108" height="108" fill="url(#bg)"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108"><defs>
+<radialGradient id="ibg" cx="50%" cy="34%" r="78%"><stop offset="0" stop-color="#5a74c4"/><stop offset=".5" stop-color="#2a3a72"/><stop offset="1" stop-color="#0f1630"/></radialGradient>
+<radialGradient id="iglow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffd878" stop-opacity=".55"/><stop offset="1" stop-color="#ffd878" stop-opacity="0"/></radialGradient>
+<linearGradient id="igrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#80be56"/><stop offset="1" stop-color="#5a9a3c"/></linearGradient>
+<radialGradient id="itree" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#7cc65a"/><stop offset="1" stop-color="#2f8a3e"/></radialGradient>
+<linearGradient id="igold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff2c4"/><stop offset=".5" stop-color="#f2c45a"/><stop offset="1" stop-color="#d98e1f"/></linearGradient>
+<radialGradient id="ivig" cx=".5" cy=".42" r=".7"><stop offset=".62" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#0a1e08" stop-opacity=".3"/></radialGradient>
+<clipPath id="ipc"><path d="M24.88 31.12L41.38 31.12L41.38 29.12A7.5 7.5 0 1 1 54.38 29.12L54.38 31.12L70.88 31.12A5.5 5.5 0 0 1 76.38 36.62L76.38 53.12L78.38 53.12A7.5 7.5 0 1 1 78.38 66.12L76.38 66.12L76.38 82.62A5.5 5.5 0 0 1 70.88 88.12L54.38 88.12L54.38 86.12A7.5 7.5 0 1 0 41.38 86.12L41.38 88.12L24.88 88.12A5.5 5.5 0 0 1 19.38 82.62L19.38 66.12L21.38 66.12A7.5 7.5 0 1 0 21.38 53.12L19.38 53.12L19.38 36.62A5.5 5.5 0 0 1 24.88 31.12Z"/></clipPath></defs><rect width="108" height="108" fill="url(#ibg)"/><circle cx="54" cy="52" r="46" fill="url(#iglow)"/></svg>
