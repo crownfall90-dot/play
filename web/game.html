@@ -782,7 +782,7 @@ function setClock(who, left, low) {
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -851,7 +851,7 @@ function helpWindow(tab = 'pts') {
   const old = document.getElementById('helpBox'); if (old) old.remove();
   const r = gameRules, mode = (MODES[r.mode] || MODES.classic).label, tie = r.tie === 'split' ? 'очки делятся поровну' : 'очки получает каждый из них';
   const item = (cls, ttl, todo, pts) => `<div class="hitem"><span class="rimg ${cls}"></span><div><b>${ttl}</b><p>${todo}</p><em>${pts}</em></div></div>`;
-  const pts = `<div class="hnow">В этой партии: <b>${mode}</b> · фишек у игрока: <b>${r.meeples}</b> · если фишек поровну — ${tie}${net && (net.quick || r.cups) ? ' · <b>игра на кубки</b>' : ''}</div>
+  const pts = `<div class="hnow">В этой партии: <b>${mode}</b> · фишек у игрока: <b>${r.meeples}</b> · если фишек поровну — ${tie}${net && !players.some(p => !p.human) && (net.quick || r.cups) ? ' · <b>игра на кубки</b>' : ''}</div>
     ${item('t-c2', '🏰 Город', 'Закройте картами все края города — чтобы со всех сторон он был окружён.', '2 очка за каждую карту города · недостроенный в конце игры — 1 за карту')}
     ${item('t-rS', '🛤 Дорога', 'Доведите дорогу до конца с обеих сторон: до города, перекрёстка, тупика или замкните её в кольцо.', '1 очко за каждую карту дороги · с целым большим мостом ×2')}
     ${item('t-fort', '🏯 Крепость', 'Окружите крепость картами со всех 8 сторон, включая углы.', '9 очков · недостроенная в конце — 1 за каждую карту рядом')}
@@ -1294,8 +1294,9 @@ function startGame(cfg, replay = []) {
   playersEl.style.gridTemplateColumns = `repeat(${players.length},1fr)`;
   const h = humanCount(), b = players.length - h;
   if (net) {
-    const isCups = !!(net.quick || (gameRules && gameRules.cups) || (rules && rules.cups));
-    const sub = `${isCups ? 'рейтинговая игра' : 'онлайн'} · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}`;
+    const hasBots = players.some(p => !p.human);
+    const isCups = !hasBots && !!(net.quick || (gameRules && gameRules.cups) || (rules && rules.cups));
+    const sub = `${isCups ? 'рейтинговая игра' : 'онлайн'}${hasBots && net.quick ? ' (с ботом)' : ''} · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}`;
     $('.room').innerHTML = `<b>${net.quick ? 'Онлайн' : 'Комната ' + net.code}</b><span><i></i>${sub}</span>`;
   }
   else if (window.AndroidApp || window.WEBAPP) $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Люди и боты' : 'С ботами') : 'Один телефон'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
@@ -1372,6 +1373,7 @@ function rewardChips(g) {
   const rw = g.rw || {}, sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
   const chips = [];
   if (rw.rated) chips.push(`<div class="rchip cup${rw.cups ? '' : ' zero'}" style="--i:0"><b>🏆 ${sign(rw.cups)}</b><small>кубков · всего ${PROG.cups}</small></div>`);
+  else if (net && players.some(p => !p.human)) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>без кубков: игра с ботом</small></div>`);
   else if (net && !net.quick) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>без кубков: игра с друзьями</small></div>`);
   chips.push(`<div class="rchip gold${g.delta < 0 ? ' neg' : ''}" style="--i:1"><b><i class="coin"></i> ${sign(g.delta)}</b><small>золота · всего ${wallet.gold}</small></div>`);
   if (rw.xp) chips.push(`<div class="rchip xp" style="--i:2"><b>⭐ +${rw.xp}</b><small>опыта · уровень ${rw.lvl}</small></div>`);
@@ -1390,8 +1392,8 @@ function renderResults(final, gold) {
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
   $('#rt').textContent = winTitle(o[0], final);
   const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
-  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${p.name}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
-  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
+  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
+  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
   const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
   $('#sumline').innerHTML = `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
   const ag = $('#again'); if (ag) { ag.textContent = net ? 'Реванш' : 'Ещё партию'; ag.disabled = false; }
@@ -2728,13 +2730,30 @@ function matchTick(me) {
   $('#mClock').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   const seats = net && net.quick && net.lobby ? net.lobby.seats : [];
   // After a while the creator may fill the empty seats with bots; anyone else may go play bots.
-  $('#mBots').hidden = sec < 20 || !!me.startAt;
+  $('#mBots').hidden = sec < 10 || !!me.startAt;
   $('#mBots').textContent = net && net.host && seats.length >= 2 ? 'Добавить ботов и начать' : 'Пока сыграть с ботами';
   if (!net || !net.quick || net.gameId) return;
   if (net.host && !me.startAt && (Date.now() - me.lastSeek > SEEK_MS || me.lastN !== seats.length)) { me.lastN = seats.length; me.lastSeek = Date.now(); matchSay({t: 'seek', code: net.code, id: myId, want: me.want, mode: me.mode, n: seats.length}); }
   // We knocked but the room's creator never let us in (closed the app, or the room is full).
   if (!net.host && Date.now() - net.since * 1000 > 9000 && !seats.some(x => x.owner === myId)) return matchSkip(net.code);
-  if (net.host && me.startAt && Date.now() >= me.startAt) { me.startAt = Infinity; startOnline(net.lobby.seats); }
+  // Guest waiting alone or with unresponsive host for >= 10s: skip to own room
+  if (!net.host && sec >= 10 && !me.startAt && seats.length < me.want) return matchSkip(net.code);
+
+  // H-5: if no human opponent found within ~10 seconds, auto-fill remaining seats with bots so player doesn't wait in empty room
+  if (net.host && !me.startAt && sec >= 10 && seats.length < me.want) {
+    const nextSeats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
+    if (!nextSeats.some(x => x.owner === myId)) nextSeats.unshift({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: true});
+    while (nextSeats.length < me.want) {
+      const bName = BOT_NAMES.find(n => !nextSeats.some(x => x.name === n)) || ('Бот ' + (nextSeats.length + 1));
+      nextSeats.push({owner: null, bot: true, name: bName, fig: randomFig(), col: null, ready: true});
+    }
+    publishLobby(nextSeats);
+    if (net.lobby) net.lobby.seats = nextSeats;
+    me.startAt = Date.now() + 1500;
+    matchSay({t: 'close', code: net.code});
+  }
+
+  if (net.host && me.startAt && Date.now() >= me.startAt) { me.startAt = Infinity; startOnline(net.lobby ? net.lobby.seats : seats); }
   matchRender();
 }
 const meLabel = (me, name) => (name = clean(name), me && name !== 'Вы' ? name + ' (вы)' : name);
@@ -2749,8 +2768,9 @@ function matchRender() {
   const left = mm.startAt && mm.startAt !== Infinity ? Math.max(0, Math.ceil((mm.startAt - Date.now()) / 1000)) : 0;
   $('#mLoad').classList.toggle('found', full);
   $('#mTitle').textContent = full ? (left ? `Старт через ${left}…` : 'Начинаем!') : others ? `Найдено ${others} из ${want - 1}` : 'Ищем соперников…';
-  $('#mSub').textContent = full ? 'Все игроки собрались' : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
-  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}</li>`);
+  const hasBot = seats.some(x => !x.owner);
+  $('#mSub').textContent = full ? (hasBot ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
+  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner ? ' <span class="botpill">бот</span>' : ''}</li>`);
   if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
   while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
   const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
@@ -2861,10 +2881,11 @@ function gameDone(place, score) {
   const xp = laid < 6 ? 0 : Math.round((10 + (place < 0 ? 15 : [30, 20, 10, 5, 5][place] || 5) + Math.min(40, score >> 1)) * (net ? 1.5 : 1));
   const up = PG.state.progress.addXp(PROG, xp); wallet.gold += 20 * up;
   // Cups: quick online games, and a private room whose creator turned "for cups" on (at most 5 such games a day:
-  // nobody can farm cups with a friend).
-  const privCups = !!(net && !net.quick && gameRules.cups && players.filter(p => p.human).length >= 2);
+  // nobody can farm cups with a friend). No cups if any bot is in the game.
+  const hasBots = players.some(p => !p.human);
+  const privCups = !!(net && !net.quick && gameRules.cups && players.filter(p => p.human).length >= 2 && !hasBots);
   if (privCups) { const d = today(); if (PROG.pc && PROG.pc.d === d) PROG.pc.n++; else PROG.pc = {d, n: 1}; }
-  const rated = !!(net && (net.quick || (privCups && PROG.pc.n <= 5)));
+  const rated = !!(!hasBots && net && (net.quick || (privCups && PROG.pc.n <= 5)));
   const cups = rated ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
   if (rated) { PROG.cups += cups; syncRating(); }
   saveWallet(); progressDot();
@@ -3572,15 +3593,23 @@ async function statsDialog() {
     const app = v => v.p === 'github' || v.p === 'play';
     const tile = (num, label) => `<div class="stt"><b>${num}</b><small>${label}</small></div>`;
     const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
-    let eligD1 = 0, retD1 = 0, eligD7 = 0, retD7 = 0;
+    let eligD1 = 0, retD1 = 0, eligD7 = 0, retD7 = 0, hasFb1 = false, hasFb7 = false;
     P.forEach(v => {
       const fs = v.fs; if (!fs || !/^\d{4}-\d{2}-\d{2}$/.test(fs)) return;
       const fsMs = Date.parse(fs + 'T00:00:00Z'), age = Math.floor((now - fsMs) / D);
-      if (age >= 1) { eligD1++; if (v.d1 != null ? v.d1 === 1 : (v.t - fsMs >= D)) retD1++; }
-      if (age >= 7) { eligD7++; if (v.d7 != null ? v.d7 === 1 : (v.t - fsMs >= 7 * D)) retD7++; }
+      if (age >= 1) {
+        eligD1++;
+        if (v.d1 != null) { if (v.d1 === 1) retD1++; }
+        else if (v.t - fsMs >= D) { retD1++; hasFb1 = true; }
+      }
+      if (age >= 7) {
+        eligD7++;
+        if (v.d7 != null) { if (v.d7 === 1) retD7++; }
+        else if (v.t - fsMs >= 7 * D) { retD7++; hasFb7 = true; }
+      }
     });
-    const d1Str = eligD1 ? Math.round(retD1 / eligD1 * 100) + '%' : '—';
-    const d7Str = eligD7 ? Math.round(retD7 / eligD7 * 100) + '%' : '—';
+    const d1Str = eligD1 ? Math.round(retD1 / eligD1 * 100) + '%' + (hasFb1 ? ' (оценка)' : '') : '—';
+    const d7Str = eligD7 ? Math.round(retD7 / eligD7 * 100) + '%' + (hasFb7 ? ' (оценка)' : '') : '—';
     out.innerHTML = `<div class="stgrid">${tile(P.length, 'игроков заходили')}${tile(n(v => v.r), 'с сохранённым профилем')}${tile(online.length, 'в сети сейчас')}${tile(playing, 'играют сейчас')}
       ${tile(n(v => ago(v) < D), 'за сутки')}${tile(n(v => ago(v) < 7 * D), 'за неделю')}${tile(d1Str, 'удержание D1')}${tile(d7Str, 'удержание D7')}
       ${tile(n(app), 'с приложением')}${tile(n(v => app(v) && now - (v.u || 0) < D), 'обновились за сутки')}${tile(n(v => v.p === 'web'), 'в веб-версии')}${tile(relOk ? rels.length : '—', 'версий вышло')}</div>

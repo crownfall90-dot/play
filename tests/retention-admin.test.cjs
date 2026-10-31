@@ -75,4 +75,20 @@ test('retention panel (H-2): founder-admin displays D1/D7 metrics and cohort bre
   assert.equal(eligD7, 3);
   assert.equal(retD7, 1);
   assert.equal(Math.round(retD7 / eligD7 * 100), 33);
+
+  // Fallback indicator test: when d1 is missing and fallback is used, '(оценка)' is appended
+  const fallbackRecord = [{uid: 'uOld', fs: '2026-10-25', t: now, d1: null, d7: null}];
+  let fbEligD1 = 0, fbRetD1 = 0, hasFb1 = false;
+  fallbackRecord.forEach(p => {
+    const fsMs = Date.parse(p.fs + 'T00:00:00Z');
+    const ageDays = Math.floor((now - fsMs) / dayMs);
+    if (ageDays >= 1) {
+      fbEligD1++;
+      const isFallback = p.d1 == null;
+      const ret = p.d1 != null ? p.d1 === 1 : (p.t - fsMs >= dayMs);
+      if (ret) { fbRetD1++; if (isFallback) hasFb1 = true; }
+    }
+  });
+  const label = fbEligD1 > 0 ? `${Math.round(fbRetD1 / fbEligD1 * 100)}% (${fbRetD1}/${fbEligD1})${hasFb1 ? ' (оценка)' : ''}` : '—';
+  assert.ok(label.includes('(оценка)'), 'metric contains (оценка) when computed via fallback');
 });

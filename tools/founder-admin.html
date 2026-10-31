@@ -510,7 +510,7 @@ async function loadStats() {
 
     // Retention D1 / D7 across all presence records with first seen date (fs)
     const dayMs = 864e5;
-    let eligD1 = 0, retD1 = 0, eligD7 = 0, retD7 = 0;
+    let eligD1 = 0, retD1 = 0, eligD7 = 0, retD7 = 0, hasFb1 = false, hasFb7 = false;
     const cohorts = {};
     all.forEach(p => {
       const fs = p.fs;
@@ -521,17 +521,27 @@ async function loadStats() {
       cohorts[fs].total++;
       if (ageDays >= 1) {
         eligD1++;
+        const isFallback = p.d1 == null;
         const ret = p.d1 != null ? p.d1 === 1 : (p.t - fsMs >= dayMs);
-        if (ret) { retD1++; cohorts[fs].d1++; }
+        if (ret) {
+          retD1++;
+          cohorts[fs].d1++;
+          if (isFallback) hasFb1 = true;
+        }
       }
       if (ageDays >= 7) {
         eligD7++;
+        const isFallback = p.d7 == null;
         const ret = p.d7 != null ? p.d7 === 1 : (p.t - fsMs >= 7 * dayMs);
-        if (ret) { retD7++; cohorts[fs].d7++; }
+        if (ret) {
+          retD7++;
+          cohorts[fs].d7++;
+          if (isFallback) hasFb7 = true;
+        }
       }
     });
-    $('valRetD1').textContent = eligD1 > 0 ? `${Math.round(retD1 / eligD1 * 100)}% (${retD1}/${eligD1})` : '—';
-    $('valRetD7').textContent = eligD7 > 0 ? `${Math.round(retD7 / eligD7 * 100)}% (${retD7}/${eligD7})` : '—';
+    $('valRetD1').textContent = eligD1 > 0 ? `${Math.round(retD1 / eligD1 * 100)}% (${retD1}/${eligD1})${hasFb1 ? ' (оценка)' : ''}` : '—';
+    $('valRetD7').textContent = eligD7 > 0 ? `${Math.round(retD7 / eligD7 * 100)}% (${retD7}/${eligD7})${hasFb7 ? ' (оценка)' : ''}` : '—';
 
     const recentCohorts = Object.values(cohorts).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
     if (recentCohorts.length) {
