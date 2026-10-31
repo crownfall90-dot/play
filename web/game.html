@@ -39,14 +39,14 @@
           <h2 class="logo">Puzzle<span>grad</span></h2>
           <p class="tag">Стройте города, дороги и крепости из общей стопки</p>
           <button class="resume" id="resume" hidden><span class="ric"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg></span><span class="rtx"><b>Продолжить партию</b><small id="resumeInfo"></small></span></button>
-          <button class="playon" id="playOnline"><span class="pglow"></span>
+          <div class="jig" id="jigMenu"><button class="playon" id="playOnline" data-jp data-jc="gold" data-je="b:tab"><span class="pglow"></span>
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
           <div class="modes">
-            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С&nbsp;друзьями</b><small>Комната по коду</small></button>
-            <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
-            <button class="mode" data-mode="local"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
-          </div>
+            <button class="mode" data-go="lobby" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С&nbsp;друзьями</b><small>Комната по коду</small></button>
+            <button class="mode" data-mode="bots" data-jp data-jc="#3fc27a" data-je="t:notch,l:notch,r:tab"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
+            <button class="mode" data-mode="local" data-jp data-jc="#b06cf0" data-je="l:notch"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
+          </div></div>
         </div>
       </section>
 
@@ -177,6 +177,7 @@
       <section class="screen scroll" id="scr-setup" hidden>
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b id="setupTitle">Новая партия</b></div>
+          <div class="jig shero" id="jigSetup"><div class="mhero" id="setupHero" data-jp data-jc="#3fc27a" data-je="r:tab"><span class="mhi" id="shIcon">🤖</span><div><b id="shTitle"></b><p id="shTag"></p></div></div></div>
           <button class="quickbig" id="setupQuick" hidden><i>⚡</i><span><b>Быстрая игра</b><small>Сразу к первой игре, где ждут игроков</small></span></button>
           <div class="h3 orown" id="setupOwn" hidden>Или своя игра</div>
           <div class="h3">Сколько игроков</div>
@@ -1949,6 +1950,8 @@ function openSetup(mode) {
     if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
   });
   $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
+  const hero = $('#setupHero'), hm = {bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', ''];
+  hero.dataset.jc = hm[0]; $('#shIcon').textContent = hm[1]; $('#shTitle').textContent = hm[2]; $('#shTag').textContent = hm[3]; hero.classList.toggle('gold', hm[0] === 'gold');
   // setupInvite removed; friends shown inline in lobby
   colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
@@ -3492,6 +3495,56 @@ if ($('#feedbackBtn')) $('#feedbackBtn').onclick = openFeedback;
 if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 // Bottom navigation: the five main sections, shown on those screens only (never in a game or a lobby).
+/* Jigsaw frame: the pieces inside a host (children with data-jp) are drawn as puzzle pieces. data-jc is the colour
+   ("gold" or a hex), data-je lists the edges that carry a tab or a notch, e.g. "r:tab,b:notch". The outline is SVG
+   behind the real buttons, redrawn when anything changes size. The same shapes are the design language of the game:
+   the bottom bar, the main menu and the section banners. */
+let jigN = 0;
+function jigsawFrame(host, o) {
+  const uid = 'jg' + (++jigN); // gradient ids must differ per frame: a gradient inside a hidden screen does not paint elsewhere
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'jigsvg'); svg.setAttribute('aria-hidden', 'true'); host.prepend(svg);
+  const K = Object.assign({R: 20, NECK: 5.5, BR: 9, CLR: 2, BULB: 6, GAP: 6}, o || {}), f = v => +v.toFixed(2);
+  const mix = (h, o2, k) => { const n = x => parseInt(x.slice(1), 16), a = n(h), c = n(o2), g = sh => Math.round(((a >> sh) & 255) * k + ((c >> sh) & 255) * (1 - k)); return '#' + ((1 << 24) | g(16) << 16 | g(8) << 8 | g(0)).toString(16).slice(1); };
+  const path = (x, y, w, h, ed) => {
+    const {R, NECK, BR, CLR, BULB, GAP} = K;
+    const sides = [{k: 't', u: [1, 0], S: [x + R, y], L: w - 2 * R}, {k: 'r', u: [0, 1], S: [x + w, y + R], L: h - 2 * R}, {k: 'b', u: [-1, 0], S: [x + w - R, y + h], L: w - 2 * R}, {k: 'l', u: [0, -1], S: [x, y + h - R], L: h - 2 * R}];
+    let d = `M${f(x + R)} ${f(y)}`;
+    sides.forEach((e, i) => {
+      const [ux, uy] = e.u, nx = uy, ny = -ux, m = e.L / 2, kind = ed[e.k];
+      const P = (a, off) => `${f(e.S[0] + ux * a + nx * off)} ${f(e.S[1] + uy * a + ny * off)}`;
+      if (kind === 'tab') d += `L${P(m - NECK, 0)}C${P(m - NECK, 1)} ${P(m - BR, 3)} ${P(m - BR, BULB)}A${BR} ${BR} 0 1 1 ${P(m + BR, BULB)}C${P(m + BR, 3)} ${P(m + NECK, 1)} ${P(m + NECK, 0)}`;
+      else if (kind === 'notch') { const r = BR + CLR, nk = NECK + CLR, ib = BULB - GAP; d += `L${P(m - nk, 0)}C${P(m - nk, -1)} ${P(m - r, -1.5)} ${P(m - r, -ib)}A${r} ${r} 0 1 0 ${P(m + r, -ib)}C${P(m + r, -1.5)} ${P(m + nk, -1)} ${P(m + nk, 0)}`; }
+      const nx2 = sides[(i + 1) % 4];
+      d += `L${P(e.L, 0)}A${R} ${R} 0 0 1 ${f(nx2.S[0])} ${f(nx2.S[1])}`;
+    });
+    return d + 'Z';
+  };
+  const el = (n, at) => { const e = document.createElementNS(NS, n); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  const draw = () => {
+    const hr = host.getBoundingClientRect(), pcs = [...host.querySelectorAll('[data-jp]')];
+    if (!hr.width || !hr.height || !pcs.length) return;
+    const PAD = 24; svg.setAttribute('viewBox', `${-PAD} ${-PAD} ${hr.width + 2 * PAD} ${hr.height + 2 * PAD}`);
+    svg.setAttribute('width', hr.width + 2 * PAD); svg.setAttribute('height', hr.height + 2 * PAD); svg.style.left = svg.style.top = -PAD + 'px';
+    const defs = el('defs', {}), out = [defs];
+    const grad = (id, top, bot) => { const g = el('linearGradient', {id, x1: 0, y1: 0, x2: 0, y2: 1}); g.append(el('stop', {offset: 0, 'stop-color': top}), el('stop', {offset: 1, 'stop-color': bot})); defs.append(g); };
+    const gl = el('linearGradient', {id: uid + 'Gl', x1: 0, y1: 0, x2: 0, y2: 1}); gl.append(el('stop', {offset: 0, 'stop-color': '#fff', 'stop-opacity': .26}), el('stop', {offset: .5, 'stop-color': '#fff', 'stop-opacity': .05}), el('stop', {offset: 1, 'stop-color': '#fff', 'stop-opacity': 0})); defs.append(gl);
+    grad(uid + 'Gold', '#ffe08e', '#e29c2a');
+    pcs.forEach((b, i) => {
+      const r = b.getBoundingClientRect(), c = b.dataset.jc || '#4c8dff', ed = {};
+      (b.dataset.je || '').split(',').forEach(t => { const [k, v] = t.split(':'); if (k && v) ed[k.trim()] = v.trim(); });
+      if (c !== 'gold') grad(uid + 'C' + i, mix(c, '#1c2656', .5), mix(c, '#121a40', .72));
+      const d = path(r.left - hr.left, r.top - hr.top, r.width, r.height, ed);
+      out.push(el('path', {d, class: 'base' + (c === 'gold' ? ' gold' : ''), fill: `url(#${uid}${c === 'gold' ? 'Gold' : 'C' + i})`}), el('path', {d, class: 'gloss', fill: `url(#${uid}Gl)`}));
+    });
+    svg.replaceChildren(...out);
+  };
+  const ro = new ResizeObserver(draw); ro.observe(host); host.querySelectorAll('[data-jp]').forEach(p => ro.observe(p));
+  new MutationObserver(draw).observe(host, {attributes: true, attributeFilter: ['hidden', 'class', 'data-jc'], subtree: true});
+  requestAnimationFrame(draw); document.fonts && document.fonts.ready && document.fonts.ready.then(draw);
+  return draw;
+}
+(function menuJigsaw() { const h = $('#jigMenu'); if (h) jigsawFrame(h, {R: 20, GAP: 6}); const g = $('#jigSetup'); if (g) jigsawFrame(g, {R: 20, GAP: 6, NECK: 6, BR: 10, BULB: 7}); })();
 /* The bottom bar is four jigsaw pieces: each has a round tab that fits into the notch of the next one. Every
    section has its own colour; the piece of the open section is gold and glowing. The outline is drawn as SVG from
    the real size of the buttons. */
@@ -3501,7 +3554,7 @@ $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'men
   svg.setAttribute('class', 'bnpz'); svg.setAttribute('aria-hidden', 'true');
   nav.prepend(svg);
   const R = 16, NECK = 6.5, BR = 10.5, CLR = 2, BULB = 7, GAP = 4; // corner, half neck, tab radius, room in the notch, tab centre from the edge
-  const COLS = ['#4c8dff', '#3fc27a', '#b06cf0', '#f2994a'];
+  const COLS = ['#6a7dff', '#22b8cf', '#4c8dff', '#f2994a'];
   const mix = (h, o, k) => { const n = x => parseInt(x.slice(1), 16), a = n(h), c = n(o), f = (s) => Math.round(((a >> s) & 255) * k + ((c >> s) & 255) * (1 - k)); return '#' + ((1 << 24) | f(16) << 16 | f(8) << 8 | f(0)).toString(16).slice(1); };
   const piece = (b, i, last, cy, H) => {
     const {x0, x1} = b, f = v => +v.toFixed(2), y1 = H;
