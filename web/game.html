@@ -155,6 +155,8 @@
       <section class="screen scroll" id="scr-setup" hidden>
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b id="setupTitle">Новая партия</b></div>
+          <button class="quickbig" id="setupQuick" hidden><i>⚡</i><span><b>Быстрая игра</b><small>Сразу к первой игре, где ждут игроков</small></span></button>
+          <div class="h3 orown" id="setupOwn" hidden>Или своя игра</div>
           <div class="h3">Сколько игроков</div>
           <div class="seg" id="seg"><button>2</button><button>3</button><button>4</button><button>5</button></div>
           <p class="shint" id="segHint" hidden></p>
@@ -168,7 +170,7 @@
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button><button class="cta wide alt" id="startQuick" hidden>⚡ Найти быструю игру</button><button class="ghostbtn wide" id="startInv" hidden>👥 Играть с друзьями онлайн</button></div>
+        <div class="sfoot"><div class="sbtns"><button class="cta alt" id="startInv" hidden>👥 Пригласить друзей</button><button class="cta wide" id="start">Начать партию</button></div></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -1795,10 +1797,10 @@ function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
 $('#startInv').onclick = async () => { await quickMatch(true); if (mm) setTimeout(() => inviteSheet(), 300); };
 // «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
-$('#startQuick').onclick = () => quickMatch();
+$('#setupQuick').onclick = () => quickMatch();
 function renderSetup() {
-  $('#startInv').hidden = !(setupMode === 'online' && FB && registered());
-  $('#startQuick').hidden = setupMode !== 'online';
+  $('#startInv').hidden = setupMode !== 'online';
+  $('#setupQuick').hidden = $('#setupOwn').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
@@ -1837,7 +1839,7 @@ $('#setupColor').addEventListener('click', e => {
 const SETUP_MODES = {
   bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.'},
-  online: {title: 'Игра онлайн', go: '🎲 Создать игру', hint: 'Рейтинговая партия на кубки. «Создать игру» — ваша игра с выбранными игроками и режимом, к вам подключатся другие. «Найти быструю игру» — сразу к первой игре, где ждут игроков, с любым режимом.', seg: 'Поиск соберёт столько игроков, включая вас'},
+  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки. Своя игра ждёт игроков, нажавших «Быструю игру»; друзей можно позвать заранее.', seg: 'Поиск соберёт столько игроков, включая вас'},
   friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'После создания появится код комнаты — отправьте его друзьям. Свободные места можно занять ботами.', seg: 'Столько мест будет в комнате, включая вас'},
 };
 let setupMode = 'bots';
