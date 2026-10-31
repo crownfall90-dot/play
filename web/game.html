@@ -39,6 +39,11 @@
           <h2 class="logo">Puzzle<span>grad</span></h2>
           <p class="tag">Стройте города, дороги и крепости из общей стопки</p>
           <button class="resume" id="resume" hidden><span class="ric"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg></span><span class="rtx"><b>Продолжить партию</b><small id="resumeInfo"></small></span></button>
+          <button class="mquest-banner" id="menuQuestBanner" aria-label="Ежедневные задания">
+            <span class="mq-ic">🎯</span>
+            <span class="mq-tx"><b id="mqTitle">Задания: 0/3</b><small id="mqSub">Загрузка заданий…</small></span>
+            <span class="mq-arr"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg></span>
+          </button>
           <div class="jig" id="jigMenu"><button class="playon" id="playOnline" data-jp data-jc="gold" data-je="b:tab"><span class="pglow"></span>
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
@@ -1484,25 +1489,43 @@ function openGift() {
 const localDay = (shift = 0) => { const d = new Date(Date.now() + shift * 864e5); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 function streakState() {
   const st = wallet.streak || {n: 0, last: ''};
-  // n: days in a row already claimed; today's claim makes it n + 1 (or 1 after a gap)
-  const next = st.last === localDay(-1) ? st.n + 1 : 1;
-  return {st, ready: st.last !== localDay(), next, day: (next - 1) % 7};
+  const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : 'w1';
+  const freezeAvail = !st.freezeWeek || st.freezeWeek !== curWeek;
+  const isYesterday = st.last === localDay(-1);
+  const isTwoDaysAgo = st.last === localDay(-2);
+  let next = 1;
+  let usedFreeze = false;
+  if (isYesterday) {
+    next = (st.n || 0) + 1;
+  } else if (isTwoDaysAgo && freezeAvail && (st.n || 0) >= 1) {
+    next = (st.n || 0) + 1;
+    usedFreeze = true;
+  }
+  return {st, ready: st.last !== localDay(), next, day: (next - 1) % 7, usedFreeze, freezeAvail};
 }
 function streakCheck() {
   if (!isApp || (typeof tut !== 'undefined' && tut) || !(wallet.tut || wallet.tutAsked) || document.querySelector('body > .over')) return;
-  const {st, ready, next, day} = streakState();
+  const {st, ready, next, day, usedFreeze, freezeAvail} = streakState();
   if (!ready) return;
   const lost = st.n > 1 && next === 1;
   const gold = STREAK_GOLD[day];
   const cells = STREAK_GOLD.map((g, i) => `<li class="${i < day ? 'done' : i === day ? 'now' : ''}${i === 6 ? ' big' : ''}"><small>День ${i + 1}</small>${i < day ? '<b>✓</b>' : `<b><i class="coin"></i>${g}</b>`}</li>`).join('');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard streak"><div class="fire">🔥</div><h3>${next === 1 ? (lost ? 'Серия прервалась — начнём заново' : 'Ежедневная награда') : `${next} ${next % 10 === 1 && next % 100 !== 11 ? 'день' : next % 10 >= 2 && next % 10 <= 4 && (next % 100 < 10 || next % 100 >= 20) ? 'дня' : 'дней'} подряд!`}</h3><p>Заходите каждый день — награда растёт до 100 золота. Пропуск дня начинает серию заново</p><ol class="days">${cells}</ol><button class="cta wide" id="streakTake">Забрать +${gold} <i class="coin" style="display:inline-block;vertical-align:-2px"></i></button></div>`;
+  const freezeMsg = usedFreeze ? '<p class="streak-freeze-badge">🧊 Заморозка спасла серию за пропущенный день!</p>' : `<p class="streak-freeze-badge">🧊 Заморозка серии: ${freezeAvail ? 'доступна на этой неделе' : 'использована'}</p>`;
+  box.innerHTML = `<div class="ocard streak"><div class="fire">🔥</div><h3>${next === 1 ? (lost ? 'Серия прервалась — начнём заново' : 'Ежедневная награда') : `${next} ${next % 10 === 1 && next % 100 !== 11 ? 'день' : next % 10 >= 2 && next % 10 <= 4 && (next % 100 < 10 || next % 100 >= 20) ? 'дня' : 'дней'} подряд!`}</h3><p>Заходите каждый день — награда растёт до 100 золота. Пропуск дня начинает серию заново</p>${freezeMsg}<ol class="days">${cells}</ol><button class="cta wide" id="streakTake">Забрать +${gold} <i class="coin" style="display:inline-block;vertical-align:-2px"></i></button></div>`;
   document.body.append(box);
   box.querySelector('#streakTake').onclick = () => {
-    wallet.streak = {n: next, last: localDay(), best: Math.max(next, st.best || 0)};
-    wallet.gold += gold; saveWallet(); beep('coin'); track('daily_streak', {day: next});
+    const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : 'w1';
+    wallet.streak = {
+      n: next,
+      last: localDay(),
+      best: Math.max(next, st.best || 0),
+      freezeWeek: usedFreeze ? curWeek : (st.freezeWeek || '')
+    };
+    wallet.gold += gold; saveWallet(); beep('coin'); track('daily_streak', {day: next, freeze: usedFreeze});
     document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
-    box.remove(); toastAny(day === 6 ? `Неделя подряд! +${gold} золота 🎉` : `+${gold} золота. Завтра — ${STREAK_GOLD[(day + 1) % 7]}`);
+    box.remove();
+    toastAny(usedFreeze ? `🧊 Заморозка спасла серию! +${gold} золота` : day === 6 ? `Неделя подряд! +${gold} золота 🎉` : `+${gold} золота. Завтра — ${STREAK_GOLD[(day + 1) % 7]}`);
   };
 }
 // Gold by place: 1st +15, 2nd +10, 3rd +5, 4th 0, 5th −5 (ties share the higher place).
@@ -2854,7 +2877,14 @@ const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
 // Level, quest and achievement rules live in src/state/progress.js.
-const {xpNeed, QUESTS, ACH} = PG.state.progress;
+const {xpNeed, QUESTS, ACH, WEEKLY_QUESTS, WEEKLY_CHEST_GOLD, weekId} = PG.state.progress;
+function questsWeekly() {
+  const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : 'w1';
+  if (PROG.week === curWeek && PROG.wq && PROG.wq.length) return;
+  PROG.week = curWeek;
+  PROG.wq = (WEEKLY_QUESTS || []).map(q => ({id: q.id, n: 0, got: false}));
+  PROG.wchest = false;
+}
 // Three quests a day, the same for the whole day.
 function questsToday() {
   if (PROG.day === today()) return;
@@ -2862,11 +2892,15 @@ function questsToday() {
 }
 function progress(d) {
   questsToday();
+  questsWeekly();
   for (const [k, v] of Object.entries(d)) {
     if (k in PROG.st && k !== 'best') PROG.st[k] += v;
-    PROG.q.forEach(q => { const Q = QUESTS.find(x => x.id === q.id); if (Q.k === k && !q.got) q.n = Math.min(Q.n, q.n + v); });
+    PROG.q.forEach(q => { const Q = QUESTS.find(x => x.id === q.id); if (Q && Q.k === k && !q.got) q.n = Math.min(Q.n, q.n + v); });
+    if (PROG.wq) {
+      PROG.wq.forEach(q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); if (WQ && WQ.k === k && !q.got) q.n = Math.min(WQ.n, q.n + v); });
+    }
   }
-  saveWallet(); progressDot();
+  saveWallet(); progressDot(); renderMenuQuestBanner();
 }
 // place: 0 = first … ; -1 = draw.
 function gameDone(place, score) {
@@ -2894,25 +2928,57 @@ function gameDone(place, score) {
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated, cups, xp, up, lvl: PROG.lvl, place};
 }
-const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
+const rewardReady = () => {
+  questsToday();
+  questsWeekly();
+  const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
+  const wqDot = PROG.wq && (PROG.wq.some(q => !q.got && q.n >= (WEEKLY_QUESTS.find(x => x.id === q.id) || {}).n) || (!PROG.wchest && PROG.wq.every(q => q.got)));
+  const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
+  return qDot || wqDot || aDot || !!PROG.inTop10;
+};
 function ptabsDot() {
   questsToday();
+  questsWeekly();
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
+  const wqDot = PROG.wq && (PROG.wq.some(q => !q.got && q.n >= (WEEKLY_QUESTS.find(x => x.id === q.id) || {}).n) || (!PROG.wchest && PROG.wq.every(q => q.got)));
   const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
-    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || aDot) : pt === 'top' ? tDot : false);
+    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || wqDot || aDot) : pt === 'top' ? tDot : false);
   });
 }
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
 let ptab = 'rewards';
 function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
 // The profile plate on the menu: avatar, nickname, level with its bar, gold. Taps open the profile.
+function renderMenuQuestBanner() {
+  const b = $('#menuQuestBanner'); if (!b) return;
+  questsToday();
+  const qList = PROG.q || [];
+  const doneCount = qList.filter(q => {
+    const Q = (QUESTS || []).find(x => x.id === q.id);
+    return q.got || (Q && q.n >= Q.n);
+  }).length;
+  const readyGold = qList.filter(q => {
+    const Q = (QUESTS || []).find(x => x.id === q.id);
+    return !q.got && Q && q.n >= Q.n;
+  }).reduce((sum, q) => sum + ((QUESTS || []).find(x => x.id === q.id) || {g: 0}).g, 0);
+  const remGold = qList.filter(q => !q.got).reduce((sum, q) => sum + ((QUESTS || []).find(x => x.id === q.id) || {g: 0}).g, 0);
+
+  const tEl = $('#mqTitle'), sEl = $('#mqSub');
+  if (tEl) tEl.textContent = `Задания: ${doneCount}/${qList.length}`;
+  if (sEl) {
+    if (readyGold > 0) sEl.textContent = `${readyGold} золота ждёт!`;
+    else if (doneCount === qList.length && qList.length > 0) sEl.textContent = 'Все выполнены 🎉';
+    else sEl.textContent = `ещё ${remGold} золота`;
+  }
+}
 function renderMenuProfile() {
   const el = $('#mprof'); if (!el) return;
   const need = xpNeed(PROG.lvl), name = profileName();
   el.innerHTML = `<span class="av${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${name[0] || '?'}</span><span class="mpi"><b>${name}</b><span class="mpl"><em>Ур. ${PROG.lvl}</em><i class="mxp"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></i></span></span><span class="mpg"><i class="coin"></i><b class="goldN">${wallet.gold}</b></span>`;
+  renderMenuQuestBanner();
 }
 function renderProgress() {
   questsToday();
@@ -2941,8 +3007,21 @@ function renderProgress() {
       const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
       return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
     }).join('');
+    questsWeekly();
+    const wqDone = q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); return WQ && q.n >= WQ.n; };
+    const wqList = PROG.wq || [];
+    const wqRows = [...wqList].sort((a, b) => rank(wqDone(a), a.got) - rank(wqDone(b), b.got)).map(q => {
+      const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id) || {ic: '🎯', t: 'Цель', n: 1, g: 10};
+      const done = q.n >= WQ.n;
+      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${WQ.ic}</span><span class="qt"><b>${WQ.t}</b><div class="xpbar"><i style="width:${Math.min(100, 100 * q.n / WQ.n)}%"></i></div><small>${q.n} / ${WQ.n} · <i class="coin"></i> ${WQ.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimwq="${q.id}">Забрать</button>` : ''}</div>`;
+    }).join('');
+    const allWqGot = wqList.length > 0 && wqList.every(q => q.got);
+    const chestClaimed = !!PROG.wchest;
+    const chestRow = `<div class="quest weekly-chest${chestClaimed ? ' got' : allWqGot ? ' done' : ''}"><span class="qi">🎁</span><span class="qt"><b>Большой сундук недели</b><small>${chestClaimed ? 'Сундук недели открыт' : allWqGot ? 'Все цели недели достигнуты!' : 'Выполните все 3 цели недели'} · <i class="coin"></i> ${WEEKLY_CHEST_GOLD || 100}</small></span>${chestClaimed ? '<span class="pill">Получено</span>' : allWqGot ? '<button class="chip pri" data-claimwchest="1">Забрать +100</button>' : '<span class="pill lock">Заперт</span>'}</div>`;
+    const wqGot = wqList.filter(q => q.got).length;
+
     const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
-    el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p><div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
+    el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p><div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<p class="qnote">Цели недели сбрасываются каждый понедельник</p><div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
   } else if (ptab === 'hist') renderHistory(el);
   else renderTop();
 }
@@ -3001,11 +3080,13 @@ $('#rtabs').onclick = e => {
 };
 $('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; PROG.topSeen = true; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
-  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
+  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]'), wq = e.target.closest('[data-claimwq]'), wch = e.target.closest('[data-claimwchest]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
   else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st, PROG.lvl)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
+  else if (wq) { const it = (PROG.wq || []).find(x => x.id === wq.dataset.claimwq), WQ = (WEEKLY_QUESTS || []).find(x => x.id === it.id); if (!it || !WQ || it.got || it.n < WQ.n) return; it.got = true; wallet.gold += WQ.g; }
+  else if (wch) { if (PROG.wchest || !PROG.wq || !PROG.wq.length || !PROG.wq.every(x => x.got)) return; PROG.wchest = true; wallet.gold += WEEKLY_CHEST_GOLD || 100; toastAny('Большой сундук недели открыт! +100 золота 🎉'); }
   else return;
-  beep('coin'); saveWallet(); progressDot(); renderProgress();
+  beep('coin'); saveWallet(); progressDot(); renderProgress(); renderMenuProfile();
 });
 /* Rating: cups from online games (1st +30, 2nd +15, 3rd +5, draw +10) in /leaders, top 50.
    The database rules let a player raise their own score by at most 30 a minute, so a big
@@ -3031,6 +3112,7 @@ async function syncRating(force) {
     }
   } catch (_) {}
 }
+let topScope = 'all';
 async function renderTop() {
   const el = $('#ptab');
   if (!FB) { el.innerHTML = '<p class="qnote">Рейтинг доступен в приложении</p>'; return; }
@@ -3040,15 +3122,38 @@ async function renderTop() {
     const r = await fetch(`${FB.dbUrl}/leaders.json?auth=${tok}&orderBy=%22r%22&limitToLast=50`);
     if (ptab !== 'top') return;
     if (!r.ok) { el.innerHTML = '<p class="qnote">Рейтинг скоро заработает — обновляем сервер</p>'; return; }
-    const rows = Object.entries((await r.json()) || {}).map(([uid, v]) => ({uid, ...v})).filter(x => x.r > 0).sort((a, b) => b.r - a.r);
-    const me = fbAuth.uid, mine = rows.findIndex(x => x.uid === me);
+    const allRows = Object.entries((await r.json()) || {}).map(([uid, v]) => ({uid, ...v})).filter(x => x.r > 0).sort((a, b) => b.r - a.r);
+    const me = (fbAuth && fbAuth.uid) ? fbAuth.uid : '';
+    const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : '';
+
+    const friendUids = new Set(Object.keys(wallet.friends || {}));
+    if (me) friendUids.add(me);
+    const rows = topScope === 'friends' ? allRows.filter(x => friendUids.has(x.uid)) : allRows;
+    const mine = rows.findIndex(x => x.uid === me);
+
     const av = (x, i) => `<span class="av" style="--c:${PALETTE[i % PALETTE.length].col}">${(clean(x.n) || '?')[0].toUpperCase()}</span>`;
     const podium = [1, 0, 2].map(i => rows[i] ? `<div class="pod p${i + 1}${rows[i].uid === me ? ' me' : ''}">${av(rows[i], i)}<b>${clean(rows[i].n) || 'Игрок'}</b><small>🏆 ${rows[i].r}</small><div class="ped"><i>${i + 1}</i></div></div>` : '<div class="pod empty"></div>').join('');
     const list = rows.slice(3, 10).map((x, k) => `<div class="lead${x.uid === me ? ' me' : ''}"><i>${k + 4}</i>${av(x, k + 3)}<span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><b>🏆 ${x.r}</b></div>`).join('');
     const myRow = mine >= 10 ? `<div class="lead me myrank"><i>${mine + 1}</i>${av(rows[mine], mine)}<span>Вы</span><b>🏆 ${rows[mine].r}</b></div>`
       : mine < 0 ? `<div class="lead me myrank"><i>—</i><span>Вы пока не в рейтинге</span><b>🏆 ${PROG.cups}</b></div>` : '';
-    el.innerHTML = rows.length ? `<div class="podium">${podium}</div>${list}${myRow}` : '<p class="qnote">Пока никого — выиграйте рейтинговую партию первым!</p>';
-    el.innerHTML += '<p class="qnote">Кубки — за онлайн-партии на рейтинг: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
+
+    const scopeTabs = `<div class="scope-tabs"><button class="chip${topScope === 'all' ? ' pri' : ''}" id="topScopeAll">Все игроки</button><button class="chip${topScope === 'friends' ? ' pri' : ''}" id="topScopeFriends">Среди друзей</button></div>`;
+    const seasonTag = curWeek ? `<div style="text-align:center;color:var(--muted);font-size:11.5px;margin-bottom:6px">Лига · Сезон <b>${curWeek}</b> (сброс в понедельник)</div>` : '';
+
+    let contentHtml = '';
+    if (rows.length) {
+      contentHtml = `<div class="podium">${podium}</div>${list}${myRow}`;
+    } else if (topScope === 'friends') {
+      contentHtml = '<p class="qnote">Никто из ваших друзей ещё не попал в рейтинг. Приглашайте друзей по коду в разделе «Друзья»!</p>' + myRow;
+    } else {
+      contentHtml = '<p class="qnote">Пока никого — выиграйте рейтинговую партию первым!</p>';
+    }
+
+    el.innerHTML = seasonTag + scopeTabs + contentHtml + '<p class="qnote">Кубки — за онлайн-партии на рейтинг: 1-е место +30, 2-е +15, 3-е +5, ничья +10</p>';
+    const btnAll = el.querySelector('#topScopeAll'), btnFriends = el.querySelector('#topScopeFriends');
+    if (btnAll) btnAll.onclick = () => { topScope = 'all'; renderTop(); };
+    if (btnFriends) btnFriends.onclick = () => { topScope = 'friends'; renderTop(); };
+
     PROG.topSeen = mine >= 0 && mine < 10; PROG.inTop10 = false; saveWallet(); progressDot();
     syncRating();
   } catch (_) { el.innerHTML = '<p class="qnote">Нет связи — проверьте интернет</p>'; }
@@ -4359,6 +4464,8 @@ document.addEventListener('click', e => {
   show(b.dataset.tab || b.dataset.go);
 });
 $('#again').onclick = () => rematchClick();
+const mqb = $('#menuQuestBanner');
+if (mqb) mqb.onclick = () => { ptab = 'rewards'; show('progress'); };
 
 /* ---------------- app shell (Android app and the web build) ---------------- */
 // The web build (scripts/wrap-web.sh web) runs on iPhone, in Android browsers and on computers.
