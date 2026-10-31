@@ -28,6 +28,7 @@ export const RULES = [
   {k: 'timer', label: 'Время на ход', opts: [[0, 'Без'], [30, '30 с'], [60, '60 с']]},
   {k: 'hints', label: 'Подсветка мест', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'tie', label: 'Спорный объект: очки', opts: [['all', 'Каждому'], ['split', 'Поровну']]},
+  {k: 'cups', label: 'Игра на кубки', opts: [[false, 'Нет'], [true, 'Да']], room: true},
 ];
 
 export const PREFS = [

@@ -56,6 +56,12 @@
           <div class="gift" id="gift"></div>
           <div class="h3">Фигурки</div>
           <div class="figgrid" id="figgrid"></div>
+          <div class="h3">Премиум <span class="soon">скоро</span></div>
+          <div class="prem">
+            <div class="pitem"><i>💰</i><b>Мешок золота</b><small>1 000 золота</small><span class="soon">Скоро</span></div>
+            <div class="pitem"><i>🧰</i><b>Сундук казначея</b><small>5 000 золота + рамка</small><span class="soon">Скоро</span></div>
+            <div class="pitem wide"><i>👑</i><b>Королевский пропуск</b><small>30 дней: ×2 золота за партии, особая фигурка и рамка, без ограничения кубков в комнатах с друзьями</small><span class="soon">Скоро</span></div>
+          </div>
           <div class="h3">Рамки аватара</div>
           <div class="frgrid" id="frgrid"></div>
           <div class="h3">Локации</div>
@@ -162,7 +168,7 @@
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button></div>
+        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button><button class="ghostbtn wide" id="startInv" hidden>Пригласить друзей онлайн</button></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -240,6 +246,7 @@
         <div class="tray">
           <div class="status" id="status"></div>
           <div class="prow" id="prow">
+            <div class="turnfig" id="turnFig" aria-live="polite"></div>
             <button class="rbtn" id="rot" aria-label="Повернуть карту"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 11-2.4-5.7"/><path d="M20 4v5h-5"/></svg></button>
             <div class="card"><div class="ctw"><div class="ct" id="ct"><div class="face" id="tface"></div></div></div><div class="cname" id="cname"></div></div>
             <button class="cta" id="ok" disabled>Поставить</button>
@@ -301,7 +308,7 @@ const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human,
 try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
 setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
 // Game modes are presets of the rules below; any rule can still be changed after picking one.
-setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, setup.rules);
+setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all', cups: false}, setup.rules);
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
 if (![40, 60, 0].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
@@ -742,7 +749,7 @@ function setClock(who, left, low) {
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -755,6 +762,8 @@ function renderTray() {
   const solo = isLocal(turn) && localHumans() === 1;
   ct.style.setProperty('--c', solo ? 'transparent' : players[turn].col);
   cname.innerHTML = `<b>${TYPES[current.type].name}</b><small>${solo ? 'Ваша карта' : 'Карта: ' + players[turn].name}</small>`;
+  // whose turn it is, big on the left: that player's own figure in their colour
+  const tf = $('#turnFig'); tf.style.setProperty('--c', players[turn].col); tf.innerHTML = `${meepleImg(turn)}<small>${players[turn].name}</small>`;
   if (!RM) ct.animate([{transform: 'rotateX(26deg) translateY(26px) scale(.7)', opacity: 0}, {transform: 'rotateX(26deg)', opacity: 1}], {duration: 320, easing: 'cubic-bezier(.3,1.4,.5,1)'});
 }
 function setRot(nr) {
@@ -1780,7 +1789,10 @@ function setProfileName(n) {
   return true;
 }
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
+// Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
+$('#startInv').onclick = async () => { await quickMatch(); const box = $('#mOnline'); if (box) setTimeout(() => box.scrollIntoView({behavior: 'smooth', block: 'center'}), 600); };
 function renderSetup() {
+  $('#startInv').hidden = !(setupMode === 'online' && FB && registered());
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
@@ -1844,10 +1856,10 @@ function renderRules() {
   const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰'};
   const cards = (locked) => `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
   // Online games always have a turn clock ("no limit" counts as 60 s there).
-  const rows = on => RULES.filter(r => r.k !== 'mode').map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
+  const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
   document.querySelectorAll('[data-rules]').forEach(el => {
     const lobby = el.id === 'lbRules', rated = !lobby && setupMode === 'online', canEdit = lobby ? !!(net && net.host) : true;
-    el.innerHTML = cards(!canEdit) + (rated || !canEdit ? '' : `<button class="morebtn" data-more aria-expanded="${rulesOpen}">⚙️ Свои правила <span>${rulesOpen ? '▴' : '▾'}</span></button><div class="opts"${rulesOpen ? '' : ' hidden'}>${rows(lobby || onlineMode())}</div>`);
+    el.innerHTML = cards(!canEdit) + (rated || !canEdit ? '' : `<button class="morebtn" data-more aria-expanded="${rulesOpen}">⚙️ Свои правила <span>${rulesOpen ? '▴' : '▾'}</span></button><div class="opts"${rulesOpen ? '' : ' hidden'}>${rows(lobby || onlineMode(), lobby || setupMode === 'friends')}</div>`);
   });
 }
 document.addEventListener('click', e => {
@@ -1869,7 +1881,15 @@ document.addEventListener('click', e => {
 renderRules();
 function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on ftoast'; d.style.position = 'fixed'; d.style.top = 'auto'; d.style.bottom = 'calc(28px + var(--ib, 0px))'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); }
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
-$('#copyLink').onclick = () => track('share', {content_type: 'room'}) || copyText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
+// Invites: the phone's own share sheet (pick the messenger); copying is the fallback. On Android in the browser the
+// text also carries the APK link, since the app is not in a store yet.
+async function shareText(txt, done) {
+  const full = /Android/i.test(navigator.userAgent) && !isAndroid ? `${txt}\nПриложение для Android: ${APK_URL}` : txt;
+  if (window.AndroidApp && AndroidApp.share) { try { AndroidApp.share(full); return; } catch (_) {} }
+  if (navigator.share) { try { await navigator.share({title: 'Puzzlegrad', text: full}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  copyText(full, done);
+}
+$('#copyLink').onclick = () => track('share', {content_type: 'room'}) || shareText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-linv]'); if (!b) return;
@@ -2205,7 +2225,7 @@ function renderLobby() {
     });
   }
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= roomMax();
   $('#lobbyStart').hidden = !net.host || (!!net.gameId && phase !== 'end'); $('#lobbyStart').disabled = seats.length < 2;
   $('#lobbyStart').textContent = seats.length < 2 ? 'Нужно хотя бы 2 игрока' : 'Начать игру';
@@ -2271,7 +2291,7 @@ async function quickMatch() {
   if (!(await serverReachable())) return noServer(quickMatch);
   stopMatch(true);
   leaveRoom();
-  // want: the table size this player chose; only rooms of the same size match.
+  // want: the table size of the room this player opens if nobody is waiting; joining takes any room.
   mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0};
   const me = mm;
   me.timers.push(setInterval(() => matchTick(me), 1000));
@@ -2284,9 +2304,8 @@ async function quickMatch() {
       let m; try { m = JSON.parse(v.m); } catch (_) { return; }
       if (!/^[A-Z0-9]{5}$/.test(m.code || '')) return;
       if (m.t === 'close') me.closed.add(m.code);
-      // rooms of the same mode for another table size: offered as an alternative
-      if (m.t === 'seek' && m.id !== myId && m.want !== me.want && (m.mode || 'classic') === me.mode) me.other.set(m.code, {ts: v.ts || 0, n: +m.n || 1, want: +m.want});
-      if (m.t === 'seek' && m.id !== myId && m.want === me.want && (m.mode || 'classic') === me.mode) { const o = me.seeks.get(m.code); if (!o || (v.ts || 0) >= o.ts) me.seeks.set(m.code, {ts: v.ts || 0, n: +m.n || 1}); }
+      // any waiting room counts, whatever its mode and size: the room keeps its own rules
+      if (m.t === 'seek' && m.id !== myId) { const o = me.seeks.get(m.code); if (!o || (v.ts || 0) >= o.ts) me.seeks.set(m.code, {ts: v.ts || 0, n: +m.n || 1, want: Math.min(5, Math.max(2, +m.want || 2))}); }
     };
     const put = e => {
       let d; try { d = JSON.parse(e.data); } catch (_) { return; }
@@ -2304,11 +2323,11 @@ async function quickMatch() {
 }
 function matchFail(me) { if (mm !== me) return; toastAny('Нет связи с сервером — проверьте интернет'); stopMatch(); show('menu'); }
 const matchSay = (msg) => FIRE.send(MATCH_ROOM, msg).catch(() => {});
-// Open rooms of our size other players are waiting in, freshest first.
+// Open rooms others wait in, the closest to starting first: one free seat, then two, and so on (any mode and size).
 function matchOpen(me) {
   const now = Date.now();
-  return [...me.seeks].filter(([c, o]) => !me.closed.has(c) && !me.skip.has(c) && now - o.ts < SEEK_FRESH && (!net || c !== net.code))
-    .sort((a, b) => b[1].n - a[1].n || b[1].ts - a[1].ts).map(([code, o]) => ({code, n: o.n}));
+  return [...me.seeks].filter(([c, o]) => !me.closed.has(c) && !me.skip.has(c) && now - o.ts < SEEK_FRESH && o.n < o.want && (!net || c !== net.code))
+    .sort((a, b) => (a[1].want - a[1].n) - (b[1].want - b[1].n) || b[1].ts - a[1].ts).map(([code, o]) => ({code, n: o.n}));
 }
 function matchDecide(me) {
   if (mm !== me || !me.ready) return;
@@ -2424,7 +2443,7 @@ function showSay(p, i) {
   const txt = SAYS[i], card = playersEl.children[p]; if (!txt || !card) return;
   if ((sayUntil[p] || 0) > Date.now()) return;
   sayUntil[p] = Date.now() + SAY_MS - 400;
-  const r = card.getBoundingClientRect(), b = document.createElement('div'), cx = Math.min(innerWidth - 60, Math.max(60, r.left + r.width / 2)), cy = r.bottom + 8;
+  const r = card.getBoundingClientRect(), b = document.createElement('div'), cx = Math.min(innerWidth - 60, Math.max(60, r.left + r.width / 2)), cy = r.bottom + 32; // under the turn clock, never over it
   b.className = 'bubble' + (isText(txt) ? '' : ' e'); b.textContent = txt; b.style.setProperty('--c', players[p].col);
   b.style.left = cx + 'px'; b.style.top = cy + 'px';
   document.body.append(b); setTimeout(() => b.remove(), SAY_MS + 100);
@@ -2462,15 +2481,23 @@ function gameDone(place, score) {
   const win = place === 0;
   PROG.st.best = Math.max(PROG.st.best, score);
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= 30 ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
-  const xp = score + 5 + (win ? 25 : 0);
+  // Experience: a share for taking part, more for the place and for the points, half again online. A game where this
+  // player laid fewer than 6 cards gives nothing (quitting early is not farming).
+  const me = players.find(isMe), laid = me && me.stats ? me.stats.t || 0 : 6;
+  const xp = laid < 6 ? 0 : Math.round((10 + (place < 0 ? 15 : [30, 20, 10, 5, 5][place] || 5) + Math.min(40, score >> 1)) * (net ? 1.5 : 1));
   const up = PG.state.progress.addXp(PROG, xp); wallet.gold += 20 * up;
-  const cups = net && net.quick ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
-  if (net && net.quick) { PROG.cups += cups; syncRating(); } // cups: rated games only
+  // Cups: quick online games, and a private room whose creator turned "for cups" on (at most 5 such games a day:
+  // nobody can farm cups with a friend).
+  const privCups = !!(net && !net.quick && gameRules.cups && players.filter(p => p.human).length >= 2);
+  if (privCups) { const d = today(); if (PROG.pc && PROG.pc.d === d) PROG.pc.n++; else PROG.pc = {d, n: 1}; }
+  const rated = !!(net && (net.quick || (privCups && PROG.pc.n <= 5)));
+  const cups = rated ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
+  if (rated) { PROG.cups += cups; syncRating(); }
   saveWallet(); progressDot();
   setTimeout(() => toastAny(up ? `Новый уровень ${PROG.lvl}! +${20 * up} золота` : `+${xp} опыта`), 1200);
   const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st, PROG.lvl));
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
-  return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
+  return {rated, cups, xp, up, lvl: PROG.lvl, place};
 }
 const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
 function ptabsDot() {
@@ -2519,6 +2546,24 @@ function renderProgress() {
 }
 // The last games (kept on this phone, newest first): when, how it went and who played. Saved profiles met online
 // can be added as friends from here.
+// Another player's card: name, colour, cups and when seen, with "add friend". Opened from the history, the room and
+// the players at a table. Only public data: the name, /leaders and /presence (no e-mail, no profile contents).
+async function openPlayer(uid, name, col) {
+  if (!uid || !FB) return;
+  const old = document.getElementById('plBox'); if (old) old.remove();
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'plBox'; box.style.position = 'fixed';
+  const me = uid === myUid(), n = clean(name) || 'Игрок', c = validCol(col) ? col : '#5b6684';
+  box.innerHTML = `<div class="ocard prof pcard"><span class="av big" style="--c:${c}">${n[0].toUpperCase()}</span><h3>${n}</h3><p class="pstat" id="plStat">…</p>
+    ${me ? '' : `<button class="cta wide" id="plAdd"${isFriend(uid) ? ' disabled' : ''}>${isFriend(uid) ? 'Уже в друзьях' : 'Добавить в друзья'}</button>`}<button class="ghostbtn" id="plNo">Закрыть</button></div>`;
+  document.body.append(box);
+  box.onclick = e => { if (e.target === box || e.target.id === 'plNo') box.remove(); };
+  const add = box.querySelector('#plAdd'); if (add) add.onclick = () => { add.disabled = true; add.textContent = 'Заявка отправлена'; addFriend(uid, n, 'profile'); };
+  const [lead, pres] = await Promise.all([fbGet('leaders/' + uid).catch(() => null), fbGet('presence/' + uid).catch(() => null)]);
+  const ago = pres && pres.t ? Math.round((Date.now() - pres.t) / 60000) : null;
+  const seen = ago == null ? '' : pres.s && pres.s !== 'off' && ago < 3 ? '🟢 в сети' : ago < 60 ? `был ${ago} мин назад` : ago < 1440 ? `был ${Math.round(ago / 60)} ч назад` : `был ${Math.round(ago / 1440)} дн назад`;
+  const st = box.querySelector('#plStat'); if (st) st.textContent = [`🏆 ${lead && +lead.r || 0} кубков`, lead && lead.w ? `${+lead.w} побед онлайн` : '', seen].filter(Boolean).join(' · ');
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (b && !e.target.closest('button.chip')) openPlayer(b.dataset.pl, b.dataset.n, b.dataset.c); });
 function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
@@ -2526,7 +2571,7 @@ function renderHistory(el) {
   el.innerHTML = rows.map(r => {
     const ps = r.players.slice().sort((a, b) => b.score - a.score), me = ps.findIndex(p => p.me), online = /^o:/.test(r.id);
     const head = r.reason === 'draw' ? 'Ничья' : me === 0 ? '🏆 Победа' : me > 0 ? `${me + 1}-е место` : 'Партия';
-    const who = ps.map(p => `<span class="hp${p.me ? ' me' : ''}"><i style="--c:${validCol(p.col) ? p.col : '#5b6684'}"></i>${clean(p.name)} <b>${+p.score || 0}</b>${online && p.uid && !p.me && !p.bot && !isFriend(p.uid) ? `<button class="chip hadd" data-uid="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}">+ в друзья</button>` : ''}</span>`).join('');
+    const who = ps.map(p => `<span class="hp${p.me ? ' me' : ''}"${online && p.uid && !p.me && !p.bot ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}" data-c="${validCol(p.col) ? p.col : ''}"` : ''}><i style="--c:${validCol(p.col) ? p.col : '#5b6684'}"></i>${clean(p.name)} <b>${+p.score || 0}</b>${online && p.uid && !p.me && !p.bot && !isFriend(p.uid) ? `<button class="chip hadd" data-uid="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}">+ в друзья</button>` : ''}</span>`).join('');
     return `<div class="quest hrow"><span class="qi">${online ? '🌐' : '🤖'}</span><span class="qt"><b>${head}</b><small>${when(r.at)} · ${online ? 'онлайн' : 'офлайн'}</small><span class="hps">${who}</span></span></div>`;
   }).join('');
   el.querySelectorAll('.hadd').forEach(b => { b.onclick = () => { b.disabled = true; addFriend(b.dataset.uid, b.dataset.n, 'history'); }; });
@@ -3140,7 +3185,7 @@ $('#fGate').addEventListener('click', e => {
 });
 $('#fcode').onclick = () => wallet.fcode && copyText(wallet.fcode, `Код ${wallet.fcode} скопирован`);
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
-$('#fCopy').onclick = () => wallet.fcode && copyText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\nМой код друга:\n${wallet.fcode}`, 'Ссылка-приглашение скопирована — отправьте её другу');
+$('#fCopy').onclick = () => wallet.fcode && shareText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\nМой код друга:\n${wallet.fcode}`, 'Ссылка-приглашение скопирована — отправьте её другу');
 function confirmTextParts(text) {
   const value = text == null ? '' : String(text);
   const match = /^([^<>]*)<br\s*\/?><small(?:\s+style="[^"]*")?>([^<>]*)<\/small>$/i.exec(value);

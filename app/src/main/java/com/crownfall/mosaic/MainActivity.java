@@ -341,6 +341,17 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String store() { return BuildConfig.FLAVOR; }
 
+        /** Invite links: the system "share" sheet, so the player picks the messenger. */
+        @JavascriptInterface
+        public void share(String text) {
+            runOnUiThread(() -> {
+                android.content.Intent send = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                send.setType("text/plain");
+                send.putExtra(android.content.Intent.EXTRA_TEXT, text);
+                try { startActivity(android.content.Intent.createChooser(send, "Пригласить в Puzzlegrad")); } catch (Exception ignored) { }
+            });
+        }
+
         /** This phone, for the owner's statistics: model and screen diagonal. */
         @JavascriptInterface
         public String deviceInfo() {
