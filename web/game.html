@@ -170,7 +170,7 @@
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><div class="sbtns"><button class="cta alt" id="startInv" hidden>👥 Пригласить друзей</button><button class="cta wide" id="start">Начать партию</button></div></div>
+        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -224,6 +224,7 @@
           <button class="iconbtn" id="gameMenu" aria-label="Меню партии"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
           <div class="room"><b>Комната K7Q2</b><span><i></i>онлайн · 4 игрока</span></div>
           <button class="iconbtn saybtn" id="sayBtn" hidden aria-label="Быстрые фразы"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4.5 4v-4H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></svg></button>
+          <button class="iconbtn" id="helpBtn" aria-label="Очки и правила"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button>
           <div class="deck"><span class="dstack"><i></i><i></i><i></i></span><span><b id="deckN">0</b><small>в стопке</small></span></div>
         </div>
         <div class="players" id="players"></div>
@@ -747,7 +748,8 @@ function setClock(who, left, low) {
   const c = playersEl.children[who]; if (!c) return;
   let el = c.querySelector('.clk');
   if (!el) { el = document.createElement('span'); el.className = 'clk'; c.append(el); }
-  el.textContent = clock(left); el.classList.toggle('low', low);
+  const t = clock(left); if (el.textContent !== t) el.textContent = t; // ticks 4 times a second: touch the page once a second
+  if (el.classList.contains('low') !== !!low) el.classList.toggle('low', !!low);
 }
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
@@ -812,6 +814,35 @@ function rotate() {
   setRot(rots[(rots.indexOf(current.r) + 1) % rots.length]);
 }
 rotBtn.onclick = rotate;
+/* "Points and rules" window, from the button in the game header: what each object is worth and what has to be done to
+   get it, plus the rules, in any game (also online; the turn clock keeps running there). Not a placement hint. */
+function helpWindow(tab = 'pts') {
+  const old = document.getElementById('helpBox'); if (old) old.remove();
+  const r = gameRules, mode = (MODES[r.mode] || MODES.classic).label, tie = r.tie === 'split' ? 'очки делятся поровну' : 'очки получает каждый из них';
+  const item = (cls, ttl, todo, pts) => `<div class="hitem"><span class="rimg ${cls}"></span><div><b>${ttl}</b><p>${todo}</p><em>${pts}</em></div></div>`;
+  const pts = `<div class="hnow">В этой партии: <b>${mode}</b> · фишек у игрока: <b>${r.meeples}</b> · если фишек поровну — ${tie}${net && (net.quick || r.cups) ? ' · <b>игра на кубки</b>' : ''}</div>
+    ${item('t-c2', '🏰 Город', 'Закройте картами все края города — чтобы со всех сторон он был окружён.', '2 очка за каждую карту города · недостроенный в конце игры — 1 за карту')}
+    ${item('t-rS', '🛤 Дорога', 'Доведите дорогу до конца с обеих сторон: до города, перекрёстка, тупика или замкните её в кольцо.', '1 очко за каждую карту дороги · с целым большим мостом ×2')}
+    ${item('t-fort', '🏯 Крепость', 'Окружите крепость картами со всех 8 сторон, включая углы.', '9 очков · недостроенная в конце — 1 за каждую карту рядом')}
+    ${item('t-brHalf', '🌉 Большой мост', 'Соедините две половины моста друг с другом — дорога через него становится ценнее.', 'каждая карта дороги вокруг — вдвое, сами половины — по 1')}
+    <div class="hitem"><span class="hic">🧍</span><div><b>Фишка</b><p>Поставьте её на город, дорогу или крепость на только что положенной карте, пока объект ещё ничей. Очки получает тот, у кого на объекте больше фишек; после очков фишка возвращается.</p><em>Одна фишка за ход, по желанию</em></div></div>
+    <div class="hitem"><span class="hic">🤝</span><div><b>Респект</b><p>Достроили объект, на котором стоят только чужие фишки.</p><em>+1 очко вам</em></div></div>`;
+  const rules = `<div class="hitem"><span class="hic">🎯</span><div><b>Цель</b><p>Стройте королевство из общей стопки. Когда стопка кончилась — больше очков значит победа.</p></div></div>
+    <div class="hitem"><span class="hic">🃏</span><div><b>Ваш ход</b><p>Возьмите карту, приложите её к полю так, чтобы края совпали (город с городом, дорога с дорогой, река с рекой), поверните при необходимости и по желанию поставьте фишку.</p></div></div>
+    <div class="hitem"><span class="hic">🌊</span><div><b>Реки и озёра</b><p>Река должна продолжаться рекой. Озеро занимает всю карту и впадает во все стороны реки. Исток — начало реки.</p></div></div>
+    <div class="hitem"><span class="hic">🚧</span><div><b>Обрыв и мосты</b><p>У обрыва дорога обрывается: за ним можно ставить только обрыв. Половина большого моста стыкуется только с другой половиной.</p></div></div>
+    <div class="hitem"><span class="hic">⏱</span><div><b>Время хода</b><p>${r.timer || net ? `На ход — ${r.timer || 60} секунд. Когда время выходит, ход делает бот.` : 'В этой партии время хода не ограничено.'}</p></div></div>
+    <div class="hitem"><span class="hic">🏁</span><div><b>Конец игры</b><p>Недостроенные объекты приносят по 1 очку за карту. Побеждает набравший больше всех очков.</p></div></div>`;
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'helpBox'; box.style.position = 'fixed';
+  box.setAttribute('role', 'dialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-label', 'Очки и правила');
+  box.innerHTML = `<div class="ocard helpcard"><h3>Очки и правила</h3><div class="seg htabs"><button data-ht="pts" aria-pressed="${tab === 'pts'}">Очки</button><button data-ht="rules" aria-pressed="${tab === 'rules'}">Правила</button></div><div class="hbody">${tab === 'pts' ? pts : rules}</div><button class="cta wide" data-hx>Понятно</button></div>`;
+  document.body.append(box);
+  const close = () => { document.removeEventListener('keydown', keys); box.remove(); }, keys = e => { if (e.key === 'Escape') close(); };
+  document.addEventListener('keydown', keys);
+  box.onclick = e => { if (e.target === box || e.target.closest('[data-hx]')) return close(); const t = e.target.closest('[data-ht]'); if (t) { close(); helpWindow(t.dataset.ht); } };
+  track('help_open');
+}
+$('#helpBtn').onclick = () => helpWindow();
 // The hint button: on your own turn (not online, not in the tutorial, when the table plays with hints) it picks the
 // best spot for the card, turns the card to fit and says why. The choice lives in src/engine/bots.js.
 const tipBtn = $('#tip');
@@ -1005,7 +1036,17 @@ function focusLast() {
   ensureVisible(t.x, t.y);
   t.el.classList.add('glow'); setTimeout(() => t.el.classList.remove('glow'), 1500);
 }
+/* Calm: the water keeps flowing only while something is going on. A few seconds after the last touch or move the
+   ambient animations are paused (no repainting, so the phone can cool down) and wake up on the next touch or turn. */
+let calmT = 0, calmAt = 0;
+function wake(force) {
+  const now = Date.now(); if (!force && now - calmAt < 400) return; calmAt = now;
+  const root = document.documentElement; if (root.classList.contains('calm')) root.classList.remove('calm');
+  clearTimeout(calmT); calmT = setTimeout(() => root.classList.add('calm'), 3500);
+}
+['pointerdown', 'pointermove', 'wheel', 'keydown'].forEach(ev => document.addEventListener(ev, () => wake(), {passive: true, capture: true}));
 function startTurn() {
+  wake(true);
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer(); tipBtn.hidden = true;
   // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
@@ -1323,7 +1364,40 @@ const today = () => new Date().toISOString().slice(0, 10);
 // A checksum mismatch is reported, never punished (see walletSig): the gold stays.
 const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', info));
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
-function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
+function track(name, params) {
+  try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {}
+  if (LOG_KINDS.has(name)) plog(name, params);
+}
+/* Event log for the owner's panel: the few events that explain what happened to a player (sign-in, games, drops, errors,
+   purchases) go to /logs/{uid}, in batches, at most 80 a day per phone. No e-mails and no texts typed by the player. */
+const LOG_KINDS = new Set(['open', 'login', 'sign_up', 'logout', 'game_start', 'game_end', 'net_down', 'net_back', 'google_error', 'google_redirect', 'spend_virtual_currency', 'tutorial_begin', 'tutorial_complete', 'wallet_sig_mismatch', 'friend_invite', 'error', 'maintenance']);
+const logBuf = [];
+let logTimer = 0;
+function plog(kind, detail) {
+  try {
+    const day = new Date().toISOString().slice(0, 10), cap = JSON.parse(localStorage.getItem('logCap') || '{}');
+    if (cap.d !== day) { cap.d = day; cap.n = 0; }
+    if (cap.n >= 80) return;
+    cap.n++; localStorage.setItem('logCap', JSON.stringify(cap));
+    let d = detail == null ? '' : typeof detail === 'string' ? detail : JSON.stringify(detail);
+    d = d.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '…').slice(0, 240); // never an address
+    logBuf.push({k: String(kind).slice(0, 24), d, c: Date.now()});
+    if (logBuf.length >= 12) logFlush(); else if (!logTimer) logTimer = setTimeout(logFlush, 20000);
+  } catch (_) {}
+}
+async function logFlush(keepalive) {
+  clearTimeout(logTimer); logTimer = 0;
+  if (!logBuf.length) return;
+  try {
+    if (typeof FBC === 'undefined' || !FBC) return;
+    const tok = await FBC.token(), uid = FBC.session() && FBC.session().uid; if (!uid) return;
+    const batch = logBuf.splice(0, 30), body = {};
+    batch.forEach((e, i) => { body[e.c.toString(36) + i.toString(36) + Math.random().toString(36).slice(2, 5)] = {t: {'.sv': 'timestamp'}, k: e.k, c: e.c, ...(e.d ? {d: e.d} : {})}; });
+    const r = await fetch(`${FB.dbUrl}/logs/${uid}.json?auth=${tok}`, {method: 'PATCH', body: JSON.stringify(body), keepalive: !!keepalive});
+    if (!r.ok) throw 0;
+  } catch (_) { /* the rules may not be published yet, or no network: the events are dropped, never retried forever */ }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) logFlush(true); });
 function saveWallet() {
   PG.state.storeWallet(localStorage, wallet);
   document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
@@ -1795,11 +1869,9 @@ function setProfileName(n) {
 }
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
-$('#startInv').onclick = async () => { await quickMatch(true); if (mm) setTimeout(() => inviteSheet(), 300); };
 // «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
 $('#setupQuick').onclick = () => quickMatch();
 function renderSetup() {
-  $('#startInv').hidden = setupMode !== 'online';
   $('#setupQuick').hidden = $('#setupOwn').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
@@ -1839,7 +1911,7 @@ $('#setupColor').addEventListener('click', e => {
 const SETUP_MODES = {
   bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.'},
-  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки. Своя игра ждёт игроков, нажавших «Быструю игру»; друзей можно позвать заранее.', seg: 'Поиск соберёт столько игроков, включая вас'},
+  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки. Своя игра ждёт игроков, нажавших «Быструю игру»; друзей можно позвать, когда начнётся поиск.', seg: 'Поиск соберёт столько игроков, включая вас'},
   friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'После создания появится код комнаты — отправьте его друзьям. Свободные места можно занять ботами.', seg: 'Столько мест будет в комнате, включая вас'},
 };
 let setupMode = 'bots';
@@ -2072,7 +2144,7 @@ function leaveRoom() { if (net && net.close) net.close(); if (net) netUp(net); n
 const NET_DIALOG_AFTER = 30000;
 function netDown(me) {
   if (me.down) return;
-  me.down = Date.now(); $('#netBad').hidden = false;
+  me.down = Date.now(); $('#netBad').hidden = false; track('net_down');
   clearTimeout(me.downT);
   me.downT = setTimeout(() => {
     if (net !== me || !me.down) return;
@@ -2146,9 +2218,14 @@ function onNet(d) {
     // Quick match: a room that started without us is no use — look for another one.
     if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
+    // "Online" (rated) or a friends' room: told by the game's creator in the start message, so a friend who came in by an
+    // invitation, or who returns to the game later, plays the same kind of game. Games started before this carried no
+    // flag: then what this phone remembered about the game is used.
+    const was = lastOnline();
+    net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
     startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? x.uid.slice(0, 64) : null, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
-    else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now()})); } catch (_) {} updAnnounce(); } // to come back after a restart
+    else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
   }
   if (m.t === 'move') { if (!live) m.old = true; return onMove(m); }
@@ -2320,7 +2397,7 @@ $('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
 const ratedRules = mode => ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
 function startOnline(seats) {
   const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
-  netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0});
+  netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
 }
 renderLobby();
 renderSetup();
@@ -4103,6 +4180,7 @@ window.onBack = () => {
 let errShown = false, lastErrorReported = 0;
 function reportError(msg) {
   try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError(String(msg).slice(0, 500)); } catch (_) {}
+  plog('error', String(msg).slice(0, 200));
   if (!errShown) { errShown = true; toast('Что-то пошло не так, игра продолжает работу'); }
   try {
     if (typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbToken === 'function' && Date.now() - lastErrorReported > 30000) {
@@ -4114,6 +4192,7 @@ function reportError(msg) {
             m: String(msg).slice(0, 500),
             ua: (navigator.userAgent || '').slice(0, 200),
             ver: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev'),
+            uid: (FBC && FBC.session() && FBC.session().uid) || undefined,
             ts: {'.sv': 'timestamp'}
           })
         }).catch(() => {});
@@ -4162,6 +4241,7 @@ window.addEventListener('keydown', e => {
 
 injectArt();
 dailyBonus(); renderResume(); renderPrefs(); checkMaintenance();
+plog('open', {p: installKind(), v: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev')});
 if (window.WEBAPP && FB && FB.googleClientId) googleReturn();
 // back from Google's page with the browser's Back button: the page comes from the cache with the button still pressed
 addEventListener('pageshow', e => { if (e.persisted) document.querySelectorAll('#accGoogle').forEach(b => { b.disabled = false; }); });

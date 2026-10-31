@@ -35,9 +35,10 @@ function instrumentedCopy() {
 // Seeded Math.random, so a recording run is reproducible (replays do not need it: moves carry everything).
 const seededRandom = seed => `(() => { let s = ${seed >>> 0}; Math.random = () => { s = s + 0x6D2B79F5 | 0; let t = Math.imul(s ^ s >>> 15, 1 | s); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; })();`;
 
-async function openGame(browser, file, seed) {
+async function openGame(browser, file, seed, init) {
   const ctx = await browser.newContext({viewport: {width: 430, height: 900}, reducedMotion: 'reduce'});
   if (seed != null) await ctx.addInitScript(seededRandom(seed));
+  if (init) await ctx.addInitScript(init); // e.g. the web build's flag, to get the real phone layout
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
