@@ -40,7 +40,8 @@ test('hint button: on your turn it suggests a legal move with a reason', {skip: 
     // switched off for experienced players: no button, no advice
     await page.waitForFunction(() => window.__pg.state().phase === 'place', null, {timeout: 20000});
     await page.evaluate(() => document.querySelector('#prefs [data-pref=coach] button[data-i="2"]').click());
-    await page.click('#world .slot');
+    // chosen by the game's own call: the first spot can sit under the zoom buttons, which would take the tap
+    await page.evaluate(() => { const sl = document.querySelector('#world .slot'); window.__pg.selectSlot(+sl.dataset.x, +sl.dataset.y); });
     await page.click('#ok');
     await page.waitForTimeout(1200);
     await page.evaluate(() => { const b = [...document.querySelectorAll('#mrow button')].find(x => /Без фишки/.test(x.textContent)); if (b) b.click(); });

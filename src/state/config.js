@@ -15,19 +15,18 @@ export const PALETTE = [
 ];
 
 export const MODES = {
-  fast: {label: 'Быстрая', desc: '40 карт · 5 фишек · 10–15 минут', set: {deck: 40, meeples: 5}},
-  classic: {label: 'Классика', desc: 'Вся колода · 7 фишек · золотая середина', set: {deck: 0, meeples: 7}},
-  epic: {label: 'Большая', desc: 'Двойная колода · 9 фишек · огромное королевство', set: {deck: 0, meeples: 9}},
+  fast: {label: 'Быстрая', desc: '30 карт · ~8 мин · 4 фишки', set: {deck: 30, meeples: 4}},
+  classic: {label: 'Классика', desc: '50 карт · ~15 мин · 6 фишек', set: {deck: 50, meeples: 6}},
+  epic: {label: 'Большая', desc: '100 карт · ~30 мин · 8 фишек', set: {deck: 100, meeples: 8}},
 };
 
 export const RULES = [
   {k: 'mode', label: 'Режим', opts: Object.entries(MODES).map(([k, m]) => [k, m.label])},
-  {k: 'deck', label: 'Карт в стопке', opts: [[40, '40'], [60, '60'], [0, 'Все']]},
+  {k: 'deck', label: 'Карт в стопке', opts: [[30, '30'], [50, '50'], [100, '100']]},
   {k: 'rivers', label: 'Реки', opts: [[true, 'Есть'], [false, 'Нет']]},
-  {k: 'meeples', label: 'Фигурок у игрока', opts: [[5, '5'], [7, '7'], [9, '9']]},
+  {k: 'meeples', label: 'Фигурок у игрока', opts: [[4, '4'], [6, '6'], [8, '8']]},
   {k: 'timer', label: 'Время на ход', opts: [[0, 'Без'], [30, '30 с'], [60, '60 с']]},
   {k: 'hints', label: 'Подсветка мест', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'tie', label: 'Спорный объект: очки', opts: [['all', 'Каждому'], ['split', 'Поровну']]},
   {k: 'cups', label: 'Игра на кубки', opts: [[false, 'Нет'], [true, 'Да']], room: true},
 ];
 
@@ -35,6 +34,7 @@ export const PREFS = [
   {k: 'sound', ic: '🔊', label: 'Звуки', hint: 'Стук карт, фишки, фанфары', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'music', ic: '🎵', label: 'Музыка', hint: 'Спокойная музыка в меню и партии', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'view', ic: '🧊', label: 'Вид поля', hint: 'Объёмное поле или вид сверху', opts: [['3d', '3D'], ['top', 'Сверху']]},
+  {k: 'botlvl', ic: '🤖', label: 'Сложность ботов', hint: 'Лёгкие ходят просто, обычные считают очки объектов, сложные играют острее и берегут фишки', opts: [['easy', 'Лёгкие'], ['normal', 'Обычные'], ['hard', 'Сложные']]},
   {k: 'speed', ic: '⚡', label: 'Скорость ботов', hint: 'Как быстро ходят соперники-боты', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
   {k: 'alert', ic: '⏰', label: 'Подсветка хода', hint: 'Экран мигает на вашем ходу и краснеет, если время на исходе, а вы бездействуете; в последние 5 секунд лёгкая вибрация', opts: [[true, 'Вкл'], [false, 'Выкл']]},
   {k: 'coach', ic: '💡', label: 'Подсказки', hint: '«Всегда» — на каждом ходу совет: куда положить карту, сколько очков даст объект и что осталось достроить. «По кнопке» — только по лампочке. Опытным можно выключить', opts: [['on', 'Всегда'], ['tip', 'По кнопке'], ['off', 'Выкл']]},
@@ -43,7 +43,7 @@ export const PREFS = [
   {k: 'notify', ic: '🔔', label: 'Уведомления', hint: 'Новые версии и новости игры', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
 ];
 
-export const PREF_GROUPS = [['Звук', ['sound', 'music']], ['Игра', ['coach', 'view', 'speed', 'alert', 'zones']], ['Экран', ['gfx']], ['Уведомления', ['notify']]];
+export const PREF_GROUPS = [['Звук', ['sound', 'music']], ['Игра', ['coach', 'view', 'botlvl', 'speed', 'alert', 'zones']], ['Экран', ['gfx']], ['Уведомления', ['notify']]];
 
 export const STREAK_GOLD = [10, 15, 20, 25, 35, 50, 100];
 

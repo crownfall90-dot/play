@@ -15,12 +15,12 @@ export function botPick(tiles, type, random) {
 
 /** For a player whose clock ran out: next to their own unfinished objects first (finishing one is best), never to
  *  the benefit of an opponent who leads an object, otherwise somewhere compact. players: how many seats. */
-export function helperPick(tiles, meeples, type, p, players, random) {
+export function helperPick(tiles, meeples, type, p, players, random, sharp = 1) {
   let best = null, bs = -1e9;
   for (const m of allMoves(tiles, type)) {
     const t = {x: m.x, y: m.y, type, r: m.r, seed: 1};
     tiles.set(key(t.x, t.y), t); // tried in place, removed below
-    let s = random() * .6;
+    let s = random() * .6 / sharp;
     for (const g of groupsOf(t)) {
       if (g.kind === 'f') continue;
       const c = component(tiles, meeples, t, g);
@@ -28,7 +28,7 @@ export function helperPick(tiles, meeples, type, p, players, random) {
       const cnt = Array.from({length: players}, () => 0); c.meeples.forEach(x => cnt[x.p]++);
       const mx = Math.max(...cnt), shared = cnt.filter(n => n === mx).length > 1;
       const worth = c.complete ? (c.kind === 'c' ? c.tiles.length * 2 : roadPoints(tiles, c)) : c.tiles.length * .8;
-      if (cnt[p] === mx) s += 6 + worth * (shared ? .5 : 1.5) + (c.complete ? 8 : 0);
+      if (cnt[p] === mx) s += 6 + worth * (shared ? .5 : 1.5) + (c.complete ? 8 * sharp : 0);
       else s -= 5 + worth * 1.2 + (c.complete ? 8 : 0);
     }
     tiles.delete(key(t.x, t.y));
@@ -88,4 +88,33 @@ export function hintPick(tiles, meeples, type, p, players, haveFigure) {
 export function featureNote(tiles, meeples, t, g) {
   const c = component(tiles, meeples, t, g), v0 = featurePoints(tiles, c, false), miss = c.complete ? 0 : missing(tiles, c);
   return c.complete ? `+${pts(v0)} сразу` : g.kind === 'f' ? `окружите — +${pts(v0)}, ${left(g.kind, miss)}` : `достроите — минимум +${pts(atLeast(g.kind, v0, miss))}, ${left(g.kind, miss)}`;
+}
+
+/* ---- bot levels: easy = the old compact-and-random play; normal looks at the objects (own, rival, finished);
+   hard looks at them more sharply and spends figures more readily. ---- */
+export const BOT_LEVELS = ['easy', 'normal', 'hard'];
+
+/** Where a bot puts a card, by level. Always one of allMoves. */
+export function levelPick(tiles, meeples, type, p, players, random, level) {
+  if (level === 'easy') return botPick(tiles, type, random);
+  return helperPick(tiles, meeples, type, p, players, random, level === 'hard' ? 3 : 1);
+}
+
+/** Which object a bot claims with a figure (or null: keep the figure). opts: {t, g, done?}. left: figures it still has.
+ *  Worth: a city 2 per card, a road 1 per card, a fort about 5, plus a finishing bonus; the fewer figures are left, the
+ *  more an object must be worth, so a bot does not run out of figures in the first ten cards. */
+export function figurePick(tiles, meeples, opts, left, random, level) {
+  let best = null, bs = 0;
+  for (const o of opts) {
+    if (o.done) continue;
+    const c = component(tiles, meeples, o.t, o.g);
+    if (c.meeples.length) continue;
+    const n = c.tiles.length;
+    let v = c.kind === 'c' ? n * 2 + 2 : c.kind === 'r' ? n + 1 : 5;
+    if (c.complete) v += 4;
+    v *= .85 + random() * .3;
+    if (v > bs) { bs = v; best = o; }
+  }
+  const need = left <= 1 ? 9 : left <= 2 ? 6 : left <= 4 ? 4 : 2.5;
+  return best && bs >= need * (level === 'hard' ? .75 : 1) ? best : null;
 }

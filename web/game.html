@@ -152,7 +152,7 @@
             <div class="h3">Как работают фишки</div>
             <div class="hitem"><span class="hic">☝️</span><div><b>Одна фишка за ход</b><p>Ставится на только что положенную карту — на город, дорогу или крепость.</p></div></div>
             <div class="hitem"><span class="hic">🔒</span><div><b>Занятое не занять</b><p>Если на объекте уже стоит чья-то фишка, поставить туда свою нельзя — даже когда объект соединён с вашим через новую карту.</p></div></div>
-            <div class="hitem"><span class="hic">🎯</span><div><b>Больше фишек — объект ваш</b><p>Очки за достроенный объект получает тот, у кого на нём больше фишек. Если поровну — по правилу партии.</p></div></div>
+            <div class="hitem"><span class="hic">🎯</span><div><b>Больше фишек — объект ваш</b><p>Очки за достроенный объект получает тот, у кого на нём больше фишек. Если поровну — очки получает каждый из них.</p></div></div>
             <div class="hitem"><span class="hic">↩️</span><div><b>Фишка возвращается</b><p>Как только объект достроен и очки начислены, фишка снова у вас в запасе.</p></div></div>
             <div class="hitem"><span class="hic">🤝</span><div><b>Респект</b><p>Достроили объект, на котором стоят только чужие фишки.</p><em>+1 очко вам</em></div></div>
             <div class="hitem"><span class="hic">🧍</span><div><b>Свободная фишка</b><p>Все карты достроенного объекта ваши — можно поставить на него свободную фишку и забрать очки.</p></div></div>
@@ -336,9 +336,11 @@ const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human,
 try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
 setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
 // Game modes are presets of the rules below; any rule can still be changed after picking one.
-setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all', cups: false}, setup.rules);
+setup.rules = Object.assign({mode: 'classic', deck: 50, rivers: true, meeples: 6, timer: 0, hints: true, tie: 'all', cups: false}, setup.rules);
+setup.rules.tie = 'all'; // a disputed feature (equal figures) always gives every leader the full points: the usual rule, no option any more
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
-if (![40, 60, 0].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck;
+if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck; // the old sizes (40, 60, whole deck) became 30 / 50 / 100
+if (![4, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
 const isLocal = i => net ? players[i].owner === myId : players[i].human;
@@ -989,7 +991,8 @@ async function afterPlace(t, p, forced) {
     else {
       // Bot: always use placed tile only, even in anyMode.
       const botOpts = anyMode ? claimable(t).map(g => ({t, g})) : opts;
-      if (botOpts.length && Math.random() < .55) {
+      if (botLevel() !== 'easy') choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
+      else if (botOpts.length && Math.random() < .55) {
         const cs = botOpts.filter(o => o.g.kind !== 'r');
         choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : botOpts[(Math.random() * botOpts.length) | 0];
       }
@@ -1150,14 +1153,15 @@ function beginHumanTurn() {
 // there is no "pass the phone" screen over the board any more.
 function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // Bot choices live in src/engine/bots.js.
-const botPick = type => PG.engine.bots.botPick(tiles, type, Math.random);
+const botLevel = () => PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal';
+const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
   setStatus(`Ходит <b>${players[p].name}</b>…`);
   const k = wallet.speed === 'fast' ? .35 : 1;
   await wait(900 * k); if (my !== token || tt !== turnTok) return;
-  let best = botPick(current.type);
+  let best = botPick(current.type, p);
   if (tut && tut.bot.length) { const m = tut.bot.shift(); if (fits(current.type, m.r, m.x, m.y)) best = m; }
   await ensureVisible(best.x, best.y); if (my !== token || tt !== turnTok) return;
   sel = {x: best.x, y: best.y}; setRot(best.r); placeGhost();
@@ -1737,7 +1741,7 @@ document.addEventListener('click', e => { if (e.target.closest('button') && !e.t
 /* ---------------- settings ---------------- */
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
-Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'tip', view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
+Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'tip', view: '3d', botlvl: 'normal', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
 const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
 applyGfx();
 function renderPrefs() {
@@ -1956,11 +1960,11 @@ const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
 document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 let rulesOpen = false;
 function renderRules() {
-  const total = deckList(setup.rules).length, mode = MODES[setup.rules.mode] || MODES.classic;
+  const mode = MODES[setup.rules.mode] || MODES.classic;
   const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰'};
   const cards = (locked) => `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
   // Online games always have a turn clock ("no limit" counts as 60 s there).
-  const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
+  const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${l}</button>`).join('')}</span></div>`).join('');
   document.querySelectorAll('[data-rules]').forEach(el => {
     const lobby = el.id === 'lbRules', rated = !lobby && setupMode === 'online', canEdit = lobby ? !!(net && net.host) : true;
     el.innerHTML = cards(!canEdit) + (rated || !canEdit ? '' : `<button class="morebtn" data-more aria-expanded="${rulesOpen}">⚙️ Свои правила <span>${rulesOpen ? '▴' : '▾'}</span></button><div class="opts"${rulesOpen ? '' : ' hidden'}>${rows(lobby || onlineMode(), lobby || setupMode === 'friends')}</div>`);
@@ -3455,19 +3459,22 @@ function openFeedback() {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const first = !wallet.feedbackSent;
   const CATS = [{k:'bug',ic:'🐛',t:'Баг'},{k:'idea',ic:'💡',t:'Идея'},{k:'other',ic:'💬',t:'Другое'}];
-  box.innerHTML = `<div class="ocard" style="width:min(340px,92vw)">
-    <h3>Написать разработчику</h3>
-    <p style="color:var(--muted);font-size:13.5px;margin:0 0 12px">Пожелания, идеи, баги — всё пойдёт в дело${first ? '.<br><b style="color:#f2b84b">+10 золота</b> за первое сообщение' : ''}</p>
-    <div style="display:flex;gap:6px;margin-bottom:12px">${CATS.map(c => `<button class="chip fb-cat${c.k==='idea'?' sel':''}" data-cat="${c.k}" style="flex:1;justify-content:center">${c.ic} ${c.t}</button>`).join('')}</div>
-    <textarea id="fbText" rows="4" placeholder="Расскажите что думаете…" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:inherit;font:14px var(--f-body);padding:10px 12px;resize:vertical;outline:none;min-height:80px"></textarea>
-    <button class="cta wide" id="fbSend" style="margin-top:10px">Отправить${first ? ' (+10 золота)' : ''}</button>
-    <button class="ghostbtn" id="fbCancel" style="margin-top:6px">Отмена</button>
+  const CC = {bug: '#ef5350', idea: '#f2994a', other: '#4c8dff'};
+  box.innerHTML = `<div class="ocard fbcard">
+    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Написать разработчику</b><p>Пожелания, идеи, баги — всё пойдёт в дело</p></div></div></div>
+    ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
+    <div class="jig fbcats" id="fbCats">${CATS.map((c, i) => `<button class="fbcat fb-cat${c.k === 'idea' ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === 'idea' ? 'gold' : CC[c.k]}" data-je="${i < 2 ? 'r:tab' : ''}${i === 1 ? ',l:notch' : ''}${i === 2 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`).join('')}</div>
+    <textarea id="fbText" class="fbtext" rows="4" placeholder="Расскажите, что думаете…"></textarea>
+    <button class="cta wide" id="fbSend">Отправить${first ? ' (+10 золота)' : ''}</button>
+    <button class="ghostbtn" id="fbCancel">Отмена</button>
   </div>`;
   document.body.append(box);
+  jigsawFrame(box.querySelector('#fbHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
+  jigsawFrame(box.querySelector('#fbCats'), {R: 14, GAP: 6, NECK: 4.5, BR: 7.5, BULB: 5});
   let cat = 'idea';
   box.querySelectorAll('.fb-cat').forEach(b => b.addEventListener('click', () => {
     cat = b.dataset.cat;
-    box.querySelectorAll('.fb-cat').forEach(x => x.classList.toggle('sel', x === b));
+    box.querySelectorAll('.fb-cat').forEach(x => { x.classList.toggle('sel', x === b); x.dataset.jc = x === b ? 'gold' : CC[x.dataset.cat]; });
   }));
   box.querySelector('#fbCancel').onclick = () => box.remove();
   box.onclick = e => { if (e.target === box) box.remove(); };
