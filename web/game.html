@@ -155,6 +155,8 @@
       <section class="screen scroll" id="scr-setup" hidden>
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b id="setupTitle">Новая партия</b></div>
+          <button class="quickbig" id="setupQuick" hidden><i>⚡</i><span><b>Быстрая игра</b><small>Сразу к первой игре, где ждут игроков</small></span></button>
+          <div class="h3 orown" id="setupOwn" hidden>Или своя игра</div>
           <div class="h3">Сколько игроков</div>
           <div class="seg" id="seg"><button>2</button><button>3</button><button>4</button><button>5</button></div>
           <p class="shint" id="segHint" hidden></p>
@@ -168,7 +170,7 @@
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button><button class="ghostbtn wide" id="startInv" hidden>Пригласить друзей онлайн</button></div>
+        <div class="sfoot"><div class="sbtns"><button class="cta alt" id="startInv" hidden>👥 Пригласить друзей</button><button class="cta wide" id="start">Начать партию</button></div></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -1793,9 +1795,12 @@ function setProfileName(n) {
 }
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
-$('#startInv').onclick = async () => { await quickMatch(); const box = $('#mOnline'); if (box) setTimeout(() => box.scrollIntoView({behavior: 'smooth', block: 'center'}), 600); };
+$('#startInv').onclick = async () => { await quickMatch(true); if (mm) setTimeout(() => inviteSheet(), 300); };
+// «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
+$('#setupQuick').onclick = () => quickMatch();
 function renderSetup() {
-  $('#startInv').hidden = !(setupMode === 'online' && FB && registered());
+  $('#startInv').hidden = setupMode !== 'online';
+  $('#setupQuick').hidden = $('#setupOwn').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
@@ -1819,7 +1824,7 @@ $('#slist').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (sw && colorEdit >= 0) { setup.seats[colorEdit].col = sw.dataset.sw; if (colorEdit === 0) { wallet.color = sw.dataset.sw; saveWallet(); } colorEdit = -1; saveSetup(); return renderSetup(); }
 });
 $('#start').onclick = () => {
-  if (setupMode === 'online') return quickMatch();
+  if (setupMode === 'online') return quickMatch(true); // «Создать игру»: a room with these settings, quick players join it
   if (setupMode === 'friends') return createRoom();
   newGame(); show('game');
 };
@@ -1834,7 +1839,7 @@ $('#setupColor').addEventListener('click', e => {
 const SETUP_MODES = {
   bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.'},
-  online: {title: 'Игра онлайн', go: 'Найти соперников', hint: 'Рейтинговая партия: правила у всех одинаковые, выбирается только режим. Подберём соперников с тем же режимом и числом игроков.', seg: 'Поиск соберёт столько игроков, включая вас'},
+  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки. Своя игра ждёт игроков, нажавших «Быструю игру»; друзей можно позвать заранее.', seg: 'Поиск соберёт столько игроков, включая вас'},
   friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'После создания появится код комнаты — отправьте его друзьям. Свободные места можно занять ботами.', seg: 'Столько мест будет в комнате, включая вас'},
 };
 let setupMode = 'bots';
@@ -1909,15 +1914,24 @@ $('#lbCups').onclick = () => { if (!net || !net.host || net.gameId) return; setu
 // with one-tap join), and the share sheet for anyone else.
 function inviteSheet(fresh) {
   const old = document.getElementById('invBox'); if (old) old.remove();
+  // online search: only friends who are online right now, nothing to send; a friends' room also offers the link
+  const online = !!(mm || (net && net.quick)), room = net && net.code;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'invBox'; box.style.position = 'fixed';
   const ok = FB && registered(), seats = net && net.lobby ? net.lobby.seats : [], inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
   const on = ok ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];
-  box.innerHTML = `<div class="ocard invsheet"><h3>Пригласить друзей</h3>${!ok ? '<p>Звать друзей из списка могут сохранённые профили</p>' : on.length ? `<ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-linv="${f.uid}">${invited.uids.has(f.uid) && invited.code === (net && net.code) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p && f.p.s] || 'в сети')).join('')}</ul>` : '<p>Сейчас никого из друзей нет в сети — отправьте ссылку</p>'}
-    <button class="cta wide" id="invShare">🔗 Отправить ссылку</button><button class="ghostbtn" id="invNo">Закрыть</button></div>`;
+  const state = f => invited.code === room && invited.joined.has(f.uid) ? ['✓ С вами', ' joined'] : invited.code === room && invited.uids.has(f.uid) ? ['Ждём ответа', ' sent'] : ['Позвать', ''];
+  const rows = on.map(f => { const [t, c] = state(f); return `<li class="ivrow${c}"><span class="av" style="--c:${f.c || '#3fc27a'}">${(f.n || '?')[0]}</span><span class="ivwho"><b>${f.n}</b><small><i></i>${STATE_TEXT[f.p && f.p.s] || 'в сети'}</small></span><button class="chip go" data-linv="${f.uid}"${c ? ' disabled' : ''}>${t}</button></li>`; }).join('');
+  const empty = !ok ? 'Звать друзей могут сохранённые профили' : online ? 'Сейчас никого из друзей нет в сети. Как только кто-то зайдёт — он появится здесь' : 'Сейчас никого из друзей нет в сети — отправьте им ссылку';
+  box.innerHTML = `<div class="ocard invsheet"><div class="ivhead"><span>👥</span><h3>${online ? 'Позвать друзей в онлайн-игру' : 'Пригласить друзей'}</h3><small>${online ? 'Друг получит приглашение и сядет за ваш стол' : 'Друг получит приглашение в комнату'}</small></div>
+    ${rows ? `<ul class="ivlist">${rows}</ul>` : `<p class="ivempty">${empty}</p>`}
+    ${online ? '' : '<button class="cta wide" id="invShare">🔗 Отправить ссылку</button>'}<button class="ghostbtn" id="invNo">Готово</button></div>`;
   document.body.append(box);
-  box.onclick = e => { if (e.target === box || e.target.id === 'invNo') box.remove(); else if (e.target.closest('[data-linv]')) setTimeout(() => { const b = e.target.closest('[data-linv]'); if (b) b.textContent = '✓ Позвали'; }, 50); };
-  box.querySelector('#invShare').onclick = () => { if (net && net.code) $('#copyLink').click(); else if (wallet.fcode) $('#fCopy').click(); };
-  // the list is drawn at once from what is known, then once more with fresh online marks
+  box.onclick = e => {
+    if (e.target === box || e.target.id === 'invNo') return box.remove();
+    const b = e.target.closest('[data-linv]'); if (b) setTimeout(() => { b.textContent = 'Ждём ответа'; b.disabled = true; b.closest('.ivrow').classList.add('sent'); }, 30);
+  };
+  const sh = box.querySelector('#invShare'); if (sh) sh.onclick = () => $('#copyLink').click();
+  // drawn at once from what is known, then once more with fresh online marks
   if (ok && fresh !== true) loadFriends().then(() => { if (box.isConnected) { box.remove(); inviteSheet(true); } }).catch(() => {});
 }
 $('#lbInvite').onclick = () => inviteSheet();
@@ -2320,14 +2334,14 @@ renderSetup();
    when it is full); from then on it is an ordinary online game. */
 const MATCH_ROOM = 'QMATCH', SEEK_MS = 10000, SEEK_FRESH = 25000, START_IN = 3;
 var mm = null; // var: renderLobby() looks at it before this line runs
-async function quickMatch() {
+async function quickMatch(create) {
   if (!FB) return toastAny('Онлайн-поиск недоступен — используйте «С друзьями»');
   if (net && net.gameId && phase !== 'end') return show('game');
-  if (!(await serverReachable())) return noServer(quickMatch);
+  if (!(await serverReachable())) return noServer(() => quickMatch(create));
   stopMatch(true);
   leaveRoom();
   // want: the table size of the room this player opens if nobody is waiting; joining takes any room.
-  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0};
+  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0, create: create === true};
   const me = mm;
   me.timers.push(setInterval(() => matchTick(me), 1000));
   (async () => {
@@ -2368,14 +2382,14 @@ function matchDecide(me) {
   if (mm !== me || !me.ready) return;
   const open = matchOpen(me);
   if (!net) {
-    if (open.length) return connect(open[0].code, false, true);
+    if (open.length && !me.create) return connect(open[0].code, false, true);
     connect(newCode(), true, true); net.max = me.want;
     me.lastSeek = 0; return matchTick(me);
   }
   // Waiting alone in our own room while others wait too: move to a room with more people,
   // or, between two lone players, the one with the larger code moves to the smaller.
   const seats = net.lobby ? net.lobby.seats : [];
-  if (net.host && seats.length <= 1 && !net.gameId && !(invited.code === net.code && invited.uids.size)) {
+  if (net.host && !me.create && seats.length <= 1 && !net.gameId && !(invited.code === net.code && invited.uids.size)) {
     const other = open.find(o => o.n > 1 || o.code < net.code);
     if (other) { matchSay({t: 'close', code: net.code}); return connect(other.code, false, true); }
   }
