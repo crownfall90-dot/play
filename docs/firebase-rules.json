@@ -33,7 +33,7 @@
     },
     "profiles": {
       "$uid": {
-        ".read": "auth != null && auth.uid === $uid",
+        ".read": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).val() === true)",
         ".write": "auth != null && auth.uid === $uid",
         ".validate": "newData.hasChildren(['w', 't']) && newData.child('w').isString() && newData.child('w').val().length < 20000"
       }
@@ -106,8 +106,11 @@
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       "$id": {
         ".write": "auth != null && !data.exists()",
-        ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length <= 500 && newData.child('ts').val() === now && (!newData.child('ua').exists() || (newData.child('ua').isString() && newData.child('ua').val().length <= 200)) && (!newData.child('ver').exists() || (newData.child('ver').isString() && newData.child('ver').val().length <= 40))"
-      }
+        ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length <= 500 && newData.child('ts').val() === now && (!newData.child('ua').exists() || (newData.child('ua').isString() && newData.child('ua').val().length <= 200)) && (!newData.child('ver').exists() || (newData.child('ver').isString() && newData.child('ver').val().length <= 40)) && (!newData.child('uid').exists() || (newData.child('uid').isString() && newData.child('uid').val().length <= 64))"
+      },
+      ".indexOn": [
+        "uid"
+      ]
     },
     "promo_codes": {
       "$code": {
@@ -119,6 +122,15 @@
     "admins": {
       ".read": false,
       ".write": false
+    },
+    "logs": {
+      ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+      "$uid": {
+        "$id": {
+          ".write": "auth != null && ((auth.uid === $uid && !data.exists()) || root.child('admins').child(auth.uid).val() === true)",
+          ".validate": "!newData.exists() || (newData.hasChildren(['t', 'k']) && newData.child('t').val() === now && newData.child('k').isString() && newData.child('k').val().length <= 24 && (!newData.child('d').exists() || (newData.child('d').isString() && newData.child('d').val().length <= 240)) && (!newData.child('c').exists() || newData.child('c').isNumber()))"
+        }
+      }
     }
   }
 }
