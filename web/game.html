@@ -2073,12 +2073,13 @@ const FBC = FB ? PG.net.createFirebase({apiKey: FB.apiKey, dbUrl: FB.dbUrl, stor
 function fbToken() { return FBC.token(); }
 const FIRE = {
   async send(code, msg) {
-    const r = await fetch(`${FB.dbUrl}/rooms/${code}/msgs.json?auth=${await fbToken()}`, {method: 'POST', body: JSON.stringify({m: JSON.stringify(msg), ts: {'.sv': 'timestamp'}})});
+    const tok = await fbToken(); // u: who really wrote it — the database rules make it equal to the writer's account id
+    const r = await fetch(`${FB.dbUrl}/rooms/${code}/msgs.json?auth=${tok}`, {method: 'POST', body: JSON.stringify({m: JSON.stringify(msg), ts: {'.sv': 'timestamp'}, u: fbAuth && fbAuth.uid || undefined})});
     if (!r.ok) throw new Error('send ' + r.status);
   },
   listen(code, on) {
     let es = null, closed = false, pause = 2000;
-    const emit = (id, v) => v && typeof v.m === 'string' && on.msg({id, time: (v.ts || Date.now()) / 1000, message: v.m});
+    const emit = (id, v) => v && typeof v.m === 'string' && on.msg({id, time: (v.ts || Date.now()) / 1000, message: v.m, u: typeof v.u === 'string' ? v.u : ''});
     const start = async () => {
       let tok; try { tok = await fbToken(); } catch (_) { return on.error(); }
       if (closed) return;
@@ -2206,7 +2207,7 @@ async function serverReachable(ms = 6000) {
 function noServer(retry) { confirmBox('Нет связи с игровым сервером<br><small>Проверьте интернет. Игра с ботами и на одном телефоне работает без сети</small>', 'Повторить', retry, 'Закрыть'); }
 function connect(code, asHost, quick) {
   leaveRoom();
-  const me = net = {code, host: false, hostId: null, seen: new Set(), lobby: null, gameId: null, since: Date.now() / 1000, quick: !!quick};
+  const me = net = {code, host: false, hostId: null, seen: new Set(), uidOf: new Map(), secure: false, lobby: null, gameId: null, since: Date.now() / 1000, quick: !!quick};
   let opened = false;
   net.close = TRANSPORT.listen(code, {
     open() {
@@ -2228,11 +2229,44 @@ function connect(code, asHost, quick) {
 // max: how many seats the creator chose for the room.
 function publishLobby(seats) { netSend({t: 'lobby', seats, rules: setup.rules, max: roomMax()}); }
 const roomMax = () => Math.min(5, Math.max(2, (net && (net.max || net.lobby && net.lobby.max)) || 5));
+/* Who may say what in a room (audit S-2). Every message carries d.u, the account id of the phone that wrote it (the
+   database rules force it to be true). The first time a phone says hello its client id is tied to that account id;
+   after that only the same account can speak for that client. Moves and the rest of a seat's messages must come from
+   the seat's owner; a move marked auto (another phone plays for a player who ran out of time) and the bots' moves
+   may come from any player in the room. Rooms started by a new version (start.sec = 1) are "secure": messages without
+   d.u are dropped there; older rooms keep working as before. Returns false: ignore the message (never stop the game). */
+function netAuth(d, m) {
+  const u = typeof d.u === 'string' ? d.u : '', ids = net.uidOf;
+  if (!u) return !net.secure;
+  const bind = id => {
+    if (typeof id !== 'string') return false;
+    const b = ids.get(id);
+    if (!b || !net.gameId) { ids.set(id, u); return true; } // before the start an account may change (guest signed in)
+    return b === u;
+  };
+  const hostUid = net.hostId ? ids.get(net.hostId) : '';
+  if (m.t === 'host') return !net.hostId || m.id === net.hostId ? bind(m.id) : false;
+  if (m.t === 'hello') return bind(m.id);
+  if (m.t === 'lobby' || m.t === 'start') {
+    if (hostUid && u !== hostUid) return false;
+    if (m.t === 'start' && m.sec === 1) net.secure = true;
+    return true;
+  }
+  if (m.g !== net.gameId || typeof m.p !== 'number' && m.t !== 'ver' && m.t !== 'upd' && m.t !== 'upresume') return true;
+  const seat = typeof m.p === 'number' ? players[m.p] : null;
+  const room = new Set(players.filter(x => x.owner).map(x => ids.get(x.owner)).filter(Boolean));
+  if (hostUid) room.add(hostUid);
+  if (!seat) return room.has(u) || !net.secure; // ver / upd / upresume: anyone in the room
+  if (!seat.owner || (m.t === 'move' && m.auto)) return room.has(u) || !net.secure; // a bot seat is run by the room's creator
+  const owner = ids.get(seat.owner);
+  return owner ? owner === u : !net.secure;
+}
 function onNet(d) {
   if (net.seen.has(d.id)) return;
   net.seen.add(d.id);
   let m; try { m = JSON.parse(d.message); } catch (_) { return; }
   const live = d.time >= net.since - 2;
+  if (!m || typeof m !== 'object' || !netAuth(d, m)) return;
   if (m.t === 'host') { if (!net.hostId) { net.hostId = m.id; net.host = m.id === myId; } return renderLobby(); }
   if (m.t === 'hello' && net.host && live) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
@@ -2452,7 +2486,7 @@ $('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
 const ratedRules = mode => ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
 function startOnline(seats) {
   const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
-  netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
+  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
 }
 renderLobby();
 renderSetup();
