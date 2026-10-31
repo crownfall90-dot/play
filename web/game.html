@@ -3544,6 +3544,21 @@ function jigsawFrame(host, o) {
   requestAnimationFrame(draw); document.fonts && document.fonts.ready && document.fonts.ready.then(draw);
   return draw;
 }
+// Every section opens with the same kind of card: a coloured jigsaw piece with an icon, a title and a line about it.
+(function sectionHeroes() {
+  const H = {
+    settings: ['#6a7dff', '⚙️', 'Настройте под себя', 'Звук, подсказки и вид игры'],
+    shop: ['#f2994a', '🛍', 'Коллекция фигурок', 'Подарки, сундуки и новые фигурки'],
+    friends: ['#4c8dff', '👥', 'Ваша компания', 'Играйте и общайтесь вместе'],
+    lobby: ['#4c8dff', '🏠', 'Играйте своими', 'Код комнаты — игра только для своих']
+  };
+  for (const [id, [c, ic, t, tag]] of Object.entries(H)) {
+    const lb = document.querySelector(`#scr-${id} .lb`), top = lb && lb.querySelector('.ltop'); if (!top) continue;
+    const host = document.createElement('div'); host.className = 'jig shero small';
+    host.innerHTML = `<div class="mhero" data-jp data-jc="${c}" data-je="r:tab"><span class="mhi">${ic}</span><div><b>${t}</b><p>${tag}</p></div></div>`;
+    top.after(host); jigsawFrame(host, {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
+  }
+})();
 (function menuJigsaw() { const h = $('#jigMenu'); if (h) jigsawFrame(h, {R: 20, GAP: 6}); const g = $('#jigSetup'); if (g) jigsawFrame(g, {R: 20, GAP: 6, NECK: 6, BR: 10, BULB: 7}); })();
 /* The bottom bar is four jigsaw pieces: each has a round tab that fits into the notch of the next one. Every
    section has its own colour; the piece of the open section is gold and glowing. The outline is drawn as SVG from
