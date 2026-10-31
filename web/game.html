@@ -1154,7 +1154,10 @@ function beginHumanTurn() {
 // there is no "pass the phone" screen over the board any more.
 function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // Bot choices live in src/engine/bots.js.
-const botLevel = () => PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal';
+// Soft start for a newcomer: the first three games against bots are against "easy" ones (unless the player chose a level
+// themselves); from the fourth game the chosen level applies and one note says so.
+const softStart = () => wallet.botlvl === 'normal' && PROG.st.games < 3;
+const botLevel = () => softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal';
 const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
@@ -1209,10 +1212,14 @@ async function endGame(reason) {
   const medal = reason === 'draw' ? '🤝' : myPlace < 0 ? '🏁' : ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][myPlace];
   const rows = order.slice(0, 5).map((p, k) => `<li class="${p.i === meIdx ? 'me' : ''}" style="--c:${p.col};--d:${k * 90}ms"><span class="n">${k + 1}</span><i></i><b>${p.name}</b><span class="v">${p.score}</span></li>`).join('');
   const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
-  over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}<button class="cta wide" data-go="results">Подробные итоги</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
+  // After the first win a guest is offered to keep the progress (a profile with sign-in), once.
+  const saveCard = won && FB && !fbAuth && PROG.st.wins === 1 && !wallet.saveAsked ? `<button class="ghostbtn savecard" id="saveProg"><b>☁️ Сохранить прогресс</b><small>Войдите, чтобы золото и уровень не пропали при смене телефона</small></button>` : '';
+  over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}${xpLine()}${saveCard}<button class="cta wide" id="again2">Ещё партию</button><button class="ghostbtn" data-go="results">Подробные итоги</button></div>`;
   over.hidden = false;
   historySave(reason, true);
   $('#again2').onclick = () => net ? show('lobby') : newGame();
+  const sp = $('#saveProg'); if (sp) sp.onclick = () => { wallet.saveAsked = true; saveWallet(); over.hidden = true; track('save_prompt_tap'); wallet.name ? accountDialog('link') : askProfile(); };
+  if (saveCard) { wallet.saveAsked = true; saveWallet(); }
   setStatus('Партия окончена'); $('.tray').classList.add('ended');
 }
 const winTitle = (p, final) => isMe(p) ? (final ? 'Вы победили!' : 'Вы лидируете') : `${final ? 'Побеждает' : 'Лидирует'} ${p.name}`;
@@ -1267,6 +1274,9 @@ function startGame(cfg, replay = []) {
   if (!cfg.online) cfg = {...cfg, localId: cfg.localId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2))};
   ending = false; $('.tray').classList.remove('ended');
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
+  if (!replay.length && !cfg.tut && !cfg.noIntro && !cfg.online && wallet.botlvl === 'normal' && PROG.st.games === 3 && !wallet.softNote) {
+    wallet.softNote = true; saveWallet(); setTimeout(() => toastAny('Боты стали сильнее: теперь «Обычные». Сложность меняется в настройках'), 1800);
+  }
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
@@ -1365,6 +1375,11 @@ function rewardChips(g) {
   if (rw.xp) chips.push(`<div class="rchip xp" style="--i:2"><b>⭐ +${rw.xp}</b><small>опыта · уровень ${rw.lvl}</small></div>`);
   return `<div class="rchips">${chips.join('')}</div>${rw.up ? `<div class="lvlup">🎉 Новый уровень ${rw.lvl}! +${20 * rw.up} золота</div>` : ''}`;
 }
+// Progress to the next level, shown under the reward chips of a finished game.
+function xpLine() {
+  const need = xpNeed(PROG.lvl), pc = Math.max(0, Math.min(100, Math.round(PROG.xp / need * 100)));
+  return `<div class="xpline"><div class="xpbar"><i style="width:${pc}%"></i></div><small>Уровень ${PROG.lvl} · ещё ${Math.max(0, need - PROG.xp)} опыта до следующего</small></div>`;
+}
 function renderResults(final, gold) {
   const o = ranked();
   if (!gold && final) gold = lastGold;
@@ -1389,7 +1404,7 @@ const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() *
 const today = () => new Date().toISOString().slice(0, 10);
 // The wallet's storage lives in src/state/wallet.js.
 // A checksum mismatch is reported, never punished (see walletSig): the gold stays.
-const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', info));
+const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', 'first_open', 'first_game_done', 'second_game_done', 'third_game_done', 'save_prompt_tap', 'return_d1', 'return_d3', 'return_d7', info));
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) {
   try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {}
@@ -2695,6 +2710,8 @@ function progress(d) {
 function gameDone(place, score) {
   const win = place === 0;
   PROG.st.best = Math.max(PROG.st.best, score);
+  // Funnel markers: the owner's panel and Analytics show where newcomers stop.
+  { const n = PROG.st.games + 1; if (n <= 3) track(['first_game_done', 'second_game_done', 'third_game_done'][n - 1], {win: win ? 1 : 0, score}); }
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= 30 ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
   // Experience: a share for taking part, more for the place and for the points, half again online. A game where this
   // player laid fewer than 6 cards gives nothing (quitting early is not farming).
@@ -4530,6 +4547,13 @@ window.addEventListener('keydown', e => {
 injectArt();
 dailyBonus(); renderResume(); renderPrefs(); checkMaintenance();
 devVerify();
+// First open and the days people come back (D1, D3, D7), each reported once.
+(() => {
+  const d0 = Date.UTC(...today().split('-').map((v, i) => i === 1 ? v - 1 : +v));
+  if (!wallet.firstSeen) { wallet.firstSeen = today(); wallet.rd = {}; saveWallet(); track('first_open'); return; }
+  const days = Math.round((d0 - Date.parse(wallet.firstSeen + 'T00:00:00Z')) / 864e5);
+  for (const k of [1, 3, 7]) if (days >= k && days < k + 2 && !(wallet.rd || {})[k]) { wallet.rd = Object.assign(wallet.rd || {}, {[k]: 1}); saveWallet(); track('return_d' + k, {days}); }
+})();
 plog('open', {p: installKind(), v: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev')});
 if (window.WEBAPP && FB && FB.googleClientId) googleReturn();
 // back from Google's page with the browser's Back button: the page comes from the cache with the button still pressed
