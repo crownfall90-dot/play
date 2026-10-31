@@ -507,8 +507,11 @@ function centerCam(anim) { const b = bounds(); const to = {px: -(b.x0 + b.x1) / 
 function ensureVisible(x, y) {
   const vw = board.clientWidth, vh = board.clientHeight;
   if (!vw) return;
-  const hx = vw / 2 / cam.z / T - .9, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
-  if (Math.abs(x + cam.px / T) > hx || Math.abs(y + cam.py / T) > hy) return tweenCam({px: -x * T, py: -y * T}, 650);
+  // the zoom and hint buttons cover the right edge: keep a cell clear of them
+  const hx = (vw / 2 - 58) / cam.z / T - .6, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
+  // pan only as far as needed to bring the cell in, so the table does not jump about
+  const ox = x + cam.px / T, oy = y + cam.py / T;
+  if (Math.abs(ox) > hx || Math.abs(oy) > hy) return tweenCam({px: cam.px - (Math.abs(ox) > hx ? ox - Math.sign(ox) * hx : 0) * T, py: cam.py - (Math.abs(oy) > hy ? oy - Math.sign(oy) * hy : 0) * T}, 650);
 }
 // A finger move on screen, turned back into board directions (the board may be rotated and tilted).
 let panSum = 0;
@@ -733,7 +736,7 @@ function setClock(who, left, low) {
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av">${p.init}</span><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span>${clkHtml(i)}</div>`).join('');
+  playersEl.innerHTML = players.map((p, i) => `<div class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -803,6 +806,7 @@ function coachTurn() {
   if (wallet.coach !== 'on' || !tipOk()) return false;
   const m = tipFor(); if (!m) return false;
   const el = slotEls.find(e => +e.dataset.x === m.x && +e.dataset.y === m.y); if (el) el.classList.add('tip');
+  ensureVisible(m.x, m.y);
   setStatus(`💡 ${m.why}. Место подсвечено`);
   return true;
 }

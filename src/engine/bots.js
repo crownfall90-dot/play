@@ -39,7 +39,7 @@ export function helperPick(tiles, meeples, type, p, players, random) {
 }
 
 const NOUN = {c: 'ваш город', r: 'вашу дорогу', f: 'вашу крепость'};
-const FREE = {c: 'Город без хозяина', r: 'Дорога без хозяина', f: 'Крепость'};
+const FREE = {c: 'Город без хозяина', r: 'Дорога без хозяина'};
 const plural = (n, one, few, many) => n % 10 === 1 && n % 100 !== 11 ? one : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? few : many;
 const pts = n => `${n} ${plural(n, 'очко', 'очка', 'очков')}`;
 /** What is still missing: open sides of a town or road, empty cells round a fort. */
@@ -49,6 +49,8 @@ function missing(tiles, c) {
   for (const t of c.tiles) for (const g of groupsOf(t)) if (c.ids.has(t.x + ',' + t.y + '|' + g.kind + g.edges.join(''))) for (const d of g.edges) if (!tiles.get(key(t.x + DX[d], t.y + DY[d]))) open++;
   return open;
 }
+/** The least a feature brings once finished: an open town or road needs at least one more card. */
+const atLeast = (kind, v, miss) => kind === 'f' ? v : v + (miss ? (kind === 'c' ? 2 : 1) : 0);
 const left = (kind, n) => kind === 'f' ? `осталось окружить ${n} ${plural(n, 'клетку', 'клетки', 'клеток')}` : `осталось закрыть ${n} ${plural(n, 'край', 'края', 'краёв')}`;
 
 /** The coach: the best spot for player p's card, and why, in words a player understands, with the points at stake
@@ -66,13 +68,13 @@ export function hintPick(tiles, meeples, type, p, players, haveFigure) {
       const c = component(tiles, meeples, t, g), v0 = featurePoints(tiles, c, false), miss = c.complete ? 0 : missing(tiles, c);
       if (!c.meeples.length) {
         // a figure can only go on a feature nobody holds, on the card just placed
-        if (haveFigure && !c.complete) { const v = 2.5 + Math.min(v0, 12) * .25; s += v; say(v, `${FREE[g.kind]} — поставьте фишку: достроите — +${pts(v0)} или больше, ${left(g.kind, miss)}`); }
+        if (haveFigure && !c.complete) { const v = 2.5 + Math.min(v0, 12) * .25; s += v; say(v, g.kind === 'f' ? `Крепость — поставьте фишку: окружите картами — +${pts(v0)}, ${left(g.kind, miss)}` : `${FREE[g.kind]} — поставьте фишку: достроите — минимум +${pts(atLeast(g.kind, v0, miss))}, ${left(g.kind, miss)}`); }
         continue;
       }
       const cnt = Array.from({length: players}, () => 0); c.meeples.forEach(x => cnt[x.p]++);
       const mx = Math.max(...cnt), mine = cnt[p] === mx;
       if (mine && c.complete) { const v = 10 + v0 * 1.5; s += v; say(v, `Достроит ${NOUN[g.kind]} — +${pts(v0)} прямо сейчас`); }
-      else if (mine) { const v = 2 + c.tiles.length * .4 + (miss <= 1 ? 2 : 0); s += v; say(v, `Продолжит ${NOUN[g.kind]}: достроите — +${pts(v0)}, ${left(g.kind, miss)}`); }
+      else if (mine) { const v = 2 + c.tiles.length * .4 + (miss <= 1 ? 2 : 0); s += v; say(v, `Продолжит ${NOUN[g.kind]}: достроите — минимум +${pts(atLeast(g.kind, v0, miss))}, ${left(g.kind, miss)}`); }
       else s -= c.complete ? 3 + v0 : 1 + c.tiles.length * .3;
     }
     tiles.delete(key(t.x, t.y));
@@ -84,6 +86,6 @@ export function hintPick(tiles, meeples, type, p, players, haveFigure) {
 
 /** Coach text for one figure option: what this town / road / fort is worth and what is left to finish it. */
 export function featureNote(tiles, meeples, t, g) {
-  const c = component(tiles, meeples, t, g), v0 = featurePoints(tiles, c, false);
-  return c.complete ? `+${pts(v0)} сразу` : `достроите — +${pts(v0)}, ${left(g.kind, missing(tiles, c))}`;
+  const c = component(tiles, meeples, t, g), v0 = featurePoints(tiles, c, false), miss = c.complete ? 0 : missing(tiles, c);
+  return c.complete ? `+${pts(v0)} сразу` : g.kind === 'f' ? `окружите — +${pts(v0)}, ${left(g.kind, miss)}` : `достроите — минимум +${pts(atLeast(g.kind, v0, miss))}, ${left(g.kind, miss)}`;
 }
