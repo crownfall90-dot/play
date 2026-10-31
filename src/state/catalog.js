@@ -11,6 +11,16 @@ export const FIGS = {
   queen: {name: 'Королева', price: 2500},
 };
 
+/** Avatar frames: a ring round the player's own avatar (menu plate, profile, own plate in a game). Looks only. */
+export const FRAMES = {
+  none: {name: 'Без рамки', price: 0, ring: ''},
+  gold: {name: 'Золото', price: 200, ring: 'linear-gradient(135deg,#fff1b8,#f2b84b 45%,#a8701a)'},
+  forest: {name: 'Лес', price: 350, ring: 'linear-gradient(135deg,#b7f08a,#3fae4f 50%,#1f5e2c)'},
+  sea: {name: 'Море', price: 350, ring: 'linear-gradient(135deg,#bfefff,#3fa9e8 50%,#1b4f9c)'},
+  royal: {name: 'Королевская', price: 700, ring: 'conic-gradient(#f7c948,#b06cf0,#f7c948,#b06cf0,#f7c948)'},
+  fire: {name: 'Пламя', price: 1000, ring: 'conic-gradient(from 20deg,#ffe08a,#ff8c42,#ef5350,#ff8c42,#ffe08a)'},
+};
+
 export const LOCS = [
   {name: 'Деревня', desc: 'Дороги, города, реки и крепости', open: true, art: '<rect width="160" height="90" fill="#7cb85a"/><path d="M0 60Q40 40 80 58T160 52V90H0z" fill="#5f9e40"/><path d="M0 70L160 64" stroke="#e2c690" stroke-width="7"/><path d="M110 0Q100 40 120 90" stroke="#3b88cf" stroke-width="9" fill="none"/><g fill="#c1452f"><path d="M28 40l10-10 10 10z"/><path d="M50 44l9-9 9 9z"/></g><g fill="#eadcbc"><rect x="30" y="40" width="16" height="10"/><rect x="52" y="44" width="14" height="9"/></g><path d="M130 30h12v24h-12z" fill="#b7ae9b"/><path d="M136 18l8 4-8 4z" fill="#e04a3a"/>'},
   {name: 'Мегаполис', desc: 'Проспекты, кварталы, метро и небоскрёбы', art: '<rect width="160" height="90" fill="#1d2550"/><circle cx="130" cy="18" r="8" fill="#f4e7b0"/><g fill="#2f3a72"><rect x="8" y="40" width="22" height="50"/><rect x="34" y="22" width="18" height="68"/><rect x="56" y="48" width="24" height="42"/><rect x="84" y="12" width="20" height="78"/><rect x="108" y="34" width="22" height="56"/><rect x="134" y="52" width="20" height="38"/></g><g fill="#ffd36b"><rect x="38" y="30" width="4" height="4"/><rect x="45" y="40" width="4" height="4"/><rect x="88" y="22" width="4" height="4"/><rect x="96" y="36" width="4" height="4"/><rect x="88" y="50" width="4" height="4"/><rect x="12" y="50" width="4" height="4"/><rect x="114" y="44" width="4" height="4"/><rect x="62" y="58" width="4" height="4"/></g>'},
