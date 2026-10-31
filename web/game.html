@@ -32,7 +32,7 @@
       <section class="screen" id="scr-menu" hidden>
         <div class="mtop">
           <button class="mprof" id="mprof" data-go="progress" aria-label="Профиль, уровень и золото"></button>
-          <button class="goldchip shopchip" data-go="shop" aria-label="Магазин"><span class="sbag"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg></span></button>
+          <div class="mtools"><button class="mtool" data-go="rules" aria-label="Как играть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button><button class="mtool" id="menuSettings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button><button class="mtool goldchip shopchip" data-go="shop" aria-label="Магазин"><span class="sbag"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg></span></button></div>
         </div>
         <div class="hero"><div class="mini" id="mini"></div></div>
         <div class="mbody">
@@ -99,7 +99,7 @@
 
       <section class="screen scroll" id="scr-progress" hidden>
         <div class="lb">
-          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Профиль</b><span class="ltools"><button class="topbtn" data-go="rules" aria-label="Как играть"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button><button class="topbtn" id="profSettings" aria-label="Настройки"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg></button></span></div>
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Профиль</b></div>
           <div class="profile" id="profile"></div>
           <div class="sgroup prof" id="acct"></div>
           <div class="stats" id="stats"></div>
@@ -110,7 +110,7 @@
 
       <section class="screen scroll" id="scr-rules" hidden>
         <div class="lb rules">
-          <div class="ltop"><button class="iconbtn" data-go="progress" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Как играть</b></div>
+          <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Как играть</b></div>
           <button class="tutcard" id="tutBtn"><span>🎓</span><span><b>Обучение за 2 минуты</b><small>Сыграйте первую партию с подсказками · +30 золота</small></span></button>
           <div class="h3">Цель</div>
           <div class="goal"><span>🏰</span><p>Стройте королевство из общей стопки. Стопка кончилась — <b>больше очков = победа</b></p></div>
@@ -1647,7 +1647,7 @@ function setView(v) { const top = v === 'top'; $('#view').textContent = top ? '2
 
 /* ---------------- game menu: pause, settings, cancel / resign, draw ---------------- */
 const mySeat = () => players.findIndex((p, i) => net && p.owner === myId && !p.resigned);
-let settingsReturn = 'progress';
+let settingsReturn = 'menu';
 function closeGameMenu() { const b = document.getElementById('gmenu'); if (b) b.remove(); paused = false; }
 function openGameMenu() {
   if (document.getElementById('gmenu')) return;
@@ -1691,8 +1691,8 @@ function openGameMenu() {
   });
 }
 $('#gameMenu').onclick = openGameMenu;
-$('#profSettings').onclick = () => { settingsReturn = 'progress'; show('settings'); };
-$('#settingsBack').onclick = () => { const back = settingsReturn; settingsReturn = 'progress'; show(back); if (back === 'game') openGameMenu(); };
+$('#menuSettings').onclick = () => { settingsReturn = 'menu'; show('settings'); };
+$('#settingsBack').onclick = () => { const back = settingsReturn; settingsReturn = 'menu'; show(back); if (back === 'game') openGameMenu(); };
 const activeHumans = () => players.map((p, i) => i).filter(i => players[i].human && !players[i].resigned);
 function onResign(p) {
   const pl = players[p];
