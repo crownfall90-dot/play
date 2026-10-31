@@ -180,7 +180,7 @@
           <div class="mclock" id="mClock">0:00</div>
           <ul class="mseats" id="mSeats"></ul>
           <div class="monline" id="mOnline" hidden><div class="h3" id="mOnlineTitle">Друзья онлайн</div><ul class="flist" id="mOnlineList"></ul></div>
-          <div class="mact"><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
+          <div class="mact"><button class="cta wide alt" id="mInvite">👥 Пригласить друзей</button><button class="cta wide alt" id="mOther" hidden></button><button class="cta wide" id="mBots" hidden>Пока сыграть с ботами</button><button class="ghostbtn" id="mCancel">Отменить поиск</button></div>
         </div>
       </section>
 
@@ -196,7 +196,8 @@
           </div>
           <div class="col" id="lbRoom" hidden>
             <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите на код, чтобы скопировать</small>
-              <div class="row2"><button class="chip" id="copyLink">🔗 Скопировать код</button></div></div>
+              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить друзей</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
+            <button class="cupsbadge" id="lbCups"></button>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
             <p class="shint">Если два игрока выберут один цвет, при старте он достанется одному из них случайно, второму — другой свободный.</p>
@@ -901,7 +902,7 @@ async function afterPlace(t, p, forced) {
   // Score completed groups FIRST — so we can detect if this player's meeple returned.
   t.by = p;
   const meeplesBefore = players[p].meeples;
-  const mine = players[p].meeples > 0 && !tut ? doneMine(t, p) : [];
+  const mine = players[p].meeples > 0 ? doneMine(t, p) : [];
   await scoreAfter(t, p, new Set(mine.flatMap(m => [...m.c.ids])));
   if (my !== token) return;
   const meepleReturned = players[p].meeples > meeplesBefore;
@@ -1219,6 +1220,8 @@ function startGame(cfg, replay = []) {
   deck = cfg.deck.slice();
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
+  // Tutorial: the first piece counts as the player's own, so the town they close on move one can take a figure at once.
+  if (cfg.tut) first.by = 0;
   tiles = new Map([[key(0, 0), first]]);
   first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
@@ -1879,7 +1882,17 @@ document.addEventListener('click', e => {
   if (net && net.host && net.lobby && !net.gameId) publishLobby(net.lobby.seats);
 });
 renderRules();
-function toastAny(t) { const d = document.createElement('div'); d.className = 'toast on ftoast'; d.style.position = 'fixed'; d.style.top = 'auto'; d.style.bottom = 'calc(28px + var(--ib, 0px))'; d.textContent = t; document.body.append(d); setTimeout(() => d.remove(), 2200); }
+// Results and warnings: one card in the middle of the screen (above the bottom bar and any dialog), in the game's own
+// style, with a sign for success, a problem or plain news. Tap it to close; long texts stay longer.
+const NOTE_BAD = /^(Не |Нет |Неверн|Ошибка|Сначала|Это ваш)|уже был|не удалось|не хватает|не найден|недоступ/i, NOTE_OK = /^🎉|^✅|активирован|добавлен|сохранён|отправлен|ваша|ваш!|Привет|С возвращением|скопирован/i;
+function toastAny(t, kind) {
+  const old = document.getElementById('note'); if (old) old.remove();
+  const text = String(t || ''), k = kind || (NOTE_BAD.test(text) ? 'bad' : NOTE_OK.test(text) ? 'ok' : 'info');
+  const d = document.createElement('div'); d.id = 'note'; d.className = 'note ' + k; d.setAttribute('role', k === 'bad' ? 'alert' : 'status');
+  d.innerHTML = `<i>${k === 'bad' ? '!' : k === 'ok' ? '✓' : 'i'}</i><span></span>`; d.querySelector('span').textContent = text.replace(/^(🎉|✅)\s*/, '');
+  document.body.append(d); d.onclick = () => d.remove();
+  setTimeout(() => { d.classList.add('out'); setTimeout(() => d.remove(), 260); }, Math.min(5000, 1800 + text.length * 35));
+}
 const copyText = async (txt, done) => { try { await navigator.clipboard.writeText(txt); toastAny(done); } catch (_) { toastAny(txt); } };
 // Invites: the phone's own share sheet (pick the messenger); copying is the fallback. On Android in the browser the
 // text also carries the APK link, since the app is not in a store yet.
@@ -1891,6 +1904,24 @@ async function shareText(txt, done) {
 }
 $('#copyLink').onclick = () => track('share', {content_type: 'room'}) || shareText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
+$('#lbCups').onclick = () => { if (!net || !net.host || net.gameId) return; setup.rules.cups = !setup.rules.cups; saveSetup(); if (net.lobby) publishLobby(net.lobby.seats); renderLobby(); renderRules(); };
+// Inviting friends, one sheet for the room and for the online search: friends online now with "Call" (they get a card
+// with one-tap join), and the share sheet for anyone else.
+function inviteSheet(fresh) {
+  const old = document.getElementById('invBox'); if (old) old.remove();
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'invBox'; box.style.position = 'fixed';
+  const ok = FB && registered(), seats = net && net.lobby ? net.lobby.seats : [], inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
+  const on = ok ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];
+  box.innerHTML = `<div class="ocard invsheet"><h3>Пригласить друзей</h3>${!ok ? '<p>Звать друзей из списка могут сохранённые профили</p>' : on.length ? `<ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-linv="${f.uid}">${invited.uids.has(f.uid) && invited.code === (net && net.code) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p && f.p.s] || 'в сети')).join('')}</ul>` : '<p>Сейчас никого из друзей нет в сети — отправьте ссылку</p>'}
+    <button class="cta wide" id="invShare">🔗 Отправить ссылку</button><button class="ghostbtn" id="invNo">Закрыть</button></div>`;
+  document.body.append(box);
+  box.onclick = e => { if (e.target === box || e.target.id === 'invNo') box.remove(); else if (e.target.closest('[data-linv]')) setTimeout(() => { const b = e.target.closest('[data-linv]'); if (b) b.textContent = '✓ Позвали'; }, 50); };
+  box.querySelector('#invShare').onclick = () => { if (net && net.code) $('#copyLink').click(); else if (wallet.fcode) $('#fCopy').click(); };
+  // the list is drawn at once from what is known, then once more with fresh online marks
+  if (ok && fresh !== true) loadFriends().then(() => { if (box.isConnected) { box.remove(); inviteSheet(true); } }).catch(() => {});
+}
+$('#lbInvite').onclick = () => inviteSheet();
+$('#mInvite').onclick = () => inviteSheet();
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-linv]'); if (!b) return;
   b.disabled = true; await inviteFriend(b.dataset.linv); renderLobbyFriends();
@@ -2213,6 +2244,10 @@ function renderLobby() {
   $('#lbJoin').hidden = !!net; $('#lbRoom').hidden = !net;
   if (!net) return;
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
+  // "for cups" is seen by everyone in the room; the creator switches it here with one tap
+  const cups = !!(net.lobby && net.lobby.rules ? net.lobby.rules.cups : setup.rules.cups), cb = $('#lbCups');
+  cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : ''); cb.disabled = !net.host || !!net.gameId;
+  cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? 'Нажмите, чтобы ' + (cups ? 'выключить' : 'включить') : cups ? 'Победа даст кубки в рейтинг' : 'Дружеская партия, рейтинг не меняется'}</small>`;
   renderMyColor();
   const seats = net.lobby ? net.lobby.seats : [];
   if (invited.code === net.code) {
@@ -2522,7 +2557,11 @@ function renderMenuProfile() {
 function renderProgress() {
   questsToday();
   const need = xpNeed(PROG.lvl), name = profileName();
-  $('#profile').innerHTML = `<div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><b>${name}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков</small></div>`;
+  // One card: avatar, nickname and e-mail with the edit button, then level and experience; the account buttons
+  // (#acct, below) join it.
+  const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
+  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков · <i class="coin"></i> ${wallet.gold}</small></div></div>`;
+  $('#profEdit').onclick = editProfile;
   const st = PROG.st;
   $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
@@ -2564,6 +2603,18 @@ async function openPlayer(uid, name, col) {
   const st = box.querySelector('#plStat'); if (st) st.textContent = [`🏆 ${lead && +lead.r || 0} кубков`, lead && lead.w ? `${+lead.w} побед онлайн` : '', seen].filter(Boolean).join(' · ');
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (b && !e.target.closest('button.chip')) openPlayer(b.dataset.pl, b.dataset.n, b.dataset.c); });
+// Edit the profile: colour (free, any time) and nickname (the usual rename).
+function editProfile() {
+  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="epAv" style="--c:${wallet.color}">${(profileName()[0] || '?').toUpperCase()}</div><h3>Редактировать профиль</h3><p>Цвет игрока — в профиле и по умолчанию в партиях</p><span id="epAnchor"></span>
+    <button class="cta wide" id="epName">Сменить никнейм · <i class="coin" style="display:inline-block;width:12px;height:12px"></i> ${RENAME_PRICE}</button><button class="ghostbtn" id="epOk">Готово</button></div>`;
+  document.body.append(box);
+  colorPick(box.querySelector('#epAnchor'), box.querySelector('#epAv'));
+  const done = () => { box.remove(); renderProgress(); renderAccount(); renderMenuProfile(); };
+  box.querySelector('#epOk').onclick = done;
+  box.querySelector('#epName').onclick = () => { done(); renameDialog(); };
+  box.onclick = e => { if (e.target === box) done(); };
+}
 function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
@@ -2677,6 +2728,9 @@ function tutShow() {
   c.innerHTML = `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
   c.hidden = false; c.style.top = (playersEl.offsetTop + playersEl.offsetHeight + 8) + 'px';
   if (phase === 'place' && current) renderSlots();
+  // the spot to tap is brought to the middle: after the pan and zoom lessons it may be off the screen
+  // (after the zoom button's own animation, which would cancel this one)
+  if (s.only) { const i = tut.i; setTimeout(() => { if (tut && tut.i === i) tweenCam({px: -s.only[0] * T, py: -s.only[1] * T}, 450); }, 350); }
   requestAnimationFrame(() => {
     if (s.hl) document.querySelectorAll(s.hl).forEach(h => h.classList.add('tutpulse'));
     if (s.only) document.querySelectorAll('.slot').forEach(h => h.classList.add('tutpulse'));
