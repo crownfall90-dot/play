@@ -227,7 +227,24 @@ body:not(.authed) main > .card:not(#loginCard) { display: none; }
         <div class="stat-val" id="valRooms">--</div>
         <div class="stat-sub">Активных комнат</div>
       </div>
+      <div>
+        <div class="stat-val" id="valDau">--</div>
+        <div class="stat-sub">Заходили за сутки</div>
+      </div>
+      <div>
+        <div class="stat-val" id="valWau">--</div>
+        <div class="stat-sub">Заходили за неделю</div>
+      </div>
+      <div>
+        <div class="stat-val" id="valReg">--</div>
+        <div class="stat-sub">С сохранённым профилем (за неделю)</div>
+      </div>
+      <div>
+        <div class="stat-val" id="valApp">--</div>
+        <div class="stat-sub">Приложение / сайт (за неделю)</div>
+      </div>
     </div>
+    <div class="stat-sub" id="valVers"></div>
     <button class="btn" id="btnRefreshStats">Обновить статистику</button>
   </div>
 
@@ -453,7 +470,14 @@ $('btnCopyInvite').onclick = () => {
 async function loadStats() {
   try {
     const pres = await db('presence') || {}, now = Date.now();
-    $('valOnline').textContent = Object.values(pres).filter(p => p && p.s !== 'off' && now - (p.t || 0) < 3 * 60 * 1000).length;
+    const all = Object.values(pres).filter(p => p && p.t), day = all.filter(p => now - p.t < 864e5), week = all.filter(p => now - p.t < 7 * 864e5);
+    $('valOnline').textContent = all.filter(p => p.s !== 'off' && now - p.t < 3 * 60 * 1000).length;
+    // Every open game marks /presence once a minute; the last mark of each player stays, so it also tells who came lately.
+    $('valDau').textContent = day.length; $('valWau').textContent = week.length;
+    $('valReg').textContent = week.filter(p => p.r).length;
+    $('valApp').textContent = `${week.filter(p => p.p && p.p !== 'web' && p.p !== 'mock').length} / ${week.filter(p => p.p === 'web').length}`;
+    const vers = {}; week.forEach(p => { if (p.v) vers[p.v] = (vers[p.v] || 0) + 1; });
+    $('valVers').textContent = Object.keys(vers).length ? 'Версии за неделю: ' + Object.entries(vers).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([v, n]) => `${v} — ${n}`).join(' · ') : '';
     const rooms = await fetch(`${DB}/rooms.json?shallow=true&auth=${await token()}`).then(r => r.ok ? r.json() : null);
     $('valRooms').textContent = rooms ? Object.keys(rooms).length : 0;
   } catch (e) { log('Статистика: ' + e.message); }
