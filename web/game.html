@@ -168,7 +168,7 @@
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button><button class="ghostbtn wide" id="startInv" hidden>👥 Играть с друзьями онлайн</button></div>
+        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button><button class="cta wide alt" id="startQuick" hidden>⚡ Найти быструю игру</button><button class="ghostbtn wide" id="startInv" hidden>👥 Играть с друзьями онлайн</button></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -1793,9 +1793,12 @@ function setProfileName(n) {
 }
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
-$('#startInv').onclick = async () => { await quickMatch(); if (mm) setTimeout(() => inviteSheet(), 300); };
+$('#startInv').onclick = async () => { await quickMatch(true); if (mm) setTimeout(() => inviteSheet(), 300); };
+// «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
+$('#startQuick').onclick = () => quickMatch();
 function renderSetup() {
   $('#startInv').hidden = !(setupMode === 'online' && FB && registered());
+  $('#startQuick').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
@@ -1819,7 +1822,7 @@ $('#slist').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (sw && colorEdit >= 0) { setup.seats[colorEdit].col = sw.dataset.sw; if (colorEdit === 0) { wallet.color = sw.dataset.sw; saveWallet(); } colorEdit = -1; saveSetup(); return renderSetup(); }
 });
 $('#start').onclick = () => {
-  if (setupMode === 'online') return quickMatch();
+  if (setupMode === 'online') return quickMatch(true); // «Создать игру»: a room with these settings, quick players join it
   if (setupMode === 'friends') return createRoom();
   newGame(); show('game');
 };
@@ -1834,7 +1837,7 @@ $('#setupColor').addEventListener('click', e => {
 const SETUP_MODES = {
   bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.'},
-  online: {title: 'Игра онлайн', go: 'Найти соперников', hint: 'Рейтинговая партия: правила у всех одинаковые, выбирается только режим. Подберём соперников с тем же режимом и числом игроков.', seg: 'Поиск соберёт столько игроков, включая вас'},
+  online: {title: 'Игра онлайн', go: '🎲 Создать игру', hint: 'Рейтинговая партия на кубки. «Создать игру» — ваша игра с выбранными игроками и режимом, к вам подключатся другие. «Найти быструю игру» — сразу к первой игре, где ждут игроков, с любым режимом.', seg: 'Поиск соберёт столько игроков, включая вас'},
   friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'После создания появится код комнаты — отправьте его друзьям. Свободные места можно занять ботами.', seg: 'Столько мест будет в комнате, включая вас'},
 };
 let setupMode = 'bots';
@@ -2329,14 +2332,14 @@ renderSetup();
    when it is full); from then on it is an ordinary online game. */
 const MATCH_ROOM = 'QMATCH', SEEK_MS = 10000, SEEK_FRESH = 25000, START_IN = 3;
 var mm = null; // var: renderLobby() looks at it before this line runs
-async function quickMatch() {
+async function quickMatch(create) {
   if (!FB) return toastAny('Онлайн-поиск недоступен — используйте «С друзьями»');
   if (net && net.gameId && phase !== 'end') return show('game');
-  if (!(await serverReachable())) return noServer(quickMatch);
+  if (!(await serverReachable())) return noServer(() => quickMatch(create));
   stopMatch(true);
   leaveRoom();
   // want: the table size of the room this player opens if nobody is waiting; joining takes any room.
-  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0};
+  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0, create: create === true};
   const me = mm;
   me.timers.push(setInterval(() => matchTick(me), 1000));
   (async () => {
@@ -2377,14 +2380,14 @@ function matchDecide(me) {
   if (mm !== me || !me.ready) return;
   const open = matchOpen(me);
   if (!net) {
-    if (open.length) return connect(open[0].code, false, true);
+    if (open.length && !me.create) return connect(open[0].code, false, true);
     connect(newCode(), true, true); net.max = me.want;
     me.lastSeek = 0; return matchTick(me);
   }
   // Waiting alone in our own room while others wait too: move to a room with more people,
   // or, between two lone players, the one with the larger code moves to the smaller.
   const seats = net.lobby ? net.lobby.seats : [];
-  if (net.host && seats.length <= 1 && !net.gameId && !(invited.code === net.code && invited.uids.size)) {
+  if (net.host && !me.create && seats.length <= 1 && !net.gameId && !(invited.code === net.code && invited.uids.size)) {
     const other = open.find(o => o.n > 1 || o.code < net.code);
     if (other) { matchSay({t: 'close', code: net.code}); return connect(other.code, false, true); }
   }

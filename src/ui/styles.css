@@ -678,3 +678,4 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 .ivrow .chip{height:34px;padding:0 13px}.ivrow.sent{border-color:rgba(242,184,75,.45)}.ivrow.joined{border-color:rgba(63,194,122,.55);background:rgba(63,194,122,.1)}.ivrow .chip:disabled{opacity:.8}
 .ivempty{color:var(--muted);text-align:center;font-size:13.5px;line-height:1.45;margin:6px 4px 8px}.chip.pri{background:var(--brass);color:var(--brass-ink);border-color:transparent}
 .ivrow .chip.go:not(:disabled){background:var(--brass);color:var(--brass-ink);border-color:transparent;font-weight:700}
+#startQuick{background:rgba(242,184,75,.1);color:var(--ink);border:1px solid rgba(242,184,75,.6)}.sfoot .cta+.cta{margin-top:8px}
