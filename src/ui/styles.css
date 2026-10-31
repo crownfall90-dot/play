@@ -245,11 +245,16 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .topbtn.hasdot::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
 .topbtn{position:relative}
 /* bottom navigation: the main sections; it fades in from the screen above, with no edge line */
-.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:6px;border-radius:26px;background:linear-gradient(180deg,#2a376a,#161f3f);border:1px solid rgba(255,255,255,.1);box-shadow:0 16px 36px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
+.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;padding:0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.5))}
 .bnav[hidden]{display:none}
-.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border:0;border-radius:20px;background:none;color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
+.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 7px;border:0;border-radius:15px;background:linear-gradient(180deg,#2c3a70,#1a2350);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -2px 0 rgba(0,0,0,.25);color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
+/* puzzle pieces: each one carries a knob that fits into the notch of the next */
+.bnav .sm,.bnav .kn{position:absolute;border-radius:50%;pointer-events:none}
+.bnav .sm{z-index:1;width:26px;height:26px;right:-14.5px;top:calc(50% - 13px);background:#0b1230;clip-path:inset(0 0 0 50%)}
+.bnav .kn{z-index:2;width:19px;height:19px;right:-11px;top:calc(50% - 9.5px);background:#243163;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
+.bnav button.on .kn{background:#f2b84b;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 .bnav button svg{width:23px;height:23px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
-.bnav button.on{color:var(--brass-ink);background:linear-gradient(180deg,#ffd877,#f2b84b 60%,#dc9a2e);box-shadow:0 6px 16px rgba(242,184,75,.38),inset 0 1px 0 rgba(255,255,255,.55)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
+.bnav button.on{color:var(--brass-ink);background:linear-gradient(180deg,#ffd877,#f2b84b 60%,#e5a53a);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(0,0,0,.12)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
 .bnav button:active{transform:scale(.93)}
 .bnav button.hasdot::after{content:"";position:absolute;top:5px;right:calc(50% - 19px);width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #1c2650;box-shadow:0 0 8px rgba(239,83,80,.7)}
 .bnav .fnum{bottom:auto;top:20px;right:calc(50% - 18px);border-color:#1c2650}
@@ -699,7 +704,7 @@ html.calm .tile .sd.fall::before,html.calm .tile .sd.fall::after,html.calm .face
 .tray.ended .prow,.tray.ended .mrow{display:none}.tray.ended .status{font:700 13px var(--f-display);color:var(--brass);background:none;border-color:transparent}
 /* a common finish for every section: a warm glow at the top, titles with a mark, soft raised cards, a glossy main button */
 .screen.scroll{--sp:28px;--htop:#1d2848;padding-top:0;background:radial-gradient(90% 26% at 50% 16%,rgba(242,184,75,.07),transparent 70%),radial-gradient(80% 40% at 100% 100%,rgba(76,141,255,.09),transparent 65%),linear-gradient(180deg,var(--htop),#111829)}
-html.app .screen.scroll{--sp:var(--it,0px)}
+html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap is inside the title bar: a padding on the scroller itself kept the bar from reaching the top */
 /* Section title bar: full width, always at the top while the page scrolls, the colour of the screen behind it (and under
    the status bar), so nothing shows through or looks like a separate slab. */
 .screen.scroll .ltop{position:sticky;top:0;z-index:6;margin:-8px -18px 0;padding:calc(var(--sp) + 8px) 18px 12px;background:linear-gradient(var(--htop) 76%,rgba(29,40,72,0))}
