@@ -107,6 +107,11 @@ export function levelPick(tiles, meeples, type, p, players, random, level) {
  *  Worth: a city 2 per card, a road 1 per card, a fort about 5, plus a finishing bonus; the fewer figures are left, the
  *  more an object must be worth, so a bot does not run out of figures in the first ten cards. */
 export function figurePick(tiles, meeples, opts, left, random, level) {
+  if (level === 'easy') {
+    if (!opts.length || random() >= .55) return null;
+    const cs = opts.filter(o => !o.done && o.g && o.g.kind !== 'r');
+    return cs.length && random() < .7 ? cs[(random() * cs.length) | 0] : opts[(random() * opts.length) | 0];
+  }
   let best = null, bs = 0;
   for (const o of opts) {
     if (o.done) continue;
