@@ -1349,3 +1349,37 @@
 - Журнал версий: 1.0.221
 - docs(changelog): 1.0.221, clear release notes
 
+## 1.0.223 — 2026-10-31
+
+**Игрокам:**
+- Подсказки в партии: на вашем ходу игра подсвечивает лучшее место для карты и пишет, сколько очков даст объект и сколько краёв осталось закрыть («Продолжит ваш город: достроите — минимум +8 очков, осталось закрыть 1 край»). При выборе фишки рядом с каждым вариантом видно, сколько он принесёт. Лампочка справа от поля сразу ставит карту на лучшее место и поворачивает её
+- В настройках «Подсказки»: «Всегда», «По кнопке» (только лампочка) или «Выкл» — для опытных игроков. Работают в играх с ботами и на одном телефоне
+- Кнопка вида поля переключает только 3D и 2D — режим «Низко» убран
+- iPhone (веб-версия): исправлен вход через Google — теперь он открывает страницу Google и возвращает в игру уже с профилем
+- iPhone (веб-версия): интерфейс стал компактнее — того же размера, что в приложении на Android
+- Обновлён экран партии: компактные плашки игроков, поле плавно уходит под верхнюю и нижнюю панели без резких краёв, больше места для игры
+- Камера мягко подводит к нужной клетке, а не прыгает в центр, и клетки не прячутся под кнопками справа
+- Внизу появилась панель навигации: Главная, Задания, Друзья, Магазин и Настройки — в одно касание из любого раздела
+
+**В коде:**
+- Подсказки-тренер, экран партии без стыков, нижняя навигация, вход Google и размер на iPhone
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- refactor(net): сессия и REST Firebase в src/net/firebase.js (008-5); устойчивый тест смены графики
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(ui): нижняя панель навигации по основным разделам
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(ui): экран партии без стыков, компактные плашки игроков; честный минимум очков в подсказках
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(game): подсказки с очками и что достроить; настройка «Всегда / По кнопке / Выкл»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- fix(web): вход через Google на iPhone переходом на страницу Google, компактный интерфейс на iPhone
+- docs: record actual account regression and offline build results
+- feat(game): подсказка лучшего хода, вид поля только 3D и 2D
+- Журнал версий: 1.0.222
+- docs(changelog): версия 1.0.222, заметки к выпуску очищены
+
