@@ -117,6 +117,7 @@
             <div><i>🧩</i><b>Приложите</b><small>края совпадают</small></div><em>→</em>
             <div><i>🧍</i><b>Фишка</b><small>по желанию</small></div>
           </div>
+          <p class="rnote">💡 Не знаете, куда положить карту? Нажмите лампочку справа от поля — игра подскажет лучший ход и объяснит почему</p>
           <div class="h3">Очки за достроенное</div>
           <div class="ptsgrid">
             <div><span class="rimg t-rS"></span><b>1</b><small>за карту дороги</small></div>
@@ -220,6 +221,7 @@
           <div class="toast" id="toast"></div>
           <div class="edgeglow" id="edgeglow"></div>
           <div class="fabs">
+            <button class="fab tipb" id="tip" aria-label="Подсказка: лучший ход" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0012 3z"/></svg></button>
             <button class="fab" id="zin" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
             <button class="fab" id="zout" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
             <button class="fab" id="ctr" aria-label="К центру поля"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
@@ -572,11 +574,11 @@ function fling() {
 $('#zin').onclick = () => { tutEvent('zoom'); tweenCam({z: Math.min(1.8, cam.z * 1.25)}, 250); };
 $('#zout').onclick = () => tweenCam({z: Math.max(.45, cam.z / 1.25)}, 250);
 $('#ctr').onclick = () => centerCam(true);
-// Tilt presets: low (look along the board), regular 3D, top-down.
-const TILTS = [[66, 'Низко'], [55, '3D'], [22, '2D']];
+// Tilt presets: regular 3D and top-down; the button switches between them.
+const TILTS = [[55, '3D'], [22, '2D']];
 $('#view').onclick = e => {
   const i = (TILTS.findIndex(t => Math.abs(t[0] - cam.tilt) < 4) + 1) % TILTS.length;
-  e.currentTarget.textContent = TILTS[i][1]; e.currentTarget.style.fontSize = TILTS[i][1].length > 2 ? '9px' : '';
+  e.currentTarget.textContent = TILTS[i][1];
   tweenCam({tilt: TILTS[i][0]}, 500);
 };
 $('#turnL').onclick = () => tweenCam({rot: Math.round((cam.rot - 90) / 90) * 90}, 450);
@@ -789,11 +791,24 @@ function rotate() {
   setRot(rots[(rots.indexOf(current.r) + 1) % rots.length]);
 }
 rotBtn.onclick = rotate;
+// The hint button: on your own turn (not online, not in the tutorial, when the table plays with hints) it picks the
+// best spot for the card, turns the card to fit and says why. The choice lives in src/engine/bots.js.
+const tipBtn = $('#tip');
+const tipOk = () => phase === 'place' && !!current && !net && !tut && gameRules.hints !== false && isLocal(turn) && !(players[turn].missed >= 1);
+const showTip = () => { tipBtn.hidden = !tipOk(); };
+tipBtn.onclick = () => {
+  if (!tipOk()) return;
+  const m = PG.engine.bots.hintPick(tiles, meeples, current.type, turn, players.length, players[turn].meeples > 0);
+  if (!m) return;
+  selectSlot(m.x, m.y); setRot(m.r); ensureVisible(m.x, m.y);
+  setStatus(`💡 ${m.why} · <b>«Поставить»</b>`);
+  track('hint_used');
+};
 okBtn.onclick = async () => {
   if (phase !== 'place' || !sel) return;
   // the turn the coach asks for, and in the right rotation (the next step builds on it)
   if (tut && (tutStep().wait !== 'placed' || (tutStep().r != null && current.r !== tutStep().r))) { const h = $('#rot'); h.classList.remove('tutpulse'); void h.offsetWidth; h.classList.add('tutpulse'); return; }
-  phase = 'busy'; okBtn.disabled = rotBtn.disabled = true; clearSlots();
+  phase = 'busy'; okBtn.disabled = rotBtn.disabled = true; clearSlots(); showTip();
   tutEvent('placed');
   const t = {x: sel.x, y: sel.y, type: current.type, r: current.r, seed: (Math.random() * 1e9) | 0};
   const my = token; await dropAt(t); if (my !== token) return; afterPlace(t, turn);
@@ -958,7 +973,7 @@ function focusLast() {
 }
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
-  pendingStart = false; current = null; sel = null; stopTimer();
+  pendingStart = false; current = null; sel = null; stopTimer(); tipBtn.hidden = true;
   // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
   while (deck.length) { const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; } }
   renderDeck();
@@ -1024,7 +1039,7 @@ function turnAlert() {
 }
 function beginHumanTurn() {
   beep('turn'); turnAlert();
-  phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer();
+  phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer(); showTip();
   if (players[turn].missed >= 1) return setStatus('За вас ходит бот <button class="chip" id="imHere">Вернуться</button>');
   setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
 }
