@@ -170,7 +170,7 @@
           <div class="rulesbox" data-rules></div>
           <p class="shint" id="setupHint">Люди ходят по очереди с одного телефона: перед каждым ходом игра попросит передать телефон. Боты ходят сами.</p>
         </div>
-        <div class="sfoot"><div class="sbtns"><button class="cta alt" id="startInv" hidden>👥 Пригласить друзей</button><button class="cta wide" id="start">Начать партию</button></div></div>
+        <div class="sfoot"><button class="cta wide" id="start">Начать партию</button></div>
       </section>
 
       <section class="screen" id="scr-match" hidden>
@@ -1795,11 +1795,9 @@ function setProfileName(n) {
 }
 function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)); } catch (_) {} }
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
-$('#startInv').onclick = async () => { await quickMatch(true); if (mm) setTimeout(() => inviteSheet(), 300); };
 // «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
 $('#setupQuick').onclick = () => quickMatch();
 function renderSetup() {
-  $('#startInv').hidden = setupMode !== 'online';
   $('#setupQuick').hidden = $('#setupOwn').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
@@ -1839,7 +1837,7 @@ $('#setupColor').addEventListener('click', e => {
 const SETUP_MODES = {
   bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Вы играете против ботов — они ходят сами.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Все сидят за одним телефоном и ходят по очереди: перед каждым ходом игра попросит передать телефон.'},
-  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки. Своя игра ждёт игроков, нажавших «Быструю игру»; друзей можно позвать заранее.', seg: 'Поиск соберёт столько игроков, включая вас'},
+  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки. Своя игра ждёт игроков, нажавших «Быструю игру»; друзей можно позвать, когда начнётся поиск.', seg: 'Поиск соберёт столько игроков, включая вас'},
   friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'После создания появится код комнаты — отправьте его друзьям. Свободные места можно занять ботами.', seg: 'Столько мест будет в комнате, включая вас'},
 };
 let setupMode = 'bots';
@@ -2146,9 +2144,14 @@ function onNet(d) {
     // Quick match: a room that started without us is no use — look for another one.
     if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
+    // "Online" (rated) or a friends' room: told by the game's creator in the start message, so a friend who came in by an
+    // invitation, or who returns to the game later, plays the same kind of game. Games started before this carried no
+    // flag: then what this phone remembered about the game is used.
+    const was = lastOnline();
+    net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
     startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? x.uid.slice(0, 64) : null, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
-    else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now()})); } catch (_) {} updAnnounce(); } // to come back after a restart
+    else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
   }
   if (m.t === 'move') { if (!live) m.old = true; return onMove(m); }
@@ -2320,7 +2323,7 @@ $('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
 const ratedRules = mode => ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
 function startOnline(seats) {
   const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
-  netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0});
+  netSend({t: 'start', seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
 }
 renderLobby();
 renderSetup();

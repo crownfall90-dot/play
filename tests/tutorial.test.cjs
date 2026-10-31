@@ -10,13 +10,15 @@ const pw = loadPlaywright();
 test('tutorial: all steps, from the first card to the win', {skip: !pw && 'playwright is not installed (npm ci)', timeout: 120000}, async () => {
   const browser = await pw.chromium.launch();
   try {
-    const {page, errors} = await openGame(browser, instrumentedCopy(), null);
-    await page.setViewportSize({width: 360, height: 640}); // the narrowest Android phone: the spots to tap must still be reachable
+    // the web build's layout (the real phone screen, not the desktop mock-up) on the narrowest Android phone
+    const {page, errors} = await openGame(browser, instrumentedCopy(), null, 'window.WEBAPP = true; window.IS_STAGING = false;');
+    await page.setViewportSize({width: 360, height: 640});
     const coach = () => page.evaluate(() => { const c = document.querySelector('#coach'); return c && !c.hidden ? c.querySelector('b').textContent : ''; });
     const waitCoach = (re, ms = 10000) => page.waitForFunction(r => { const c = document.querySelector('#coach'); return c && !c.hidden && new RegExp(r).test(c.querySelector('b').textContent); }, re.source, {timeout: ms});
     // a spot to tap is brought into view by the camera first (it takes under a second)
     const tap = async sel => { if (/slot/.test(sel)) await page.waitForTimeout(900); await page.locator(sel).first().click({timeout: 8000}); };
-    await page.evaluate(() => document.querySelector('#tutBtn').click());
+    // a new player is offered the tutorial on the first start: press its button, as they would
+    await page.locator('[data-t=go]').click({timeout: 15000});
     await waitCoach(/Тапните по рамке/);
     await tap('#world .slot'); await waitCoach(/Нажмите «Поставить»/);
     await tap('#ok'); await waitCoach(/фишку на город/);
