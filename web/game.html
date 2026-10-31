@@ -3463,37 +3463,44 @@ if ($('#feedbackBtn')) $('#feedbackBtn').onclick = openFeedback;
 if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 // Bottom navigation: the five main sections, shown on those screens only (never in a game or a lobby).
-/* The bottom bar is four jigsaw pieces: each has a round tab that fits into the notch of the next one. The outline
-   is drawn as SVG from the real size of the buttons, and the piece of the open section is gold. */
+/* The bottom bar is four jigsaw pieces: each has a round tab that fits into the notch of the next one. Every
+   section has its own colour; the piece of the open section is gold and glowing. The outline is drawn as SVG from
+   the real size of the buttons. */
 (function bnavPuzzle() {
   const nav = $('#bnav'); if (!nav) return;
   const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('class', 'bnpz'); svg.setAttribute('aria-hidden', 'true');
-  svg.innerHTML = '<defs><linearGradient id="bnG1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34437f"/><stop offset="1" stop-color="#1a2352"/></linearGradient><linearGradient id="bnG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffdc82"/><stop offset=".6" stop-color="#f2b84b"/><stop offset="1" stop-color="#df9d2d"/></linearGradient></defs>';
   nav.prepend(svg);
-  const R = 15, NECK = 6, BR = 9, CLR = 2, BULB = 6; // corner, half neck, bulb radius, clearance of a notch, bulb centre from the edge
+  const R = 16, NECK = 6.5, BR = 10.5, CLR = 2, BULB = 7, GAP = 4; // corner, half neck, tab radius, room in the notch, tab centre from the edge
+  const COLS = ['#4c8dff', '#3fc27a', '#b06cf0', '#f2994a'];
+  const mix = (h, o, k) => { const n = x => parseInt(x.slice(1), 16), a = n(h), c = n(o), f = (s) => Math.round(((a >> s) & 255) * k + ((c >> s) & 255) * (1 - k)); return '#' + ((1 << 24) | f(16) << 16 | f(8) << 8 | f(0)).toString(16).slice(1); };
   const piece = (b, i, last, cy, H) => {
     const {x0, x1} = b, f = v => +v.toFixed(2), y1 = H;
     let d = `M${f(x0 + R)} 0H${f(x1 - R)}A${R} ${R} 0 0 1 ${f(x1)} ${R}`;
     if (!last) d += `V${f(cy - NECK)}C${f(x1 + 1)} ${f(cy - NECK)} ${f(x1 + 3)} ${f(cy - BR)} ${f(x1 + BULB)} ${f(cy - BR)}A${BR} ${BR} 0 1 1 ${f(x1 + BULB)} ${f(cy + BR)}C${f(x1 + 3)} ${f(cy + BR)} ${f(x1 + 1)} ${f(cy + NECK)} ${f(x1)} ${f(cy + NECK)}`;
     d += `V${f(y1 - R)}A${R} ${R} 0 0 1 ${f(x1 - R)} ${y1}H${f(x0 + R)}A${R} ${R} 0 0 1 ${f(x0)} ${f(y1 - R)}`;
     if (i > 0) { // the notch: the previous piece's tab plus a little room, seen from this piece's left edge
-      const gap = 4, xb = x0 - gap + BULB, r = BR + CLR, nk = NECK + CLR;
+      const xb = x0 - GAP + BULB, r = BR + CLR, nk = NECK + CLR;
       d += `V${f(cy + nk)}C${f(x0 + 1)} ${f(cy + nk)} ${f(x0 + 1.5)} ${f(cy + r)} ${f(xb)} ${f(cy + r)}A${r} ${r} 0 1 0 ${f(xb)} ${f(cy - r)}C${f(x0 + 1.5)} ${f(cy - r)} ${f(x0 + 1)} ${f(cy - nk)} ${f(x0)} ${f(cy - nk)}`;
     }
     return d + `V${R}A${R} ${R} 0 0 1 ${f(x0 + R)} 0Z`;
   };
+  const el = (n, at) => { const e = document.createElementNS(NS, n); for (const k in at) e.setAttribute(k, at[k]); return e; };
   const draw = () => {
     if (nav.hidden) return;
     const W = nav.clientWidth, H = nav.clientHeight, btns = [...nav.querySelectorAll('button')]; if (!W || !H || !btns.length) return;
     svg.setAttribute('viewBox', `-16 0 ${W + 32} ${H}`); svg.setAttribute('width', W + 32); svg.setAttribute('height', H);
-    const nb = nav.getBoundingClientRect();
-    svg.replaceChildren(...[...svg.querySelectorAll('defs')], ...btns.map((el, i) => {
-      const r = el.getBoundingClientRect(), p = document.createElementNS(NS, 'path');
-      p.setAttribute('d', piece({x0: r.left - nb.left, x1: r.right - nb.left}, i, i === btns.length - 1, H / 2, H));
-      if (el.classList.contains('on')) p.setAttribute('class', 'on');
-      return p;
-    }));
+    const nb = nav.getBoundingClientRect(), defs = el('defs', {}), out = [defs];
+    const grad = (id, top, bot) => { const g = el('linearGradient', {id, x1: 0, y1: 0, x2: 0, y2: 1}); g.append(el('stop', {offset: 0, 'stop-color': top}), el('stop', {offset: 1, 'stop-color': bot})); defs.append(g); };
+    grad('bnGold', '#ffe08e', '#e29c2a');
+    const gl = el('linearGradient', {id: 'bnGloss', x1: 0, y1: 0, x2: 0, y2: 1}); gl.append(el('stop', {offset: 0, 'stop-color': '#fff', 'stop-opacity': .26}), el('stop', {offset: .5, 'stop-color': '#fff', 'stop-opacity': .05}), el('stop', {offset: 1, 'stop-color': '#fff', 'stop-opacity': 0})); defs.append(gl);
+    btns.forEach((b, i) => {
+      const r = b.getBoundingClientRect(), on = b.classList.contains('on'), c = COLS[i % COLS.length];
+      grad('bnC' + i, mix(c, '#1c2656', .5), mix(c, '#121a40', .72));
+      const d = piece({x0: r.left - nb.left, x1: r.right - nb.left}, i, i === btns.length - 1, H / 2, H);
+      out.push(el('path', {d, class: 'base' + (on ? ' on' : ''), fill: `url(#${on ? 'bnGold' : 'bnC' + i})`}), el('path', {d, class: 'gloss', fill: 'url(#bnGloss)'}));
+    });
+    svg.replaceChildren(...out);
   };
   new ResizeObserver(draw).observe(nav);
   new MutationObserver(draw).observe(nav, {attributes: true, attributeFilter: ['class', 'hidden'], subtree: true});

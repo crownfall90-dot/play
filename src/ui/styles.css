@@ -250,8 +250,14 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 7px;border:0;border-radius:15px;background:none;color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
 /* puzzle pieces: each one carries a knob that fits into the notch of the next */
 .bnav .bnpz{position:absolute;left:-16px;top:0;z-index:0;pointer-events:none;overflow:visible}
-.bnav .bnpz path{fill:url(#bnG1);stroke:rgba(255,255,255,.16);stroke-width:1}
-.bnav .bnpz path.on{fill:url(#bnG2);stroke:rgba(255,236,170,.7)}
+.bnav .bnpz path.base{stroke:rgba(8,12,34,.55);stroke-width:1.4}
+.bnav .bnpz path.base.on{stroke:rgba(150,92,10,.7)}
+.bnav .bnpz path.gloss{stroke:rgba(255,255,255,.2);stroke-width:1;pointer-events:none}
+.bnav .bnpz{filter:drop-shadow(0 -1px 0 rgba(255,255,255,.08))}
+.bnav button:nth-of-type(1){--ac:#8fbaff}.bnav button:nth-of-type(2){--ac:#7ee2a8}.bnav button:nth-of-type(3){--ac:#d3a6ff}.bnav button:nth-of-type(4){--ac:#ffbf84}
+.bnav button{color:#eef2ff;padding-top:10px;padding-bottom:8px}.bnav button svg{color:var(--ac,#9aa6c8)}
+.bnav button.on,.bnav button.on svg{color:var(--brass-ink)}
+.bnav.hasglow .bnpz{filter:none}
 .bnav button{z-index:1}
 .bnav button svg{width:23px;height:23px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
 .bnav button.on{color:var(--brass-ink)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
