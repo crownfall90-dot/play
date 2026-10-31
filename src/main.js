@@ -1,0 +1,20 @@
+// Everything game.html takes from the modules. Grows step by step as code moves out of game.html.
+import {rng, hash} from './engine/rng.js';
+import {TYPES, normEdge, rareName, deckList} from './engine/tiles.js';
+import * as board from './engine/board.js';
+import * as scoring from './engine/scoring.js';
+import * as bots from './engine/bots.js';
+import {createSound} from './audio/sound.js';
+import {walletSig, loadWallet, storeWallet} from './state/wallet.js';
+import * as progress from './state/progress.js';
+import * as catalog from './state/catalog.js';
+import * as config from './state/config.js';
+import {createArt} from './render/art.js';
+import {createFirebase} from './net/firebase.js';
+
+export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, board, scoring, bots};
+
+export const audio = {createSound};
+export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config};
+export const render = {createArt};
+export const net = {createFirebase};

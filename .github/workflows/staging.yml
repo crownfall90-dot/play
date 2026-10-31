@@ -1,18 +1,18 @@
 name: Test APK (offline)
 on:
   push:
-    branches: [setup/test-environment, dev]
+    branches: [setup/test-environment, dev, 'dev/**']
   pull_request:
     branches: [main]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: staging-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   build:
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/setup/test-environment' || github.ref == 'refs/heads/dev'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' || github.ref == 'refs/heads/setup/test-environment' || github.ref == 'refs/heads/dev' || startsWith(github.ref, 'refs/heads/dev/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     outputs:
@@ -66,6 +66,17 @@ jobs:
             TEST-BUILD.txt
           if-no-files-found: error
           retention-days: 14
+      - name: Publish Staging Pre-Release for testers
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/staging/debug/app-staging-debug.apk Puzzlegrad-Staging.apk
+          gh release delete staging-latest --yes || true
+          gh release create staging-latest Puzzlegrad-Staging.apk \
+            --title "Puzzlegrad Staging (Тестовая сборка #${{ github.run_number }})" \
+            --notes "Тестовая сборка для закрытого тестирования (Staging). Обновляется автоматически при изменениях в ветках разработки." \
+            --prerelease
       - name: Upload public diagnostics even on verification failure
         if: always()
         uses: actions/upload-artifact@v4

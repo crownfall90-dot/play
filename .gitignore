@@ -7,3 +7,4 @@ local.properties
 *.apk
 *.aab
 __pycache__/
+node_modules/
