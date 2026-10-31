@@ -87,6 +87,7 @@
           <div class="h3">Поддержка</div>
           <div class="sgroup">
             <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Пожелания, идеи, баги — всё пойдёт в дело</small></span><span class="sgo">›</span></button>
+            <button class="srow btn" id="nameProposalBtn"><span class="sic">💡</span><span class="stx"><b>Конкурс на новое название</b><small id="nameProposalSub">Придумайте имя игры · +100 золота</small></span><span class="sgo">›</span></button>
           </div>
           <div class="h3">О приложении</div>
           <div class="sgroup">
@@ -1426,7 +1427,8 @@ const LOG_KINDS = new Set([
   'reinstall_offer', 'reinstall_download', 'reinstall_remove', 'open', 'login', 'sign_up', 'logout',
   'game_start', 'game_end', 'net_down', 'net_back', 'google_error', 'google_redirect', 'spend_virtual_currency',
   'tutorial_begin', 'tutorial_complete', 'wallet_sig_mismatch', 'friend_invite', 'error', 'maintenance',
-  'first_open', 'first_game_done', 'second_game_done', 'third_game_done', 'save_prompt_tap', 'return_d1', 'return_d3', 'return_d7'
+  'first_open', 'first_game_done', 'second_game_done', 'third_game_done', 'save_prompt_tap', 'return_d1', 'return_d3', 'return_d7',
+  'perf_lag', 'name_suggested', 'feedback_sent'
 ]);
 const logBuf = [];
 let logTimer = 0;
@@ -1526,6 +1528,7 @@ function streakCheck() {
     document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
     box.remove();
     toastAny(usedFreeze ? `🧊 Заморозка спасла серию! +${gold} золота` : day === 6 ? `Неделя подряд! +${gold} золота 🎉` : `+${gold} золота. Завтра — ${STREAK_GOLD[(day + 1) % 7]}`);
+    if (typeof checkNameProposal === 'function') setTimeout(checkNameProposal, 600);
   };
 }
 // Gold by place: 1st +15, 2nd +10, 3rd +5, 4th 0, 5th −5 (ties share the higher place).
@@ -1810,6 +1813,7 @@ function renderPrefs() {
   $('#checkUpd').hidden = !window.AndroidApp;
   try { renderInstall(); } catch (_) {} // the web shell may not be set up yet on the first call
   devGet('devToken'); $('#devBtn').hidden = !devGet('devPanel');
+  if (typeof updateNameProposalBtnLabel === 'function') updateNameProposalBtnLabel();
 }
 $('#prefs').addEventListener('click', e => {
   const sw = e.target.closest('.tgl'), b = e.target.closest('.mseg button'); if (!sw && !b) return;
@@ -3251,7 +3255,7 @@ function askProfile() {
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   colorPick(inp, av);
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
-  ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); };
+  ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); if (typeof checkNameProposal === 'function') setTimeout(checkNameProposal, 1200); };
   box.querySelector('#profLogin').onclick = () => { box.remove(); accountDialog('login'); };
   setTimeout(() => inp.focus(), 200);
 }
@@ -3791,47 +3795,321 @@ function confirmBox(text, yes, ok, no, onNo) {
   box.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; close(b.dataset.a === 'y'); if (b.dataset.a === 'n' && typeof onNo === 'function') onNo(); });
   box.querySelector('[data-a=n]').focus();
 }
+// Telemetry, Device Diagnostics & Performance lag tracking
+window._recentLags = [];
+window._actionTrail = [];
+function recordAction(action) {
+  try {
+    window._actionTrail.push({a: String(action).slice(0, 60), t: Date.now()});
+    if (window._actionTrail.length > 20) window._actionTrail.shift();
+  } catch (_) {}
+}
+
+let lastFrameTime = typeof performance !== 'undefined' ? performance.now() : Date.now();
+let frameCount = 0;
+let lastFpsCheck = lastFrameTime;
+window._currentFps = 60;
+function perfTick(now) {
+  try {
+    const delta = now - lastFrameTime;
+    lastFrameTime = now;
+    frameCount++;
+    if (now - lastFpsCheck >= 1000) {
+      window._currentFps = Math.round((frameCount * 1000) / (now - lastFpsCheck));
+      frameCount = 0;
+      lastFpsCheck = now;
+    }
+    if (delta > 250 && typeof document !== 'undefined' && !document.hidden && window.boot && window.boot.gone) {
+      const cur = (document.querySelector('.screen:not([hidden])') || {}).id || 'menu';
+      window._recentLags.push({ms: Math.round(delta), scr: cur, t: Date.now()});
+      if (window._recentLags.length > 10) window._recentLags.shift();
+      if (delta > 1000 && typeof plog === 'function') {
+        plog('perf_lag', `${cur}: ${Math.round(delta)}ms`);
+      }
+    }
+  } catch (_) {}
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(perfTick);
+}
+if (typeof requestAnimationFrame === 'function') requestAnimationFrame(perfTick);
+
+function getDeviceDiagnostics() {
+  const nav = typeof navigator !== 'undefined' ? navigator : {};
+  const scr = typeof window !== 'undefined' && window.screen ? window.screen : {};
+  const conn = nav.connection || nav.mozConnection || nav.webkitConnection || {};
+
+  let platform = 'web';
+  if (window.AndroidApp) platform = 'android_app';
+  else if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) platform = 'pwa';
+
+  const ua = nav.userAgent || '';
+  let os = 'Unknown OS';
+  if (/Android\s([0-9.]+)/i.test(ua)) os = 'Android ' + RegExp.$1;
+  else if (/iPhone OS\s([0-9_]+)/i.test(ua)) os = 'iOS ' + RegExp.$1.replace(/_/g, '.');
+  else if (/Windows NT\s([0-9.]+)/i.test(ua)) os = 'Windows NT ' + RegExp.$1;
+  else if (/Mac OS X\s([0-9_]+)/i.test(ua)) os = 'macOS ' + RegExp.$1.replace(/_/g, '.');
+  else if (/Linux/i.test(ua)) os = 'Linux';
+
+  const screenStr = `${scr.width || 0}x${scr.height || 0} (vp: ${typeof window !== 'undefined' ? window.innerWidth : 0}x${typeof window !== 'undefined' ? window.innerHeight : 0}, dpr: ${(typeof window !== 'undefined' && window.devicePixelRatio ? window.devicePixelRatio : 1).toFixed(2)})`;
+  const cores = nav.hardwareConcurrency || '?';
+  const ram = nav.deviceMemory ? `${nav.deviceMemory}GB` : '?';
+  const netType = !nav.onLine ? 'offline' : (conn.effectiveType || (conn.type ? String(conn.type) : 'online'));
+  const netStr = conn.rtt ? `${netType} (~${conn.rtt}ms, ${conn.downlink || '?'}Mb/s)` : netType;
+
+  return {
+    platform,
+    os,
+    screen: screenStr,
+    cores,
+    ram,
+    net: netStr,
+    online: !!nav.onLine,
+    fps: window._currentFps || 60,
+    lagsRecorded: (window._recentLags && window._recentLags.length) || 0,
+    ver: window.WEB_VERSION || (window.AndroidApp && AndroidApp.versionName ? AndroidApp.versionName() : 'dev'),
+    ua: ua.slice(0, 180)
+  };
+}
+
 function openFeedback() {
   if (!FB) { toastAny('Нужно подключение к интернету'); return; }
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const first = !wallet.feedbackSent;
-  const CATS = [{k:'bug',ic:'🐛',t:'Баг'},{k:'idea',ic:'💡',t:'Идея'},{k:'other',ic:'💬',t:'Другое'}];
-  const CC = {bug: '#ef5350', idea: '#f2994a', other: '#4c8dff'};
+  const diag = getDeviceDiagnostics();
+  const CATS = [
+    {k: 'bug', ic: '🐛', t: 'Баг'},
+    {k: 'lag', ic: '⚡', t: 'Лаги'},
+    {k: 'idea', ic: '💡', t: 'Идея'},
+    {k: 'other', ic: '💬', t: 'Другое'}
+  ];
+  const CC = {bug: '#ef5350', lag: '#ff7043', idea: '#f2994a', other: '#4c8dff'};
+  const PLACEHOLDERS = {
+    bug: 'Опишите, что пошло не так, на каком экране или при каком действии…',
+    lag: 'Где именно лагает, падает FPS или игра зависает? Сколько длится зависание?…',
+    idea: 'Какую новую механику, режим или фишку вы хотите увидеть в игре?…',
+    other: 'Ваш отзыв, впечатление или вопрос к разработчику…'
+  };
+  const STAR_LABELS = {
+    1: '1/5 — Много багов / не понравилось',
+    2: '2/5 — Есть проблемы и баги',
+    3: '3/5 — Нормально, но есть над чем работать',
+    4: '4/5 — Хорошо, нравится!',
+    5: '5/5 — Отличная игра! 🔥'
+  };
+
+  const namePromo = !wallet.nameSuggested ? `
+    <div class="fb-name-promo" id="fbNamePromo">
+      <span>💡 <b>Конкурс названий:</b> предложите новое имя игры</span>
+      <span class="chip go" style="margin:0;padding:3px 8px;font-size:11px">+100 🟡</span>
+    </div>
+  ` : '';
+
   box.innerHTML = `<div class="ocard fbcard">
-    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Написать разработчику</b><p>Пожелания, идеи, баги — всё пойдёт в дело</p></div></div></div>
+    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, баги, лаги и идеи — читаем каждый отзыв</p></div></div></div>
     ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
-    <div class="jig fbcats" id="fbCats">${CATS.map((c, i) => `<button class="fbcat fb-cat${c.k === 'idea' ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === 'idea' ? 'gold' : CC[c.k]}" data-je="${i < 2 ? 'r:tab' : ''}${i === 1 ? ',l:notch' : ''}${i === 2 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`).join('')}</div>
-    <textarea id="fbText" class="fbtext" rows="4" placeholder="Расскажите, что думаете…"></textarea>
+    ${namePromo}
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Ваша оценка игры:</div>
+    <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Оценка">
+      <button type="button" class="fb-star active" data-val="1" aria-label="1 звезда">⭐</button>
+      <button type="button" class="fb-star active" data-val="2" aria-label="2 звезды">⭐</button>
+      <button type="button" class="fb-star active" data-val="3" aria-label="3 звезды">⭐</button>
+      <button type="button" class="fb-star active" data-val="4" aria-label="4 звезды">⭐</button>
+      <button type="button" class="fb-star active" data-val="5" aria-label="5 звёзд">⭐</button>
+    </div>
+    <div class="fb-star-label" id="fbStarLabel">${STAR_LABELS[5]}</div>
+    <div class="jig fbcats" id="fbCats">${CATS.map((c, i) => `<button class="fbcat fb-cat${c.k === 'idea' ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === 'idea' ? 'gold' : CC[c.k]}" data-je="${i < 3 ? 'r:tab' : ''}${i > 0 && i < 3 ? ',' : ''}${i > 0 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`).join('')}</div>
+    <textarea id="fbText" class="fbtext" rows="3" placeholder="${PLACEHOLDERS.idea}"></textarea>
+    <div class="fb-diag">
+      <label class="fb-diag-check">
+        <input type="checkbox" id="fbAttachDiag" checked>
+        <span>Прикрепить данные об устройстве для диагностики</span>
+      </label>
+      <div style="font-size:11px;opacity:.7">${diag.os} · ${diag.screen} · Сеть: ${diag.net}</div>
+    </div>
     <button class="cta wide" id="fbSend">Отправить${first ? ' (+10 золота)' : ''}</button>
     <button class="ghostbtn" id="fbCancel">Отмена</button>
   </div>`;
+
   document.body.append(box);
   jigsawFrame(box.querySelector('#fbHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
-  jigsawFrame(box.querySelector('#fbCats'), {R: 14, GAP: 6, NECK: 4.5, BR: 7.5, BULB: 5});
+  jigsawFrame(box.querySelector('#fbCats'), {R: 12, GAP: 4, NECK: 3.8, BR: 6.5, BULB: 4.5});
+
   let cat = 'idea';
+  let stars = 5;
+
+  const starBtns = box.querySelectorAll('.fb-star');
+  const starLbl = box.querySelector('#fbStarLabel');
+  starBtns.forEach(b => b.addEventListener('click', () => {
+    stars = +b.dataset.val;
+    starBtns.forEach(s => s.classList.toggle('active', +s.dataset.val <= stars));
+    starLbl.textContent = STAR_LABELS[stars] || `${stars}/5`;
+  }));
+
+  const np = box.querySelector('#fbNamePromo');
+  if (np) np.onclick = () => { box.remove(); showNameProposalDialog(true); };
+
+  const txtArea = box.querySelector('#fbText');
   box.querySelectorAll('.fb-cat').forEach(b => b.addEventListener('click', () => {
     cat = b.dataset.cat;
-    box.querySelectorAll('.fb-cat').forEach(x => { x.classList.toggle('sel', x === b); x.dataset.jc = x === b ? 'gold' : CC[x.dataset.cat]; });
+    box.querySelectorAll('.fb-cat').forEach(x => {
+      x.classList.toggle('sel', x === b);
+      x.dataset.jc = x === b ? 'gold' : CC[x.dataset.cat];
+    });
+    txtArea.placeholder = PLACEHOLDERS[cat] || 'Расскажите подробнее…';
   }));
+
   box.querySelector('#fbCancel').onclick = () => box.remove();
   box.onclick = e => { if (e.target === box) box.remove(); };
+
   box.querySelector('#fbSend').onclick = async () => {
-    const msg = box.querySelector('#fbText').value.trim();
-    if (!msg) { box.querySelector('#fbText').focus(); return; }
+    const msg = txtArea.value.trim();
+    if (!msg) { txtArea.focus(); return; }
+    const attachDiag = box.querySelector('#fbAttachDiag').checked;
     const btn = box.querySelector('#fbSend'); btn.disabled = true; btn.textContent = 'Отправляем…';
     try {
       const tok = fbAuth ? await fbToken() : null;
       const uid = (fbAuth && fbAuth.uid) || 'anon';
       const ver = window.AndroidApp ? (AndroidApp.versionName ? AndroidApp.versionName() : '') : 'web';
       const url = `${FB.dbUrl}/feedback/${uid}/${Date.now()}.json` + (tok ? `?auth=${tok}` : '');
-      await fetch(url, {method:'PUT', body:JSON.stringify({k:cat, m:msg.slice(0,1000), v:ver, t:{'.sv':'timestamp'}})});
-      if (first) { wallet.gold += 10; wallet.feedbackSent = true; saveWallet(); }
+      const body = {
+        k: cat,
+        m: msg.slice(0, 1500),
+        stars,
+        v: ver,
+        t: {'.sv': 'timestamp'}
+      };
+      if (attachDiag) {
+        body.device = {
+          os: diag.os,
+          screen: diag.screen,
+          cores: diag.cores,
+          ram: diag.ram,
+          net: diag.net,
+          fps: diag.fps,
+          lags: diag.lagsRecorded
+        };
+      }
+      await fetch(url, {method: 'PUT', body: JSON.stringify(body)});
+      if (first) { wallet.gold += 10; wallet.feedbackSent = true; saveWallet(); beep('coin'); }
+      plog('feedback_sent', {cat, stars});
       box.remove();
       toastAny(first ? 'Спасибо за помощь! +10 золота 🎉' : 'Спасибо за обратную связь!');
-    } catch (_) { btn.disabled = false; btn.textContent = 'Отправить'; toastAny('Нет связи — попробуйте позже'); }
+    } catch (_) {
+      btn.disabled = false; btn.textContent = 'Отправить'; toastAny('Нет связи — попробуйте позже');
+    }
   };
 }
+
+function updateNameProposalBtnLabel() {
+  const sub = document.getElementById('nameProposalSub');
+  if (!sub) return;
+  if (wallet && wallet.nameSuggested && wallet.suggestedGameName) {
+    sub.textContent = `Ваш вариант: «${wallet.suggestedGameName}»`;
+  } else {
+    sub.textContent = 'Придумайте имя игры · +100 золота';
+  }
+}
+
+function showNameProposalDialog(force) {
+  if (document.getElementById('nameProposalBox')) return;
+  const box = document.createElement('div');
+  box.className = 'over';
+  box.id = 'nameProposalBox';
+  box.style.position = 'fixed';
+  const already = !!(wallet && wallet.nameSuggested);
+  const curName = (wallet && wallet.suggestedGameName) || '';
+
+  box.innerHTML = `<div class="ocard namecard">
+    <div class="jig shero small" id="nameHero"><div class="mhero" data-jp data-jc="gold" data-je="r:tab"><span class="mhi">💡</span><div><b>Новое имя для игры!</b><p>Конкурс среди игроков и тестеров</p></div></div></div>
+    <div class="nprize">
+      Мы хотим сменить название с <b>Puzzlegrad</b> на более звучное и увлекательное! Предложите свой вариант.
+      <div class="nprize-row">
+        <span>💰 Сразу +100 золота за идею</span>
+      </div>
+      <div class="nprize-row" style="color:#7fe0a8">
+        <span>👑 Автору выбранного названия — эксклюзивная рамка профиля!</span>
+      </div>
+    </div>
+    ${already ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Вы уже предложили: <b style="color:var(--brass)">«${clean(curName)}»</b> (+100 🟡 получено). Можно обновить вариант:</p>` : ''}
+    <input class="field" id="nameIdeaInput" maxlength="40" placeholder="Придумайте название игры…" value="${clean(curName)}" autocomplete="off" style="font-weight:700">
+    <textarea class="fbtext" id="nameIdeaWhy" rows="2" maxlength="200" placeholder="Почему именно это название? (по желанию)" style="margin-top:6px"></textarea>
+    <button class="cta wide" id="nameIdeaSend" style="margin-top:10px"${curName.length >= 2 ? '' : ' disabled'}>${already ? 'Обновить название' : 'Предложить название (+100 🟡)'}</button>
+    <button class="ghostbtn" id="nameIdeaCancel">${already ? 'Закрыть' : 'Подумать позже'}</button>
+  </div>`;
+
+  document.body.append(box);
+  jigsawFrame(box.querySelector('#nameHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
+
+  const inp = box.querySelector('#nameIdeaInput');
+  const why = box.querySelector('#nameIdeaWhy');
+  const sendBtn = box.querySelector('#nameIdeaSend');
+  const cancelBtn = box.querySelector('#nameIdeaCancel');
+
+  inp.oninput = () => {
+    const val = inp.value.trim();
+    sendBtn.disabled = val.length < 2;
+  };
+
+  cancelBtn.onclick = () => box.remove();
+  box.onclick = e => { if (e.target === box) box.remove(); };
+
+  sendBtn.onclick = async () => {
+    const title = inp.value.trim().slice(0, 40);
+    if (title.length < 2) { inp.focus(); return; }
+    const comment = (why.value || '').trim().slice(0, 200);
+    sendBtn.disabled = true;
+    sendBtn.textContent = 'Отправляем…';
+    try {
+      const tok = fbAuth ? await fbToken() : null;
+      const uid = (fbAuth && fbAuth.uid) || (FBC && FBC.session() && FBC.session().uid) || 'u_' + Math.random().toString(36).slice(2, 10);
+      const author = typeof profileName === 'function' ? profileName() : (wallet.name || 'Игрок');
+      const ver = window.WEB_VERSION || (window.AndroidApp && AndroidApp.versionName ? AndroidApp.versionName() : 'dev');
+      if (FB && FB.dbUrl) {
+        const url = `${FB.dbUrl}/suggestions/names/${uid}.json` + (tok ? `?auth=${tok}` : '');
+        await fetch(url, {
+          method: 'PUT',
+          body: JSON.stringify({
+            name: title,
+            comment,
+            author,
+            uid,
+            v: ver,
+            t: {'.sv': 'timestamp'}
+          })
+        });
+      }
+      if (!wallet.nameSuggested) {
+        wallet.gold = (wallet.gold || 0) + 100;
+        wallet.nameSuggested = true;
+        beep('coin');
+      }
+      wallet.suggestedGameName = title;
+      saveWallet();
+      plog('name_suggested', title);
+      box.remove();
+      toastAny(already ? 'Ваш вариант обновлён! Спасибо! 🎉' : '🎉 Отлично! +100 золота начислено. Спасибо за идею!');
+      updateNameProposalBtnLabel();
+    } catch (_) {
+      if (!wallet.nameSuggested) {
+        wallet.gold = (wallet.gold || 0) + 100;
+        wallet.nameSuggested = true;
+        beep('coin');
+      }
+      wallet.suggestedGameName = title;
+      saveWallet();
+      box.remove();
+      toastAny('Идея сохранена! +100 золота 🎉');
+      updateNameProposalBtnLabel();
+    }
+  };
+}
+
+function checkNameProposal(force) {
+  if (!force && (!isApp || (typeof tut !== 'undefined' && tut) || (wallet && wallet.tutActive) || !(wallet && (wallet.tut || wallet.tutAsked)) || (wallet && wallet.nameSuggested) || document.querySelector('body > .over'))) return;
+  showNameProposalDialog(force);
+}
+
 if ($('#feedbackBtn')) $('#feedbackBtn').onclick = openFeedback;
+if ($('#nameProposalBtn')) $('#nameProposalBtn').onclick = () => showNameProposalDialog(true);
 if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 // Bottom navigation: the five main sections, shown on those screens only (never in a game or a lobby).
@@ -4439,6 +4717,7 @@ async function signOut() {
 
 /* ---------------- screens ---------------- */
 function show(name) {
+  if (typeof recordAction === 'function') recordAction('show:' + name);
   document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== 'scr-' + name);
   const nav = $('#bnav'), onNav = ['menu', 'progress', 'friends', 'shop'].includes(name);
   nav.hidden = !onNav; nav.parentNode.classList.toggle('hasnav', onNav);
@@ -4456,7 +4735,7 @@ function show(name) {
   if (name === 'progress') { renderProgress(); renderAccount(); }
   track('screen_view', {screen_name: name});
   if (name === 'friends') openFriends();
-  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => { (typeof syncStart === 'undefined' ? Promise.resolve() : syncStart).then(() => setTimeout(streakCheck, 300)); setTimeout(notifNudge, 1600); }); }
+  if (name === 'menu') { friendsDot(); (typeof bootReady === 'undefined' ? Promise.resolve() : bootReady).then(() => { (typeof syncStart === 'undefined' ? Promise.resolve() : syncStart).then(() => { setTimeout(streakCheck, 300); setTimeout(checkNameProposal, 800); }); setTimeout(notifNudge, 1600); }); }
   clearTimeout(presenceSoon); presenceSoon = setTimeout(() => presenceMark(true), 1500);
 }
 document.addEventListener('click', e => {
@@ -4777,6 +5056,9 @@ function reportError(msg) {
   try {
     if (typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbToken === 'function' && Date.now() - lastErrorReported > 30000) {
       lastErrorReported = Date.now();
+      const diag = typeof getDeviceDiagnostics === 'function' ? getDeviceDiagnostics() : null;
+      const devStr = diag ? `${diag.os} · ${diag.screen} · ${diag.net}`.slice(0, 200) : undefined;
+      const trailStr = (window._actionTrail && window._actionTrail.length) ? window._actionTrail.slice(-6).map(x => x.a).join(' -> ').slice(0, 200) : undefined;
       fbToken().then(t => {
         fetch(`${FB.dbUrl}/errors.json?auth=${t}`, {
           method: 'POST',
@@ -4785,6 +5067,8 @@ function reportError(msg) {
             ua: (navigator.userAgent || '').slice(0, 200),
             ver: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev'),
             uid: (FBC && FBC.session() && FBC.session().uid) || undefined,
+            dev: devStr,
+            trail: trailStr,
             ts: {'.sv': 'timestamp'}
           })
         }).catch(() => {});

@@ -86,7 +86,16 @@
       "$uid": {
         "$key": {
           ".write": "auth != null && auth.uid === $uid",
-          ".validate": "newData.hasChildren(['k', 'm', 't']) && newData.child('k').isString() && newData.child('m').isString() && newData.child('m').val().length <= 1000 && newData.child('t').val() === now"
+          ".validate": "newData.hasChildren(['k', 'm', 't']) && newData.child('k').isString() && newData.child('m').isString() && newData.child('m').val().length <= 1500 && newData.child('t').val() === now"
+        }
+      }
+    },
+    "suggestions": {
+      "names": {
+        ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid",
+          ".validate": "newData.hasChildren(['name', 't']) && newData.child('name').isString() && newData.child('name').val().length <= 100 && newData.child('t').val() === now"
         }
       }
     },
@@ -106,7 +115,7 @@
       ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
       "$id": {
         ".write": "auth != null && !data.exists()",
-        ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length <= 500 && newData.child('ts').val() === now && (!newData.child('ua').exists() || (newData.child('ua').isString() && newData.child('ua').val().length <= 200)) && (!newData.child('ver').exists() || (newData.child('ver').isString() && newData.child('ver').val().length <= 40)) && (!newData.child('uid').exists() || (newData.child('uid').isString() && newData.child('uid').val().length <= 64))"
+        ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length <= 500 && newData.child('ts').val() === now && (!newData.child('ua').exists() || (newData.child('ua').isString() && newData.child('ua').val().length <= 200)) && (!newData.child('ver').exists() || (newData.child('ver').isString() && newData.child('ver').val().length <= 40)) && (!newData.child('uid').exists() || (newData.child('uid').isString() && newData.child('uid').val().length <= 64)) && (!newData.child('dev').exists() || (newData.child('dev').isString() && newData.child('dev').val().length <= 200)) && (!newData.child('trail').exists() || (newData.child('trail').isString() && newData.child('trail').val().length <= 200))"
       },
       ".indexOn": [
         "uid"
