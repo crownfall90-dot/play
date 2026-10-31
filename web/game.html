@@ -1186,7 +1186,7 @@ async function endGame(reason) {
   over.hidden = false;
   historySave(reason, true);
   $('#again2').onclick = () => net ? show('lobby') : newGame();
-  setStatus('Партия окончена');
+  setStatus('Партия окончена'); $('.tray').classList.add('ended');
 }
 const winTitle = (p, final) => isMe(p) ? (final ? 'Вы победили!' : 'Вы лидируете') : `${final ? 'Побеждает' : 'Лидирует'} ${p.name}`;
 const ranked = () => players.map((p, i) => ({...p, i})).sort((a, b) => (a.resigned ? 1 : 0) - (b.resigned ? 1 : 0) || b.score - a.score);
@@ -1238,7 +1238,7 @@ function newGame() {
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
   if (!cfg.online) cfg = {...cfg, localId: cfg.localId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2))};
-  ending = false;
+  ending = false; $('.tray').classList.remove('ended');
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
@@ -2620,7 +2620,7 @@ function gameDone(place, score) {
   const cups = rated ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
   if (rated) { PROG.cups += cups; syncRating(); }
   saveWallet(); progressDot();
-  setTimeout(() => toastAny(up ? `Новый уровень ${PROG.lvl}! +${20 * up} золота` : `+${xp} опыта`), 1200);
+  // experience and a new level are shown by the results board itself (rewardChips)
   const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st, PROG.lvl));
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated, cups, xp, up, lvl: PROG.lvl, place};
@@ -2816,6 +2816,7 @@ function tutShow() {
   const c = $('#coach');
   if (!tut) { c.hidden = true; return; }
   const s = TUT[tut.i];
+  if (s.done) { c.hidden = true; return tutFinale(); }
   c.innerHTML = `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
   c.hidden = false; c.style.top = (playersEl.offsetTop + playersEl.offsetHeight + 8) + 'px';
   if (phase === 'place' && current) renderSlots();
@@ -2827,6 +2828,14 @@ function tutShow() {
     if (s.only) document.querySelectorAll('.slot').forEach(h => h.classList.add('tutpulse'));
   });
 }
+// The last lesson: the results board is the only card on the screen; its two buttons give way to one that ends the lessons.
+function tutFinale(n = 0) {
+  const fin = $('#over .fin');
+  if (!fin) return n < 25 ? setTimeout(() => tut && TUT[tut.i].done && tutFinale(n + 1), 200) : null; // the board appears a moment after the last card
+  fin.querySelectorAll('.cta, .ghostbtn').forEach(b => b.remove());
+  fin.insertAdjacentHTML('beforeend', '<button class="cta wide" id="tutNext">Играть · +30 золота</button>');
+}
+$('#over').addEventListener('click', e => { if (e.target.closest('#tutNext')) tutNext(); });
 function tutNext() {
   if (!tut) return;
   if (TUT[tut.i].done) { track('tutorial_complete'); tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); tutShow(); return setTimeout(askProfile, 400); }
@@ -4050,7 +4059,7 @@ function openLink() {
 }
 // On the first visit from a phone (not installed yet) show how to install, once.
 function firstInstallHint() {
-  if (!isWeb || standalone() || !isMobile || wallet.installHinted || document.querySelector('body > .over')) return;
+  if (!isWeb || standalone() || !isMobile || wallet.installHinted || document.querySelector('body > .over') || tut || gameVisible) return; // never over a lesson or a game
   wallet.installHinted = true; saveWallet(); installDialog();
 }
 // After an update (from Google Play or GitHub) show what changed, once per version.

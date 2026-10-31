@@ -245,15 +245,15 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .topbtn.hasdot::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
 .topbtn{position:relative}
 /* bottom navigation: the main sections; it fades in from the screen above, with no edge line */
-.bnav{position:absolute;left:0;right:0;bottom:0;z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:2px;padding:14px max(8px,var(--il,0px)) calc(8px + var(--ib,0px)) max(8px,var(--ir,0px));background:linear-gradient(180deg,rgba(13,19,36,0),rgba(13,19,36,.94) 34%,#0d1324)}
+.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:6px;border-radius:26px;background:linear-gradient(180deg,#2a376a,#161f3f);border:1px solid rgba(255,255,255,.1);box-shadow:0 16px 36px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.12)}
 .bnav[hidden]{display:none}
-.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px 4px;border:0;border-radius:14px;background:none;color:var(--muted);font:600 10.5px var(--f-body);cursor:pointer;transition:color .2s,background .2s}
-.bnav button svg{width:22px;height:22px;transition:transform .2s}
-.bnav button.on{color:var(--brass);background:rgba(242,184,75,.1)}.bnav button.on svg{transform:translateY(-1px) scale(1.06)}
-.bnav button:active{transform:scale(.94)}
-.bnav button.hasdot::after{content:"";position:absolute;top:3px;right:calc(50% - 17px);width:9px;height:9px;border-radius:50%;background:#ef5350;border:2px solid #0d1324}
-.bnav .fnum{bottom:auto;top:18px;right:calc(50% - 16px)}
-.scr.hasnav .screen{padding-bottom:calc(66px + var(--ib,0px))}
+.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px 6px;border:0;border-radius:20px;background:none;color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
+.bnav button svg{width:23px;height:23px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.bnav button.on{color:var(--brass-ink);background:linear-gradient(180deg,#ffd877,#f2b84b 60%,#dc9a2e);box-shadow:0 6px 16px rgba(242,184,75,.38),inset 0 1px 0 rgba(255,255,255,.55)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
+.bnav button:active{transform:scale(.93)}
+.bnav button.hasdot::after{content:"";position:absolute;top:5px;right:calc(50% - 19px);width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #1c2650;box-shadow:0 0 8px rgba(239,83,80,.7)}
+.bnav .fnum{bottom:auto;top:20px;right:calc(50% - 18px);border-color:#1c2650}
+.scr.hasnav .screen{padding-bottom:calc(92px + var(--ib,0px))}
 .coach{position:absolute;left:12px;right:62px;z-index:9;display:flex;align-items:center;gap:12px;padding:12px 14px 16px;border-radius:18px;background:linear-gradient(160deg,#2b3f75,#1b2547);border:1.5px solid rgba(242,184,75,.6);box-shadow:0 14px 34px rgba(0,0,0,.45);animation:chestpop .3s ease-out;overflow:hidden}
 .coach .cic{font-size:28px;flex:0 0 auto;animation:wob 2.4s ease-in-out infinite}
 .coach .ctx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.coach .ctx b{font:700 15px var(--f-display)}.coach .ctx small{color:#c9d2ea;font-size:12.5px}
@@ -694,3 +694,13 @@ html.tutoring #helpBtn{display:none}
 /* water at rest: nothing repaints while the player is not doing anything (see wake() in the game) */
 html.calm .tile .sd.fall::before,html.calm .tile .sd.fall::after,html.calm .face.t-wLake::after,html.calm .face.t-wTee::after{animation-play-state:paused}
 .board.dragging .tile .sd.fall::before,.board.dragging .tile .sd.fall::after,.board.dragging .face.t-wLake::after,.board.dragging .face.t-wTee::after{animation-play-state:paused}/* the finger moves the whole scene: no water repainting on top of that */
+
+.tray.ended .prow,.tray.ended .mrow{display:none}.tray.ended .status{font:700 13px var(--f-display);color:var(--brass);background:none;border-color:transparent}
+/* a common finish for every section: a warm glow at the top, titles with a mark, soft raised cards, a glossy main button */
+.screen.scroll{background:radial-gradient(110% 34% at 50% -6%,rgba(242,184,75,.11),transparent 62%),radial-gradient(80% 40% at 100% 100%,rgba(76,141,255,.09),transparent 65%)}
+.ltop{position:sticky;top:0;z-index:6;margin:0 -2px;padding:4px 2px 10px;background:linear-gradient(var(--sky-bot) 62%,rgba(16,23,41,0))}
+.ltop b{font:800 18px var(--f-display);letter-spacing:-.01em}
+.h3{display:flex;align-items:center;gap:8px}.h3::before{content:"";width:4px;height:13px;border-radius:2px;background:linear-gradient(var(--brass),#c98a22);flex:0 0 auto}.ocard .h3::before,.hnow .h3::before{display:none}
+:is(.stats>div,.quest,.srow,.fig,.frb,.mode,.fchip,.pitem,.hitem,.codecard,.gift,.profile,.plist li,.ptsgrid>div,.steps>div,.goal,.pod,.locgrid>*,.fb-card){background-image:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 18px rgba(0,0,0,.2)}
+.cta:not(:disabled):not(.alt){background:linear-gradient(180deg,#ffd877,#f2b84b 58%,#dc9a2e);box-shadow:0 8px 20px rgba(242,184,75,.26),inset 0 1px 0 rgba(255,255,255,.5)}
+.cta:not(:disabled):not(.alt):active{transform:translateY(1px);box-shadow:0 4px 12px rgba(242,184,75,.22),inset 0 1px 0 rgba(255,255,255,.4)}
