@@ -2854,7 +2854,7 @@ function gameDone(place, score) {
   PROG.st.best = Math.max(PROG.st.best, score);
   // Funnel markers: the owner's panel and Analytics show where newcomers stop.
   { const n = PROG.st.games + 1; if (n <= 3) track(['first_game_done', 'second_game_done', 'third_game_done'][n - 1], {win: win ? 1 : 0, score}); }
-  progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= 30 ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
+  progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= ((deckMax <= 30) ? 20 : 30) ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
   // Experience: a share for taking part, more for the place and for the points, half again online. A game where this
   // player laid fewer than 6 cards gives nothing (quitting early is not farming).
   const me = players.find(isMe), laid = me && me.stats ? me.stats.t || 0 : 6;
