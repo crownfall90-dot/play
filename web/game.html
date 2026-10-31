@@ -152,7 +152,7 @@
             <div class="h3">Как работают фишки</div>
             <div class="hitem"><span class="hic">☝️</span><div><b>Одна фишка за ход</b><p>Ставится на только что положенную карту — на город, дорогу или крепость.</p></div></div>
             <div class="hitem"><span class="hic">🔒</span><div><b>Занятое не занять</b><p>Если на объекте уже стоит чья-то фишка, поставить туда свою нельзя — даже когда объект соединён с вашим через новую карту.</p></div></div>
-            <div class="hitem"><span class="hic">🎯</span><div><b>Больше фишек — объект ваш</b><p>Очки за достроенный объект получает тот, у кого на нём больше фишек. Если поровну — по правилу партии.</p></div></div>
+            <div class="hitem"><span class="hic">🎯</span><div><b>Больше фишек — объект ваш</b><p>Очки за достроенный объект получает тот, у кого на нём больше фишек. Если поровну — очки получает каждый из них.</p></div></div>
             <div class="hitem"><span class="hic">↩️</span><div><b>Фишка возвращается</b><p>Как только объект достроен и очки начислены, фишка снова у вас в запасе.</p></div></div>
             <div class="hitem"><span class="hic">🤝</span><div><b>Респект</b><p>Достроили объект, на котором стоят только чужие фишки.</p><em>+1 очко вам</em></div></div>
             <div class="hitem"><span class="hic">🧍</span><div><b>Свободная фишка</b><p>Все карты достроенного объекта ваши — можно поставить на него свободную фишку и забрать очки.</p></div></div>
@@ -337,6 +337,7 @@ try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && save
 setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
 // Game modes are presets of the rules below; any rule can still be changed after picking one.
 setup.rules = Object.assign({mode: 'classic', deck: 50, rivers: true, meeples: 6, timer: 0, hints: true, tie: 'all', cups: false}, setup.rules);
+setup.rules.tie = 'all'; // a disputed feature (equal figures) always gives every leader the full points: the usual rule, no option any more
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
 if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck; // the old sizes (40, 60, whole deck) became 30 / 50 / 100
 if (![4, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
