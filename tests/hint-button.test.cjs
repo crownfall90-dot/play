@@ -12,13 +12,16 @@ test('hint button: on your turn it suggests a legal move with a reason', {skip: 
   const browser = await pw.chromium.launch();
   try {
     const {page, errors} = await openGame(browser, instrumentedCopy(), null);
+    // new players start with "on the button"; this test goes through "always" first
+    assert.equal(await page.evaluate(() => document.querySelector('#prefs [data-pref=coach] button[data-i="1"]').getAttribute('aria-pressed')), 'true', 'default: on the button');
+    await page.evaluate(() => document.querySelector('#prefs [data-pref=coach] button[data-i="0"]').click());
     const cfg = JSON.parse(JSON.stringify(games[0].cfg));
     cfg.seats[0] = {...cfg.seats[0], name: 'Я', human: true};
     cfg.noIntro = true;
     await page.evaluate(c => { window.__pg.startGame(c, []); window.__pg.show('game'); }, cfg);
     for (let turn = 0; turn < 3; turn++) {
       await page.waitForFunction(() => window.__pg.state().phase === 'place' && !document.querySelector('#tip').hidden, null, {timeout: 20000});
-      // "always" (the default): the advised spot glows and the reason is already written, nothing chosen yet
+      // "always": the advised spot glows and the reason is already written, nothing chosen yet
       const auto = await page.evaluate(() => ({status: document.querySelector('#status').textContent, glow: document.querySelectorAll('#world .slot.tip').length, ok: !document.querySelector('#ok').disabled}));
       assert.match(auto.status, /^💡 .+Место подсвечено$/);
       assert.equal(auto.glow, 1);

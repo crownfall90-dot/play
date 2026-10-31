@@ -247,8 +247,8 @@
           <button class="iconbtn" id="gameMenu" aria-label="Меню партии"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
           <div class="room"><b>Комната K7Q2</b><span><i></i>онлайн · 4 игрока</span></div>
           <button class="iconbtn saybtn" id="sayBtn" hidden aria-label="Быстрые фразы"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5h16v10H10l-4.5 4v-4H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></svg></button>
-          <button class="iconbtn" id="helpBtn" aria-label="Очки и правила"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 014.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button>
-          <div class="deck"><span class="dstack"><i></i><i></i><i></i></span><span><b id="deckN">0</b><small>в стопке</small></span></div>
+          
+          <div class="deck"><svg class="dstack" viewBox="0 0 56 50" width="46" height="41" aria-hidden="true"><defs><linearGradient id="dkG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9bd96b"/><stop offset="1" stop-color="#4f9a3b"/></linearGradient></defs><g transform="translate(-2 7)" opacity=".5"><path d="M12 12H30A6 6 0 0 1 36 18V23C37 23 39 22 42 22A5 5 0 1 1 42 32C39 32 37 31 36 31V36A6 6 0 0 1 30 42H12A6 6 0 0 1 6 36V18A6 6 0 0 1 12 12Z" fill="#4f7f3a" stroke="#27421e" stroke-width="1.6"/></g><g transform="translate(2 3.5)" opacity=".8"><path d="M12 12H30A6 6 0 0 1 36 18V23C37 23 39 22 42 22A5 5 0 1 1 42 32C39 32 37 31 36 31V36A6 6 0 0 1 30 42H12A6 6 0 0 1 6 36V18A6 6 0 0 1 12 12Z" fill="#5f9a45" stroke="#27421e" stroke-width="1.6"/></g><g transform="translate(6 0)"><path d="M12 12H30A6 6 0 0 1 36 18V23C37 23 39 22 42 22A5 5 0 1 1 42 32C39 32 37 31 36 31V36A6 6 0 0 1 30 42H12A6 6 0 0 1 6 36V18A6 6 0 0 1 12 12Z" fill="url(#dkG)" stroke="#27421e" stroke-width="1.6"/><path d="M21 42V30M21 30q9 0 11-9" fill="none" stroke="#ecdca8" stroke-width="3.4" stroke-linecap="round"/></g></svg><span class="dtx"><b id="deckN">0</b><small>в стопке</small><i class="dbar"><i id="deckBar"></i></i></span></div>
         </div>
         <div class="players" id="players"></div>
         <div class="saybox" id="sayBox" hidden></div>
@@ -256,6 +256,7 @@
         <div class="board" id="board">
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
+          <button class="helppill float" id="helpBtn" aria-label="Очки и правила"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10a3 3 0 013 3V20H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h10M9 8.5h5"/></svg><span>Очки и правила</span></button>
           <div class="toast" id="toast"></div>
           <div class="netbad" id="netBad" hidden role="status"><i></i>Нет связи — переподключаемся…</div>
           <div class="edgeglow" id="edgeglow"></div>
@@ -569,7 +570,7 @@ function hideHint() { hint.classList.add('gone'); clearTimeout(hintTimer); }
 const pts = new Map();
 let moved = false, sx = 0, sy = 0, pinch = null, vel = {x: 0, y: 0}, lastT = 0;
 board.addEventListener('pointerdown', e => {
-  if (e.target.closest('.fab,.over')) return;
+  if (e.target.closest('.fab,.over,.helppill')) return;
   camAnim++; inertia++;
   try { board.setPointerCapture(e.pointerId); } catch (_) {}
   pts.set(e.pointerId, {x: e.clientX, y: e.clientY});
@@ -782,7 +783,8 @@ function renderPlayers(bump = []) {
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
 function toast(txt) { if (fast()) return; toastEl.textContent = txt; toastEl.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toastEl.classList.remove('on'), 2000); }
-function renderDeck() { $('#deckN').textContent = deck.length; }
+let deckMax = 0;
+function renderDeck() { if (deck.length > deckMax || !phase || phase === 'idle') deckMax = Math.max(deck.length, deckMax); $('#deckN').textContent = deck.length; const bar = $('#deckBar'); if (bar) bar.style.width = (deckMax ? 100 * deck.length / deckMax : 0) + '%'; }
 function renderTray() {
   if (!current) { tface.className = 'face'; cname.innerHTML = ''; return; }
   tface.style.transition = 'none'; trayDeg = current.r * 90; tface.style.setProperty('--r', (trayDeg + cam.rot) + 'deg');
@@ -1229,7 +1231,7 @@ function buildBoard() {
     tiles.set(key(best.x, best.y), {x: best.x, y: best.y, type: id, r: best.r, seed: (R() * 1e9) | 0});
     placed++;
   }
-  deck = pool;
+  deck = pool; deckMax = pool.length;
   for (let i = deck.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [deck[i], deck[j]] = [deck[j], deck[i]]; }
   return R;
 }
@@ -1280,7 +1282,7 @@ function startGame(cfg, replay = []) {
   const h = humanCount(), b = players.length - h;
   if (net) $('.room').innerHTML = `<b>${net.quick ? 'Онлайн' : 'Комната ' + net.code}</b><span><i></i>онлайн · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
   else if (window.AndroidApp || window.WEBAPP) $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Люди и боты' : 'С ботами') : 'Один телефон'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
-  deck = cfg.deck.slice();
+  deck = cfg.deck.slice(); deckMax = deck.length;
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
   // Tutorial: the first piece counts as the player's own, so the town they close on move one can take a figure at once.
@@ -1735,7 +1737,7 @@ document.addEventListener('click', e => { if (e.target.closest('button') && !e.t
 /* ---------------- settings ---------------- */
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
-Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'on', view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
+Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'tip', view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
 const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
 applyGfx();
 function renderPrefs() {
