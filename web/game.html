@@ -2128,11 +2128,12 @@ let presenceTimer = 0;
 function presenceTick() {
   clearTimeout(presenceTimer);
   if (document.hidden) return;
-  presenceMark(true).then(presenceCount).then(inboxPoll).then(() => typeof cloudPeek === 'function' && cloudPeek()); // the inbox also has a live stream; this covers a dropped one
+  presenceMark(true).then(presenceCount).then(inboxPoll).then(() => { if (typeof cloudPeek === 'function') { cloudPeek(); profileListen(); } }); // the inbox also has a live stream; this covers a dropped one
   presenceTimer = setTimeout(presenceTick, 60000);
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden) { clearTimeout(presenceTimer); presenceMark(false); } else presenceTick(); });
 if (FB) setTimeout(() => ensureGuestName().then(presenceTick), 1500);
+if (FB) setTimeout(() => { try { profileListen(); } catch (_) {} }, 3000);
 
 function netSend(msg) {
   return TRANSPORT.send(net.code, msg).catch(() => toast('Нет связи — проверьте интернет'));
@@ -3746,6 +3747,23 @@ async function cloudPeek() {
     if (t && (!base || base.t !== t)) cloudSync(false);
   } catch (_) {}
 }
+// Live link: another device saving the profile reaches this one within seconds, not at the next minute.
+let profEs = null, profEsUid = '';
+async function profileListen() {
+  if (!FB || !linkedNow()) return;
+  if (profEs && profEsUid === fbAuth.uid) return;
+  if (profEs) { profEs.close(); profEs = null; }
+  try {
+    await fbToken(); const uid = profEsUid = fbAuth.uid, es = profEs = new EventSource(await fbUrl('profiles/' + uid + '/t'));
+    let first = true;
+    const again = () => { es.close(); if (profEs === es) profEs = null; setTimeout(profileListen, 20000); };
+    es.addEventListener('put', () => { if (first) { first = false; return; } cloudPeek(); }); // the first event is the current value
+    es.addEventListener('auth_revoked', () => { fbAuth.exp = 0; again(); }); es.onerror = again;
+  } catch (_) { profEs = null; setTimeout(profileListen, 30000); }
+}
+// Leaving the app: save at once instead of waiting for the delay; back online: catch up.
+document.addEventListener('visibilitychange', () => { if (document.hidden && cloudTimer) { clearTimeout(cloudTimer); cloudTimer = 0; cloudSync(true); } });
+addEventListener('online', () => { cloudSync(true); profileListen(); });
 // Signing in on this device: the cloud profile replaces what is here.
 async function cloudLoad() {
   const tok = await fbToken(), r = await fetch(`${FB.dbUrl}/profiles/${fbAuth.uid}.json?auth=${tok}`);
@@ -4061,7 +4079,7 @@ function openLink() {
     const qs = l.friend ? 'friend=' + l.friend : 'room=' + l.room, what = l.friend ? 'Приглашение в друзья' : 'Приглашение в комнату';
     const intent = `intent://${location.host}${location.pathname}?${qs}#Intent;scheme=https;package=com.crownfall.mosaic;S.browser_fallback_url=${encodeURIComponent(APK_URL)};end`;
     const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-    box.innerHTML = `<div class="ocard"><div style="font-size:44px">${l.friend ? '🤝' : '🎲'}</div><h3>${what}</h3><p>Откройте игру в приложении или продолжите прямо в браузере</p><a class="cta wide" id="lkApp" href="${intent}" style="text-decoration:none;display:grid;place-items:center">Открыть в приложении</a><button class="ghostbtn" id="lkWeb">Продолжить в браузере</button><a class="linkbtn" href="${APK_URL}" target="_blank" rel="noopener">Скачать приложение</a></div>`;
+    box.innerHTML = `<div class="ocard"><div style="font-size:44px">${l.friend ? '🤝' : '🎲'}</div><h3>${what}</h3><p>Откройте игру в приложении или продолжите прямо в браузере</p><a class="cta wide" id="lkApp" href="${intent}" style="text-decoration:none;display:grid;place-items:center">Открыть в приложении</a><button class="ghostbtn" id="lkWeb">Продолжить в браузере</button><a class="linkbtn" href="${APK_URL}" target="_blank" rel="noopener">Нет приложения? Скачать для Android</a></div>`;
     document.body.append(box);
     box.querySelector('#lkWeb').onclick = () => { box.remove(); routeLink(l); };
     return;
