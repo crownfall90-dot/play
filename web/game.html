@@ -222,6 +222,7 @@
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
           <div class="toast" id="toast"></div>
+          <div class="netbad" id="netBad" hidden role="status"><i></i>Нет связи — переподключаемся…</div>
           <div class="edgeglow" id="edgeglow"></div>
           <div class="fabs">
             <button class="fab tipb" id="tip" aria-label="Подсказка: лучший ход" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0012 3z"/></svg></button>
@@ -1888,13 +1889,15 @@ const FIRE = {
     if (!r.ok) throw new Error('send ' + r.status);
   },
   listen(code, on) {
-    let es = null, closed = false;
+    let es = null, closed = false, pause = 2000;
     const emit = (id, v) => v && typeof v.m === 'string' && on.msg({id, time: (v.ts || Date.now()) / 1000, message: v.m});
     const start = async () => {
       let tok; try { tok = await fbToken(); } catch (_) { return on.error(); }
       if (closed) return;
       es = new EventSource(`${FB.dbUrl}/rooms/${code}/msgs.json?auth=${tok}`);
-      es.onopen = on.open; es.onerror = on.error;
+      es.onopen = () => { pause = 2000; on.open(); };
+      // the browser retries a dropped stream by itself; one it gave up on (closed) is reopened here, waiting longer each time
+      es.onerror = () => { on.error(); if (es.readyState === 2 && !closed) { setTimeout(() => { if (!closed) start(); }, pause); pause = Math.min(pause * 2, 30000); } };
       const put = e => {
         let d; try { d = JSON.parse(e.data); } catch (_) { return; }
         if (d.path === '/') Object.keys(d.data || {}).sort().forEach(k => emit(k, d.data[k]));
@@ -1975,18 +1978,60 @@ if (FB) setTimeout(() => ensureGuestName().then(presenceTick), 1500);
 function netSend(msg) {
   return TRANSPORT.send(net.code, msg).catch(() => toast('Нет связи — проверьте интернет'));
 }
-function leaveRoom() { if (net && net.close) net.close(); net = null; }
+function leaveRoom() { if (net && net.close) net.close(); if (net) netUp(net); net = null; }
+/* Connection to the table (phase 1.3 of the roadmap): a short drop shows a quiet "reconnecting" line over the board;
+   one longer than 30 s asks "Retry / To the menu". The game itself is never lost: moves are kept on the server and
+   replayed without animation when the stream comes back. */
+const NET_DIALOG_AFTER = 30000;
+function netDown(me) {
+  if (me.down) return;
+  me.down = Date.now(); $('#netBad').hidden = false;
+  clearTimeout(me.downT);
+  me.downT = setTimeout(() => {
+    if (net !== me || !me.down) return;
+    confirmBox('Связь с игрой потеряна<br><small>Партия сохранена на сервере. Проверьте интернет и попробуйте снова — ходы подтянутся сами</small>', 'Повторить', () => netRetry(me), 'В меню', () => { show('menu'); renderResume(); });
+  }, NET_DIALOG_AFTER);
+}
+function netUp(me) {
+  clearTimeout(me.downT); if (!me.down) return;
+  me.down = null; $('#netBad').hidden = true;
+  const box = document.getElementById('confirmBox'); if (box && box.dismiss && /Связь с игрой потеряна/.test(box.textContent)) box.dismiss(false);
+  track('net_back');
+}
+// Retry: open the stream again from scratch (seen messages are skipped, so nothing is applied twice).
+function netRetry(me) {
+  if (net !== me) return;
+  if (me.close) me.close();
+  me.down = null; netDown(me);
+  me.close = TRANSPORT.listen(me.code, {open: () => net === me && netUp(me), error: () => {}, msg: d => { if (net === me) onNet(d); }});
+}
+addEventListener('offline', () => { if (net && net.gameId) netDown(net); });
+// Before going online: one request to the game server with a time limit (Wi-Fi alone proves nothing).
+async function serverReachable(ms = 6000) {
+  if (!FB) return true;
+  const ac = typeof AbortController === 'function' ? new AbortController() : null, t = setTimeout(() => ac && ac.abort(), ms);
+  try { const r = await fetch(`${FB.dbUrl}/config/maintenance.json`, ac ? {signal: ac.signal, cache: 'no-store'} : {cache: 'no-store'}); return r.status < 500; }
+  catch (_) { return false; }
+  finally { clearTimeout(t); }
+}
+function noServer(retry) { confirmBox('Нет связи с игровым сервером<br><small>Проверьте интернет. Игра с ботами и на одном телефоне работает без сети</small>', 'Повторить', retry, 'Закрыть'); }
 function connect(code, asHost, quick) {
   leaveRoom();
   const me = net = {code, host: false, hostId: null, seen: new Set(), lobby: null, gameId: null, since: Date.now() / 1000, quick: !!quick};
   let opened = false;
   net.close = TRANSPORT.listen(code, {
     open() {
-      if (opened || net !== me) return; opened = true;
+      if (net !== me) return;
+      if (opened) return netUp(me); // back after a drop: the stream sends everything again, seen messages are skipped
+      opened = true;
       (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color}));
       if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { if (me.quick) return matchSkip(code); toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
     },
-    error() { if (!opened && net === me) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); if (me.quick) stopMatch(); } },
+    error() {
+      if (net !== me) return;
+      if (!opened) { toastAny('Нет связи с сервером комнат'); leaveRoom(); renderLobby(); if (me.quick) stopMatch(); return; }
+      netDown(me);
+    },
     msg(d) { if (net === me) onNet(d); },
   });
   renderLobby();
@@ -2168,11 +2213,11 @@ $('#myColor').addEventListener('click', e => {
 });
 $('#create').onclick = () => openSetup('friends');
 const newCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); };
-function createRoom() { connect(newCode(), true); net.max = setup.onN || 2; show('lobby'); }
+async function createRoom() { if (!(await serverReachable())) return noServer(createRoom); connect(newCode(), true); net.max = setup.onN || 2; show('lobby'); }
 $('#join').onclick = () => {
   const code = $('#codeIn').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (code.length !== 5) return toastAny('Код комнаты — 5 символов');
-  connect(code, false);
+  serverReachable().then(ok => ok ? connect(code, false) : noServer(() => $('#join').click()));
 };
 $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.gameId) leaveRoom(); show('menu'); renderLobby(); };
 $('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col}); publishLobby(seats); };
@@ -2198,9 +2243,10 @@ renderSetup();
    when it is full); from then on it is an ordinary online game. */
 const MATCH_ROOM = 'QMATCH', SEEK_MS = 10000, SEEK_FRESH = 25000, START_IN = 3;
 var mm = null; // var: renderLobby() looks at it before this line runs
-function quickMatch() {
+async function quickMatch() {
   if (!FB) return toastAny('Онлайн-поиск недоступен — используйте «С друзьями»');
   if (net && net.gameId && phase !== 'end') return show('game');
+  if (!(await serverReachable())) return noServer(quickMatch);
   stopMatch(true);
   leaveRoom();
   // want: the table size this player chose; only rooms of the same size match.
@@ -3053,11 +3099,11 @@ function confirmTextParts(text) {
   const match = /^([^<>]*)<br\s*\/?><small(?:\s+style="[^"]*")?>([^<>]*)<\/small>$/i.exec(value);
   return match ? {title: match[1], description: match[2]} : {title: value, description: ''};
 }
-function confirmBox(text, yes, ok) {
+function confirmBox(text, yes, ok, no, onNo) {
   const old = document.getElementById('confirmBox'); if (old && old.dismiss) old.dismiss(false);
   const box = document.createElement('div'); box.id = 'confirmBox'; box.className = 'over'; box.style.position = 'fixed';
   box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'confirmText');
-  box.innerHTML = '<div class="ocard"><h3 id="confirmText"></h3><button class="cta wide" data-a="y"></button><button class="ghostbtn" data-a="n">Отмена</button></div>';
+  box.innerHTML = '<div class="ocard"><h3 id="confirmText"></h3><button class="cta wide" data-a="y"></button><button class="ghostbtn" data-a="n"></button></div>';
   const parts = confirmTextParts(text);
   box.querySelector('h3').textContent = parts.title;
   if (parts.description) {
@@ -3069,6 +3115,7 @@ function confirmBox(text, yes, ok) {
     box.setAttribute('aria-describedby', 'confirmDescription');
   }
   box.querySelector('[data-a=y]').textContent = String(yes || 'Да');
+  box.querySelector('[data-a=n]').textContent = String(no || 'Отмена');
   const previous = document.activeElement;
   document.body.append(box); let done = false;
   const close = run => { if (done) return; done = true; document.removeEventListener('keydown', keys); box.remove(); if (previous && previous.isConnected) previous.focus(); if (run && typeof ok === 'function') ok(); };
@@ -3081,7 +3128,7 @@ function confirmBox(text, yes, ok) {
   };
   box.dismiss = close;
   document.addEventListener('keydown', keys);
-  box.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) close(b.dataset.a === 'y'); });
+  box.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (!b) return; close(b.dataset.a === 'y'); if (b.dataset.a === 'n' && typeof onNo === 'function') onNo(); });
   box.querySelector('[data-a=n]').focus();
 }
 function openFeedback() {

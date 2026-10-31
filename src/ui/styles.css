@@ -643,3 +643,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 .devlink{display:grid;place-items:center;text-decoration:none}
 /* in the profile the level card already shows the avatar, name and level: the account card keeps only its status and buttons */
 #scr-progress #acct .av.big,#scr-progress #acct .pwho b,#scr-progress #acct .plvl{display:none}
+/* a dropped connection in an online game: a quiet line over the board, not a dialog */
+.netbad{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:8px;padding:7px 13px;border-radius:12px;background:rgba(60,22,22,.9);border:1px solid rgba(255,120,110,.45);font-size:12.5px;white-space:nowrap;pointer-events:none}
+.netbad[hidden]{display:none}.netbad i{width:8px;height:8px;border-radius:50%;background:#ff8a80;animation:netblink 1s ease-in-out infinite}
+@keyframes netblink{50%{opacity:.3}}
