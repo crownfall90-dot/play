@@ -238,6 +238,7 @@
             <div class="rulesbox" data-rules id="lbRules"></div>
             <button class="cta wide" id="backToGame" hidden>Вернуться в партию</button>
             <button class="cta wide" id="lobbyStart">Начать игру</button>
+            <button class="cta wide" id="lobbyReady" hidden>Готов</button>
             <div class="lbwait" id="lbWait" hidden><div class="pz sm"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><p class="shint">Ждём, когда создатель комнаты начнёт игру. Правила выбирает он.</p></div>
           </div>
         </div>
@@ -1267,6 +1268,7 @@ function newGame() {
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
+  clearRematchTimer(); if (net) net.rematchVotes = null;
   if (!cfg.online) cfg = {...cfg, localId: cfg.localId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2))};
   ending = false; $('.tray').classList.remove('ended');
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
@@ -1291,7 +1293,11 @@ function startGame(cfg, replay = []) {
   world.classList.toggle('nohint', !rules.hints);
   playersEl.style.gridTemplateColumns = `repeat(${players.length},1fr)`;
   const h = humanCount(), b = players.length - h;
-  if (net) $('.room').innerHTML = `<b>${net.quick ? 'Онлайн' : 'Комната ' + net.code}</b><span><i></i>онлайн · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
+  if (net) {
+    const isCups = !!(net.quick || (gameRules && gameRules.cups) || (rules && rules.cups));
+    const sub = `${isCups ? 'рейтинговая игра' : 'онлайн'} · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}`;
+    $('.room').innerHTML = `<b>${net.quick ? 'Онлайн' : 'Комната ' + net.code}</b><span><i></i>${sub}</span>`;
+  }
   else if (window.AndroidApp || window.WEBAPP) $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Люди и боты' : 'С ботами') : 'Один телефон'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
   deck = cfg.deck.slice(); deckMax = deck.length;
   // First card from the top of the stack goes in the middle of the table.
@@ -2186,7 +2192,7 @@ if (FB) setTimeout(() => { try { profileListen(); } catch (_) {} }, 3000);
 function netSend(msg) {
   return TRANSPORT.send(net.code, msg).catch(() => toast('Нет связи — проверьте интернет'));
 }
-function leaveRoom() { if (net && net.close) net.close(); if (net) netUp(net); net = null; }
+function leaveRoom() { clearRematchTimer(); if (net && net.close) net.close(); if (net) netUp(net); net = null; }
 /* Connection to the table (phase 1.3 of the roadmap): a short drop shows a quiet "reconnecting" line over the board;
    one longer than 30 s asks "Retry / To the menu". The game itself is never lost: moves are kept on the server and
    replayed without animation when the stream comes back. */
@@ -2264,7 +2270,7 @@ function netAuth(d, m) {
   };
   const hostUid = net.hostId ? ids.get(net.hostId) : '';
   if (m.t === 'host') return !net.hostId || m.id === net.hostId ? bind(m.id) : false;
-  if (m.t === 'hello') return bind(m.id);
+  if (m.t === 'hello' || m.t === 'ready') return bind(m.id);
   if (m.t === 'lobby' || m.t === 'start') {
     if (hostUid && u !== hostUid) return false;
     if (m.t === 'start' && m.sec === 1) net.secure = true;
@@ -2286,12 +2292,18 @@ function onNet(d) {
   const live = d.time >= net.since - 2;
   if (!m || typeof m !== 'object' || !netAuth(d, m)) return;
   if (m.t === 'host') { if (!net.hostId) { net.hostId = m.id; net.host = m.id === myId; } return renderLobby(); }
-  if (m.t === 'hello' && net.host && live) {
+  if (m.t === 'hello' && net.host && !net.gameId) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
     const s = seats.find(x => x.owner === m.id);
     const uid = typeof m.uid === 'string' && m.reg ? m.uid.slice(0, 64) : null; // only saved profiles can be added as friends
     if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig || s.col !== m.col || s.uid !== uid) { s.name = clean(m.name); s.fig = m.fig; s.col = m.col; s.uid = uid; publishLobby(seats); } }
-    else if (seats.length < roomMax()) { seats.push({owner: m.id, uid, name: clean(m.name), fig: m.fig, col: m.col}); publishLobby(seats); }
+    else if (seats.length < roomMax()) { seats.push({owner: m.id, uid, name: clean(m.name), fig: m.fig, col: m.col, ready: false}); publishLobby(seats); }
+    return;
+  }
+  if (m.t === 'ready' && net.host && !net.gameId) {
+    const seats = net.lobby ? net.lobby.seats.slice() : [];
+    const s = seats.find(x => x.owner === m.id);
+    if (s) { s.ready = !!m.ready; publishLobby(seats); renderLobby(); }
     return;
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
@@ -2317,11 +2329,17 @@ function onNet(d) {
     if (m.t === 'upresume') { if (live && net.upd && m.c >= net.upd.c) updEnd('Партия продолжается'); return; }
   }
   if (m.t === 'rematch') {
-    if (net && net.host) {
-      toastAny(`${clean(m.name) || 'Соперник'} предлагает реванш!`);
-      const b1 = $('#again'), b2 = $('#again2');
-      if (b1) { b1.textContent = 'Принять реванш'; b1.disabled = false; }
-      if (b2) { b2.textContent = 'Принять реванш'; b2.disabled = false; }
+    if (net) {
+      net.rematchVotes = net.rematchVotes || new Set();
+      const voterId = m.id || (typeof m.p === 'number' && players[m.p] && players[m.p].owner) || ('p' + m.p);
+      if (!net.rematchVotes.has(voterId)) {
+        net.rematchVotes.add(voterId);
+        const playerName = clean(m.name) || (typeof m.p === 'number' && players[m.p] && clean(players[m.p].name)) || 'Соперник';
+        const humans = players.filter(p => p.human);
+        toastAny(`${playerName} предлагает реванш! (${net.rematchVotes.size}/${humans.length})`);
+      }
+      updateRematchUI();
+      checkRematchVotes();
     }
     return;
   }
@@ -2456,7 +2474,10 @@ function renderLobby() {
   cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : ''); cb.disabled = !net.host || !!net.gameId;
   cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? 'Нажмите, чтобы ' + (cups ? 'выключить' : 'включить') : cups ? 'Победа даст кубки в рейтинг' : 'Дружеская партия, рейтинг не меняется'}</small>`;
   renderMyColor();
-  const seats = net.lobby ? net.lobby.seats : [];
+  const seats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : []);
+  if (net && !net.host && !seats.some(x => x.owner === myId)) {
+    seats.push({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: false, pending: true});
+  }
   if (invited.code === net.code) {
     seats.forEach(x => {
       if (x.uid && x.uid !== myUid() && invited.uids.has(x.uid) && !invited.joined.has(x.uid)) {
@@ -2467,11 +2488,39 @@ function renderLobby() {
     });
   }
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : 'Игрок'}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : '<span class="pill">В комнате</span>'}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= roomMax();
-  $('#lobbyStart').hidden = !net.host || (!!net.gameId && phase !== 'end'); $('#lobbyStart').disabled = seats.length < 2;
-  $('#lobbyStart').textContent = seats.length < 2 ? 'Нужно хотя бы 2 игрока' : 'Начать игру';
-  $('#lbWait').hidden = net.host || (!!net.gameId && phase !== 'end');
+  const others = seats.filter(x => x.owner && x.owner !== net.hostId);
+  const allReady = others.length === 0 || others.every(x => x.ready);
+  const inLobby = !(net.gameId && phase !== 'end');
+  const mySeat = seats.find(x => x.owner === myId);
+
+  if (net.host) {
+    $('#lobbyReady').hidden = true;
+    $('#lobbyStart').hidden = !inLobby;
+    if (seats.length < 2) {
+      $('#lobbyStart').disabled = true;
+      $('#lobbyStart').textContent = 'Нужно хотя бы 2 игрока';
+    } else if (!allReady && !net.quick) {
+      $('#lobbyStart').disabled = true;
+      const readyCount = others.filter(x => x.ready).length;
+      $('#lobbyStart').textContent = others.length > 1 ? `Прожмите готовность (${readyCount}/${others.length})` : 'Прожмите готовность';
+    } else {
+      $('#lobbyStart').disabled = false;
+      $('#lobbyStart').textContent = 'Начать игру';
+    }
+  } else {
+    $('#lobbyStart').hidden = true;
+    $('#lobbyReady').hidden = !inLobby || !!net.quick;
+    if (inLobby && !net.quick) {
+      const isReady = !!(mySeat && mySeat.ready);
+      $('#lobbyReady').textContent = isReady ? '✓ Готов (отменить)' : 'Готов';
+      $('#lobbyReady').className = isReady ? 'cta wide alt' : 'cta wide';
+      const hint = $('#lbWait .shint');
+      if (hint) hint.textContent = isReady ? 'Вы готовы. Ждём остальных игроков и старта от создателя.' : 'Нажмите «Готов», когда будете готовы начать игру.';
+    }
+  }
+  $('#lbWait').hidden = net.host || !inLobby;
   $('#backToGame').hidden = !(net.gameId && phase !== 'end');
   $('#lbRules').style.pointerEvents = net.host ? '' : 'none';
   renderRules();
@@ -2504,7 +2553,8 @@ $('#join').onclick = () => {
   serverReachable().then(ok => ok ? connect(code, false) : noServer(() => $('#join').click()));
 };
 $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.gameId) leaveRoom(); show('menu'); renderLobby(); };
-$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col}); publishLobby(seats); };
+$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col, ready: true}); publishLobby(seats); };
+$('#lobbyReady').onclick = () => { if (!net || net.host) return; const mySeat = net.lobby && net.lobby.seats ? net.lobby.seats.find(x => x.owner === myId) : null; const next = !(mySeat && mySeat.ready); netSend({t: 'ready', id: myId, ready: next}); };
 $('#plist').addEventListener('click', e => { const a = e.target.closest('[data-addf]'); if (a) { a.remove(); addFriend(a.dataset.addf, a.dataset.n); } });
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
 $('#backToGame').onclick = () => show('game');
@@ -2517,21 +2567,83 @@ function startOnline(seats) {
 }
 function rematchClick() {
   if (!net) { newGame(); show('game'); return; }
+  net.rematchVotes = net.rematchVotes || new Set();
+  net.rematchVotes.add(myId);
   const meIdx = players.findIndex(isMe);
-  if (net.host) {
-    startRematch();
+  netSend({t: 'rematch', id: myId, p: meIdx >= 0 ? meIdx : 0, name: profileName()});
+  toastAny('Запрос на реванш отправлен');
+  updateRematchUI();
+  checkRematchVotes();
+}
+function checkRematchVotes() {
+  if (!net || !net.rematchVotes) return;
+  const humans = players.filter(p => p.human);
+  if (humans.length > 0 && net.rematchVotes.size >= humans.length) {
+    clearRematchTimer();
+    executeRematch();
+    return;
+  }
+  if (!net.rematchTimer && net.rematchVotes.size >= 1) {
+    net.rematchCountdown = 10;
+    net.rematchTimer = setInterval(() => {
+      if (!net || phase !== 'end') return clearRematchTimer();
+      net.rematchCountdown--;
+      updateRematchUI();
+      if (net.rematchCountdown <= 0) {
+        clearRematchTimer();
+        if (net.rematchVotes && net.rematchVotes.size >= 2) {
+          executeRematch();
+        } else {
+          toastAny('Недостаточно игроков для следующей партии');
+          if (net && net.rematchVotes) net.rematchVotes.clear();
+          updateRematchUI();
+        }
+      }
+    }, 1000);
+  }
+}
+function updateRematchUI() {
+  const b1 = $('#again'), b2 = $('#again2');
+  if (!b1 && !b2) return;
+  if (!net) {
+    if (b1) { b1.textContent = 'Ещё партию'; b1.disabled = false; }
+    if (b2) { b2.textContent = 'Ещё партию'; b2.disabled = false; }
+    return;
+  }
+  const humans = players.filter(p => p.human);
+  const voted = net.rematchVotes && net.rematchVotes.has(myId);
+  const count = net.rematchVotes ? net.rematchVotes.size : 0;
+  const timeStr = net.rematchTimer && net.rematchCountdown > 0 ? ` (${net.rematchCountdown}с)` : '';
+  let text;
+  if (voted) {
+    text = `✓ Вы за (${count}/${humans.length})${timeStr}`;
+  } else if (count > 0) {
+    text = `Принять реванш (${count}/${humans.length})${timeStr}`;
   } else {
-    netSend({t: 'rematch', p: meIdx >= 0 ? meIdx : 0, name: profileName()});
-    toastAny('Запрос на реванш отправлен');
-    const b1 = $('#again'), b2 = $('#again2');
-    if (b1) { b1.textContent = 'Ждём хоста…'; b1.disabled = true; }
-    if (b2) { b2.textContent = 'Ждём хоста…'; b2.disabled = true; }
+    text = net ? 'Реванш' : 'Ещё партию';
+  }
+  if (b1) { b1.textContent = text; b1.disabled = false; }
+  if (b2) { b2.textContent = text; b2.disabled = false; }
+}
+function executeRematch() {
+  if (!net) return;
+  const agreedHumans = players.filter(p => p.human && net.rematchVotes && net.rematchVotes.has(p.owner || p.id));
+  const starter = (agreedHumans.find(p => p.owner === net.hostId) || agreedHumans[0] || {}).owner;
+  if (myId === starter || (net.host && agreedHumans.some(p => p.owner === myId))) {
+    const seats = players
+      .filter(p => !p.human || (net.rematchVotes && net.rematchVotes.has(p.owner || p.id)))
+      .map(p => ({name: p.name, owner: p.owner || null, uid: p.uid || null, fig: p.fig || 'classic', col: p.col}));
+    startOnline(seats);
   }
 }
 function startRematch() {
-  if (!net || !net.host) return;
-  const seats = players.map(p => ({name: p.name, owner: p.owner || null, uid: p.uid || null, fig: p.fig || 'classic', col: p.col}));
-  startOnline(seats);
+  executeRematch();
+}
+function clearRematchTimer() {
+  if (net && net.rematchTimer) {
+    clearInterval(net.rematchTimer);
+    net.rematchTimer = null;
+  }
 }
 renderLobby();
 renderSetup();
