@@ -226,8 +226,8 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stats div{padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center}
 .stats b{display:block;font:800 18px var(--f-display);font-variant-numeric:tabular-nums}.stats small{color:var(--muted);font-size:11px}
-#ptabs{grid-template-columns:repeat(4,1fr)}
-#ptabs button{font:700 12px var(--f-display);padding:0 2px;position:relative}
+#ptabs{grid-template-columns:repeat(3,1fr)}
+#ptabs button{font:800 14px var(--f-display);padding:0 2px;position:relative}
 #ptabs button.hasdot::after{content:"";position:absolute;top:4px;right:6px;width:7px;height:7px;border-radius:50%;background:#ef5350;border:1.5px solid #141b33}
 .quest{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
 .quest .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(255,255,255,.06);flex:0 0 auto}
@@ -245,16 +245,22 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .topbtn.hasdot::after{content:"";position:absolute;top:-3px;right:-3px;width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #141b33}
 .topbtn{position:relative}
 /* bottom navigation: the main sections; it fades in from the screen above, with no edge line */
-.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:3px;padding:0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.5))}
+.bnav{position:absolute;left:max(12px,var(--il,0px));right:max(12px,var(--ir,0px));bottom:calc(10px + var(--ib,0px));z-index:20;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;padding:0;filter:drop-shadow(0 8px 12px rgba(0,0,0,.5))}
 .bnav[hidden]{display:none}
-.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 7px;border:0;border-radius:15px;background:linear-gradient(180deg,#2c3a70,#1a2350);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -2px 0 rgba(0,0,0,.25);color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
+.bnav button{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px 7px;border:0;border-radius:15px;background:none;color:#9aa6c8;font:700 10.5px var(--f-body);letter-spacing:.01em;cursor:pointer;transition:color .2s,background .25s,box-shadow .25s,transform .15s}
 /* puzzle pieces: each one carries a knob that fits into the notch of the next */
-.bnav .sm,.bnav .kn{position:absolute;border-radius:50%;pointer-events:none}
-.bnav .sm{z-index:1;width:26px;height:26px;right:-14.5px;top:calc(50% - 13px);background:#0b1230;clip-path:inset(0 0 0 50%)}
-.bnav .kn{z-index:2;width:19px;height:19px;right:-11px;top:calc(50% - 9.5px);background:#243163;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
-.bnav button.on .kn{background:#f2b84b;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+.bnav .bnpz{position:absolute;left:-16px;top:0;z-index:0;pointer-events:none;overflow:visible}
+.bnav .bnpz path.base{stroke:rgba(8,12,34,.55);stroke-width:1.4}
+.bnav .bnpz path.base.on{stroke:rgba(150,92,10,.7)}
+.bnav .bnpz path.gloss{stroke:rgba(255,255,255,.2);stroke-width:1;pointer-events:none}
+.bnav .bnpz{filter:drop-shadow(0 -1px 0 rgba(255,255,255,.08))}
+.bnav button:nth-of-type(1){--ac:#aab6ff}.bnav button:nth-of-type(2){--ac:#7fe3f0}.bnav button:nth-of-type(3){--ac:#9fc4ff}.bnav button:nth-of-type(4){--ac:#ffbf84}
+.bnav button{color:#eef2ff;padding-top:10px;padding-bottom:8px}.bnav button svg{color:var(--ac,#9aa6c8)}
+.bnav button.on,.bnav button.on svg{color:var(--brass-ink)}
+.bnav.hasglow .bnpz{filter:none}
+.bnav button{z-index:1}
 .bnav button svg{width:23px;height:23px;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
-.bnav button.on{color:var(--brass-ink);background:linear-gradient(180deg,#ffd877,#f2b84b 60%,#e5a53a);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -2px 0 rgba(0,0,0,.12)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
+.bnav button.on{color:var(--brass-ink)}.bnav button.on svg{transform:translateY(-1px) scale(1.1)}
 .bnav button:active{transform:scale(.93)}
 .bnav button.hasdot::after{content:"";position:absolute;top:5px;right:calc(50% - 19px);width:10px;height:10px;border-radius:50%;background:#ef5350;border:2px solid #1c2650;box-shadow:0 0 8px rgba(239,83,80,.7)}
 .bnav .fnum{bottom:auto;top:20px;right:calc(50% - 18px);border-color:#1c2650}
@@ -670,8 +676,8 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 @keyframes notein{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}}@keyframes noteout{to{opacity:0;transform:translate(-50%,-46%) scale(.96)}}
 /* profile: one card — identity row, level row, account buttons */
 #scr-progress #profile{display:flex;flex-direction:column;align-items:stretch;gap:12px;text-align:left}
-#scr-progress #profile:has(+ #acct:not(:empty)){padding-bottom:70px}
-#scr-progress #acct{position:relative;margin:-66px 0 0;padding:0 16px 14px;background:none;border:0;box-shadow:none}
+#scr-progress #profile:has(+ #acct:not(:empty)){border-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+#scr-progress #acct{position:relative;margin:-14px 0 0;padding:0 14px 14px;background:linear-gradient(160deg,rgba(76,141,255,.1),rgba(255,255,255,.03));border:1px solid var(--line);border-top:0;border-radius:0 0 18px 18px;box-shadow:none}
 #scr-progress #acct:empty{display:none}
 .pctop{display:flex;align-items:center;justify-content:flex-start;gap:12px}.pctop .pwho{display:flex;flex-direction:column;align-items:flex-start}.pctop .av.big{width:56px;height:56px;font-size:23px;flex:0 0 auto}.pctop .pwho{flex:1;min-width:0}.pctop .pwho b{font:800 18px var(--f-display)}
 .pclvl{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line)}.pclvl .pi{flex:1;min-width:0}.pclvl small{color:var(--muted);font-size:12px}
@@ -715,3 +721,46 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .cta:not(:disabled):not(.alt):active{transform:translateY(1px);box-shadow:0 4px 12px rgba(242,184,75,.22),inset 0 1px 0 rgba(255,255,255,.4)}
 /* the search screen does not scroll: its title bar is part of the page */
 .screen:not(.scroll) .ltop{position:static;margin:0;padding:0;background:none}
+
+/* profile: stats card, three tabs (rewards, rating, history) */
+.pstats{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.025));border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.pstats .sbig{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.pstats .sbig div{text-align:center;padding:2px 2px;border-radius:12px;min-width:0}
+.pstats .sbig b{display:block;font:800 21px var(--f-display);font-variant-numeric:tabular-nums;color:var(--ink)}
+.pstats .sbig div:nth-child(2) b{color:var(--brass)}
+.pstats .sbig small{display:block;color:var(--muted);font-size:10.5px;line-height:1.2;margin-top:2px}
+.pstats .sbuild{display:flex;justify-content:space-between;gap:6px;padding-top:9px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.pstats .sbuild b{color:var(--ink)}
+.h3.sec{justify-content:space-between;margin-top:4px}.h3.sec em{margin-left:auto;font:700 12px var(--f-body);color:var(--muted);font-style:normal;background:rgba(255,255,255,.06);border-radius:999px;padding:3px 9px}
+.hsum{display:flex;flex-wrap:wrap;gap:4px 10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12.5px;color:var(--muted)}.hsum b{color:var(--ink)}
+.pclvl .lvl{position:relative;flex:0 0 auto;width:58px;height:58px;display:grid;place-items:center}.pclvl .lvl svg{position:absolute;inset:0}.pclvl .lvl b{position:relative;font:800 20px var(--f-display)}
+.pclvl .pl1{display:block;font:800 14px var(--f-display);margin-bottom:5px}.pclvl .xpbar{margin-bottom:5px}
+.pchips{display:flex;gap:8px;flex-wrap:wrap}.pchips span{flex:1;min-width:120px;display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 10px;border-radius:14px;background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:12.5px;color:var(--muted);white-space:nowrap}.pchips b{color:var(--ink);font:800 15px var(--f-display);font-variant-numeric:tabular-nums}.pchips .coin{width:15px;height:15px;display:inline-block}
+
+/* how to play: tabs, goal card, numbered steps */
+.seg.rtabs,#rtabs{grid-template-columns:repeat(4,1fr)}
+#rtabs button{font:800 13px var(--f-display);padding:0 2px}
+.rpane{display:flex;flex-direction:column;gap:10px}.rpane[hidden]{display:none}
+.rgoal{display:flex;gap:14px;align-items:center;padding:16px;border-radius:20px;background:linear-gradient(160deg,rgba(242,184,75,.2),rgba(255,255,255,.04));border:1px solid rgba(242,184,75,.35)}
+.rgoal>span{font-size:38px}.rgoal b{font:800 15px var(--f-display)}.rgoal p{margin:4px 0 0;font-size:13.5px;line-height:1.45;color:#dbe2f4}.rgoal p b{color:var(--brass);font:inherit;font-weight:800}
+.rsteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rsteps li{position:relative;display:grid;grid-template-columns:50px 1fr;gap:12px;align-items:center;padding:12px 12px 12px 14px;border-radius:18px;background:rgba(255,255,255,.055);border:1px solid var(--line)}
+.rsteps li>i{position:absolute;left:-1px;top:-1px;width:24px;height:24px;border-radius:18px 0 12px 0;display:grid;place-items:center;font:800 12px var(--f-display);font-style:normal;background:var(--brass);color:var(--brass-ink)}
+.rsteps .ric{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;font-size:27px;background:rgba(255,255,255,.07)}
+.rsteps b{font:700 14px var(--f-display)}.rsteps p{margin:3px 0 0;font-size:12.5px;line-height:1.4;color:#d5dcf0}
+.tutcard .tgo{margin-left:auto;font:800 28px var(--f-display);font-style:normal;opacity:.7}
+
+/* jigsaw frame (main menu): the pieces are SVG behind transparent buttons */
+.jig{position:relative;display:flex;flex-direction:column;gap:6px}.jig .modes{gap:6px}
+.jig>.jigsvg{position:absolute;pointer-events:none;overflow:visible;z-index:0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.45))}
+.jigsvg path.base{stroke:rgba(8,12,34,.55);stroke-width:1.4}.jigsvg path.base.gold{stroke:rgba(150,92,10,.7)}.jigsvg path.gloss{stroke:rgba(255,255,255,.2);stroke-width:1;pointer-events:none}
+.jig [data-jp]{position:relative;z-index:1;background:none!important;box-shadow:none!important;border:0}
+.jig .playon{border-radius:20px;padding-bottom:26px}.jig .playon .pic{background:rgba(42,26,2,.16)}
+.jig .mode{border-radius:20px;padding:20px 12px 14px;color:#eef2ff}.jig .mode small{color:rgba(238,242,255,.72)}
+.jig .mode .mic{background:rgba(8,12,34,.28);border-color:color-mix(in srgb,var(--m) 55%,transparent)}
+@media (max-height:640px){.jig .mode{padding:16px 8px 10px}.jig .playon{padding-bottom:22px}}
+
+.shero{margin-right:14px}.shero .mhero{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:20px;color:#eef2ff;min-height:84px}
+.shero .mhero.gold{color:var(--brass-ink)}.shero .mhi{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:28px;background:rgba(8,12,34,.28);flex:0 0 auto}.shero .mhero.gold .mhi{background:rgba(42,26,2,.16)}
+.shero b{display:block;font:800 18px var(--f-display)}.shero p{margin:3px 0 0;font-size:12.5px;opacity:.8}
+.shero.small .mhero{min-height:64px;padding:11px 16px;border-radius:18px}.shero.small .mhi{width:42px;height:42px;border-radius:13px;font-size:23px}.shero.small b{font-size:16px}.shero.small p{font-size:12px}

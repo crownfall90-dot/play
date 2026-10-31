@@ -24,9 +24,9 @@
       <div class="sbar"><span>9:41</span><span class="cam"></span><span>▾ ◢ 87%</span></div>
 
       <nav class="bnav" id="bnav" hidden aria-label="Разделы">
-        <button data-nav="menu" aria-label="Главная"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V19a1 1 0 001 1h3.5v-5h3v5H17a1 1 0 001-1V9.5"/></svg><span>Главная</span><i class="sm"></i><i class="kn"></i></button>
-        <button data-nav="progress" id="progBtn" aria-label="Профиль, задания и достижения"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/></svg><span>Профиль</span><i class="sm"></i><i class="kn"></i></button>
-        <button data-nav="friends" id="friendsBtn" aria-label="Друзья"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><path d="M18 8v6M15 11h6"/></svg><em class="fnum" hidden>0</em><span>Друзья</span><i class="sm"></i><i class="kn"></i></button>
+        <button data-nav="menu" aria-label="Главная"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V19a1 1 0 001 1h3.5v-5h3v5H17a1 1 0 001-1V9.5"/></svg><span>Главная</span></button>
+        <button data-nav="progress" id="progBtn" aria-label="Профиль, задания и достижения"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5 20c.8-3.8 3.6-5.8 7-5.8s6.2 2 7 5.8"/></svg><span>Профиль</span></button>
+        <button data-nav="friends" id="friendsBtn" aria-label="Друзья"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><path d="M18 8v6M15 11h6"/></svg><em class="fnum" hidden>0</em><span>Друзья</span></button>
         <button data-nav="shop" id="navShop" aria-label="Магазин"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.2 10.2a2 2 0 01-2 1.8H7.2a2 2 0 01-2-1.8z"/><path d="M8.5 9V7a3.5 3.5 0 017 0v2"/></svg><span>Магазин</span></button>
       </nav>
       <section class="screen" id="scr-menu" hidden>
@@ -39,14 +39,14 @@
           <h2 class="logo">Puzzle<span>grad</span></h2>
           <p class="tag">Стройте города, дороги и крепости из общей стопки</p>
           <button class="resume" id="resume" hidden><span class="ric"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l10.5-6.5z"/></svg></span><span class="rtx"><b>Продолжить партию</b><small id="resumeInfo"></small></span></button>
-          <button class="playon" id="playOnline"><span class="pglow"></span>
+          <div class="jig" id="jigMenu"><button class="playon" id="playOnline" data-jp data-jc="gold" data-je="b:tab"><span class="pglow"></span>
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
           <div class="modes">
-            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С&nbsp;друзьями</b><small>Комната по коду</small></button>
-            <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
-            <button class="mode" data-mode="local"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
-          </div>
+            <button class="mode" data-go="lobby" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С&nbsp;друзьями</b><small>Комната по коду</small></button>
+            <button class="mode" data-mode="bots" data-jp data-jc="#3fc27a" data-je="t:notch,l:notch,r:tab"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
+            <button class="mode" data-mode="local" data-jp data-jc="#b06cf0" data-je="l:notch"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
+          </div></div>
         </div>
       </section>
 
@@ -110,8 +110,8 @@
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Профиль</b></div>
           <div class="profile" id="profile"></div>
           <div class="sgroup prof" id="acct"></div>
-          <div class="stats" id="stats"></div>
-          <div class="seg ptabs" id="ptabs"><button data-pt="quests" aria-pressed="true">Задания</button><button data-pt="ach" aria-pressed="false">Достижения</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
+          <div class="pstats" id="stats"></div>
+          <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
           <div class="col" id="ptab"></div>
         </div>
       </section>
@@ -119,35 +119,57 @@
       <section class="screen scroll" id="scr-rules" hidden>
         <div class="lb rules">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Как играть</b></div>
-          <button class="tutcard" id="tutBtn"><span>🎓</span><span><b>Обучение за 2 минуты</b><small>Сыграйте первую партию с подсказками · +30 золота</small></span></button>
-          <div class="h3">Цель</div>
-          <div class="goal"><span>🏰</span><p>Стройте королевство из общей стопки. Стопка кончилась — <b>больше очков = победа</b></p></div>
-          <div class="h3">Ваш ход</div>
-          <div class="steps">
-            <div><i>🃏</i><b>Карта</b><small>из стопки</small></div><em>→</em>
-            <div><i>🧩</i><b>Приложите</b><small>края совпадают</small></div><em>→</em>
-            <div><i>🧍</i><b>Фишка</b><small>по желанию</small></div>
+          <button class="tutcard" id="tutBtn"><span>🎓</span><span><b>Обучение за 2 минуты</b><small>Сыграйте первую партию с подсказками · +30 золота</small></span><i class="tgo">›</i></button>
+          <div class="seg rtabs" id="rtabs"><button data-rt="basics" aria-pressed="true">Основы</button><button data-rt="score" aria-pressed="false">Очки</button><button data-rt="meeple" aria-pressed="false">Фишки</button><button data-rt="more" aria-pressed="false">Ещё</button></div>
+
+          <div class="rpane" data-rp="basics">
+            <div class="rgoal"><span>🏰</span><div><b>Цель</b><p>Стройте королевство из общей стопки карт. Когда стопка кончилась — <b>у кого больше очков, тот победил</b>.</p></div></div>
+            <div class="h3">Ваш ход — три шага</div>
+            <ol class="rsteps">
+              <li><i>1</i><span class="ric">🃏</span><div><b>Возьмите карту</b><p>Верхняя карта стопки показана внизу. Её можно поворачивать.</p></div></li>
+              <li><i>2</i><span class="ric">🧩</span><div><b>Приложите к полю</b><p>Края карты должны совпасть с соседними: город с городом, дорога с дорогой, река с рекой. Подходящие места подсвечены.</p></div></li>
+              <li><i>3</i><span class="ric">🧍</span><div><b>Поставьте фишку</b><p>По желанию — на город, дорогу или крепость только что положенной карты. Потом — «Поставить».</p></div></li>
+            </ol>
+            <div class="h3">Подсказки</div>
+            <div class="hitem"><span class="hic">💡</span><div><b>Игра подсказывает ход</b><p>На вашем ходу подсвечивается лучшее место и пишется, сколько очков даст город или дорога и сколько краёв осталось закрыть. Лампочка справа от поля сразу ставит карту на это место.</p><em>В настройках: «Всегда», «По кнопке» или «Выкл»</em></div></div>
+            <div class="h3">Время хода</div>
+            <div class="hitem"><span class="hic">⏱</span><div><b>Часы у того, чей ход</b><p>Время хода показано у игрока, который сейчас ходит. За 10 секунд до конца телефон вибрирует. Если время вышло, ход делает бот — по смыслу, а не наугад.</p></div></div>
           </div>
-          <p class="rnote">💡 Подсказки: на вашем ходу игра подсвечивает лучшее место и пишет, сколько очков даст город или дорога и сколько краёв осталось закрыть. Лампочка справа от поля сразу ставит карту на это место. В настройках: «Всегда», «По кнопке» или «Выкл»</p>
-          <div class="h3">Очки за достроенное</div>
-          <div class="ptsgrid">
-            <div><span class="rimg t-rS"></span><b>1</b><small>за карту дороги</small></div>
-            <div><span class="rimg t-c2"></span><b>2</b><small>за карту города</small></div>
-            <div><span class="rimg t-fort"></span><b>9</b><small>крепость, окружённая 8 картами</small></div>
-            <div><span class="rimg t-brHalf"></span><b>×2</b><small>дорога с целым большим мостом</small></div>
+
+          <div class="rpane" data-rp="score" hidden>
+            <div class="h3">Очки за достроенное</div>
+            <div class="hitem"><span class="rimg t-rS"></span><div><b>🛤 Дорога</b><p>Доведите дорогу до конца с обеих сторон: до города, перекрёстка, тупика или замкните в кольцо.</p><em>1 очко за каждую карту дороги</em></div></div>
+            <div class="hitem"><span class="rimg t-c2"></span><div><b>🏰 Город</b><p>Закройте картами все края города, чтобы со всех сторон он был окружён.</p><em>2 очка за каждую карту города</em></div></div>
+            <div class="hitem"><span class="rimg t-fort"></span><div><b>🏯 Крепость</b><p>Окружите крепость картами со всех 8 сторон, включая углы.</p><em>9 очков</em></div></div>
+            <div class="hitem"><span class="rimg t-brHalf"></span><div><b>🌉 Большой мост</b><p>Соедините две половины моста друг с другом — дорога через него становится ценнее.</p><em>очки за такую дорогу удваиваются</em></div></div>
+            <div class="hitem"><span class="hic">⏳</span><div><b>Недостроенное в конце</b><p>Когда стопка кончилась, всё, что не достроено, всё равно приносит очки.</p><em>по 1 очку за карту</em></div></div>
+            <div class="h3">Золото за место</div>
+            <div class="goldrow"><span>🥇<b>+15</b></span><span>🥈<b>+10</b></span><span>🥉<b>+5</b></span><span>4<b>0</b></span><span>5<b>−5</b></span></div>
+            <p class="rnote">С ботами и онлайн. За одним телефоном золото не начисляется</p>
           </div>
-          <p class="rnote">⏳ Недостроенное в конце — по 1 очку за карту</p>
-          <div class="h3">Фишки</div>
-          <div class="tags"><span>☝️ Одна фишка за ход</span><span>🔒 Занятое не занять</span><span>🎯 Больше фишек — объект ваш</span><span>↩️ Фишка возвращается после очков</span><span>🤝 Ничья — по правилу партии</span></div>
-          <div class="h3">Особые случаи</div>
-          <div class="tags"><span>🤝 Достроили чужой объект — +1 балл «респект»</span><span>🧍 Все карты достроенного объекта ваши — можно поставить на него свободную фишку и забрать очки</span></div>
-          <div class="h3">Карты местности</div>
-          <div class="tags"><span>🌊 Озеро занимает всю карту и впадает во все стороны реки</span><span>⛲ Исток — река начинается из родника</span><span>🚧 Дорога к обрыву: за обрывом ставить можно только обрыв, видна половина карты</span></div>
-          <div class="h3">Время хода</div>
-          <div class="tags"><span>⏱ Время хода показано у игрока, чей сейчас ход</span><span>📳 За 10 секунд до конца — вибрация</span><span>🤖 Если время вышло, ход делает бот (по смыслу, не наугад)</span><span>💤 Свёрнута игра больше минуты — вас выводит из онлайн-партии, можно вернуться</span><span>💬 Быстрые фразы и эмодзи — не чаще раза в несколько секунд</span></div>
-          <div class="h3">Золото за место</div>
-          <div class="goldrow"><span>🥇<b>+15</b></span><span>🥈<b>+10</b></span><span>🥉<b>+5</b></span><span>4<b>0</b></span><span>5<b>−5</b></span></div>
-          <p class="rnote">С ботами и онлайн. За одним телефоном золото не начисляется</p>
+
+          <div class="rpane" data-rp="meeple" hidden>
+            <div class="h3">Как работают фишки</div>
+            <div class="hitem"><span class="hic">☝️</span><div><b>Одна фишка за ход</b><p>Ставится на только что положенную карту — на город, дорогу или крепость.</p></div></div>
+            <div class="hitem"><span class="hic">🔒</span><div><b>Занятое не занять</b><p>Если на объекте уже стоит чья-то фишка, поставить туда свою нельзя — даже когда объект соединён с вашим через новую карту.</p></div></div>
+            <div class="hitem"><span class="hic">🎯</span><div><b>Больше фишек — объект ваш</b><p>Очки за достроенный объект получает тот, у кого на нём больше фишек. Если поровну — по правилу партии.</p></div></div>
+            <div class="hitem"><span class="hic">↩️</span><div><b>Фишка возвращается</b><p>Как только объект достроен и очки начислены, фишка снова у вас в запасе.</p></div></div>
+            <div class="hitem"><span class="hic">🤝</span><div><b>Респект</b><p>Достроили объект, на котором стоят только чужие фишки.</p><em>+1 очко вам</em></div></div>
+            <div class="hitem"><span class="hic">🧍</span><div><b>Свободная фишка</b><p>Все карты достроенного объекта ваши — можно поставить на него свободную фишку и забрать очки.</p></div></div>
+          </div>
+
+          <div class="rpane" data-rp="more" hidden>
+            <div class="h3">Особые карты</div>
+            <div class="hitem"><span class="hic">🌊</span><div><b>Озеро</b><p>Занимает всю карту, и во все стороны в него впадают реки.</p></div></div>
+            <div class="hitem"><span class="hic">⛲</span><div><b>Исток</b><p>Река начинается из родника: с другой стороны карты воды нет.</p></div></div>
+            <div class="hitem"><span class="hic">🚧</span><div><b>Обрыв</b><p>Дорога к обрыву: за обрывом ставить можно только обрыв, видна половина карты.</p></div></div>
+            <div class="h3">Онлайн и друзья</div>
+            <div class="hitem"><span class="hic">⚡</span><div><b>Быстрая игра</b><p>Сразу к первой игре, где ждут игроков. Все онлайн-партии идут на рейтинг: 1-е место +30 кубков, 2-е +15, 3-е +5, ничья +10.</p></div></div>
+            <div class="hitem"><span class="hic">👀</span><div><b>Видно ход соперника</b><p>Ещё до подтверждения вы видите, куда игрок хочет поставить карту и как её поворачивает. Карта подсвечена цветом игрока.</p></div></div>
+            <div class="hitem"><span class="hic">💬</span><div><b>Фразы и эмодзи</b><p>Быстрые фразы — не чаще раза в несколько секунд.</p></div></div>
+            <div class="hitem"><span class="hic">💤</span><div><b>Игра свёрнута</b><p>Если игра свёрнута больше минуты, вас выводит из онлайн-партии. Вернуться можно.</p></div></div>
+          </div>
+
           <button class="ghostbtn" data-mode="bots">Сыграть с ботами</button>
         </div>
       </section>
@@ -155,6 +177,7 @@
       <section class="screen scroll" id="scr-setup" hidden>
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b id="setupTitle">Новая партия</b></div>
+          <div class="jig shero" id="jigSetup"><div class="mhero" id="setupHero" data-jp data-jc="#3fc27a" data-je="r:tab"><span class="mhi" id="shIcon">🤖</span><div><b id="shTitle"></b><p id="shTag"></p></div></div></div>
           <button class="quickbig" id="setupQuick" hidden><i>⚡</i><span><b>Быстрая игра</b><small>Сразу к первой игре, где ждут игроков</small></span></button>
           <div class="h3 orown" id="setupOwn" hidden>Или своя игра</div>
           <div class="h3">Сколько игроков</div>
@@ -1927,6 +1950,8 @@ function openSetup(mode) {
     if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
   });
   $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
+  const hero = $('#setupHero'), hm = {bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', ''];
+  hero.dataset.jc = hm[0]; $('#shIcon').textContent = hm[1]; $('#shTitle').textContent = hm[2]; $('#shTag').textContent = hm[3]; hero.classList.toggle('gold', hm[0] === 'gold');
   // setupInvite removed; friends shown inline in lobby
   colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
@@ -2662,11 +2687,11 @@ function ptabsDot() {
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
-    b.classList.toggle('hasdot', pt === 'quests' ? qDot : pt === 'ach' ? aDot : tDot);
+    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || aDot) : pt === 'top' ? tDot : false);
   });
 }
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
-let ptab = 'quests';
+let ptab = 'rewards';
 function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
 // The profile plate on the menu: avatar, nickname, level with its bar, gold. Taps open the profile.
 function renderMenuProfile() {
@@ -2680,26 +2705,29 @@ function renderProgress() {
   // One card: avatar, nickname and e-mail with the edit button, then level and experience; the account buttons
   // (#acct, below) join it.
   const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
-  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков · <i class="coin"></i> ${wallet.gold}</small></div></div>`;
+  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span></div>`;
   $('#profEdit').onclick = editProfile;
   const st = PROG.st;
-  $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
+  const rate = st.games ? Math.round(100 * st.wins / st.games) : 0;
+  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   ptabsDot();
   const el = $('#ptab');
-  if (ptab === 'quests') {
-    // Rewards ready to claim go first, then the ones in progress, claimed ones last.
+  if (ptab === 'rewards') {
+    // Two lists in one tab: today's tasks and the achievements. Rewards ready to claim go first, then the ones in
+    // progress, claimed ones last.
     const rank = (done, got) => got ? 2 : done ? 0 : 1;
-    el.innerHTML = [...PROG.q].sort((a, b) => rank(a.n >= QUESTS.find(x => x.id === a.id).n, a.got) - rank(b.n >= QUESTS.find(x => x.id === b.id).n, b.got)).map(q => {
+    const qDone = q => q.n >= QUESTS.find(x => x.id === q.id).n;
+    const qRows = [...PROG.q].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
       const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
-      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="cta" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
-    }).join('') + '<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p>';
-  } else if (ptab === 'ach') {
-    const rank = (ok, got) => got ? 2 : ok ? 0 : 1;
-    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
-      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
-      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="cta" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
     }).join('');
+    const aRows = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
+      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
+      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+    }).join('');
+    const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
+    el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p><div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
   } else if (ptab === 'hist') renderHistory(el);
   else renderTop();
 }
@@ -2739,7 +2767,9 @@ function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
   const when = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
-  el.innerHTML = rows.map(r => {
+  const wins = rows.filter(r => r.reason !== 'draw' && r.players.slice().sort((a, b) => b.score - a.score)[0].me).length;
+  const sum = `<div class="hsum"><b>${rows.length}</b> последних партий · 🏆 <b>${wins}</b> побед · онлайн <b>${rows.filter(r => /^o:/.test(r.id)).length}</b></div>`;
+  el.innerHTML = sum + rows.map(r => {
     const ps = r.players.slice().sort((a, b) => b.score - a.score), me = ps.findIndex(p => p.me), online = /^o:/.test(r.id);
     const head = r.reason === 'draw' ? 'Ничья' : me === 0 ? '🏆 Победа' : me > 0 ? `${me + 1}-е место` : 'Партия';
     const who = ps.map(p => `<span class="hp${p.me ? ' me' : ''}"${online && p.uid && !p.me && !p.bot ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}" data-c="${validCol(p.col) ? p.col : ''}"` : ''}><i style="--c:${validCol(p.col) ? p.col : '#5b6684'}"></i>${clean(p.name)} <b>${+p.score || 0}</b>${online && p.uid && !p.me && !p.bot && !isFriend(p.uid) ? `<button class="chip hadd" data-uid="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}">+ в друзья</button>` : ''}</span>`).join('');
@@ -2747,6 +2777,13 @@ function renderHistory(el) {
   }).join('');
   el.querySelectorAll('.hadd').forEach(b => { b.onclick = () => { b.disabled = true; addFriend(b.dataset.uid, b.dataset.n, 'history'); }; });
 }
+// "How to play": four panes behind tabs instead of one long page.
+$('#rtabs').onclick = e => {
+  const b = e.target.closest('[data-rt]'); if (!b) return;
+  document.querySelectorAll('#rtabs button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  document.querySelectorAll('#scr-rules .rpane').forEach(p => { p.hidden = p.dataset.rp !== b.dataset.rt; });
+  $('#scr-rules').scrollTop = 0;
+};
 $('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; PROG.topSeen = true; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
@@ -3458,6 +3495,114 @@ if ($('#feedbackBtn')) $('#feedbackBtn').onclick = openFeedback;
 if (FB) setTimeout(() => { if (registered()) { inboxListen(); inboxPoll(); loadFriends().then(friendsDot).catch(() => {}); } }, 2500);
 $('#fBack').onclick = () => show(friendsBack === 'lobby' && net ? 'lobby' : 'menu');
 // Bottom navigation: the five main sections, shown on those screens only (never in a game or a lobby).
+/* Jigsaw frame: the pieces inside a host (children with data-jp) are drawn as puzzle pieces. data-jc is the colour
+   ("gold" or a hex), data-je lists the edges that carry a tab or a notch, e.g. "r:tab,b:notch". The outline is SVG
+   behind the real buttons, redrawn when anything changes size. The same shapes are the design language of the game:
+   the bottom bar, the main menu and the section banners. */
+let jigN = 0;
+function jigsawFrame(host, o) {
+  const uid = 'jg' + (++jigN); // gradient ids must differ per frame: a gradient inside a hidden screen does not paint elsewhere
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'jigsvg'); svg.setAttribute('aria-hidden', 'true'); host.prepend(svg);
+  const K = Object.assign({R: 20, NECK: 5.5, BR: 9, CLR: 2, BULB: 6, GAP: 6}, o || {}), f = v => +v.toFixed(2);
+  const mix = (h, o2, k) => { const n = x => parseInt(x.slice(1), 16), a = n(h), c = n(o2), g = sh => Math.round(((a >> sh) & 255) * k + ((c >> sh) & 255) * (1 - k)); return '#' + ((1 << 24) | g(16) << 16 | g(8) << 8 | g(0)).toString(16).slice(1); };
+  const path = (x, y, w, h, ed) => {
+    const {R, NECK, BR, CLR, BULB, GAP} = K;
+    const sides = [{k: 't', u: [1, 0], S: [x + R, y], L: w - 2 * R}, {k: 'r', u: [0, 1], S: [x + w, y + R], L: h - 2 * R}, {k: 'b', u: [-1, 0], S: [x + w - R, y + h], L: w - 2 * R}, {k: 'l', u: [0, -1], S: [x, y + h - R], L: h - 2 * R}];
+    let d = `M${f(x + R)} ${f(y)}`;
+    sides.forEach((e, i) => {
+      const [ux, uy] = e.u, nx = uy, ny = -ux, m = e.L / 2, kind = ed[e.k];
+      const P = (a, off) => `${f(e.S[0] + ux * a + nx * off)} ${f(e.S[1] + uy * a + ny * off)}`;
+      if (kind === 'tab') d += `L${P(m - NECK, 0)}C${P(m - NECK, 1)} ${P(m - BR, 3)} ${P(m - BR, BULB)}A${BR} ${BR} 0 1 1 ${P(m + BR, BULB)}C${P(m + BR, 3)} ${P(m + NECK, 1)} ${P(m + NECK, 0)}`;
+      else if (kind === 'notch') { const r = BR + CLR, nk = NECK + CLR, ib = BULB - GAP; d += `L${P(m - nk, 0)}C${P(m - nk, -1)} ${P(m - r, -1.5)} ${P(m - r, -ib)}A${r} ${r} 0 1 0 ${P(m + r, -ib)}C${P(m + r, -1.5)} ${P(m + nk, -1)} ${P(m + nk, 0)}`; }
+      const nx2 = sides[(i + 1) % 4];
+      d += `L${P(e.L, 0)}A${R} ${R} 0 0 1 ${f(nx2.S[0])} ${f(nx2.S[1])}`;
+    });
+    return d + 'Z';
+  };
+  const el = (n, at) => { const e = document.createElementNS(NS, n); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  const draw = () => {
+    const hr = host.getBoundingClientRect(), pcs = [...host.querySelectorAll('[data-jp]')];
+    if (!hr.width || !hr.height || !pcs.length) return;
+    const PAD = 24; svg.setAttribute('viewBox', `${-PAD} ${-PAD} ${hr.width + 2 * PAD} ${hr.height + 2 * PAD}`);
+    svg.setAttribute('width', hr.width + 2 * PAD); svg.setAttribute('height', hr.height + 2 * PAD); svg.style.left = svg.style.top = -PAD + 'px';
+    const defs = el('defs', {}), out = [defs];
+    const grad = (id, top, bot) => { const g = el('linearGradient', {id, x1: 0, y1: 0, x2: 0, y2: 1}); g.append(el('stop', {offset: 0, 'stop-color': top}), el('stop', {offset: 1, 'stop-color': bot})); defs.append(g); };
+    const gl = el('linearGradient', {id: uid + 'Gl', x1: 0, y1: 0, x2: 0, y2: 1}); gl.append(el('stop', {offset: 0, 'stop-color': '#fff', 'stop-opacity': .26}), el('stop', {offset: .5, 'stop-color': '#fff', 'stop-opacity': .05}), el('stop', {offset: 1, 'stop-color': '#fff', 'stop-opacity': 0})); defs.append(gl);
+    grad(uid + 'Gold', '#ffe08e', '#e29c2a');
+    pcs.forEach((b, i) => {
+      const r = b.getBoundingClientRect(), c = b.dataset.jc || '#4c8dff', ed = {};
+      (b.dataset.je || '').split(',').forEach(t => { const [k, v] = t.split(':'); if (k && v) ed[k.trim()] = v.trim(); });
+      if (c !== 'gold') grad(uid + 'C' + i, mix(c, '#1c2656', .5), mix(c, '#121a40', .72));
+      const d = path(r.left - hr.left, r.top - hr.top, r.width, r.height, ed);
+      out.push(el('path', {d, class: 'base' + (c === 'gold' ? ' gold' : ''), fill: `url(#${uid}${c === 'gold' ? 'Gold' : 'C' + i})`}), el('path', {d, class: 'gloss', fill: `url(#${uid}Gl)`}));
+    });
+    svg.replaceChildren(...out);
+  };
+  const ro = new ResizeObserver(draw); ro.observe(host); host.querySelectorAll('[data-jp]').forEach(p => ro.observe(p));
+  new MutationObserver(draw).observe(host, {attributes: true, attributeFilter: ['hidden', 'class', 'data-jc'], subtree: true});
+  requestAnimationFrame(draw); document.fonts && document.fonts.ready && document.fonts.ready.then(draw);
+  return draw;
+}
+// Every section opens with the same kind of card: a coloured jigsaw piece with an icon, a title and a line about it.
+(function sectionHeroes() {
+  const H = {
+    settings: ['#6a7dff', '⚙️', 'Настройте под себя', 'Звук, подсказки и вид игры'],
+    shop: ['#f2994a', '🛍', 'Коллекция фигурок', 'Подарки, сундуки и новые фигурки'],
+    friends: ['#4c8dff', '👥', 'Ваша компания', 'Играйте и общайтесь вместе'],
+    lobby: ['#4c8dff', '🏠', 'Играйте своими', 'Код комнаты — игра только для своих']
+  };
+  for (const [id, [c, ic, t, tag]] of Object.entries(H)) {
+    const lb = document.querySelector(`#scr-${id} .lb`), top = lb && lb.querySelector('.ltop'); if (!top) continue;
+    const host = document.createElement('div'); host.className = 'jig shero small';
+    host.innerHTML = `<div class="mhero" data-jp data-jc="${c}" data-je="r:tab"><span class="mhi">${ic}</span><div><b>${t}</b><p>${tag}</p></div></div>`;
+    top.after(host); jigsawFrame(host, {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
+  }
+})();
+(function menuJigsaw() { const h = $('#jigMenu'); if (h) jigsawFrame(h, {R: 20, GAP: 6}); const g = $('#jigSetup'); if (g) jigsawFrame(g, {R: 20, GAP: 6, NECK: 6, BR: 10, BULB: 7}); })();
+/* The bottom bar is four jigsaw pieces: each has a round tab that fits into the notch of the next one. Every
+   section has its own colour; the piece of the open section is gold and glowing. The outline is drawn as SVG from
+   the real size of the buttons. */
+(function bnavPuzzle() {
+  const nav = $('#bnav'); if (!nav) return;
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'bnpz'); svg.setAttribute('aria-hidden', 'true');
+  nav.prepend(svg);
+  const R = 16, NECK = 6.5, BR = 10.5, CLR = 2, BULB = 7, GAP = 4; // corner, half neck, tab radius, room in the notch, tab centre from the edge
+  const COLS = ['#6a7dff', '#22b8cf', '#4c8dff', '#f2994a'];
+  const mix = (h, o, k) => { const n = x => parseInt(x.slice(1), 16), a = n(h), c = n(o), f = (s) => Math.round(((a >> s) & 255) * k + ((c >> s) & 255) * (1 - k)); return '#' + ((1 << 24) | f(16) << 16 | f(8) << 8 | f(0)).toString(16).slice(1); };
+  const piece = (b, i, last, cy, H) => {
+    const {x0, x1} = b, f = v => +v.toFixed(2), y1 = H;
+    let d = `M${f(x0 + R)} 0H${f(x1 - R)}A${R} ${R} 0 0 1 ${f(x1)} ${R}`;
+    if (!last) d += `V${f(cy - NECK)}C${f(x1 + 1)} ${f(cy - NECK)} ${f(x1 + 3)} ${f(cy - BR)} ${f(x1 + BULB)} ${f(cy - BR)}A${BR} ${BR} 0 1 1 ${f(x1 + BULB)} ${f(cy + BR)}C${f(x1 + 3)} ${f(cy + BR)} ${f(x1 + 1)} ${f(cy + NECK)} ${f(x1)} ${f(cy + NECK)}`;
+    d += `V${f(y1 - R)}A${R} ${R} 0 0 1 ${f(x1 - R)} ${y1}H${f(x0 + R)}A${R} ${R} 0 0 1 ${f(x0)} ${f(y1 - R)}`;
+    if (i > 0) { // the notch: the previous piece's tab plus a little room, seen from this piece's left edge
+      const xb = x0 - GAP + BULB, r = BR + CLR, nk = NECK + CLR;
+      d += `V${f(cy + nk)}C${f(x0 + 1)} ${f(cy + nk)} ${f(x0 + 1.5)} ${f(cy + r)} ${f(xb)} ${f(cy + r)}A${r} ${r} 0 1 0 ${f(xb)} ${f(cy - r)}C${f(x0 + 1.5)} ${f(cy - r)} ${f(x0 + 1)} ${f(cy - nk)} ${f(x0)} ${f(cy - nk)}`;
+    }
+    return d + `V${R}A${R} ${R} 0 0 1 ${f(x0 + R)} 0Z`;
+  };
+  const el = (n, at) => { const e = document.createElementNS(NS, n); for (const k in at) e.setAttribute(k, at[k]); return e; };
+  const draw = () => {
+    if (nav.hidden) return;
+    const W = nav.clientWidth, H = nav.clientHeight, btns = [...nav.querySelectorAll('button')]; if (!W || !H || !btns.length) return;
+    svg.setAttribute('viewBox', `-16 0 ${W + 32} ${H}`); svg.setAttribute('width', W + 32); svg.setAttribute('height', H);
+    const nb = nav.getBoundingClientRect(), defs = el('defs', {}), out = [defs];
+    const grad = (id, top, bot) => { const g = el('linearGradient', {id, x1: 0, y1: 0, x2: 0, y2: 1}); g.append(el('stop', {offset: 0, 'stop-color': top}), el('stop', {offset: 1, 'stop-color': bot})); defs.append(g); };
+    grad('bnGold', '#ffe08e', '#e29c2a');
+    const gl = el('linearGradient', {id: 'bnGloss', x1: 0, y1: 0, x2: 0, y2: 1}); gl.append(el('stop', {offset: 0, 'stop-color': '#fff', 'stop-opacity': .26}), el('stop', {offset: .5, 'stop-color': '#fff', 'stop-opacity': .05}), el('stop', {offset: 1, 'stop-color': '#fff', 'stop-opacity': 0})); defs.append(gl);
+    btns.forEach((b, i) => {
+      const r = b.getBoundingClientRect(), on = b.classList.contains('on'), c = COLS[i % COLS.length];
+      grad('bnC' + i, mix(c, '#1c2656', .5), mix(c, '#121a40', .72));
+      const d = piece({x0: r.left - nb.left, x1: r.right - nb.left}, i, i === btns.length - 1, H / 2, H);
+      out.push(el('path', {d, class: 'base' + (on ? ' on' : ''), fill: `url(#${on ? 'bnGold' : 'bnC' + i})`}), el('path', {d, class: 'gloss', fill: 'url(#bnGloss)'}));
+    });
+    svg.replaceChildren(...out);
+  };
+  new ResizeObserver(draw).observe(nav);
+  new MutationObserver(draw).observe(nav, {attributes: true, attributeFilter: ['class', 'hidden'], subtree: true});
+  draw();
+})();
 $('#bnav').onclick = e => { const b = e.target.closest('[data-nav]'); if (!b) return; if (b.dataset.nav === 'friends') friendsBack = 'menu'; show(b.dataset.nav); };
 
 /* ---------------- account: keep the profile across reinstalls ----------------
