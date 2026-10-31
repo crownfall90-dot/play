@@ -1,5 +1,5 @@
 // Renders the launcher icon (store/src/*.svg) into Android mipmaps and the 512px Play Store icon.
-// Usage: node scripts/render-icons.js   (needs Playwright)
+// Usage: node scripts/render-icons.cjs   (needs Playwright)
 const fs = require('fs'), path = require('path');
 const { chromium } = require(process.env.PLAYWRIGHT || 'playwright');
 const root = path.resolve(__dirname, '..'), res = path.join(root, 'app/src/main/res');
@@ -25,5 +25,12 @@ const DENS = {mdpi: 1, hdpi: 1.5, xhdpi: 2, xxhdpi: 3, xxxhdpi: 4};
     await shot('icon.svg', 48 * k, path.join(dir, 'ic_launcher_round.png'), 'border-radius:50%');
   }
   await shot('icon.svg', 512, path.join(root, 'store/icon-512.png'));
+  // Web / PWA icons: the same artwork (maskable is full-bleed; the content already sits inside the safe zone).
+  const W = path.join(root, 'web/icons');
+  await shot('icon.svg', 192, path.join(W, 'icon-192.png'), 'border-radius:18%');
+  await shot('icon.svg', 512, path.join(W, 'icon-512.png'), 'border-radius:18%');
+  await shot('icon.svg', 512, path.join(W, 'maskable-512.png'));
+  await shot('icon.svg', 180, path.join(W, 'apple-touch-icon.png'));
+  await shot('icon.svg', 32, path.join(W, 'favicon-32.png'), 'border-radius:18%');
   await b.close();
 })();
