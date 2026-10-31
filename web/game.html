@@ -336,9 +336,10 @@ const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human,
 try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
 setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
 // Game modes are presets of the rules below; any rule can still be changed after picking one.
-setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all', cups: false}, setup.rules);
+setup.rules = Object.assign({mode: 'classic', deck: 50, rivers: true, meeples: 6, timer: 0, hints: true, tie: 'all', cups: false}, setup.rules);
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
-if (![40, 60, 0].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck;
+if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck; // the old sizes (40, 60, whole deck) became 30 / 50 / 100
+if (![4, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
 const isLocal = i => net ? players[i].owner === myId : players[i].human;
@@ -1956,11 +1957,11 @@ const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
 document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 let rulesOpen = false;
 function renderRules() {
-  const total = deckList(setup.rules).length, mode = MODES[setup.rules.mode] || MODES.classic;
+  const mode = MODES[setup.rules.mode] || MODES.classic;
   const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰'};
   const cards = (locked) => `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
   // Online games always have a turn clock ("no limit" counts as 60 s there).
-  const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${r.k === 'deck' && v === 0 ? 'Все (' + total + ')' : l}</button>`).join('')}</span></div>`).join('');
+  const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${l}</button>`).join('')}</span></div>`).join('');
   document.querySelectorAll('[data-rules]').forEach(el => {
     const lobby = el.id === 'lbRules', rated = !lobby && setupMode === 'online', canEdit = lobby ? !!(net && net.host) : true;
     el.innerHTML = cards(!canEdit) + (rated || !canEdit ? '' : `<button class="morebtn" data-more aria-expanded="${rulesOpen}">⚙️ Свои правила <span>${rulesOpen ? '▴' : '▾'}</span></button><div class="opts"${rulesOpen ? '' : ' hidden'}>${rows(lobby || onlineMode(), lobby || setupMode === 'friends')}</div>`);
