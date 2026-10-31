@@ -10,9 +10,11 @@ import * as progress from './state/progress.js';
 import * as catalog from './state/catalog.js';
 import * as config from './state/config.js';
 import {createArt} from './render/art.js';
+import {createFirebase} from './net/firebase.js';
 
 export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, board, scoring, bots};
 
 export const audio = {createSound};
 export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config};
 export const render = {createArt};
+export const net = {createFirebase};

@@ -16,7 +16,9 @@ test('graphics switch: decor of placed cards is redrawn, the game stays', {skip:
     const look = () => page.evaluate(() => {
       const dc = [...document.querySelectorAll('#world .bb.dc')];
       return {dc: dc.length, trees: dc.filter(e => /s-(pine|oak|birch|poplar|bush|hay)\b/.test(e.className)).length,
-        figures: document.querySelectorAll('#world .bb[class*=" s-m"]').length, html: document.querySelector('#world').innerHTML};
+        figures: document.querySelectorAll('#world .bb[class*=" s-m"]').length,
+        // the cards only: floating score texts and puffs come and go on their own timers
+        html: [...document.querySelectorAll('#world > .tile')].map(t => t.outerHTML).join('')};
     });
     const pick = i => page.evaluate(i => document.querySelector(`#prefs [data-pref=gfx] button[data-i="${i}"]`).click(), i);
     const game = await page.evaluate(SNAPSHOT);
