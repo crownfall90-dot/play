@@ -1453,3 +1453,22 @@
 - Журнал версий: 1.0.225
 - docs(changelog): версия 1.0.225, заметки к выпуску очищены
 
+## 1.0.227 — 2026-10-31
+
+**Игрокам:**
+- Игра с друзьями онлайн: красивое окно «Позвать друзей в онлайн-игру» — только друзья, которые сейчас в сети, с отметками «Ждём ответа» и «С вами»; ссылку для онлайн-игры отправлять не нужно
+- «Играть онлайн»: сверху большая кнопка «Быстрая игра» — сразу к первой игре, где ждут игроков; ниже своя игра: число игроков, цвет и режим, кнопки «Пригласить друзей» и «Начать игру»
+
+**В коде:**
+- Быстрая игра, своя игра с приглашением друзей, окно «Позвать друзей в онлайн-игру»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(online): «Быстрая игра» сверху, своя игра ниже с «Пригласить друзей» и «Начать игру»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(online): «Создать игру» со своими настройками и «Найти быструю игру» к первой открытой
+- docs: record actual account regression and offline build results
+- feat(online): окно «Позвать друзей в онлайн-игру» — только друзья в сети, без ссылки
+- Журнал версий: 1.0.226
+- docs(changelog): версия 1.0.226, заметки к выпуску очищены
+
