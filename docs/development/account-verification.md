@@ -1,176 +1,174 @@
 # Account verification
-Source: 816dd271c903c5b921ef4540b06f466f76a2bd22
+Source: 7b7ae7fe45fdc079bb11117f2865c38e13c6ff87
 Tests exit code: 0
 Offline assembleStagingDebug exit code: 0
 No APK publication, FCM send, production Firebase access, main change or signing-key rotation.
 ## tests
 ```text
-  duration_ms: 0.286886
-  ...
-# Subtest: malformed finished marker is ignored without crashing
-ok 74 - malformed finished marker is ignored without crashing
-  ---
-  duration_ms: 2.089281
-  ...
-# Subtest: active legacy save remains compatible without localId
+ active legacy save remains compatible without localId
 ok 75 - active legacy save remains compatible without localId
   ---
-  duration_ms: 0.989379
+  duration_ms: 1.123433
   ...
 # Subtest: invalid saved structure is rejected
 ok 76 - invalid saved structure is rejected
   ---
-  duration_ms: 2.137533
+  duration_ms: 2.686504
   ...
 # Subtest: late final scoring cannot pay out into another game
 ok 77 - late final scoring cannot pay out into another game
   ---
-  duration_ms: 0.260136
+  duration_ms: 0.384496
   ...
 # Subtest: dialog uses full text safely and disposes the previous listener
 ok 78 - dialog uses full text safely and disposes the previous listener
   ---
-  duration_ms: 0.431611
+  duration_ms: 0.582495
   ...
 # Subtest: replay suppresses opening effects before the initial tile
 ok 79 - replay suppresses opening effects before the initial tile
   ---
-  duration_ms: 0.225124
+  duration_ms: 0.399287
   ...
 # Subtest: historic placement skips the puff effect
 ok 80 - historic placement skips the puff effect
   ---
-  duration_ms: 0.232144
+  duration_ms: 0.265605
   ...
 # Subtest: net/firebase: a guest gets an anonymous account once, saved under fbAuth
 ok 81 - net/firebase: a guest gets an anonymous account once, saved under fbAuth
   ---
-  duration_ms: 10.213724
+  duration_ms: 25.08042
   ...
 # Subtest: net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
 ok 82 - net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
   ---
-  duration_ms: 0.72775
+  duration_ms: 3.327057
   ...
 # Subtest: net/firebase: errors keep their old meaning
 ok 83 - net/firebase: errors keep their old meaning
   ---
-  duration_ms: 0.446062
+  duration_ms: 0.883616
   ...
 # Subtest: net/firebase: game.html takes the session from the module, with no second copy
 ok 84 - net/firebase: game.html takes the session from the module, with no second copy
   ---
-  duration_ms: 1.693154
+  duration_ms: 5.938733
   ...
 # Subtest: online flag: the start message says online or friends' room, so the header and the rewards are right everywhere
 ok 85 - online flag: the start message says online or friends' room, so the header and the rewards are right everywhere # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.196296
+  duration_ms: 2.499135
   ...
 # Subtest: peek: others see the card the mover holds, the mover sends it
 ok 86 - peek: others see the card the mover holds, the mover sends it # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.62324
+  duration_ms: 2.334949
   ...
 # Subtest: connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting"
 ok 87 - connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting" # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.190868
+  duration_ms: 2.20673
   ...
 # Subtest: source guard: mark only after Android accepts submission
 ok 88 - source guard: mark only after Android accepts submission
   ---
-  duration_ms: 1.121686
+  duration_ms: 1.826302
   ...
 # Subtest: source guard: concurrent announcements serialized
 ok 89 - source guard: concurrent announcements serialized
   ---
-  duration_ms: 0.120449
+  duration_ms: 0.197828
   ...
 # Subtest: source guard: permission and disabled channel checked
 ok 90 - source guard: permission and disabled channel checked
   ---
-  duration_ms: 0.136343
+  duration_ms: 0.223266
   ...
 # Subtest: source guard: denied notification is not marked
 ok 91 - source guard: denied notification is not marked
   ---
-  duration_ms: 0.102862
+  duration_ms: 0.191687
   ...
 # Subtest: owner panel in the game: only for admins
 ok 92 - owner panel in the game: only for admins # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.312769
+  duration_ms: 2.441558
   ...
 # Subtest: web/game.html: the game script parses
 ok 93 - web/game.html: the game script parses
   ---
-  duration_ms: 8.577934
+  duration_ms: 14.831006
   ...
 # Subtest: player log: events leave in a batch, with no addresses
 ok 94 - player log: events leave in a batch, with no addresses # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.227893
+  duration_ms: 2.344207
   ...
 # Subtest: actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
 ok 95 - actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
   ---
-  duration_ms: 1229.361692
+  duration_ms: 1249.218169
   ...
 # Subtest: production subscription path uses diagnostics without persisting tokens (source check)
 ok 96 - production subscription path uses diagnostics without persisting tokens (source check)
   ---
-  duration_ms: 0.259465
+  duration_ms: 0.342858
   ...
 # Subtest: art module exports what the game uses, and the game takes it from the bundle
 ok 97 - art module exports what the game uses, and the game takes it from the bundle
   ---
-  duration_ms: 3.164679
+  duration_ms: 8.33217
   ...
 # Subtest: catalog: figure keys and prices are stable; one free figure; locations have art
 ok 98 - catalog: figure keys and prices are stable; one free figure; locations have art
   ---
-  duration_ms: 8.949497
+  duration_ms: 16.946374
   ...
 # Subtest: config: palette, modes, rules and settings keep their keys
 ok 99 - config: palette, modes, rules and settings keep their keys
   ---
-  duration_ms: 10.04322
+  duration_ms: 16.674858
   ...
 # Subtest: progress: levels and achievements
 ok 100 - progress: levels and achievements
   ---
-  duration_ms: 12.917137
+  duration_ms: 18.270032
   ...
 # Subtest: progress: three different daily quests, every quest comes up evenly over a year
 ok 101 - progress: three different daily quests, every quest comes up evenly over a year
   ---
-  duration_ms: 5.493235
+  duration_ms: 7.270964
+  ...
+# Subtest: section title bar sticks to the top in the app too
+ok 102 - section title bar sticks to the top in the app too # SKIP playwright is not installed (npm ci)
+  ---
+  duration_ms: 3.856914
   ...
 # Subtest: tutorial: all steps, from the first card to the win
-ok 102 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
+ok 103 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.112877
+  duration_ms: 2.96848
   ...
 # Subtest: water edges: every water side has the river mouth, every pair lines up in all turns
-ok 103 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
+ok 104 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.283205
+  duration_ms: 2.717162
   ...
-1..103
-# tests 103
+1..104
+# tests 104
 # suites 0
 # pass 89
 # fail 0
 # cancelled 0
-# skipped 14
+# skipped 15
 # todo 0
-# duration_ms 1858.039627
+# duration_ms 2159.537696
 
 ```
 ## build
 ```text
 
-BUILD SUCCESSFUL in 1m 1s
+BUILD SUCCESSFUL in 1m 21s
 33 actionable tasks: 33 executed
 ```
