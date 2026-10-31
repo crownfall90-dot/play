@@ -991,7 +991,8 @@ async function afterPlace(t, p, forced) {
     else {
       // Bot: always use placed tile only, even in anyMode.
       const botOpts = anyMode ? claimable(t).map(g => ({t, g})) : opts;
-      if (botOpts.length && Math.random() < .55) {
+      if (botLevel() !== 'easy') choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
+      else if (botOpts.length && Math.random() < .55) {
         const cs = botOpts.filter(o => o.g.kind !== 'r');
         choice = cs.length && Math.random() < .7 ? cs[(Math.random() * cs.length) | 0] : botOpts[(Math.random() * botOpts.length) | 0];
       }
@@ -1152,14 +1153,15 @@ function beginHumanTurn() {
 // there is no "pass the phone" screen over the board any more.
 function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // Bot choices live in src/engine/bots.js.
-const botPick = type => PG.engine.bots.botPick(tiles, type, Math.random);
+const botLevel = () => PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal';
+const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
   setStatus(`Ходит <b>${players[p].name}</b>…`);
   const k = wallet.speed === 'fast' ? .35 : 1;
   await wait(900 * k); if (my !== token || tt !== turnTok) return;
-  let best = botPick(current.type);
+  let best = botPick(current.type, p);
   if (tut && tut.bot.length) { const m = tut.bot.shift(); if (fits(current.type, m.r, m.x, m.y)) best = m; }
   await ensureVisible(best.x, best.y); if (my !== token || tt !== turnTok) return;
   sel = {x: best.x, y: best.y}; setRot(best.r); placeGhost();
@@ -1739,7 +1741,7 @@ document.addEventListener('click', e => { if (e.target.closest('button') && !e.t
 /* ---------------- settings ---------------- */
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
-Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'tip', view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
+Object.assign(wallet, Object.assign({music: true, notify: true, coach: 'tip', view: '3d', botlvl: 'normal', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
 const applyGfx = () => document.documentElement.classList.toggle('lowgfx', wallet.gfx === 'low');
 applyGfx();
 function renderPrefs() {

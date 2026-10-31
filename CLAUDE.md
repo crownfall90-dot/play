@@ -97,3 +97,9 @@ Antigravity (Gemini/Opus/Sonnet)     Claude Opus 5.5 (ты)
    - `tools/founder-admin.html`.
 4. Заполни свой вердикт в `docs/coordination/HANDOFF.md` в секции `## От Claude → Antigravity`.
 5. Закоммить и запушь своё ревью.
+
+---
+
+## 7. Продуктовый контекст (с 31.10.2026)
+
+Для любого нового агента: сначала `docs/product/README.md` (видение, режимы и настройки, удержание, очередь задач), затем `docs/design/STYLE.md` и раздел «ПЕРЕДАЧА НОВОМУ АГЕНТУ» в `docs/coordination/HANDOFF.md`. Текущая версия — 1.0.235; релизы — только по команде владельца.
