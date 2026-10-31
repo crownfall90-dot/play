@@ -1,0 +1,29 @@
+name: Daily gift push
+
+# Once a day, in the evening (Moscow time), every installed game with notifications on gets a short reminder that
+# the daily gift and quests are waiting. OFF until the owner turns it on:
+# Settings > Secrets and variables > Actions > Variables > DAILY_GIFT_PUSH = true
+on:
+  schedule:
+    - cron: '17 16 * * *'   # 19:17 Moscow
+  workflow_dispatch:
+
+jobs:
+  push:
+    if: ${{ vars.DAILY_GIFT_PUSH == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Pick today's text
+        run: |
+          case $(( $(date +%j) % 4 )) in
+            0) T="Подарок ждёт"; B="Загляните в магазин: ежедневный сундук уже можно открыть." ;;
+            1) T="Задания на сегодня"; B="Три задания и золото за них ждут вас в профиле." ;;
+            2) T="Партия-другая?"; B="Соберите пазл с друзьями или ботами: пара ходов — и награда." ;;
+            *) T="Не потеряйте серию"; B="Зайдите сегодня, и серия дней подряд продолжится." ;;
+          esac
+          echo "NEWS_TITLE=$T" >> "$GITHUB_ENV"; echo "NEWS_BODY=$B" >> "$GITHUB_ENV"
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          NEWS_TOPIC: news
+        run: python3 scripts/fcm-send.py --news
