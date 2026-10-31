@@ -794,6 +794,7 @@ function renderSlots() {
 }
 function placeGhost() {
   if (!ghost) { ghostDeg = current.r * 90; ghost = tileEl({x: sel.x, y: sel.y, type: current.type, r: current.r}, false); ghost.classList.add('ghost'); world.append(ghost); }
+  ghost.style.setProperty('--pc', players[turn].col);
   ghost.style.left = (sel.x * T - T / 2) + 'px'; ghost.style.top = (sel.y * T - T / 2) + 'px';
 }
 function selectSlot(x, y) {
@@ -2249,12 +2250,12 @@ function onNet(d) {
    turn are sent (at most ~3 times a second, only when they change) and shown to the rest as a tinted, unconfirmed card. */
 let peekT = 0, peekLast = '', peekEl = null, peekDeg = 0;
 function peekSend() {
-  if (!net || !net.gameId || tut || phase !== 'place' || !sel || !current || !isLocal(turn)) return;
+  if (!net || !net.gameId || tut || !['place', 'ai'].includes(phase) || !sel || !current || !(isLocal(turn) || (net.host && !players[turn].human))) return; // own card, or a bot the room creator runs
   const msg = {t: 'peek', g: net.gameId, p: turn, n: applied, x: sel.x, y: sel.y, r: current.r}, key = msg.n + ':' + msg.x + ',' + msg.y + ',' + msg.r;
   if (key === peekLast || peekT) return;
   peekT = setTimeout(() => {
     peekT = 0;
-    if (!net || phase !== 'place' || !sel || !current) return;
+    if (!net || !['place', 'ai'].includes(phase) || !sel || !current) return;
     const k = applied + ':' + sel.x + ',' + sel.y + ',' + current.r; if (k === peekLast) return;
     peekLast = k; TRANSPORT.send(net.code, {...msg, n: applied, x: sel.x, y: sel.y, r: current.r}).catch(() => {});
   }, 350);
