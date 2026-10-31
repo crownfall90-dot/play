@@ -1397,7 +1397,7 @@ function track(name, params) {
 }
 /* Event log for the owner's panel: the few events that explain what happened to a player (sign-in, games, drops, errors,
    purchases) go to /logs/{uid}, in batches, at most 80 a day per phone. No e-mails and no texts typed by the player. */
-const LOG_KINDS = new Set(['open', 'login', 'sign_up', 'logout', 'game_start', 'game_end', 'net_down', 'net_back', 'google_error', 'google_redirect', 'spend_virtual_currency', 'tutorial_begin', 'tutorial_complete', 'wallet_sig_mismatch', 'friend_invite', 'error', 'maintenance']);
+const LOG_KINDS = new Set(['reinstall_offer', 'reinstall_download', 'reinstall_remove', 'open', 'login', 'sign_up', 'logout', 'game_start', 'game_end', 'net_down', 'net_back', 'google_error', 'google_redirect', 'spend_virtual_currency', 'tutorial_begin', 'tutorial_complete', 'wallet_sig_mismatch', 'friend_invite', 'error', 'maintenance']);
 const logBuf = [];
 let logTimer = 0;
 function plog(kind, detail) {
@@ -4328,7 +4328,46 @@ function bootHide() {
   bootDone();
 }
 window.onUpdateChecked = () => { boot.checked = true; bootHide(); };
+/* One-time reinstall after the app's signing key changed (docs/SIGNING-KEY-ROTATION.md): Android cannot install a
+   release signed with another key over this copy. The game walks the player through it: save the progress to the
+   profile, download the new app, remove this one, install, sign in — and everything is back. Shown on every start
+   until done; the old copy keeps working meanwhile. */
+function reinstallDialog(info) {
+  boot.checked = true; bootHide();
+  const old = document.getElementById('reinst'); if (old) old.remove();
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'reinst'; box.style.position = 'fixed';
+  const draw = () => {
+    const linked = linkedNow(), mail = linked ? String(fbAuth.email).replace(/[<>&"]/g, '') : '';
+    box.innerHTML = `<div class="ocard reinst"><div class="rbig">🔐</div><h3>Новое приложение Puzzlegrad</h3>
+      <p>Мы сменили цифровую подпись приложения — это защита от подделок. Поверх старого новое не встанет: нужно один раз переустановить. Это 1 минута.</p>
+      <ol class="rsteps2">
+        <li class="${linked ? 'ok' : ''}"><i>1</i><div><b>${linked ? 'Прогресс сохранён в профиле' : 'Сохраните прогресс'}</b><small>${linked ? mail : 'Войдите или создайте профиль — иначе золото и уровень пропадут'}</small></div>${linked ? '<em>✓</em>' : '<button class="chip pri" id="rsSave">Сохранить</button>'}</li>
+        <li><i>2</i><div><b>Скачайте новую версию</b><small>Файл Puzzlegrad.apk сохранится в «Загрузки»</small></div><button class="chip pri" id="rsGet">Скачать</button></li>
+        <li><i>3</i><div><b>Удалите эту версию</b><small>Откроются настройки приложения — нажмите «Удалить»</small></div><button class="chip" id="rsDel">Удалить</button></li>
+        <li><i>4</i><div><b>Установите скачанный файл</b><small>Откройте Puzzlegrad.apk из «Загрузок», запустите игру и войдите в тот же профиль</small></div></li>
+      </ol>
+      <button class="ghostbtn" id="rsLater">Позже</button></div>`;
+    const q = sel => box.querySelector(sel);
+    if (q('#rsSave')) q('#rsSave').onclick = () => accountDialog('link');
+    q('#rsGet').onclick = () => { track('reinstall_download'); location.href = info.url; };
+    q('#rsDel').onclick = e => {
+      if (!linkedNow() && !e.currentTarget.dataset.sure) { e.currentTarget.dataset.sure = 1; e.currentTarget.textContent = 'Без профиля?'; return toastAny('Без профиля прогресс не сохранится. Нажмите ещё раз, если всё равно удалить'); }
+      track('reinstall_remove');
+      if (window.AndroidApp && AndroidApp.openAppSettings) AndroidApp.openAppSettings();
+    };
+    q('#rsLater').onclick = () => box.remove();
+  };
+  draw();
+  if (linkedNow()) cloudSave().catch(() => {});
+  // back from the sign-in dialog: show the saved state
+  const again = () => { if (!document.body.contains(box)) return document.removeEventListener('visibilitychange', again); if (!document.hidden) draw(); };
+  document.addEventListener('visibilitychange', again);
+  box.addEventListener('click', () => setTimeout(() => { if (document.body.contains(box) && linkedNow() && !box.querySelector('li.ok')) { cloudSave().catch(() => {}); draw(); } }, 1500));
+  document.body.append(box);
+  track('reinstall_offer');
+}
 window.onUpdateAvailable = (info, manual) => {
+  if (info && info.reinstall) return reinstallDialog(info);
   lastUpd = info;
   // In an online game the whole table waits for the update (see "update pause").
   if (net && net.gameId && phase !== 'end' && info.code > appCode() && !(net.upd && net.upd.c >= info.code) && players.some(p => p.owner === myId)) { netSend({t: 'upd', g: net.gameId, c: info.code}); updOpen(info.code); }

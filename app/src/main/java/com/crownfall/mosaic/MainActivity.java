@@ -332,6 +332,19 @@ public class MainActivity extends Activity {
     }
 
     private class Bridge {
+        /** The system page of this app (with its "Uninstall" button): used for the one-time reinstall after a key change. */
+        @JavascriptInterface
+        public void openAppSettings() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:" + getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (Exception e) {
+                    report(e);
+                }
+            });
+        }
+
         @JavascriptInterface
         public String versionName() { return BuildConfig.VERSION_NAME; }
 
