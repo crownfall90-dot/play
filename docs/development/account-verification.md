@@ -1,168 +1,168 @@
 # Account verification
-Source: 7e26f85539a900f85f18d7a16a27ff03ea3b4174
+Source: 4d57e28aee6a6b84d60fd97b05d69c1493ebb830
 Tests exit code: 0
 Offline assembleStagingDebug exit code: 0
 No APK publication, FCM send, production Firebase access, main change or signing-key rotation.
 ## tests
 ```text
-s not installed (npm ci)
+is not installed (npm ci)
   ---
-  duration_ms: 2.416888
+  duration_ms: 1.86181
   ...
 # Subtest: net/firebase: a guest gets an anonymous account once, saved under fbAuth
-ok 85 - net/firebase: a guest gets an anonymous account once, saved under fbAuth
+ok 86 - net/firebase: a guest gets an anonymous account once, saved under fbAuth
   ---
-  duration_ms: 16.693944
+  duration_ms: 15.871055
   ...
 # Subtest: net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
-ok 86 - net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
+ok 87 - net/firebase: an expired saved session is refreshed; a signed-in one is never replaced by a guest
   ---
-  duration_ms: 1.121776
+  duration_ms: 1.20698
   ...
 # Subtest: net/firebase: errors keep their old meaning
-ok 87 - net/firebase: errors keep their old meaning
+ok 88 - net/firebase: errors keep their old meaning
   ---
-  duration_ms: 0.814603
+  duration_ms: 0.940594
   ...
 # Subtest: net/firebase: game.html takes the session from the module, with no second copy
-ok 88 - net/firebase: game.html takes the session from the module, with no second copy
+ok 89 - net/firebase: game.html takes the session from the module, with no second copy
   ---
-  duration_ms: 3.444669
+  duration_ms: 3.429983
   ...
 # Subtest: online flag: the start message says online or friends' room, so the header and the rewards are right everywhere
-ok 89 - online flag: the start message says online or friends' room, so the header and the rewards are right everywhere # SKIP playwright is not installed (npm ci)
+ok 90 - online flag: the start message says online or friends' room, so the header and the rewards are right everywhere # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.836963
+  duration_ms: 2.539664
   ...
 # Subtest: peek: others see the card the mover holds, the mover sends it
-ok 90 - peek: others see the card the mover holds, the mover sends it # SKIP playwright is not installed (npm ci)
+ok 91 - peek: others see the card the mover holds, the mover sends it # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.686221
+  duration_ms: 1.688017
   ...
 # Subtest: connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting"
-ok 91 - connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting" # SKIP playwright is not installed (npm ci)
+ok 92 - connection: no server → a clear dialog instead of a silent wait; a dropped stream shows and hides "reconnecting" # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.672936
+  duration_ms: 2.710512
   ...
 # Subtest: source guard: mark only after Android accepts submission
-ok 92 - source guard: mark only after Android accepts submission
+ok 93 - source guard: mark only after Android accepts submission
   ---
-  duration_ms: 2.211894
+  duration_ms: 1.964882
   ...
 # Subtest: source guard: concurrent announcements serialized
-ok 93 - source guard: concurrent announcements serialized
+ok 94 - source guard: concurrent announcements serialized
   ---
-  duration_ms: 0.249857
+  duration_ms: 0.254565
   ...
 # Subtest: source guard: permission and disabled channel checked
-ok 94 - source guard: permission and disabled channel checked
+ok 95 - source guard: permission and disabled channel checked
   ---
-  duration_ms: 0.244978
+  duration_ms: 0.253873
   ...
 # Subtest: source guard: denied notification is not marked
-ok 95 - source guard: denied notification is not marked
+ok 96 - source guard: denied notification is not marked
   ---
-  duration_ms: 0.287397
+  duration_ms: 0.259994
   ...
 # Subtest: owner panel in the game: only for admins
-ok 96 - owner panel in the game: only for admins # SKIP playwright is not installed (npm ci)
+ok 97 - owner panel in the game: only for admins # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.4018
+  duration_ms: 1.689859
   ...
 # Subtest: web/game.html: the game script parses
-ok 97 - web/game.html: the game script parses
+ok 98 - web/game.html: the game script parses
   ---
-  duration_ms: 11.932774
+  duration_ms: 16.993436
   ...
 # Subtest: player log: events leave in a batch, with no addresses
-ok 98 - player log: events leave in a batch, with no addresses # SKIP playwright is not installed (npm ci)
+ok 99 - player log: events leave in a batch, with no addresses # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.694006
+  duration_ms: 1.810234
   ...
 # Subtest: actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
-ok 99 - actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
+ok 100 - actual Java diagnostics: success, failure, disable, stale completion, synchronous error, offline configuration
   ---
-  duration_ms: 1257.769787
+  duration_ms: 3461.762101
   ...
 # Subtest: production subscription path uses diagnostics without persisting tokens (source check)
-ok 100 - production subscription path uses diagnostics without persisting tokens (source check)
+ok 101 - production subscription path uses diagnostics without persisting tokens (source check)
   ---
-  duration_ms: 0.28393
+  duration_ms: 0.290521
   ...
 # Subtest: reinstall: a release signed with another key opens the step-by-step reinstall, not the normal update
-ok 101 - reinstall: a release signed with another key opens the step-by-step reinstall, not the normal update # SKIP playwright is not installed (npm ci)
+ok 102 - reinstall: a release signed with another key opens the step-by-step reinstall, not the normal update # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.413582
+  duration_ms: 1.710698
   ...
 # Subtest: art module exports what the game uses, and the game takes it from the bundle
-ok 102 - art module exports what the game uses, and the game takes it from the bundle
+ok 103 - art module exports what the game uses, and the game takes it from the bundle
   ---
-  duration_ms: 4.42436
+  duration_ms: 3.338924
   ...
 # Subtest: catalog: figure keys and prices are stable; one free figure; locations have art
-ok 103 - catalog: figure keys and prices are stable; one free figure; locations have art
+ok 104 - catalog: figure keys and prices are stable; one free figure; locations have art
   ---
-  duration_ms: 15.388203
+  duration_ms: 9.712414
   ...
 # Subtest: config: palette, modes, rules and settings keep their keys
-ok 104 - config: palette, modes, rules and settings keep their keys
+ok 105 - config: palette, modes, rules and settings keep their keys
   ---
-  duration_ms: 17.709723
+  duration_ms: 10.80422
   ...
 # Subtest: config: game sizes keep the playing time (fast ≈ 9, classic ≈ 15, big ≈ 30 minutes)
-ok 105 - config: game sizes keep the playing time (fast ≈ 9, classic ≈ 15, big ≈ 30 minutes)
+ok 106 - config: game sizes keep the playing time (fast ≈ 9, classic ≈ 15, big ≈ 30 minutes)
   ---
-  duration_ms: 5.240013
+  duration_ms: 3.169368
   ...
 # Subtest: progress: levels and achievements
-ok 106 - progress: levels and achievements
+ok 107 - progress: levels and achievements
   ---
-  duration_ms: 27.312291
+  duration_ms: 10.43485
   ...
 # Subtest: progress: three different daily quests, every quest comes up evenly over a year
-ok 107 - progress: three different daily quests, every quest comes up evenly over a year
+ok 108 - progress: three different daily quests, every quest comes up evenly over a year
   ---
-  duration_ms: 17.882255
+  duration_ms: 2.777307
   ...
 # Subtest: section title bar sticks to the top in the app too
-ok 108 - section title bar sticks to the top in the app too # SKIP playwright is not installed (npm ci)
+ok 109 - section title bar sticks to the top in the app too # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.783784
+  duration_ms: 1.624848
   ...
 # Subtest: telegram: message lists changes, escapes HTML, links
-ok 109 - telegram: message lists changes, escapes HTML, links
+ok 110 - telegram: message lists changes, escapes HTML, links
   ---
-  duration_ms: 104.886952
+  duration_ms: 58.712632
   ...
 # Subtest: telegram: without secrets it skips quietly and never leaks
-ok 110 - telegram: without secrets it skips quietly and never leaks
+ok 111 - telegram: without secrets it skips quietly and never leaks
   ---
-  duration_ms: 97.286252
+  duration_ms: 53.301806
   ...
 # Subtest: tutorial: all steps, from the first card to the win
-ok 111 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
+ok 112 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.644923
+  duration_ms: 1.838577
   ...
 # Subtest: water edges: every water side has the river mouth, every pair lines up in all turns
-ok 112 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
+ok 113 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.83545
+  duration_ms: 1.731607
   ...
-1..112
-# tests 112
+1..113
+# tests 113
 # suites 0
-# pass 94
+# pass 95
 # fail 0
 # cancelled 0
 # skipped 18
 # todo 0
-# duration_ms 2267.309704
+# duration_ms 4401.661523
 
 ```
 ## build
 ```text
 
-BUILD SUCCESSFUL in 1m 17s
+BUILD SUCCESSFUL in 1m 30s
 33 actionable tasks: 33 executed
 ```
