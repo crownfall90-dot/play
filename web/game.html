@@ -110,8 +110,8 @@
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Профиль</b></div>
           <div class="profile" id="profile"></div>
           <div class="sgroup prof" id="acct"></div>
-          <div class="stats" id="stats"></div>
-          <div class="seg ptabs" id="ptabs"><button data-pt="quests" aria-pressed="true">Задания</button><button data-pt="ach" aria-pressed="false">Достижения</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
+          <div class="pstats" id="stats"></div>
+          <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
           <div class="col" id="ptab"></div>
         </div>
       </section>
@@ -2662,11 +2662,11 @@ function ptabsDot() {
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
-    b.classList.toggle('hasdot', pt === 'quests' ? qDot : pt === 'ach' ? aDot : tDot);
+    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || aDot) : pt === 'top' ? tDot : false);
   });
 }
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
-let ptab = 'quests';
+let ptab = 'rewards';
 function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
 // The profile plate on the menu: avatar, nickname, level with its bar, gold. Taps open the profile.
 function renderMenuProfile() {
@@ -2680,26 +2680,29 @@ function renderProgress() {
   // One card: avatar, nickname and e-mail with the edit button, then level and experience; the account buttons
   // (#acct, below) join it.
   const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
-  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b><small>уровень</small></div><div class="pi"><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня · 🏆 ${PROG.cups} кубков · <i class="coin"></i> ${wallet.gold}</small></div></div>`;
+  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span></div>`;
   $('#profEdit').onclick = editProfile;
   const st = PROG.st;
-  $('#stats').innerHTML = [[st.games, 'партий'], [st.wins, 'побед'], [st.best, 'рекорд очков'], [st.c, 'городов'], [st.r, 'дорог'], [st.f, 'крепостей']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('');
+  const rate = st.games ? Math.round(100 * st.wins / st.games) : 0;
+  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   ptabsDot();
   const el = $('#ptab');
-  if (ptab === 'quests') {
-    // Rewards ready to claim go first, then the ones in progress, claimed ones last.
+  if (ptab === 'rewards') {
+    // Two lists in one tab: today's tasks and the achievements. Rewards ready to claim go first, then the ones in
+    // progress, claimed ones last.
     const rank = (done, got) => got ? 2 : done ? 0 : 1;
-    el.innerHTML = [...PROG.q].sort((a, b) => rank(a.n >= QUESTS.find(x => x.id === a.id).n, a.got) - rank(b.n >= QUESTS.find(x => x.id === b.id).n, b.got)).map(q => {
+    const qDone = q => q.n >= QUESTS.find(x => x.id === q.id).n;
+    const qRows = [...PROG.q].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
       const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
-      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="cta" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
-    }).join('') + '<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p>';
-  } else if (ptab === 'ach') {
-    const rank = (ok, got) => got ? 2 : ok ? 0 : 1;
-    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
-      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
-      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="cta" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
     }).join('');
+    const aRows = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
+      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
+      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+    }).join('');
+    const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
+    el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p><div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
   } else if (ptab === 'hist') renderHistory(el);
   else renderTop();
 }
@@ -2739,7 +2742,9 @@ function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
   const when = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
-  el.innerHTML = rows.map(r => {
+  const wins = rows.filter(r => r.reason !== 'draw' && r.players.slice().sort((a, b) => b.score - a.score)[0].me).length;
+  const sum = `<div class="hsum"><b>${rows.length}</b> последних партий · 🏆 <b>${wins}</b> побед · онлайн <b>${rows.filter(r => /^o:/.test(r.id)).length}</b></div>`;
+  el.innerHTML = sum + rows.map(r => {
     const ps = r.players.slice().sort((a, b) => b.score - a.score), me = ps.findIndex(p => p.me), online = /^o:/.test(r.id);
     const head = r.reason === 'draw' ? 'Ничья' : me === 0 ? '🏆 Победа' : me > 0 ? `${me + 1}-е место` : 'Партия';
     const who = ps.map(p => `<span class="hp${p.me ? ' me' : ''}"${online && p.uid && !p.me && !p.bot ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}" data-c="${validCol(p.col) ? p.col : ''}"` : ''}><i style="--c:${validCol(p.col) ? p.col : '#5b6684'}"></i>${clean(p.name)} <b>${+p.score || 0}</b>${online && p.uid && !p.me && !p.bot && !isFriend(p.uid) ? `<button class="chip hadd" data-uid="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(p.name)}">+ в друзья</button>` : ''}</span>`).join('');
