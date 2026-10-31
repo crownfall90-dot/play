@@ -47,7 +47,29 @@ class Updater {
      * no limits); the GitHub API is only a fallback, because without a login it allows just 60
      * requests an hour per address, and players behind one VPN or mobile network share that.
      */
-    private static JSONObject latest(boolean deep) throws Exception {
+    /**
+     * SHA-256 of the certificate this copy is signed with (lower-case hex), "" if Android does not say. A release
+     * signed with a different key cannot be installed over this copy: the game then asks for a one-time reinstall.
+     */
+    static String myCert(android.content.Context c) {
+        try {
+            android.content.pm.PackageManager pm = c.getPackageManager();
+            android.content.pm.Signature[] sigs;
+            if (Build.VERSION.SDK_INT >= 28) {
+                sigs = pm.getPackageInfo(c.getPackageName(), android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES).signingInfo.getApkContentsSigners();
+            } else {
+                sigs = pm.getPackageInfo(c.getPackageName(), android.content.pm.PackageManager.GET_SIGNATURES).signatures;
+            }
+            byte[] d = java.security.MessageDigest.getInstance("SHA-256").digest(sigs[0].toByteArray());
+            StringBuilder sb = new StringBuilder();
+            for (byte x : d) sb.append(String.format("%02x", x));
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static JSONObject latest(android.content.Context ctx, boolean deep) throws Exception {
         boolean saidCurrent = false;
         try {
             // The release CDN may serve a stale copy for a few minutes after a release: a changing query dodges it.
@@ -59,6 +81,10 @@ class Updater {
             info.put("version", f.optString("version", "1.0." + f.getInt("code")));
             info.put("notes", f.optString("notes", ""));
             info.put("url", f.getString("url"));
+            // "cert": the release is signed with this key; when it is not ours, an in-place update is impossible.
+            String cert = f.optString("cert", "").replace(":", "").toLowerCase(java.util.Locale.ROOT);
+            String mine = myCert(ctx);
+            info.put("reinstall", !cert.isEmpty() && !mine.isEmpty() && !cert.equals(mine));
             return info;
         } catch (Exception ignored) {
             // An older release without latest.json, or the download failed: ask the API.
@@ -91,7 +117,7 @@ class Updater {
         new Thread(() -> {
             JSONObject info;
             try {
-                info = latest(manual);
+                info = latest(activity, manual);
             } catch (Exception e) {
                 // No internet or GitHub refused: play on; say so only when the player asked.
                 activity.js(manual ? "window.onCheckFailed && window.onCheckFailed()" : "window.onUpdateChecked && window.onUpdateChecked(false)");
@@ -106,7 +132,7 @@ class Updater {
     static void findUpdate(android.content.Context c, UpdateNotifier.Found cb) {
         new Thread(() -> {
             try {
-                JSONObject info = latest(false);
+                JSONObject info = latest(c, false);
                 if (info != null) { cb.found(info.getInt("code"), info.getString("version"), info.getString("notes")); return; }
             } catch (Exception ignored) {
             }

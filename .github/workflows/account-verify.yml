@@ -58,7 +58,12 @@ jobs:
           git config user.name 'Puzzlegrad development automation'
           git config user.email 'puzzlegrad-automation@users.noreply.github.com'
           git commit -m 'docs: record actual account regression and offline build results'
-          git push origin HEAD:dev/stage2-account-network-20261029
+          # somebody may have pushed while the tests ran: rebase the one report commit onto the new tip and try again
+          for i in 1 2 3 4; do
+            git push origin HEAD:dev/stage2-account-network-20261029 && break
+            git pull --rebase origin dev/stage2-account-network-20261029 || { git rebase --abort || true; break; }
+            sleep $((i * 3))
+          done
       - name: Enforce recorded results
         run: |
           test "$(cat /tmp/tests.exit)" = 0

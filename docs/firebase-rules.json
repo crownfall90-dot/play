@@ -6,7 +6,7 @@
         "msgs": {
           "$id": {
             ".write": "auth != null && !data.exists()",
-            ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length < 4000"
+            ".validate": "newData.hasChildren(['m', 'ts']) && newData.child('m').isString() && newData.child('m').val().length < 4000 && (!newData.child('u').exists() || newData.child('u').val() === auth.uid)"
           }
         }
       }

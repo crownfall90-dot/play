@@ -73,8 +73,11 @@ export function hintPick(tiles, meeples, type, p, players, haveFigure) {
       }
       const cnt = Array.from({length: players}, () => 0); c.meeples.forEach(x => cnt[x.p]++);
       const mx = Math.max(...cnt), mine = cnt[p] === mx;
-      if (mine && c.complete) { const v = 10 + v0 * 1.5; s += v; say(v, `Достроит ${NOUN[g.kind]} — +${pts(v0)} прямо сейчас`); }
-      else if (mine) { const v = 2 + c.tiles.length * .4 + (miss <= 1 ? 2 : 0); s += v; say(v, `Продолжит ${NOUN[g.kind]}: достроите — минимум +${pts(atLeast(g.kind, v0, miss))}, ${left(g.kind, miss)}`); }
+      // two parts with figures of different players are glued by this card: say who leads the joined object
+      const other = Math.max(0, ...cnt.filter((n, i) => i !== p));
+      const contest = mine && other > 0 ? `Склейка с чужой фишкой: у вас ${cnt[p]} ${plural(cnt[p], 'фишка', 'фишки', 'фишек')}, у соперника ${other} — ${cnt[p] > other ? 'объект ваш' : 'очки получите оба'}. ` : '';
+      if (mine && c.complete) { const v = 10 + v0 * 1.5; s += v; say(v, `${contest}Достроит ${NOUN[g.kind]} — +${pts(v0)} прямо сейчас`); }
+      else if (mine) { const v = 2 + c.tiles.length * .4 + (miss <= 1 ? 2 : 0) + (contest ? 1.5 : 0); s += v; say(v, `${contest}Продолжит ${NOUN[g.kind]}: достроите — минимум +${pts(atLeast(g.kind, v0, miss))}, ${left(g.kind, miss)}`); }
       else s -= c.complete ? 3 + v0 : 1 + c.tiles.length * .3;
     }
     tiles.delete(key(t.x, t.y));

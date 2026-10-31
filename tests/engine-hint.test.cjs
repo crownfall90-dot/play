@@ -43,3 +43,15 @@ test('hint: growing your own town tells the points and the open sides left', asy
   const t = tiles.get('0,0'), g = B.groupsOf(t).find(q => q.kind === 'c');
   assert.match(bots.featureNote(tiles, [], t, g), /^достроите — минимум \+4 очка, осталось закрыть 3 края$/);
 });
+
+test('hint: a card that glues two towns with figures of different players says who leads', async () => {
+  const {B, bots} = await load();
+  const a = {x: 0, y: 0, type: 'cap', r: 0}, b = {x: 0, y: -2, type: 'cap', r: 2};
+  const tiles = boardOf(B, a, b);
+  // the town card "band" turned to run north-south closes the gap between the two towns
+  const lead = bots.hintPick(tiles, [townFig(B, a, 0), townFig(B, b, 1), townFig(B, b, 0)], 'band', 0, 2, true);
+  assert.deepEqual([lead.x, lead.y, lead.r], [0, -1, 1]);
+  assert.match(lead.why, /^Склейка с чужой фишкой: у вас 2 фишки, у соперника 1 — объект ваш\. /);
+  const tie = bots.hintPick(tiles, [townFig(B, a, 0), townFig(B, b, 1)], 'band', 0, 2, true);
+  assert.match(tie.why, /у вас 1 фишка, у соперника 1 — очки получите оба\. /);
+});
