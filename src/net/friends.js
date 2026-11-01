@@ -40,3 +40,37 @@ export function renderFriendRow(f, actionBtn = '', subText = '') {
     `<span class="fwho"><b>${f.n}</b>${st}<small>${subText}</small></span>` +
     `${actionBtn}</li>`;
 }
+
+/** Generates HTML markup for friends list sections (invites, requests, online, offline, waiting). */
+export function renderFriendsListHtml({
+  invs = [],
+  reqs = [],
+  on = [],
+  off = [],
+  wait = [],
+  room = null,
+  invited = {},
+  stateTextMap = {},
+  agoTextFn = () => 'не в сети',
+  cleanFn = (t => t || 'Игрок')
+}) {
+  const fRow = (f, btn, sub) => renderFriendRow(f, btn, sub);
+  let h = '';
+  if (invs.length) {
+    h += `<div class="h3">Зовут играть</div><ul class="flist">${invs.map(([k, v]) => fRow({n: cleanFn(v.n), c: '#f2b84b'}, `<button class="chip go" data-fjoin="${k}">Войти</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'комната ' + cleanFn(v.code))).join('')}</ul>`;
+  }
+  if (reqs.length) {
+    h += `<div class="h3">Заявки в друзья</div><ul class="flist">${reqs.map(([k, v]) => fRow({n: cleanFn(v.n), c: '#f2b84b'}, `<button class="chip go" data-facc="${k.slice(0, -2)}">Принять</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'хочет дружить')).join('')}</ul>`;
+  }
+  h += `<div class="h3">В сети · ${on.length}</div><ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-finv="${f.uid}">${room && invited.code === room && invited.joined && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'}</button>`, (f.p && stateTextMap[f.p.s]) || 'в игре')).join('') || '<li class="qnote">Никого из друзей нет в сети</li>'}</ul>`;
+  if (off.length) {
+    h += `<div class="h3">Не в сети · ${off.length}</div><ul class="flist">${off.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Удалить из друзей">✕</button>`, agoTextFn(f.p && f.p.t))).join('')}</ul>`;
+  }
+  if (wait.length) {
+    h += `<div class="h3">Ждут ответа</div><ul class="flist">${wait.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Отменить заявку">✕</button>`, 'заявка отправлена')).join('')}</ul>`;
+  }
+  if (!on.length && !off.length && !wait.length && !reqs.length) {
+    h += '<p class="shint">Добавьте друга по коду выше</p>';
+  }
+  return h;
+}

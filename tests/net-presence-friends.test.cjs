@@ -68,4 +68,31 @@ test('net/friends: cleanFriendCode, formatInvitePayload, formatFriendRequestPayl
   assert.ok(rowHtml.includes('М'));
   assert.ok(rowHtml.includes('<button>Позвать</button>'));
   assert.ok(rowHtml.includes('в меню'));
+
+  // Friends list sections markup
+  const {renderFriendsListHtml} = await import('../src/net/friends.js');
+  const listHtml = renderFriendsListHtml({
+    invs: [['u1_r', {k: 'r', n: 'Петя', code: 'ROOM7'}]],
+    reqs: [['u2_f', {k: 'f', n: 'Саша'}]],
+    on: [{uid: 'u3', n: 'Даша', on: true, p: {s: 'online'}}],
+    off: [{uid: 'u4', n: 'Коля', mutual: true, on: false, p: {t: Date.now() - 3600000}}],
+    wait: [{uid: 'u5', n: 'Миша', mutual: false}],
+    room: 'ROOM1',
+    invited: {code: 'ROOM1', uids: new Set(['u3']), joined: new Set()},
+    stateTextMap: {online: 'играет онлайн'},
+    agoTextFn: () => 'был 1 ч назад'
+  });
+  assert.ok(listHtml.includes('Зовут играть'));
+  assert.ok(listHtml.includes('Петя'));
+  assert.ok(listHtml.includes('data-fjoin="u1_r"'));
+  assert.ok(listHtml.includes('Заявки в друзья'));
+  assert.ok(listHtml.includes('Саша'));
+  assert.ok(listHtml.includes('data-facc="u2"'));
+  assert.ok(listHtml.includes('В сети · 1'));
+  assert.ok(listHtml.includes('Даша'));
+  assert.ok(listHtml.includes('Ещё раз'));
+  assert.ok(listHtml.includes('Не в сети · 1'));
+  assert.ok(listHtml.includes('Коля'));
+  assert.ok(listHtml.includes('Ждут ответа'));
+  assert.ok(listHtml.includes('Миша'));
 });
