@@ -119,11 +119,11 @@
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Профиль</b></div>
           <div class="profile" id="profile"></div>
+          <div class="sgroup prof" id="acct"></div>
           <button class="tutcard itemsentry" id="itemsBtn"><span>🎒</span><span><b>Мои предметы</b><small id="itemsSub">Статусы, рамки, фигурки, локации</small></span><i class="tgo">›</i></button>
           <div class="pstats" id="stats"></div>
           <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="cols" aria-pressed="false">Коллекции</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
           <div class="col" id="ptab"></div>
-          <div class="sgroup prof acctbottom" id="acct"></div>
         </div>
       </section>
 
@@ -3182,8 +3182,10 @@ function renderProgress() {
   // One card: avatar, nickname and e-mail with the edit button, then level and experience; the account buttons
   // (#acct, below) join it.
   const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
-  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b>${myStatus() ? `<em class="fst">${myStatus()}</em>` : ''}<small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span><span>🏅 <b>${ACH.filter(a => PROG.ach[a.id] === 'got').length}</b>/${ACH.length} наград</span></div>`;
+  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b>${myStatus() ? `<em class="fst">${myStatus()}</em>` : ''}<small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span><span>🏅 <b>${ACH.filter(a => PROG.ach[a.id] === 'got').length}</b>/${ACH.length} наград</span></div>${FB ? `<div class="pacts">${fbAuth && fbAuth.email ? '<button class="chip" data-hacct="out">Выйти из аккаунта</button>' : '<button class="chip pri" data-hacct="in">Войти или создать профиль</button>'}</div>` : ''}`;
   $('#profEdit').onclick = editProfile;
+  // the buttons live in the profile card; the account block below it keeps the handlers (renderAccount)
+  document.querySelectorAll('#profile [data-hacct]').forEach(b => { b.onclick = () => { const t = $(b.dataset.hacct === 'out' ? '#acLogout' : '#acLogin'); if (t) t.click(); }; });
   const st = PROG.st = normalizeStats(PROG.st);
   const rate = st.games ? Math.round(100 * st.wins / st.games) : 0;
   const bm = st.byMode || {};
@@ -3350,9 +3352,19 @@ async function renderTop() {
     const me = (fbAuth && fbAuth.uid) ? fbAuth.uid : '';
     const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : '';
 
-    const friendUids = new Set(Object.keys(wallet.friends || {}));
-    if (me) friendUids.add(me);
-    const rows = topScope === 'friends' ? allRows.filter(x => friendUids.has(x.uid)) : allRows;
+    let rows = allRows;
+    if (topScope === 'friends') {
+      // The friends list lives in /friends (see loadFriends); a friend outside the top 50 is read one by one.
+      if (!friends.length) await loadFriends().catch(() => {});
+      const fr = friends.filter(f => f.mutual).slice(0, 40);
+      const known = new Map(allRows.map(x => [x.uid, x]));
+      const extra = await Promise.all(fr.filter(f => !known.has(f.uid)).map(f => fbGet('leaders/' + f.uid).catch(() => null).then(v => ({uid: f.uid, n: f.n, st: f.st, ...(v || {}), r: +(v && v.r) || 0}))));
+      extra.forEach(x => known.set(x.uid, x));
+      rows = fr.map(f => ({...(known.get(f.uid) || {uid: f.uid, n: f.n, r: 0}), n: f.n || (known.get(f.uid) || {}).n, st: (known.get(f.uid) || {}).st || f.st}));
+      if (me) rows.push({uid: me, n: profileName(), st: myStatus(), r: PROG.cups});
+      rows.sort((a, b) => b.r - a.r);
+      if (ptab !== 'top') return;
+    }
     const mine = rows.findIndex(x => x.uid === me);
 
     const av = (x, i) => `<span class="av" style="--c:${PALETTE[i % PALETTE.length].col}">${(clean(x.n) || '?')[0].toUpperCase()}</span>`;

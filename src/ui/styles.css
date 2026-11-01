@@ -1062,6 +1062,8 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .pchips{flex-wrap:nowrap;gap:6px}.pchips span{min-width:0;padding:9px 4px;font-size:12px;gap:4px;white-space:nowrap}
 .mgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.mcard{padding:10px 12px}.mcard.empty{opacity:.75}.mcard .mnone{color:var(--muted)}
 .goalline{padding:10px 12px;border-radius:14px;background:rgba(76,141,255,.12);border:1px solid rgba(76,141,255,.35);font-size:13px;margin-bottom:6px}.goalline.ready{background:rgba(242,184,75,.14);border-color:rgba(242,184,75,.5)}
-.acctbottom{margin-top:14px;opacity:.92}
 .itemsentry{background:linear-gradient(135deg,rgba(242,184,75,.22),rgba(242,184,75,.06));border:1px solid rgba(242,184,75,.5);color:var(--ink)}
 .itemsentry small{color:var(--muted)!important}.itemsentry b{color:var(--ink)}
+/* sign-in / sign-out buttons sit inside the profile card (the account block itself stays hidden: it keeps the handlers) */
+#acct{display:none}
+.profile .pacts{display:flex;width:100%}.profile .pacts .chip{flex:1;justify-content:center;padding:10px 8px}
