@@ -3245,35 +3245,49 @@ function renderProgress() {
   ptabsDot();
   const el = $('#ptab');
   if (ptab === 'rewards') {
-    // Two lists in one tab: today's tasks and the achievements. Rewards ready to claim go first, then the ones in
-    // progress, claimed ones last.
-    const rank = (done, got) => got ? 2 : done ? 0 : 1;
-    const qDone = q => q.n >= QUESTS.find(x => x.id === q.id).n;
-    const qRows = [...PROG.q].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
-      const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
-      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
-    }).join('');
-    const aRows = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
-      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
-      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
-    }).join('');
     questsWeekly();
-    const wqDone = q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); return WQ && q.n >= WQ.n; };
-    const wqList = PROG.wq || [];
-    const wqRows = [...wqList].sort((a, b) => rank(wqDone(a), a.got) - rank(wqDone(b), b.got)).map(q => {
-      const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id) || {ic: '🎯', t: 'Цель', n: 1, g: 10};
-      const done = q.n >= WQ.n;
-      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${WQ.ic}</span><span class="qt"><b>${WQ.t}</b><div class="xpbar"><i style="width:${Math.min(100, 100 * q.n / WQ.n)}%"></i></div><small>${q.n} / ${WQ.n} · <i class="coin"></i> ${WQ.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimwq="${q.id}">Забрать</button>` : ''}</div>`;
-    }).join('');
-    const allWqGot = wqList.length > 0 && wqList.every(q => q.got);
-    const chestClaimed = !!PROG.wchest;
-    const chestRow = `<div class="quest weekly-chest${chestClaimed ? ' got' : allWqGot ? ' done' : ''}"><span class="qi">🎁</span><span class="qt"><b>Большой сундук недели</b><small>${chestClaimed ? 'Сундук недели открыт' : allWqGot ? 'Все цели недели достигнуты!' : 'Выполните все 3 цели недели'} · <i class="coin"></i> ${WEEKLY_CHEST_GOLD || 100}</small></span>${chestClaimed ? '<span class="pill">Получено</span>' : allWqGot ? '<button class="chip pri" data-claimwchest="1">Забрать +100</button>' : '<span class="pill lock">Заперт</span>'}</div>`;
-    const wqGot = wqList.filter(q => q.got).length;
+    el.innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.progress && PG.ui.progress.renderRewardsTabHtml)
+      ? PG.ui.progress.renderRewardsTabHtml({
+          progQuests: PROG.q || [],
+          questDefs: QUESTS,
+          progWeekly: PROG.wq || [],
+          weeklyDefs: WEEKLY_QUESTS,
+          weeklyChestGold: WEEKLY_CHEST_GOLD || 100,
+          weeklyChestClaimed: !!PROG.wchest,
+          achDefs: ACH,
+          progAch: PROG.ach || {},
+          progStats: PROG.st || {},
+          progLvl: PROG.lvl || 1,
+          rewardReady: rewardReady()
+        })
+      : (() => {
+          const rank = (done, got) => got ? 2 : done ? 0 : 1;
+          const qDone = q => q.n >= QUESTS.find(x => x.id === q.id).n;
+          const qRows = [...PROG.q].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
+            const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
+            return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
+          }).join('');
+          const aRows = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
+            const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
+            return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+          }).join('');
+          const wqDone = q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); return WQ && q.n >= WQ.n; };
+          const wqList = PROG.wq || [];
+          const wqRows = [...wqList].sort((a, b) => rank(wqDone(a), a.got) - rank(wqDone(b), b.got)).map(q => {
+            const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id) || {ic: '🎯', t: 'Цель', n: 1, g: 10};
+            const done = q.n >= WQ.n;
+            return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${WQ.ic}</span><span class="qt"><b>${WQ.t}</b><div class="xpbar"><i style="width:${Math.min(100, 100 * q.n / WQ.n)}%"></i></div><small>${q.n} / ${WQ.n} · <i class="coin"></i> ${WQ.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimwq="${q.id}">Забрать</button>` : ''}</div>`;
+          }).join('');
+          const allWqGot = wqList.length > 0 && wqList.every(q => q.got);
+          const chestClaimed = !!PROG.wchest;
+          const chestRow = `<div class="quest weekly-chest${chestClaimed ? ' got' : allWqGot ? ' done' : ''}"><span class="qi">🎁</span><span class="qt"><b>Большой сундук недели</b><small>${chestClaimed ? 'Сундук недели открыт' : allWqGot ? 'Все цели недели достигнуты!' : 'Выполните все 3 цели недели'} · <i class="coin"></i> ${WEEKLY_CHEST_GOLD || 100}</small></span>${chestClaimed ? '<span class="pill">Получено</span>' : allWqGot ? '<button class="chip pri" data-claimwchest="1">Забрать +100</button>' : '<span class="pill lock">Заперт</span>'}</div>`;
+          const wqGot = wqList.filter(q => q.got).length;
 
-    const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
-    const nearQ = PROG.q.filter(q => !q.got).map(q => ({q, Q: QUESTS.find(x => x.id === q.id)})).filter(x => x.Q).sort((a, b) => (a.Q.n - a.q.n) / a.Q.n - (b.Q.n - b.q.n) / b.Q.n)[0];
-    const goalLine = rewardReady() ? '<div class="goalline ready">🎁 Есть награды: заберите их ниже</div>' : nearQ ? `<div class="goalline">🎯 Ближайшая цель: <b>${nearQ.Q.t}</b> · ${nearQ.q.n}/${nearQ.Q.n}</div>` : '<div class="goalline">✅ Все задания на сегодня выполнены</div>';
-    el.innerHTML = `${goalLine}<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
+          const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
+          const nearQ = PROG.q.filter(q => !q.got).map(q => ({q, Q: QUESTS.find(x => x.id === q.id)})).filter(x => x.Q).sort((a, b) => (a.Q.n - a.q.n) / a.Q.n - (b.Q.n - b.q.n) / b.Q.n)[0];
+          const goalLine = rewardReady() ? '<div class="goalline ready">🎁 Есть награды: заберите их ниже</div>' : nearQ ? `<div class="goalline">🎯 Ближайшая цель: <b>${nearQ.Q.t}</b> · ${nearQ.q.n}/${nearQ.Q.n}</div>` : '<div class="goalline">✅ Все задания на сегодня выполнены</div>';
+          return `${goalLine}<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
+        })();
   } else if (ptab === 'cols') renderCollections(el);
   else if (ptab === 'hist') renderHistory(el);
   else renderTop();
@@ -3323,6 +3337,11 @@ function editProfile() {
 }
 function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
+  if (typeof PG !== 'undefined' && PG.ui && PG.ui.progress && PG.ui.progress.renderHistoryHtml) {
+    el.innerHTML = PG.ui.progress.renderHistoryHtml(rows, isFriend);
+    el.querySelectorAll('.hadd').forEach(b => { b.onclick = () => { b.disabled = true; addFriend(b.dataset.uid, b.dataset.n, 'history'); }; });
+    return;
+  }
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
   const when = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
   const wins = rows.filter(r => r.reason !== 'draw' && r.players.slice().sort((a, b) => b.score - a.score)[0].me).length;
@@ -3448,26 +3467,10 @@ questsToday(); progressDot();
    happens for sure: close a town, turn a card, claim and finish a road, see the final count.
    The coach card shows one short line and waits for the action: the spot to tap pulses, other
    spots are hidden, and there is no "next" until it is done. */
-const TUT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_STEPS : [
-  {ic: '👆', t: 'Тапните по рамке', p: 'Сюда ляжет ваша карта', wait: 'select', only: [0, -1]},
-  {ic: '✅', t: 'Нажмите «Поставить»', p: 'Город сошёлся с городом', wait: 'placed', hl: '#ok'},
-  {ic: '🧍', t: 'Поставьте фишку на город', p: 'Фишка делает город вашим', wait: 'meepleDone', hl: '#mrow .chip:not(.skip)'},
-  {ic: '🏰', t: 'Город достроен: +4 очка!', p: 'Фишка вернулась к вам. Теперь ходит бот', wait: 'bot'},
-  {ic: '✋', t: 'Проведите пальцем по полю', p: 'Так поле двигается', wait: 'pan', hand: true},
-  {ic: '🔍', t: 'Нажмите «+»', p: 'Или разведите два пальца — поле приблизится', wait: 'zoom', hl: '#zin'},
-  {ic: '👆', t: 'Тапните по рамке', p: 'Продолжим дорогу бота', wait: 'select', only: [1, 1]},
-  {ic: '🔄', t: 'Поверните карту', p: 'Кнопка ↻ меняет поворот', wait: 'rotate', hl: '#rot'},
-  {ic: '✅', t: 'Нажмите «Поставить»', p: 'Дорога повернула вправо', wait: 'placed', hl: '#ok', r: 2},
-  {ic: '🧍', t: 'Поставьте фишку на дорогу', p: 'Достроите дорогу — получите очки', wait: 'meepleDone', hl: '#mrow .chip:not(.skip)'},
-  {ic: '🤝', t: 'Бот закроет один конец', p: 'Чужой ход тоже может вам помочь', wait: 'bot'},
-  {ic: '👆', t: 'Закройте второй конец', p: 'Тапните по рамке справа', wait: 'select', only: [2, 1]},
-  {ic: '✅', t: 'Нажмите «Поставить»', p: 'Дорога будет закончена', wait: 'placed', hl: '#ok'},
-  {ic: '🛤️', t: 'Дорога достроена!', p: 'Стопка кончилась — считаем очки', wait: 'end'},
-  {ic: '🏆', t: 'Вы победили! +30 золота', p: 'У кого больше очков, тот и выиграл', btn: 'Играть', done: true},
-];
+const TUT = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_STEPS : [];
 // Cards come off the end of the deck: first piece, then you, bot, you, bot, you.
-const TUT_DECK = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_DECK : ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
-const TUT_BOT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_BOT : [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
+const TUT_DECK = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_DECK : ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
+const TUT_BOT = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_BOT : [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
 let tut = null;
 function startTutorial() {
   if (net) leaveRoom();
@@ -3796,10 +3799,12 @@ const stBadge = (t, cls = '') => `<span class="stchip${cls}">${t}</span>`;
 function renderStatusShop() {
   const box = $('#stgrid'); if (!box) return;
   const own = ST().ownedStatuses(wallet), worn = wallet.statusKey || '';
-  box.innerHTML = ST().SHOP_STATUSES.map(x => {
-    const k = 'sh:' + x.id, has = own.includes(k), poor = !has && wallet.gold < x.price;
-    return `<button class="stb${worn === k ? ' sel' : ''}${poor ? ' poor' : ''}" data-stb="${x.id}">${stBadge(x.text)}<small>${worn === k ? 'Надет' : has ? 'Надеть' : `<i class="coin"></i>${x.price}`}</small></button>`;
-  }).join('');
+  box.innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.shop && PG.ui.shop.renderStatusShopHtml)
+    ? PG.ui.shop.renderStatusShopHtml({shopStatuses: ST().SHOP_STATUSES, ownedStatuses: own, wornKey: worn, gold: wallet.gold, stBadgeFn: stBadge})
+    : ST().SHOP_STATUSES.map(x => {
+        const k = 'sh:' + x.id, has = own.includes(k), poor = !has && wallet.gold < x.price;
+        return `<button class="stb${worn === k ? ' sel' : ''}${poor ? ' poor' : ''}" data-stb="${x.id}">${stBadge(x.text)}<small>${worn === k ? 'Надет' : has ? 'Надеть' : `<i class="coin"></i>${x.price}`}</small></button>`;
+      }).join('');
 }
 const STATUS_ERR = {short: 'Слишком короткий статус', long: 'Не больше 15 символов', bad: 'Такой текст нельзя: выберите другой', owned: 'Такой статус у вас уже есть', gold: 'Не хватает золота'};
 function afterStatusChange() { saveWallet(); renderStatusShop(); renderMenuProfile(); if (!$('#scr-items').hidden) renderItems(); presenceMark(true); syncRating(true); }
@@ -3835,6 +3840,18 @@ function renderItems() {
   const box = $('#itemsBody'); if (!box) return;
   document.querySelectorAll('#itabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.it === itab));
   const S = ST(), own = S.ownedStatuses(wallet), worn = wallet.statusKey || '';
+  if (typeof PG !== 'undefined' && PG.ui && PG.ui.shop && PG.ui.shop.renderItemsStatusesHtml) {
+    if (itab === 'st') {
+      box.innerHTML = PG.ui.shop.renderItemsStatusesHtml({shopStatuses: S.SHOP_STATUSES, exclusiveStatuses: S.EXCLUSIVE_STATUSES, ownedStatuses: own, wornKey: worn, statusTextFn: k => S.statusText(k), stBadgeFn: stBadge});
+    } else if (itab === 'fr') {
+      box.innerHTML = PG.ui.shop.renderItemsFramesHtml({frames: FRAMES, ownedFrames: wallet.frames || [], wornFrame: wallet.frame, color: wallet.color, profileInitial: profileName()[0]});
+    } else if (itab === 'fg') {
+      box.innerHTML = PG.ui.shop.renderItemsFigsHtml({figs: FIGS, ownedFigs: wallet.owned, selectedFig: wallet.fig, figPreviewFn: figPreview});
+    } else {
+      box.innerHTML = PG.ui.shop.renderItemsLocsHtml(LOCS);
+    }
+    return;
+  }
   if (itab === 'st') {
     const counted = S.SHOP_STATUSES.length + S.EXCLUSIVE_STATUSES.filter(x => !x.soon).length, have = own.filter(k => !k.startsWith('cu:')).length;
     const mine = own.map(k => ({k, t: S.statusText(k), ex: k.startsWith('ex:'), cu: k.startsWith('cu:')}));

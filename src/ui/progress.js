@@ -58,3 +58,76 @@ export function renderCollectionCard(col, prog, figs, frames, wallet, figPreview
     `<div class="col-foot"><div class="xpbar"><i style="width:${pct}%"></i></div><small>${prog.done} / ${prog.total}</small>${actionBtn}</div>` +
     `</div>`;
 }
+
+/** Generates HTML markup for Rewards tab (daily quests, weekly quests, achievements). */
+export function renderRewardsTabHtml({
+  progQuests = [],
+  questDefs = [],
+  progWeekly = [],
+  weeklyDefs = [],
+  weeklyChestGold = 100,
+  weeklyChestClaimed = false,
+  achDefs = [],
+  progAch = {},
+  progStats = {},
+  progLvl = 1,
+  rewardReady = false,
+}) {
+  const rank = (done, got) => got ? 2 : done ? 0 : 1;
+  const qDone = q => { const Q = questDefs.find(x => x.id === q.id); return Q && q.n >= Q.n; };
+  const qRows = [...progQuests].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
+    const Q = questDefs.find(x => x.id === q.id) || {ic: '🎯', t: 'Задание', n: 1, g: 10};
+    const done = q.n >= Q.n;
+    return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
+  }).join('');
+
+  const aRows = [...achDefs].sort((a, b) => rank(a.ok(progStats, progLvl), progAch[a.id] === 'got') - rank(b.ok(progStats, progLvl), progAch[b.id] === 'got')).map(a => {
+    const ok = a.ok(progStats, progLvl), got = progAch[a.id] === 'got';
+    return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+  }).join('');
+
+  const wqDone = q => { const WQ = weeklyDefs.find(x => x.id === q.id); return WQ && q.n >= WQ.n; };
+  const wqRows = [...progWeekly].sort((a, b) => rank(wqDone(a), a.got) - rank(wqDone(b), b.got)).map(q => {
+    const WQ = weeklyDefs.find(x => x.id === q.id) || {ic: '🎯', t: 'Цель', n: 1, g: 10};
+    const done = q.n >= WQ.n;
+    return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${WQ.ic}</span><span class="qt"><b>${WQ.t}</b><div class="xpbar"><i style="width:${Math.min(100, 100 * q.n / WQ.n)}%"></i></div><small>${q.n} / ${WQ.n} · <i class="coin"></i> ${WQ.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimwq="${q.id}">Забрать</button>` : ''}</div>`;
+  }).join('');
+
+  const allWqGot = progWeekly.length > 0 && progWeekly.every(q => q.got);
+  const chestRow = `<div class="quest weekly-chest${weeklyChestClaimed ? ' got' : allWqGot ? ' done' : ''}"><span class="qi">🎁</span><span class="qt"><b>Большой сундук недели</b><small>${weeklyChestClaimed ? 'Сундук недели открыт' : allWqGot ? 'Все цели недели достигнуты!' : 'Выполните все 3 цели недели'} · <i class="coin"></i> ${weeklyChestGold}</small></span>${weeklyChestClaimed ? '<span class="pill">Получено</span>' : allWqGot ? '<button class="chip pri" data-claimwchest="1">Забрать +100</button>' : '<span class="pill lock">Заперт</span>'}</div>`;
+  const wqGot = progWeekly.filter(q => q.got).length;
+
+  const qGot = progQuests.filter(q => q.got).length, aGot = achDefs.filter(a => progAch[a.id] === 'got').length;
+  const nearQ = progQuests.filter(q => !q.got).map(q => ({q, Q: questDefs.find(x => x.id === q.id)})).filter(x => x.Q).sort((a, b) => (a.Q.n - a.q.n) / a.Q.n - (b.Q.n - b.q.n) / b.Q.n)[0];
+  const goalLine = rewardReady ? '<div class="goalline ready">🎁 Есть награды: заберите их ниже</div>' : nearQ ? `<div class="goalline">🎯 Ближайшая цель: <b>${nearQ.Q.t}</b> · ${nearQ.q.n}/${nearQ.Q.n}</div>` : '<div class="goalline">✅ Все задания на сегодня выполнены</div>';
+
+  return `${goalLine}<div class="h3 sec">Задания на сегодня<em>${qGot} / ${progQuests.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${progWeekly.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${achDefs.length}</em></div>${aRows}`;
+}
+
+/** Generates HTML markup for match history tab. */
+export function renderHistoryHtml(rows = [], isFriendFn = () => false) {
+  if (!rows.length) return '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>';
+  const when = t => {
+    const d = new Date(t), p = n => String(n).padStart(2, '0');
+    return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  };
+  const wins = rows.filter(r => r.reason !== 'draw' && r.players.slice().sort((a, b) => b.score - a.score)[0].me).length;
+  const sum = `<div class="hsum"><b>${rows.length}</b> последних партий · 🏆 <b>${wins}</b> побед · онлайн <b>${rows.filter(r => /^o:/.test(r.id)).length}</b></div>`;
+
+  return sum + rows.map(r => {
+    const ps = r.players.slice().sort((a, b) => b.score - a.score);
+    const me = ps.findIndex(p => p.me);
+    const online = /^o:/.test(r.id);
+    const head = r.reason === 'draw' ? 'Ничья' : me === 0 ? '🏆 Победа' : me > 0 ? `${me + 1}-е место` : 'Партия';
+    const who = ps.map(p => {
+      const cleanName = String(p.name || 'Игрок').replace(/[<>&"]/g, '');
+      const validCol = typeof p.col === 'string' && /^#[0-9a-f]{6}$/i.test(p.col) ? p.col : '';
+      const uidStr = String(p.uid || '').replace(/[^\w-]/g, '').slice(0, 64);
+      const isFr = isFriendFn(p.uid);
+      const plData = (online && p.uid && !p.me && !p.bot) ? ` data-pl="${uidStr}" data-n="${cleanName}" data-c="${validCol}"` : '';
+      const addBtn = (online && p.uid && !p.me && !p.bot && !isFr) ? `<button class="chip hadd" data-uid="${uidStr}" data-n="${cleanName}">+ в друзья</button>` : '';
+      return `<span class="hp${p.me ? ' me' : ''}"${plData}><i style="--c:${validCol || '#5b6684'}"></i>${cleanName} <b>${+p.score || 0}</b>${addBtn}</span>`;
+    }).join('');
+    return `<div class="quest hrow"><span class="qi">${online ? '🌐' : '🤖'}</span><span class="qt"><b>${head}</b><small>${when(r.at)} · ${online ? 'онлайн' : 'офлайн'}</small><span class="hps">${who}</span></span></div>`;
+  }).join('');
+}

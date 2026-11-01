@@ -45,3 +45,62 @@ export function renderLocationsGrid(locs) {
     `<div class="li"><b>${l.name}</b><small>${l.open ? l.desc : l.desc + '. Появится в одном из следующих обновлений'}</small></div></div>`
   ).join('');
 }
+
+/** Generates HTML markup for status buttons grid in status shop. */
+export function renderStatusShopHtml({shopStatuses, ownedStatuses = [], wornKey = '', gold = 0, stBadgeFn}) {
+  const badge = stBadgeFn || (t => `<span class="stchip">${t}</span>`);
+  return (shopStatuses || []).map(x => {
+    const k = 'sh:' + x.id;
+    const has = ownedStatuses.includes(k);
+    const poor = !has && gold < x.price;
+    return `<button class="stb${wornKey === k ? ' sel' : ''}${poor ? ' poor' : ''}" data-stb="${x.id}">${badge(x.text)}<small>${wornKey === k ? 'Надет' : has ? 'Надеть' : `<i class="coin"></i>${x.price}`}</small></button>`;
+  }).join('');
+}
+
+/** Generates HTML markup for statuses tab in "My items". */
+export function renderItemsStatusesHtml({shopStatuses = [], exclusiveStatuses = [], ownedStatuses = [], wornKey = '', statusTextFn, stBadgeFn}) {
+  const badge = stBadgeFn || ((t, cls = '') => `<span class="stchip${cls}">${t}</span>`);
+  const textFn = statusTextFn || (k => k);
+  const counted = shopStatuses.length + exclusiveStatuses.filter(x => !x.soon).length;
+  const have = ownedStatuses.filter(k => !k.startsWith('cu:')).length;
+  const mine = ownedStatuses.map(k => ({k, t: textFn(k), ex: k.startsWith('ex:'), cu: k.startsWith('cu:')}));
+  const lockedEx = exclusiveStatuses.filter(x => !ownedStatuses.includes('ex:' + x.id));
+
+  return `<div class="icount">Собрано <b>${have}</b> из ${counted}${ownedStatuses.length > have ? ` · своих: ${ownedStatuses.length - have}` : ''}</div>`
+    + `<div class="itnow">Сейчас: ${wornKey && textFn(wornKey) ? badge(textFn(wornKey)) + '<button class="chip x" data-unwear>Снять</button>' : '<small>статус не надет</small>'}</div>`
+    + (mine.length ? `<div class="h3 sec">Мои статусы</div><div class="stgrid">${mine.map(m => `<button class="stb${wornKey === m.k ? ' sel' : ''}${m.ex ? ' ex' : ''}" data-iwear="${m.k}">${badge(m.t, m.ex ? ' ex' : '')}<small>${wornKey === m.k ? 'Надет' : m.ex ? 'Эксклюзив · надеть' : m.cu ? 'Свой · надеть' : 'Надеть'}</small></button>`).join('')}</div>` : '<p class="shint">Пока нет статусов. Купите в магазине или получите за достижения.</p>')
+    + (lockedEx.length ? `<div class="h3 sec">Эксклюзивные</div><div class="exlist">${lockedEx.map(x => `<div class="exrow${x.soon ? ' soon' : ''}"><span class="exic">${x.ic}</span><span><b>${x.text}</b><small>${x.how}</small></span><i>🔒</i></div>`).join('')}</div>` : '')
+    + '<button class="ghostbtn wide" data-ishop>Купить статусы в магазине</button>';
+}
+
+/** Generates HTML markup for frames tab in "My items". */
+export function renderItemsFramesHtml({frames = {}, ownedFrames = [], wornFrame = 'none', color = '#ef5350', profileInitial = '?'}) {
+  const ownFr = Object.keys(frames).filter(k => k === 'none' || ownedFrames.includes(k) || (!frames[k].price && !frames[k].earn));
+  const total = Object.keys(frames).length - 1;
+  const have = ownFr.filter(k => k !== 'none').length;
+  const lock = Object.entries(frames).filter(([k]) => !ownFr.includes(k));
+  const initial = (profileInitial || '?').toUpperCase();
+
+  return `<div class="icount">Собрано <b>${have}</b> из ${total}</div><div class="frgrid">${ownFr.map(k => {
+    const f = frames[k];
+    const sel = (wornFrame || 'none') === k;
+    return `<button class="frb${sel ? ' sel' : ''}" data-ifr="${k}"><span class="av${f.ring ? ' fr' : ''}" style="--c:${color};${f.ring ? `--fr:${f.ring}` : ''}">${initial}</span><span>${f.name}</span><small>${sel ? 'Надета' : 'Надеть'}</small></button>`;
+  }).join('')}</div>`
+    + (lock.length ? `<div class="h3 sec">Ещё не открыты</div><div class="frgrid">${lock.map(([k, f]) => `<div class="frb lockd"><span class="av fr" style="--c:#2a3254;--fr:${f.ring}">?</span><span>${f.name}</span><small>${f.earn ? '🔒 ' + f.earn : `<i class="coin"></i>${f.price}`}</small></div>`).join('')}</div>` : '')
+    + '<button class="ghostbtn wide" data-ishop>В магазин</button>';
+}
+
+/** Generates HTML markup for figures tab in "My items". */
+export function renderItemsFigsHtml({figs = {}, ownedFigs = [], selectedFig = 'classic', figPreviewFn = () => ''}) {
+  const ownF = Object.keys(figs).filter(k => ownedFigs.includes(k));
+  const lock = Object.keys(figs).filter(k => !ownedFigs.includes(k));
+
+  return `<div class="icount">Собрано <b>${ownF.length}</b> из ${Object.keys(figs).length}</div><div class="figgrid">${ownF.map(k => `<button class="fig${selectedFig === k ? ' sel' : ''}" data-ifig="${k}"><img src="${figPreviewFn(k)}" alt=""><b>${figs[k].name}</b><small>${selectedFig === k ? 'Выбрана' : 'Выбрать'}</small></button>`).join('')}</div>`
+    + (lock.length ? `<div class="h3 sec">Ещё не куплены</div><div class="figgrid">${lock.map(k => `<div class="fig poor lockd"><img src="${figPreviewFn(k)}" alt="" style="filter:grayscale(1) brightness(.6)"><b>${figs[k].name}</b><small><i class="coin"></i>${figs[k].price}</small></div>`).join('')}</div>` : '')
+    + '<button class="ghostbtn wide" data-ishop>В магазин</button>';
+}
+
+/** Generates HTML markup for locations tab in "My items". */
+export function renderItemsLocsHtml(locs = []) {
+  return `<div class="icount">Открыто <b>${locs.filter(l => l.open).length}</b> из ${locs.length}</div><div class="locgrid">${locs.map(l => `<div class="loc${l.open ? '' : ' locked'}"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><b>${l.name}</b><small>${l.open ? 'Открыта' : 'Скоро'}</small></div>`).join('')}</div>`;
+}
