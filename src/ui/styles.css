@@ -692,8 +692,6 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 @keyframes notein{from{opacity:0;transform:translate(-50%,-50%) scale(.85)}}@keyframes noteout{to{opacity:0;transform:translate(-50%,-46%) scale(.96)}}
 /* profile: one card — identity row, level row, account buttons */
 #scr-progress #profile{display:flex;flex-direction:column;align-items:stretch;gap:12px;text-align:left}
-#scr-progress #profile:has(+ #acct:not(:empty)){border-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
-#scr-progress #acct{position:relative;margin:-14px 0 0;padding:0 14px 14px;background:linear-gradient(160deg,rgba(76,141,255,.1),rgba(255,255,255,.03));border:1px solid var(--line);border-top:0;border-radius:0 0 18px 18px;box-shadow:none}
 #scr-progress #acct:empty{display:none}
 .pctop{display:flex;align-items:center;justify-content:flex-start;gap:12px}.pctop .pwho{display:flex;flex-direction:column;align-items:flex-start}.pctop .av.big{width:56px;height:56px;font-size:23px;flex:0 0 auto}.pctop .pwho{flex:1;min-width:0}.pctop .pwho b{font:800 18px var(--f-display)}
 .pclvl{display:flex;align-items:center;gap:12px;padding-top:12px;border-top:1px solid var(--line)}.pclvl .pi{flex:1;min-width:0}.pclvl small{color:var(--muted);font-size:12px}
@@ -1072,3 +1070,4 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .plist li.inv .av{filter:saturate(.6)}
 .who .fst{display:block;width:fit-content}
 .fbcard #fbHero .mhero{background:linear-gradient(135deg,#5a86e8,#3a62c4);border:1px solid rgba(255,255,255,.22);box-shadow:0 6px 16px rgba(0,0,0,.35);width:100%;box-sizing:border-box}
+#scr-progress #acct{display:none}
