@@ -2622,7 +2622,7 @@ function pendingInvites(seats) {
   if (!net || invited.code !== net.code) return [];
   return [...invited.uids].filter(uid => !seats.some(x => x.uid === uid)).map(uid => {
     const f = friends.find(q => q.uid === uid), at = (invited.at || {})[uid] || 0;
-    return {uid, n: f ? f.n : 'Друг', st: f ? f.st : '', c: f && f.c, late: !!at && Date.now() - at > INVITE_LATE};
+    return {uid, n: f ? f.n : 'Друг', st: f ? f.st : '', c: f && f.c, late: !!at && Date.now() - at > INVITE_LATE, declined: !!(invited.declined && invited.declined.has(uid))};
   });
 }
 let lobbyPendTimer = 0;
@@ -2653,7 +2653,7 @@ function renderLobby() {
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}${pend.length ? ` · приглашено: ${pend.length}` : ''}`;
   $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b>${stTag(x.st)}<small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   if (pend.length) {
-    $('#plist').insertAdjacentHTML('beforeend', pend.map(p => `<li class="inv${p.late ? ' late' : ''}"><span class="av" style="--c:${validCol(p.c) ? p.c : '#5b6684'}">${(clean(p.n) || '?')[0]}</span><span class="who"><b>${clean(p.n)}</b>${stTag(p.st)}<small>${p.late ? 'Не отвечает' : 'Приглашён · ждём ответа'}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`).join(''));
+    $('#plist').insertAdjacentHTML('beforeend', pend.map(p => `<li class="inv${p.late || p.declined ? ' late' : ''}${p.declined ? ' no' : ''}"><span class="av" style="--c:${validCol(p.c) ? p.c : '#5b6684'}">${(clean(p.n) || '?')[0]}</span><span class="who"><b>${clean(p.n)}</b>${stTag(p.st)}<small>${p.declined ? 'Отказался' : p.late ? 'Не отвечает' : 'Приглашён · ждём ответа'}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`).join(''));
   }
   clearTimeout(lobbyPendTimer);
   if (pend.length) lobbyPendTimer = setTimeout(() => { if (net && !$('#scr-lobby').hidden) renderLobby(); }, 5000);
@@ -2732,7 +2732,7 @@ $('#plist').addEventListener('click', e => { const a = e.target.closest('[data-a
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
 $('#backToGame').onclick = () => show('game');
 $('#lobbyStart').onclick = () => {
-  const seats = net.lobby ? net.lobby.seats : [], pend = pendingInvites(seats).filter(p => !p.late);
+  const seats = net.lobby ? net.lobby.seats : [], pend = pendingInvites(seats).filter(p => !p.late && !p.declined);
   if (!pend.length) return startOnline(seats);
   confirmBox(`Ещё ждём: ${pend.map(p => clean(p.n)).join(', ')}.<br><small style="font-weight:500;color:var(--muted)">Если начать сейчас, они не попадут в эту партию</small>`, 'Начать без них', () => startOnline(net.lobby ? net.lobby.seats : seats));
 };
@@ -3674,6 +3674,12 @@ async function acceptFriend(from) {
   delete inbox[from + '_f']; fbDel(`inbox/${me}/${from}_f`);
   toastAny(`${clean(x.n)} теперь ваш друг`); await loadFriends(); renderFriends(); friendsDot();
 }
+// "Not now" / dismissing a room invitation tells the inviter (a note in their inbox under my key: no new rules needed).
+function declineInvite(key) {
+  if (!key || !key.endsWith('_r') || !FB || !registered()) return;
+  const x = inbox[key], from = key.slice(0, -2); if (!x || x.k !== 'r') return;
+  fbPut(`inbox/${from}/${myUid()}_r`, {k: 'no', code: String(x.code || ''), n: profileName(), t: {'.sv': 'timestamp'}}).catch(() => {});
+}
 function dropInbox(key) { delete inbox[key]; fbDel(`inbox/${myUid()}/${key}`); renderFriends(); friendsDot(); }
 async function removeFriend(uid) { await fbDel(`friends/${myUid()}/${uid}`); friends = friends.filter(f => f.uid !== uid); renderFriends(); }
 // A room to invite into: the current one, or a new private room (a search for opponents is dropped).
@@ -3694,7 +3700,7 @@ async function inviteFriend(uid) {
   try { await fbPut(`inbox/${uid}/${myUid()}_r`, {k: 'r', code: net.code, n: profileName(), t: {'.sv': 'timestamp'}}); toastAny(`Приглашение отправлено: ${f.n}`); }
   catch (_) { toastAny('Не получилось — проверьте интернет'); }
   if (invited.code !== net.code) invited = {code: net.code, uids: new Set(), joined: new Set(), at: {}};
-  invited.uids.add(uid); (invited.at = invited.at || {})[uid] = Date.now(); renderFriends();
+  invited.uids.add(uid); (invited.at = invited.at || {})[uid] = Date.now(); if (invited.declined) invited.declined.delete(uid); renderFriends();
   if (!$('#scr-lobby').hidden) renderLobby();
 }
 function joinInvite(key) {
@@ -3710,6 +3716,11 @@ function onInbox(all) {
   for (const [k, v] of Object.entries(all || {})) {
     if (!v || typeof v !== 'object') continue;
     const from = k.slice(0, -2);
+    if (v.k === 'no') { // the friend declined my room invitation
+      const uid = k.slice(0, -2);
+      if (invited.code && String(v.code || '') === invited.code && invited.uids.has(uid) && !inboxShown.has(k + v.t)) { inboxShown.add(k + v.t); (invited.declined = invited.declined || new Set()).add(uid); const f = friends.find(q => q.uid === uid); toastAny(`${f ? f.n : clean(v.n)} отказался(ась) от приглашения`); if (!$('#scr-lobby').hidden) renderLobby(); }
+      fbDel(`inbox/${me}/${k}`); continue;
+    }
     if (v.k === 'ok') { if (!inboxShown.has(k + v.t)) { inboxShown.add(k + v.t); toastAny(`${clean(v.n)} принял(а) заявку в друзья`); loadFriends().then(renderFriends); } fbDel(`inbox/${me}/${k}`); continue; }
     if (v.k === 'r' && Date.now() - (v.t || 0) > INVITE_TTL) { fbDel(`inbox/${me}/${k}`); continue; }
     // A request from someone I already asked: we are friends now.
@@ -3727,7 +3738,7 @@ function popInbox(k, v) {
   document.querySelectorAll('.over.invite').forEach(x => x.remove());
   const box = document.createElement('div'); box.className = 'over invite'; box.style.position = 'fixed';
   box.innerHTML = `<div class="ocard"><div style="font-size:42px">🎲</div><h3>${clean(v.n)} зовёт играть</h3><p>Комната ${clean(v.code)}</p><button class="cta wide" data-a="go">Войти в комнату</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
-  box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; box.remove(); if (b.dataset.a === 'go') joinInvite(k); };
+  box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b) return; box.remove(); if (b.dataset.a === 'go') joinInvite(k); else { declineInvite(k); dropInbox(k); } };
   document.body.append(box); beep('turn');
 }
 async function inboxPoll() { if (!FB || !registered()) return; try { await fbToken(); onInbox(await fbGet('inbox/' + myUid())); } catch (_) {} }
@@ -3896,7 +3907,7 @@ $('#scr-friends').addEventListener('click', e => {
   else if (d.finv) inviteFriend(d.finv);
   else if (d.facc) acceptFriend(d.facc);
   else if (d.fjoin) joinInvite(d.fjoin);
-  else if (d.fdrop) dropInbox(d.fdrop);
+  else if (d.fdrop) { declineInvite(d.fdrop); dropInbox(d.fdrop); }
   else if (d.fdel) { const f = friends.find(x => x.uid === d.fdel); const nm = f ? f.n : 'игрока'; confirmBox(f && !f.mutual ? `Отменить заявку для ${nm}?` : `Удалить ${nm} из друзей?`, 'Удалить', () => removeFriend(d.fdel)); }
 });
 /* ---------------- owner panel: news push to all players ----------------

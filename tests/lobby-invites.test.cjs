@@ -37,3 +37,10 @@ test('source: pending rows, counter and the start confirmation exist', () => {
   assert.match(src, /Начать без них/);
   assert.match(src, /data-idrop/);
 });
+
+test('source: a declined invitation reaches the inviter and shows "Отказался" (no new rules needed)', () => {
+  const src = require('node:fs').readFileSync(__dirname + '/../web/game.html', 'utf8');
+  assert.match(src, /k: 'no', code:/);
+  assert.match(src, /v\.k === 'no'/);
+  assert.match(src, /p\.declined \? 'Отказался'/);
+});
