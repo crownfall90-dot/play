@@ -671,6 +671,7 @@ const prow = $('#prow'), mrow = $('#mrow'), tface = $('#tface'), ct = $('#ct'), 
 let ownDirty = true;
 const markOwn = () => { ownDirty = true; };
 function cityD(E, S) {
+  if (PG.ui && PG.ui.hud) return PG.ui.hud.cityD(E, S);
   const city = [0,1,2,3].filter(d => E[d] === 'c'), k = city.length, C = S / 2;
   const corner = [[0,0],[S,0],[S,S],[0,S]], mid = [[S/2,0],[S,S/2],[S/2,S],[0,S/2]];
   const pt = p => p[0].toFixed(1) + ' ' + p[1].toFixed(1);
@@ -693,6 +694,7 @@ function cityD(E, S) {
   return {fill: fill + 'Z', wall};
 }
 function ownSvg(t, list) {
+  if (PG.ui && PG.ui.hud) return PG.ui.hud.ownSvg(t, list, TYPES[t.type] ? TYPES[t.type].e : null);
   const mid = [[50,0],[100,50],[50,100],[0,50]];
   let out = '';
   // Several claimants: dashes of each colour in turn.
@@ -813,7 +815,9 @@ function setClock(who, left, low) {
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
+  playersEl.innerHTML = (PG.ui && PG.ui.hud)
+    ? PG.ui.hud.renderPlayersListHtml(players, {turn, phase, bump, isMe, myRing, meeplesTotal: gameRules.meeples, turnTag, clockHtml: clkHtml})
+    : players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -1443,12 +1447,19 @@ function renderResults(final, gold) {
   $('#goldres').hidden = true;
   $('#rres').hidden = !gold; if (gold) $('#rres').innerHTML = rewardChips(gold);
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
-  $('#rt').textContent = winTitle(o[0], final);
-  const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
-  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
-  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
+  $('#rt').textContent = (PG.ui && PG.ui.results) ? PG.ui.results.winTitle(o[0], final, isMe(o[0])) : winTitle(o[0], final);
+  const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]).map(([p, n, h]) => [{...p, name: clean(p.name)}, n, h]);
+  $('#podium').innerHTML = (PG.ui && PG.ui.results)
+    ? PG.ui.results.renderPodiumHtml(pod, meepleImg)
+    : pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
+  const oClean = o.map(p => ({...p, name: clean(p.name)}));
+  $('#bd').innerHTML = (PG.ui && PG.ui.results)
+    ? PG.ui.results.renderBreakdownTableHtml(oClean)
+    : o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
   const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
-  $('#sumline').innerHTML = `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
+  $('#sumline').innerHTML = (PG.ui && PG.ui.results)
+    ? PG.ui.results.renderSummaryLineHtml({tilesCount: tiles.size, movesCount: moves, figsCount: figs, deckCount: deck.length})
+    : `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
   const ag = $('#again'); if (ag) { ag.textContent = net ? 'Реванш' : 'Ещё партию'; ag.disabled = false; }
 }
 

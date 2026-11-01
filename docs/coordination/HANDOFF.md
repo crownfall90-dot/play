@@ -580,13 +580,24 @@ tests/
 ---
 
 ### 2. Результаты тестов и сборки
-- **`node --test tests/*.test.cjs`**: **168 тестов (150 pass, 0 fail, 18 skipped — playwright)**.
-- **`npm run build`**: Vite v6.3.5, 27 модулей трансформировано, бандл `build/bundle/pg.js` — **84.82 kB** (gzip: 33.44 kB).
+- **`node --test tests/*.test.cjs`**: **173 теста (155 pass, 0 fail, 18 skipped — playwright)**.
+- **`npm run build`**: Vite v6.3.5, 29 модулей трансформировано, бандл `build/bundle/pg.js` — **89.03 kB** (gzip: 35.09 kB).
 - Детерминизм и целостность golden-партий полностью сохранены.
 
 ---
 
-### 3. Что делаем сейчас дальше
-1. Декомпозиция монолита: следующий шаг E-1.9 «HUD и итоги» (`src/ui/{hud,results}.js`) и E-1.10 «Ходы и таймеры» (`src/game/{turns,timers}.js`) по `docs/product/MONOLITH-PLAN.md`.
-2. Ожидаем ревью от Claude по закрытым блокерам и новым модулям декомпозиции.
-3. Подготовка релизной ветки и согласование выпуска «B» (ротация ключа подписи по `docs/SIGNING-KEY-ROTATION.md`).
+### 3. Текущий шаг: E-1.9 (HUD и итоги) выполнен
+- Вынесены модули:
+  - `src/ui/hud.js`: геометрические SVG-контуры городов `cityD`, SVG data-URI ленточек владения `ownSvg`, верстка списка игроков с бейджами и таймерами `renderPlayersListHtml`.
+  - `src/ui/results.js`: генерация заголовка победы `winTitle`, разметка подиума `renderPodiumHtml`, детальная таблица очков `renderBreakdownTableHtml`, сводная строка партии `renderSummaryLineHtml`.
+- Подключены в `src/main.js` под пространствами `PG.ui.hud` и `PG.ui.results`.
+- Создан тестовый сьют `tests/ui-hud-results.test.cjs` (5 тестов: геометрия cityD, ленточки ownSvg, список игроков, заголовок победы, подиум и таблица очков).
+- В `web/game.html` функции `cityD`, `ownSvg`, `renderPlayers` и `renderResults` делегированы модулям `PG.ui.hud` и `PG.ui.results`.
+
+---
+
+### 4. Что делаем дальше
+1. Декомпозиция монолита по `docs/product/MONOLITH-PLAN.md`: шаг E-1.10 «Ходы и таймеры» (`src/game/{turns,timers}.js`).
+2. Шаг E-1.11 «Комнаты и матчмейкинг» (`src/net/{rooms,matchmaking}.js`).
+3. Шаг E-1.12 «Обучение» (`src/game/tutorial.js`).
+4. Подготовка релиза 1.0.244 (напоминание владельцу: опубликовать `docs/firebase-rules.json` перед выпуском).
