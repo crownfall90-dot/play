@@ -801,11 +801,11 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 
 /* dialogs: clean minimalist silhouette with warm beveled border and obsidian gradient */
 .ocard:not(.fin):not(.fgate){position:relative;border:1.5px solid rgba(242,184,75,.35);border-top:1.5px solid rgba(255,230,150,.65);box-shadow:0 24px 64px rgba(0,0,0,.75),0 0 32px rgba(242,184,75,.12);background:linear-gradient(175deg,#182346 0%,#0d142a 100%)}
-.ocard.fbcard{width:min(360px,94vw);max-width:none;text-align:left}.ocard.fbcard .shero{margin-right:14px}
+.ocard.fbcard{width:min(360px,94vw);max-width:none;text-align:left}.ocard.fbcard .shero{margin-right:0}
 .fbgift{margin:0;font-size:13px;font-weight:700;color:var(--brass);text-align:center}
-.fbcats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 2px}
-.fbcat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px 7px;border:0;color:#eef2ff;font:800 11px var(--f-display);cursor:pointer;min-height:54px;border-radius:12px}
-.fbcat i{font-style:normal;font-size:18px}.fbcat.sel{color:var(--brass-ink)}
+.fbcats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0}
+.fbcat{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px 7px;border:1px solid rgba(255,255,255,.18);color:#fff;font:700 12px var(--f-body);cursor:pointer;min-height:56px;min-width:0;border-radius:14px;background-color:var(--cc);background-image:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.22));box-shadow:0 3px 8px rgba(0,0,0,.3);opacity:.82;transition:transform .15s,opacity .15s}.fbcat span{white-space:nowrap}
+.fbcat i{font-style:normal;font-size:18px}.fbcat.sel{opacity:1;transform:translateY(-1px);border-color:#ffe08a;box-shadow:0 0 0 2px rgba(255,224,138,.55),0 5px 12px rgba(0,0,0,.35)}
 .fb-stars{display:flex;justify-content:center;gap:6px;margin:4px 0 2px}
 .fb-star{background:none;border:0;font-size:26px;cursor:pointer;padding:2px 4px;filter:grayscale(1) opacity(0.35);transition:transform .15s,filter .15s;line-height:1}
 .fb-star.active{filter:none;transform:scale(1.1)}
@@ -1071,3 +1071,4 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .plist li.inv{opacity:.88;border-style:dashed}.plist li.inv .who small{color:var(--brass)}.plist li.inv.late .who small{color:var(--muted)}
 .plist li.inv .av{filter:saturate(.6)}
 .who .fst{display:block;width:fit-content}
+.fbcard #fbHero .mhero{background:linear-gradient(135deg,#5a86e8,#3a62c4);border:1px solid rgba(255,255,255,.22);box-shadow:0 6px 16px rgba(0,0,0,.35);width:100%;box-sizing:border-box}
