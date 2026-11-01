@@ -36,6 +36,12 @@ test('security audit: firebase rules contain promo_claims and secure testerPin',
   const claim = rules.rules.promo_claims.$code.$uid;
   assert.ok(claim['.write'].includes('!data.exists()'), 'prevents multiple claims of same promo');
   assert.ok(claim['.read'].includes('auth.uid === $uid'), 'users only read their own claims');
+
+  // Status moderation: admins can moderate and clear custom status in presence and leaders
+  assert.ok(rules.rules.presence.$uid['.write'].includes('admins'), 'admins can write to presence for status moderation');
+  assert.ok(rules.rules.presence.$uid['.validate'].includes('admins'), 'admins pass presence validation');
+  assert.ok(rules.rules.leaders.$uid['.write'].includes('admins'), 'admins can write to leaders for status moderation');
+  assert.ok(rules.rules.leaders.$uid['.validate'].includes('admins'), 'admins pass leaders validation');
 });
 
 test('security audit: game.html sanitizes remote seats, uid, and results board against XSS', () => {

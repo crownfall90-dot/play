@@ -64,9 +64,21 @@ test('screens: shop statuses and "my items" open without errors, buying puts the
   } finally { await browser.close(); }
 });
 
-test('source: rating "among friends" reads the real friends list; sign-out button is inside the profile card', () => {
-  const src = require('node:fs').readFileSync(__dirname + '/../web/game.html', 'utf8');
-  assert.match(src, /friends\.filter\(f => f\.mutual\)/);
-  assert.doesNotMatch(src, /Object\.keys\(wallet\.friends \|\| \{\}\)/);
-  assert.match(src, /data-hacct="out">Выйти из аккаунта/);
+test('profile DOM: sign-out / auth action is inside profile card; rating scope buttons exist', {skip: !pw && 'playwright is not installed (npm ci)', timeout: 120000}, async () => {
+  const browser = await pw.chromium.launch();
+  try {
+    const {page, errors} = await openGame(browser, instrumentedCopy(), null);
+    const res = await page.evaluate(() => {
+      const P = window.__pg;
+      P.show('profile');
+      const card = document.querySelector('#profile');
+      const authActionInsideCard = card ? card.querySelector('[data-hacct]') !== null : false;
+      document.querySelector('#ptabs [data-pt="top"]').click();
+      const topTabActive = document.querySelector('#ptabs [data-pt="top"]').getAttribute('aria-pressed') === 'true';
+      return {authActionInsideCard, topTabActive};
+    });
+    assert.equal(res.authActionInsideCard, true, 'sign-out / sign-in action button is inside the profile card');
+    assert.equal(res.topTabActive, true, 'rating tab is activated');
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
 });

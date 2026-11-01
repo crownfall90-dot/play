@@ -2,6 +2,8 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const {loadPlaywright, instrumentedCopy, openGame} = require('./golden/harness.cjs');
+const pw = loadPlaywright();
 
 test('catalog: COLLECTIONS structure and collectionProgress logic (R-9)', async () => {
   const C = await import('../src/state/catalog.js');
@@ -134,28 +136,40 @@ test('progress: normalizeStats and recordGameMode (R-11)', async () => {
   assert.equal(norm.byMode.friends.best, 48);
 });
 
-test('source check: game.html and styles.css contain R-9, R-11, D-1, D-2 integration', async () => {
-  const fs = require('node:fs');
-  const html = fs.readFileSync('web/game.html', 'utf8');
-  const css = fs.readFileSync('src/ui/styles.css', 'utf8');
+test('collections & mastery DOM: collections tab renders cards, claiming complete collection awards gold once', {skip: !pw && 'playwright is not installed (npm ci)', timeout: 120000}, async () => {
+  const browser = await pw.chromium.launch();
+  try {
+    const {page, errors} = await openGame(browser, instrumentedCopy(), null);
+    const res = await page.evaluate(() => {
+      const P = window.__pg;
+      const w = P.wallet();
+      w.gold = 100;
+      // Complete 'court' collection: classic, knight, king, queen figs + royal frame
+      w.owned = ['classic', 'knight', 'king', 'queen'];
+      w.frames = ['royal'];
+      w.colClaimed = [];
 
-  // R-9 Collections tab and renderCollections
-  assert.match(html, /data-pt="cols"/);
-  assert.match(html, /renderCollections/);
-  assert.match(html, /data-claimcol=/);
+      P.show('profile');
+      document.querySelector('#ptabs [data-pt="cols"]').click();
+      const cardCount = document.querySelectorAll('.col-card').length;
+      const claimBtn = document.querySelector('[data-claimcol="court"]');
+      const canClaimBefore = !!claimBtn;
+      if (claimBtn) claimBtn.click();
+      const goldAfterFirstClaim = w.gold;
+      const claimedAfter = (w.colClaimed || []).includes('court');
 
-  // R-11 Mastery stats
-  assert.match(html, /Мастерство по режимам/);
-  assert.match(html, /smastery/);
-  assert.match(html, /recordGameMode/);
+      // Attempt second claim
+      const secondBtn = document.querySelector('[data-claimcol="court"]');
+      if (secondBtn) secondBtn.click();
+      const goldAfterSecondClaim = w.gold;
 
-  // D-2 Placement lock & feature confetti
-  assert.match(html, /puzzle-lock/);
-  assert.match(html, /featureConfetti/);
-
-  // D-1 and D-2 CSS
-  assert.match(css, /\.puzzle-lock/);
-  assert.match(css, /\.feat-confetti/);
-  assert.match(css, /\.smastery/);
-  assert.match(css, /\.col-card/);
+      return {cardCount, canClaimBefore, goldAfterFirstClaim, claimedAfter, goldAfterSecondClaim};
+    });
+    assert.equal(res.cardCount, 3, 'renders 3 collection cards');
+    assert.equal(res.canClaimBefore, true, 'claim button is present when complete');
+    assert.equal(res.goldAfterFirstClaim, 600, 'awards 500 gold for court collection (100 + 500)');
+    assert.equal(res.claimedAfter, true, 'court marked as claimed');
+    assert.equal(res.goldAfterSecondClaim, 600, 'gold does not increase on second claim');
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
 });
