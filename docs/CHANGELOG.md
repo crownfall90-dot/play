@@ -1771,3 +1771,46 @@
 - Merge pull request #219 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.242
 
+## 1.0.244 — 2026-11-01
+
+**Игрокам:**
+- Новые быстрые дуэли 1×1 на время и события в Большой игре
+- Боты-соседи в онлайн-поиске: больше не нужно ждать в пустой комнате
+- Коллекции фигурок и рамок с наградами золотом
+- Статистика мастерства и рекорды по режимам в профиле
+- Конкурс на новое имя игры с гарантированной наградой 100 золота
+
+**В коде:**
+- Merge pull request #222 from crownfall90-dot/dev/stage2-account-network-20261029
+- style(ui): elevate global design system, cards, micro-interactions and contrast across all screens
+- docs: record actual account regression and offline build results
+- style(ui): polish name proposal modal with spring physics, dynamic counters and accessibility
+- docs: add player release notes for 1.0.244
+- style(ui): redesign name proposal dialog, remove later button and enhance visual contrast
+- refactor: extract E-1.12 tutorial game module
+- docs: record actual account regression and offline build results
+- refactor: extract E-1.11 rooms and matchmaking net modules
+- docs: record actual account regression and offline build results
+- refactor: extract E-1.10 turns and timers game modules
+- docs(coordination): владелец опубликовал правила Firebase, выпуск 1.0.244 можно начинать
+- refactor: extract E-1.9 HUD and results UI modules
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- docs(review): принято, выпуск 1.0.244 разрешён
+- refactor(decomp): extract E-1.8 camera and world game modules
+- docs: record actual account regression and offline build results
+- refactor(decomp): extract E-1.7 game state abstraction module
+- docs: record actual account regression and offline build results
+- refactor(decomp): extract E-1.6 owner panel and feedback UI modules
+- docs: record actual account regression and offline build results
+- fix(security): restore public read for testerPin, handle 401 on promo claims, normalize LF, doc duel/epic
+- docs: record actual account regression and offline build results
+- refactor: extract E-1.4 shop/progress UI and E-1.5 friends/presence modules
+- docs(review): вердикт по 2873ad7 — выпуск приостановлен, правка PIN тестеров и новые постановления
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- docs(review): вердикт по H-5, R-9, R-11 и порядок самостоятельного выпуска 1.0.244
+- feat: G-3 adaptive bots, G-5 epic events, G-6 duel mode, security audit fixes SEC-01..05, E-1.2/3 account decomposition and Google Play assets
+- docs: record actual account regression and offline build results
+- feat: R-9 collections, R-11 mastery stats, D-1/D-2 puzzle style and E-1.1 refactor
+- Merge pull request #221 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.243
+
