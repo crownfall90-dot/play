@@ -40,13 +40,15 @@ export function rareName(e) {
   return t[0].toUpperCase() + t.slice(1);
 }
 
+export const isRareTile = type => !!(TYPES[type] && TYPES[type].rare);
+
 /** The cards of one stack for these rules, in TYPES order (shuffled by the caller). */
 export function deckList(rules) {
   const d = [], k = rules.mode === 'epic' ? 2 : 1;
   for (const id in TYPES) {
     const t = TYPES[id];
     if (!rules.rivers && t.e.includes('w')) continue;
-    if (rules.mode === 'fast' && t.rare) continue;
+    if ((rules.mode === 'fast' || rules.mode === 'duel') && t.rare) continue;
     for (let i = 0; i < t.n * (t.rare ? 1 : k); i++) d.push(id);
   }
   return d;

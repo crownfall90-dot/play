@@ -1,0 +1,76 @@
+// Tests for extracted account modules: src/account/google.js, src/account/sync.js, src/account/auth.js (E-1.2, E-1.3)
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+test('account/google: jwtPayload decodes UTF-8 and handles malformed tokens', async () => {
+  const {jwtPayload, jwtEmail, googleIdpBody, classifyGoogleError} = await import('../src/account/google.js');
+
+  // UTF-8 payload
+  const token = 'header.' + Buffer.from(JSON.stringify({email: 'test@example.com', name: 'Пазлград'})).toString('base64url') + '.sig';
+  const payload = jwtPayload(token);
+  assert.equal(payload.email, 'test@example.com');
+  assert.equal(payload.name, 'Пазлград');
+  assert.equal(jwtEmail(token), 'test@example.com');
+
+  // Malformed token
+  assert.deepEqual(jwtPayload('bad-token'), {});
+  assert.equal(jwtEmail('bad-token'), '');
+
+  // IDP Body
+  const bodyNoSession = googleIdpBody('my-token');
+  assert.ok(bodyNoSession.postBody.includes('my-token'));
+  assert.equal(bodyNoSession.returnSecureToken, true);
+  assert.equal(bodyNoSession.idToken, undefined);
+
+  const bodyWithSession = googleIdpBody('my-token', 'session-123');
+  assert.equal(bodyWithSession.idToken, 'session-123');
+
+  // Error classifier
+  assert.equal(classifyGoogleError({message: 'User cancelled sign-in'}), 'canceled');
+  assert.equal(classifyGoogleError({message: 'No credentials found'}), 'no_credentials');
+  assert.equal(classifyGoogleError({message: 'Server connection failed'}), 'failed');
+});
+
+test('account/sync: encodeProfilePayload, decodeProfilePayload, and mergeWallets', async () => {
+  const {encodeProfilePayload, decodeProfilePayload, mergeWallets} = await import('../src/account/sync.js');
+
+  const wallet = {gold: 250, promos: ['OPUS55'], owned: ['classic', 'knight'], frames: ['royal']};
+  const seats = [{name: 'Алиса', col: '#ef5350'}];
+  const encoded = encodeProfilePayload(wallet, seats, 1700000000);
+
+  assert.equal(encoded.t, 1700000000);
+  assert.equal(typeof encoded.w, 'string');
+  assert.equal(typeof encoded.s, 'string');
+
+  const decoded = decodeProfilePayload(encoded);
+  assert.deepEqual(decoded.wallet.gold, 250);
+  assert.deepEqual(decoded.wallet.promos, ['OPUS55']);
+  assert.equal(decoded.seats.name, 'Алиса');
+  assert.equal(decoded.timestamp, 1700000000);
+
+  // Merging local and remote wallets
+  const localW = {gold: 150, promos: ['A'], owned: ['classic']};
+  const remoteW = {gold: 300, promos: ['B'], owned: ['classic', 'queen']};
+  const merged = mergeWallets(localW, remoteW);
+  assert.equal(merged.gold, 300, 'gold takes maximum');
+  assert.deepEqual(merged.promos.sort(), ['A', 'B'], 'promos union');
+  assert.deepEqual(merged.owned.sort(), ['classic', 'queen'], 'cosmetics union');
+});
+
+test('account/auth: sanitizeNickname, isValidNickname, getDisplayName', async () => {
+  const {sanitizeNickname, isValidNickname, getDisplayName, RENAME_PRICE} = await import('../src/account/auth.js');
+
+  assert.equal(RENAME_PRICE, 50);
+  assert.equal(sanitizeNickname('<Иван>'), 'Иван');
+  assert.equal(sanitizeNickname('   ОченьДлинныйНикнеймСверхЛимита   '), 'ОченьДлинный');
+
+  assert.equal(isValidNickname('Алиса'), true);
+  assert.equal(isValidNickname('А'), false);
+  assert.equal(isValidNickname('Игрок'), false);
+  assert.equal(isValidNickname(''), false);
+
+  assert.equal(getDisplayName({name: 'Боб'}), 'Боб');
+  assert.equal(getDisplayName({guest: 'Гость_42'}), 'Гость_42');
+  assert.equal(getDisplayName({}), 'Игрок');
+});

@@ -117,7 +117,7 @@
           <div class="profile" id="profile"></div>
           <div class="sgroup prof" id="acct"></div>
           <div class="pstats" id="stats"></div>
-          <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
+          <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="cols" aria-pressed="false">Коллекции</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
           <div class="col" id="ptab"></div>
         </div>
       </section>
@@ -348,7 +348,7 @@ setup.rules = Object.assign({mode: 'classic', deck: 50, rivers: true, meeples: 6
 setup.rules.tie = 'all'; // a disputed feature (equal figures) always gives every leader the full points: the usual rule, no option any more
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
 if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck; // the old sizes (40, 60, whole deck) became 30 / 50 / 100
-if (![4, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
+if (![4, 5, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
 const isLocal = i => net ? players[i].owner === myId : players[i].human;
@@ -381,8 +381,11 @@ const meepleSvg = col => `<svg viewBox="0 0 100 110"><path d="${MEEPLE_D}" fill=
 // Tile and sprite art live in src/render/art.js.
 const {cv, SPR, sprite, TILE_URL, injectArt} = PG.render.createArt({S, V, PL0, MEEPLE_D});
 /* ---------------- rules ---------------- */
-let tiles = new Map(), deck = [], meeples = [], players = [], turn = 0, phase = 'idle', current = null, sel = null;
-let ghost = null, ghostDeg = 0, trayDeg = 0, slotEls = [], token = 0, gameVisible = true, pendingStart = false;
+const G = (PG.game && PG.game.createGameState) ? PG.game.createGameState() : {
+  tiles: new Map(), deck: [], meeples: [], players: [], turn: 0, phase: 'idle', current: null, sel: null
+};
+let tiles = G.tiles, deck = G.deck, meeples = G.meeples, players = G.players, turn = G.turn, phase = G.phase, current = G.current, sel = G.sel;
+let ghost = G.ghost, ghostDeg = G.ghostDeg, trayDeg = G.trayDeg, slotEls = G.slotEls, token = G.token, gameVisible = G.gameVisible, pendingStart = G.pendingStart;
 // Board rules live in src/engine/board.js; these wrappers pass it the current game state.
 const B = PG.engine.board, key = B.key, edgeAt = B.edgeAt, groupsOf = B.groupsOf, gid = B.gid;
 const at = (x, y) => tiles.get(key(x, y));
@@ -394,6 +397,7 @@ const hasPlacement = type => B.hasPlacement(tiles, type);
 const fortComp = t => B.fortComp(tiles, meeples, t);
 const component = (t, g) => B.component(tiles, meeples, t, g);
 function groupPos(t, g) {
+  if (PG.game && PG.game.world) return PG.game.world.groupPos(t, g);
   if (g.kind === 'f') return [0.24, 0.18];
   if (g.kind === 'c') {
     if (g.edges.length === 1) { const [x, y] = V[g.edges[0]]; return [x * .3, y * .3]; }
@@ -522,7 +526,9 @@ let camFrame = 0;
 // Finger moves arrive faster than the screen redraws; move the 3D scene once per frame.
 function applyCamSoon() { if (!camFrame) camFrame = requestAnimationFrame(() => { camFrame = 0; applyCam(); }); }
 function applyCam() {
-  world.style.transform = `rotateX(${cam.tilt}deg) rotateZ(${cam.rot}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
+  world.style.transform = (PG.game && PG.game.camera)
+    ? PG.game.camera.formatTransform(cam)
+    : `rotateX(${cam.tilt}deg) rotateZ(${cam.rot}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
   if (cam.tilt !== lastTilt || cam.rot !== lastRot) {
     world.style.setProperty('--tilt', cam.tilt + 'deg'); world.style.setProperty('--rot', cam.rot + 'deg');
     lastTilt = cam.tilt; lastRot = cam.rot;
@@ -532,12 +538,20 @@ function applyCam() {
 }
 let boundsCache = null;
 function bounds() { if (boundsCache && boundsCache.n === tiles.size) return boundsCache; boundsCache = calcBounds(); boundsCache.n = tiles.size; return boundsCache; }
-function calcBounds() { let x0 = 0, x1 = 0, y0 = 0, y1 = 0; for (const t of tiles.values()) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); } return {x0, x1, y0, y1}; }
+function calcBounds() {
+  if (PG.game && PG.game.camera) return PG.game.camera.calcBounds(tiles);
+  let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+  for (const t of tiles.values()) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); }
+  return {x0, x1, y0, y1};
+}
 function clampCam() {
   const b = bounds();
-  cam.px = Math.max(-(b.x1 + 1.5) * T, Math.min(-(b.x0 - 1.5) * T, cam.px));
-  cam.py = Math.max(-(b.y1 + 1.5) * T, Math.min(-(b.y0 - 1.5) * T, cam.py));
-  cam.z = Math.max(.45, Math.min(1.8, cam.z));
+  if (PG.game && PG.game.camera) PG.game.camera.clampCam(cam, b, T);
+  else {
+    cam.px = Math.max(-(b.x1 + 1.5) * T, Math.min(-(b.x0 - 1.5) * T, cam.px));
+    cam.py = Math.max(-(b.y1 + 1.5) * T, Math.min(-(b.y0 - 1.5) * T, cam.py));
+    cam.z = Math.max(.45, Math.min(1.8, cam.z));
+  }
   if (tut && pinch) tutEvent('zoom');
 }
 function tweenCam(to, ms = 600) {
@@ -554,7 +568,12 @@ function tweenCam(to, ms = 600) {
     requestAnimationFrame(step);
   });
 }
-function centerCam(anim) { const b = bounds(); const to = {px: -(b.x0 + b.x1) / 2 * T, py: -(b.y0 + b.y1) / 2 * T}; if (anim) return tweenCam(to, 500); Object.assign(cam, to); applyCam(); }
+function centerCam(anim) {
+  const b = bounds();
+  const to = (PG.game && PG.game.camera) ? PG.game.camera.centerCamTarget(b, T) : {px: -(b.x0 + b.x1) / 2 * T, py: -(b.y0 + b.y1) / 2 * T};
+  if (anim) return tweenCam(to, 500);
+  Object.assign(cam, to); applyCam();
+}
 function ensureVisible(x, y) {
   const vw = board.clientWidth, vh = board.clientHeight;
   if (!vw) return;
@@ -568,9 +587,15 @@ function ensureVisible(x, y) {
 let panSum = 0;
 function panBy(dx, dy) {
   if (tut && (panSum += Math.abs(dx) + Math.abs(dy)) > 60) { panSum = 0; tutEvent('pan'); }
-  const r = cam.rot * Math.PI / 180, sy = dy / Math.cos(cam.tilt * Math.PI / 180);
-  cam.px += (dx * Math.cos(r) + sy * Math.sin(r)) / cam.z;
-  cam.py += (-dx * Math.sin(r) + sy * Math.cos(r)) / cam.z;
+  if (PG.game && PG.game.camera) {
+    const d = PG.game.camera.panDelta(dx, dy, cam);
+    cam.px += d.dpx;
+    cam.py += d.dpy;
+  } else {
+    const r = cam.rot * Math.PI / 180, sy = dy / Math.cos(cam.tilt * Math.PI / 180);
+    cam.px += (dx * Math.cos(r) + sy * Math.sin(r)) / cam.z;
+    cam.py += (-dx * Math.sin(r) + sy * Math.cos(r)) / cam.z;
+  }
   clampCam(); applyCamSoon();
 }
 const hint = $('#hint');
@@ -646,6 +671,7 @@ const prow = $('#prow'), mrow = $('#mrow'), tface = $('#tface'), ct = $('#ct'), 
 let ownDirty = true;
 const markOwn = () => { ownDirty = true; };
 function cityD(E, S) {
+  if (PG.ui && PG.ui.hud) return PG.ui.hud.cityD(E, S);
   const city = [0,1,2,3].filter(d => E[d] === 'c'), k = city.length, C = S / 2;
   const corner = [[0,0],[S,0],[S,S],[0,S]], mid = [[S/2,0],[S,S/2],[S/2,S],[0,S/2]];
   const pt = p => p[0].toFixed(1) + ' ' + p[1].toFixed(1);
@@ -668,6 +694,7 @@ function cityD(E, S) {
   return {fill: fill + 'Z', wall};
 }
 function ownSvg(t, list) {
+  if (PG.ui && PG.ui.hud) return PG.ui.hud.ownSvg(t, list, TYPES[t.type] ? TYPES[t.type].e : null);
   const mid = [[50,0],[100,50],[50,100],[0,50]];
   let out = '';
   // Several claimants: dashes of each colour in turn.
@@ -788,7 +815,9 @@ function setClock(who, left, low) {
 function renderPlayers(bump = []) {
   setTimeout(checkKicked);
   updateOwnership();
-  playersEl.innerHTML = players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
+  playersEl.innerHTML = (PG.ui && PG.ui.hud)
+    ? PG.ui.hud.renderPlayersListHtml(players, {turn, phase, bump, isMe, myRing, meeplesTotal: gameRules.meeples, turnTag, clockHtml: clkHtml})
+    : players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -931,6 +960,8 @@ async function dropAt(t) {
   t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
   if (!fast()) { const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600); }
+  if (!fast()) { t.el.classList.add('puzzle-lock'); setTimeout(() => { if (t.el) t.el.classList.remove('puzzle-lock'); }, 350); }
+  if (!fast() && gameRules && gameRules.mode === 'epic' && TYPES[t.type] && TYPES[t.type].rare) toastAny(`✨ Редкая карта на поле: ${TYPES[t.type].name}!`);
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
@@ -1005,11 +1036,21 @@ async function afterPlace(t, p, forced) {
   if (my !== token) return;
   if (forced === undefined) {
     const mt = choice ? choice.t : t;
-    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
-      m: choice ? groupsOf(mt).findIndex(g => gid(mt, g) === gid(mt, choice.g)) : -1};
-    if (choice && (mt.x !== t.x || mt.y !== t.y)) { mv.mtx = mt.x; mv.mty = mt.y; }
-    // A bot move counts as a skipped turn, unless the player came back while it was being made.
-    if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    let mv;
+    if (PG.game && PG.game.turns) {
+      const formatted = PG.game.turns.formatMovePayload({
+        n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
+        choice, groupsOfFn: groupsOf, gidFn: gid,
+        autoMove, autoAway, missedCount: players[p].missed, isNet: !!net
+      });
+      mv = formatted.move;
+      players[p].missed = formatted.missed;
+    } else {
+      mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
+        m: choice ? groupsOf(mt).findIndex(g => gid(mt, g) === gid(mt, choice.g)) : -1};
+      if (choice && (mt.x !== t.x || mt.y !== t.y)) { mv.mtx = mt.x; mv.mty = mt.y; }
+      if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    }
     autoAway = false;
     autoMove = false;
     gameLog.moves.push(mv);
@@ -1023,7 +1064,7 @@ async function afterPlace(t, p, forced) {
   for (const m of mine) if (my === token) await resolveFeature(component(m.t, m.g), false, p);
   renderPlayers();
   if (my !== token) return;
-  turn = (turn + 1) % players.length;
+  turn = (PG.game && PG.game.turns) ? PG.game.turns.nextTurnIndex(turn, players.length) : (turn + 1) % players.length;
   await wait(250);
   if (my === token) startTurn();
 }
@@ -1036,6 +1077,18 @@ const roadPoints = c => SC.roadPoints(tiles, c);
 async function scoreAfter(t, p, skip) {
   for (const c of SC.completedAround(tiles, meeples, t)) if (!skip || ![...c.ids].some(i => skip.has(i))) await resolveFeature(c, false, p);
 }
+function featureConfetti(tile, color) {
+  if (RM || fast() || (wallet && wallet.gfx === 'low') || !tile || !tile.el) return;
+  const cf = document.createElement('div'); cf.className = 'feat-confetti';
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('span');
+    s.style.setProperty('--c', color || '#f2b84b');
+    s.style.setProperty('--dx', (Math.cos(i * Math.PI / 6) * 36).toFixed(1) + 'px');
+    s.style.setProperty('--dy', (Math.sin(i * Math.PI / 6) * 36).toFixed(1) + 'px');
+    cf.append(s);
+  }
+  tile.el.append(cf); setTimeout(() => cf.remove(), 800);
+}
 async function resolveFeature(c, final, placer) {
   const {win, each, helped} = SC.settle(tiles, c, final, players.length, gameRules.tie, placer);
   c.tiles.forEach(x => x.el.classList.add('glow'));
@@ -1044,7 +1097,13 @@ async function resolveFeature(c, final, placer) {
   win.forEach(i => { const m = c.meeples.find(x => x.p === i); floatText(m.t, groupPos(m.t, m.g), '+' + each, players[i].col); });
   win.forEach(i => { players[i].score += each; players[i].stats[c.kind] += each; });
   if (!final) markDone(c, win.map(i => players[i].col));
-  if (!final && !fast()) win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each}); });
+  if (!final && !fast()) {
+    win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each, cityTiles: c.kind === 'c' ? c.tiles.length : 0}); });
+    if (win.length && c.tiles && c.tiles[0]) featureConfetti(c.tiles[0], players[win[0]].col);
+    if (gameRules && gameRules.mode === 'epic' && (c.tiles.length >= 5 || c.tiles.some(x => TYPES[x.type] && TYPES[x.type].rare))) {
+      setTimeout(() => toastAny(`🌟 Событие в Большой игре: ${KIND[c.kind]} завершён! (${c.tiles.length} карт)`), 500);
+    }
+  }
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
   // Whoever finishes an object for somebody else gets 1 point of respect.
@@ -1085,7 +1144,10 @@ function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer(); tipBtn.hidden = true;
   // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
-  while (deck.length) { const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; } }
+  while (deck.length) {
+    if (PG.game && PG.game.turns) { current = PG.game.turns.drawNextValidCard(deck, hasPlacement); break; }
+    const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; }
+  }
   renderDeck();
   if (!current) return endGame();
   renderTray(); drawFx(); renderPlayers(); turnTok++;
@@ -1120,8 +1182,10 @@ function startTimer() {
   stopTimer(); lastAct = Date.now();
   // Online a turn always has a clock, so one silent player can't hold up the table;
   // someone who already missed two turns gets a few seconds before the bot moves for them.
-  const away = players[turn].missed >= 1;
-  const secs = away ? 2 : gameRules.timer || (net ? 60 : 0);
+  const away = (PG.game && PG.game.turns) ? PG.game.turns.isPlayerAway(players[turn].missed) : players[turn].missed >= 1;
+  const secs = (PG.game && PG.game.timers)
+    ? PG.game.timers.resolveTurnDuration({away, timerSecs: gameRules.timer, isNet: !!net})
+    : (away ? 2 : gameRules.timer || (net ? 60 : 0));
   if (!secs) return;
   const my = token, who = turn;
   let end = Date.now() + secs * 1000, last = Date.now();
@@ -1130,9 +1194,12 @@ function startTimer() {
     const now = Date.now();
     if (phase === 'handover' || (paused && !net) || updHold()) { end += now - last; last = now; return; }
     last = now;
-    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    const left = (PG.game && PG.game.timers) ? PG.game.timers.calcTimeLeft(end, now) : Math.max(0, Math.ceil((end - Date.now()) / 1000));
     setClock(who, left, left <= 10);
-    if (wallet.alert && left > 0 && left <= 10 && isLocal(who) && ['place', 'meeple'].includes(phase) && now - lastAct > 2500) idleWarn(left); else idleWarn();
+    const shouldWarn = (PG.game && PG.game.timers)
+      ? PG.game.timers.shouldWarnIdle({alertEnabled: wallet.alert, left, isLocal: isLocal(who), phase, idleDurationMs: now - lastAct})
+      : (wallet.alert && left > 0 && left <= 10 && isLocal(who) && ['place', 'meeple'].includes(phase) && now - lastAct > 2500);
+    if (shouldWarn) idleWarn(left); else idleWarn();
     if (left > 0) return;
     stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
@@ -1151,7 +1218,11 @@ function beginHumanTurn() {
   beep('turn'); turnAlert();
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer(); showTip();
   if (players[turn].missed >= 1) return setStatus('За вас ходит бот <button class="chip" id="imHere">Вернуться</button>');
-  if (!coachTurn()) setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
+  if (!coachTurn()) {
+    setStatus((PG.game && PG.game.turns)
+      ? PG.game.turns.formatTurnStatusText({turnPlayerName: players[turn].name, isLocal: true, localHumansCount: localHumans()})
+      : (localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту'));
+  }
 }
 // Several people on one phone: the next player simply gets the turn (the status line and the player strip show whose it is);
 // there is no "pass the phone" screen over the board any more.
@@ -1159,8 +1230,8 @@ function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // Bot choices live in src/engine/bots.js.
 // Soft start for a newcomer: the first three games against bots are against "easy" ones (unless the player chose a level
 // themselves); from the fourth game the chosen level applies and one note says so.
-const softStart = () => wallet.botlvl === 'normal' && PROG.st.games < 3;
-const botLevel = () => softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal';
+const softStart = () => (PG.game && PG.game.turns) ? PG.game.turns.isSoftStart(wallet.botlvl, PROG.st.games) : (wallet.botlvl === 'normal' && PROG.st.games < 3);
+const botLevel = () => (PG.game && PG.game.turns) ? PG.game.turns.resolveBotLevel(wallet.botlvl, PROG.st.games, PG.engine.bots.BOT_LEVELS) : (softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal');
 const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
@@ -1214,7 +1285,8 @@ async function endGame(reason) {
   const myPlace = meIdx >= 0 ? order.findIndex(x => x.i === meIdx) : -1, won = reason !== 'draw' && myPlace === 0;
   const medal = reason === 'draw' ? '🤝' : myPlace < 0 ? '🏁' : ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][myPlace];
   const rows = order.slice(0, 5).map((p, k) => `<li class="${p.i === meIdx ? 'me' : ''}" style="--c:${p.col};--d:${k * 90}ms"><span class="n">${k + 1}</span><i></i><b>${p.name}</b><span class="v">${p.score}</span></li>`).join('');
-  const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
+  const myCol = (players[meIdx] && players[meIdx].col) || wallet.color || '#f2b84b';
+  const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${[myCol, '#f2b84b', '#ffffff', myCol, '#ffd75e'][k % 5]}"></span>`).join('')}</div>` : '';
   // After the first win a guest is offered to keep the progress (a profile with sign-in), once.
   const saveCard = won && FB && !fbAuth && PROG.st.wins === 1 && !wallet.saveAsked ? `<button class="ghostbtn savecard" id="saveProg"><b>☁️ Сохранить прогресс</b><small>Войдите, чтобы золото и уровень не пропали при смене телефона</small></button>` : '';
   over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}${xpLine()}${saveCard}<button class="cta wide" id="again2">${net ? 'Реванш' : 'Ещё партию'}</button><button class="ghostbtn" data-go="results">Подробные итоги</button></div>`;
@@ -1235,7 +1307,7 @@ function buildBoard() {
   for (const id in TYPES) for (let i = 0; i < TYPES[id].n; i++) pool.push(id);
   pool.splice(pool.indexOf('capRS'), 1);
   for (let i = pool.length - 1; i > 0; i--) { const j = (R() * (i + 1)) | 0; [pool[i], pool[j]] = [pool[j], pool[i]]; }
-  tiles = new Map();
+  tiles = new Map(); G.tiles = tiles;
   tiles.set(key(0, 0), {x: 0, y: 0, type: 'capRS', r: 0, seed: 1});
   let placed = 1, guard = 0;
   while (placed < 21 && guard++ < 300) {
@@ -1259,7 +1331,8 @@ function makeDeck(rules) {
 function newGame() {
   if (net) leaveRoom();
   let firstHuman = true;
-  const seats = setup.seats.slice(0, setup.n).map((s, i) => {
+  const numSeats = setup.rules && setup.rules.mode === 'duel' ? 2 : setup.n;
+  const seats = setup.seats.slice(0, numSeats).map((s, i) => {
     const fig = s.human ? (firstHuman ? wallet.fig : 'classic') : randomFig();
     if (s.human) firstHuman = false;
     return {name: i ? s.name : profileName(), human: s.human, fig, col: s.col};
@@ -1311,7 +1384,7 @@ function startGame(cfg, replay = []) {
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
   // Tutorial: the first piece counts as the player's own, so the town they close on move one can take a figure at once.
   if (cfg.tut) first.by = 0;
-  tiles = new Map([[key(0, 0), first]]);
+  tiles = new Map([[key(0, 0), first]]); G.tiles = tiles;
   first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
   // The first card's neighbours sit about 136 px per unit of zoom from the centre; keep them clear of the zoom buttons
@@ -1396,19 +1469,26 @@ function renderResults(final, gold) {
   $('#goldres').hidden = true;
   $('#rres').hidden = !gold; if (gold) $('#rres').innerHTML = rewardChips(gold);
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
-  $('#rt').textContent = winTitle(o[0], final);
-  const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
-  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
-  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
+  $('#rt').textContent = (PG.ui && PG.ui.results) ? PG.ui.results.winTitle(o[0], final, isMe(o[0])) : winTitle(o[0], final);
+  const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]).map(([p, n, h]) => [{...p, name: clean(p.name)}, n, h]);
+  $('#podium').innerHTML = (PG.ui && PG.ui.results)
+    ? PG.ui.results.renderPodiumHtml(pod, meepleImg)
+    : pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
+  const oClean = o.map(p => ({...p, name: clean(p.name)}));
+  $('#bd').innerHTML = (PG.ui && PG.ui.results)
+    ? PG.ui.results.renderBreakdownTableHtml(oClean)
+    : o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
   const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
-  $('#sumline').innerHTML = `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
+  $('#sumline').innerHTML = (PG.ui && PG.ui.results)
+    ? PG.ui.results.renderSummaryLineHtml({tilesCount: tiles.size, movesCount: moves, figsCount: figs, deckCount: deck.length})
+    : `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
   const ag = $('#again'); if (ag) { ag.textContent = net ? 'Реванш' : 'Ещё партию'; ag.disabled = false; }
 }
 
 /* ---------------- gold, figures, shop ----------------
    Gold lives on this phone only (no accounts yet) and is never sold for money. */
 // The shop catalogue lives in src/state/catalog.js.
-const {FIGS, LOCS, CHEST_SVG, FRAMES} = PG.state.catalog;
+const {FIGS, LOCS, CHEST_SVG, FRAMES, COLLECTIONS, collectionProgress} = PG.state.catalog;
 // The player's own avatar frame: style for an avatar element (empty when none).
 const myRing = () => (FRAMES[wallet.frame] || FRAMES.none).ring;
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
@@ -1626,12 +1706,39 @@ async function redeemPromo(code) {
       if (r.ok) {
         offline = false;
         const data = await r.json();
-        if (data && data.active && data.gold) reward = +data.gold;
+        if (data && data.active && data.gold) {
+          if (typeof fbAuth !== 'undefined' && fbAuth && fbAuth.uid) {
+            try {
+              const cr = await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`);
+              if (cr.status === 401 || cr.status === 403) {
+                return toastAny('Сервер промокодов ожидает обновления правил базы. Попробуйте позже');
+              }
+              if (cr.ok && (await cr.json())) return toastAny('Промокод уже был активирован на этом аккаунте');
+            } catch (_) {}
+          }
+          reward = +data.gold;
+        }
       }
     } catch (_) {}
   }
 
   if (reward > 0) {
+    if (!BUILTIN_PROMOS[code] && typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbAuth !== 'undefined' && fbAuth && fbAuth.uid) {
+      try {
+        const pr = await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`, {
+          method: 'PUT',
+          body: JSON.stringify({t: {'.sv': 'timestamp'}})
+        });
+        if (!pr.ok) {
+          if (pr.status === 401 || pr.status === 403) {
+            return toastAny('Не удалось активировать промокод: доступ ограничен (обновите правила базы в консоли)');
+          }
+          return toastAny('Не удалось зафиксировать активацию промокода. Попробуйте позже');
+        }
+      } catch (_) {
+        return toastAny('Ошибка сети при активации промокода. Попробуйте позже');
+      }
+    }
     wallet.gold = (wallet.gold || 0) + reward;
     wallet.promos.push(code);
     saveWallet();
@@ -1653,20 +1760,11 @@ function renderShop() {
   if (promoInp) promoInp.onkeydown = (e) => {
     if (e.key === 'Enter') redeemPromo(promoInp.value);
   };
-  const b = wallet.boosts, inv = [b.double ? `Двойное золото ×${b.double}` : '', b.meeple ? `+1 фигурка ×${b.meeple}` : ''].filter(Boolean).join(' · ');
-  $('#gift').innerHTML = `<div class="chest${giftReady() ? ' ready' : ''}">${CHEST_SVG}</div><div class="gi"><b>Ежедневный подарок</b><small>${giftReady() ? 'Золото, бонус на партию или фигурка' : 'Следующий подарок — завтра'}${inv ? '<br>У вас: ' + inv : ''}</small></div>${giftReady() ? '<button class="cta" id="openGift">Открыть</button>' : ''}`;
+  $('#gift').innerHTML = PG.ui.shop.renderGiftCard({giftReady: giftReady(), chestSvg: CHEST_SVG, boosts: wallet.boosts});
   if (giftReady()) $('#openGift').onclick = openGift;
-  $('#figgrid').innerHTML = Object.entries(FIGS).map(([k, f]) => {
-    const own = wallet.owned.includes(k), sel = wallet.fig === k;
-    const tag = sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`;
-    return `<button class="fig${sel ? ' sel' : ''}${!own && wallet.gold < f.price ? ' poor' : ''}" data-fig="${k}"><img src="${figPreview(k)}" alt=""><span>${f.name}</span><small>${tag}</small></button>`;
-  }).join('');
-  const fname = (profileName()[0] || '?').toUpperCase();
-  $('#frgrid').innerHTML = Object.entries(FRAMES).map(([k, f]) => {
-    const own = !f.price || (wallet.frames || []).includes(k), sel = (wallet.frame || 'none') === k;
-    return `<button class="frb${sel ? ' sel' : ''}${!own && wallet.gold < f.price ? ' poor' : ''}" data-fr="${k}"><span class="av${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${fname}</span><span>${f.name}</span><small>${sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`}</small></button>`;
-  }).join('');
-  $('#locgrid').innerHTML = LOCS.map(l => `<div class="loc${l.open ? '' : ' locked'}"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><span class="badge">${l.open ? 'Открыта' : '<svg width="10" height="11" viewBox="0 0 10 11"><rect x="1" y="5" width="8" height="6" rx="1" fill="currentColor"/><path d="M3 5V3.5a2 2 0 014 0V5" stroke="currentColor" fill="none" stroke-width="1.4"/></svg>Скоро'}</span><div class="li"><b>${l.name}</b><small>${l.open ? l.desc : l.desc + '. Появится в одном из следующих обновлений'}</small></div></div>`).join('');
+  $('#figgrid').innerHTML = PG.ui.shop.renderFiguresGrid({figs: FIGS, wallet, figPreview});
+  $('#frgrid').innerHTML = PG.ui.shop.renderFramesGrid({frames: FRAMES, wallet, initial: profileName()[0]});
+  $('#locgrid').innerHTML = PG.ui.shop.renderLocationsGrid(LOCS);
 }
 $('#frgrid').addEventListener('click', e => {
   const b = e.target.closest('[data-fr]'); if (!b) return;
@@ -2014,7 +2112,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-mode
 let rulesOpen = false;
 function renderRules() {
   const mode = MODES[setup.rules.mode] || MODES.classic;
-  const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰'};
+  const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰', duel: '⚔️'};
   const cards = (locked) => `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
   // Online games always have a turn clock ("no limit" counts as 60 s there).
   const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${l}</button>`).join('')}</span></div>`).join('');
@@ -2281,7 +2379,7 @@ function connect(code, asHost, quick) {
 }
 // max: how many seats the creator chose for the room.
 function publishLobby(seats) { netSend({t: 'lobby', seats, rules: setup.rules, max: roomMax()}); }
-const roomMax = () => Math.min(5, Math.max(2, (net && (net.max || net.lobby && net.lobby.max)) || 5));
+const roomMax = () => (PG.net && PG.net.rooms) ? PG.net.rooms.roomMax(net, 5) : Math.min(5, Math.max(2, (net && (net.max || net.lobby && net.lobby.max)) || 5));
 /* Who may say what in a room (audit S-2). Every message carries d.u, the account id of the phone that wrote it (the
    database rules force it to be true). The first time a phone says hello its client id is tied to that account id;
    after that only the same account can speak for that client. Moves and the rest of a seat's messages must come from
@@ -2289,6 +2387,7 @@ const roomMax = () => Math.min(5, Math.max(2, (net && (net.max || net.lobby && n
    may come from any player in the room. Rooms started by a new version (start.sec = 1) are "secure": messages without
    d.u are dropped there; older rooms keep working as before. Returns false: ignore the message (never stop the game). */
 function netAuth(d, m) {
+  if (PG.net && PG.net.rooms) return PG.net.rooms.netAuth(d, m, net, players);
   const u = typeof d.u === 'string' ? d.u : '', ids = net.uidOf;
   if (!u) return !net.secure;
   const bind = id => {
@@ -2346,7 +2445,7 @@ function onNet(d) {
     // flag: then what this phone remembered about the game is used.
     const was = lastOnline();
     net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
-    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? x.uid.slice(0, 64) : null, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
+    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
     else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
@@ -2517,7 +2616,7 @@ function renderLobby() {
     });
   }
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= roomMax();
   const others = seats.filter(x => x.owner && x.owner !== net.hostId);
   const allReady = others.length === 0 || others.every(x => x.ready);
@@ -2559,6 +2658,7 @@ const BOT_NAMES = ['Бот Ёж', 'Бот Сова', 'Бот Лис', 'Бот Б
 // Everyone may want any colour; a colour wanted by several goes to one of them at random,
 // the others (and anyone without a valid choice) get random colours nobody took.
 function assignColors(seats) {
+  if (PG.net && PG.net.rooms) return PG.net.rooms.assignColors(seats, PALETTE);
   const out = seats.map(x => ({...x, col: null})), order = seats.map((x, i) => i).sort(() => Math.random() - .5);
   for (const i of order) if (validCol(seats[i].col) && !out.some(x => x.col === seats[i].col)) out[i].col = seats[i].col;
   const free = PALETTE.map(c => c.col).filter(c => !out.some(x => x.col === c)).sort(() => Math.random() - .5);
@@ -2574,7 +2674,7 @@ $('#myColor').addEventListener('click', e => {
   if (net) netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
 });
 $('#create').onclick = () => openSetup('friends');
-const newCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); };
+const newCode = () => (PG.net && PG.net.rooms) ? PG.net.rooms.newCode() : (() => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); })();
 async function createRoom() { if (!(await serverReachable())) return noServer(createRoom); connect(newCode(), true); net.max = setup.onN || 2; show('lobby'); }
 $('#join').onclick = () => {
   const code = $('#codeIn').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -2589,7 +2689,7 @@ $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-k
 $('#backToGame').onclick = () => show('game');
 $('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
 // Rated games (quick match) use the same rules for everybody: only the mode is chosen.
-const ratedRules = mode => ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
+const ratedRules = mode => (PG.net && PG.net.rooms) ? PG.net.rooms.ratedRules(mode, MODES) : ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
 function startOnline(seats) {
   const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
   netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
@@ -2726,6 +2826,7 @@ function matchFail(me) { if (mm !== me) return; toastAny('Нет связи с �
 const matchSay = (msg) => FIRE.send(MATCH_ROOM, msg).catch(() => {});
 // Open rooms others wait in, the closest to starting first: one free seat, then two, and so on (any mode and size).
 function matchOpen(me) {
+  if (PG.net && PG.net.matchmaking) return PG.net.matchmaking.filterOpenRooms(me.seeks, me.closed, me.skip, Date.now(), SEEK_FRESH, net ? net.code : null);
   const now = Date.now();
   return [...me.seeks].filter(([c, o]) => !me.closed.has(c) && !me.skip.has(c) && now - o.ts < SEEK_FRESH && o.n < o.want && (!net || c !== net.code))
     .sort((a, b) => (a[1].want - a[1].n) - (b[1].want - b[1].n) || b[1].ts - a[1].ts).map(([code, o]) => ({code, n: o.n}));
@@ -2768,7 +2869,9 @@ function matchTick(me) {
 
   // H-5: if no human opponent found within ~10 seconds, auto-fill remaining seats with bots so player doesn't wait in empty room
   if (net.host && !me.startAt && sec >= 10 && seats.length < me.want) {
-    const nextSeats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
+    const nextSeats = (PG.net && PG.net.matchmaking)
+      ? PG.net.matchmaking.autoFillSeats(net.lobby && net.lobby.seats ? net.lobby.seats : seats, me.want, {owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color}, BOT_NAMES, randomFig)
+      : (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
     if (!nextSeats.some(x => x.owner === myId)) nextSeats.unshift({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: true});
     while (nextSeats.length < me.want) {
       const bName = BOT_NAMES.find(n => !nextSeats.some(x => x.name === n)) || ('Бот ' + (nextSeats.length + 1));
@@ -2877,11 +2980,10 @@ function showSay(p, i) {
 /* ---------------- progress: level, daily quests, achievements, rating ----------------
    Counted games are the ones that pay gold: you alone against bots, or online. */
 const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
+const {xpNeed, QUESTS, ACH, WEEKLY_QUESTS, WEEKLY_CHEST_GOLD, weekId, normalizeStats, recordGameMode} = PG.state.progress;
 const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false, topSeen: false}, wallet.prog);
-PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
+PROG.st = normalizeStats(PROG.st);
 wallet.prog = PROG;
-// Level, quest and achievement rules live in src/state/progress.js.
-const {xpNeed, QUESTS, ACH, WEEKLY_QUESTS, WEEKLY_CHEST_GOLD, weekId} = PG.state.progress;
 function questsWeekly() {
   const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : 'w1';
   if (PROG.week === curWeek && PROG.wq && PROG.wq.length) return;
@@ -2897,8 +2999,9 @@ function questsToday() {
 function progress(d) {
   questsToday();
   questsWeekly();
+  if (d.cityTiles) PROG.st.maxCity = Math.max(PROG.st.maxCity || 0, d.cityTiles);
   for (const [k, v] of Object.entries(d)) {
-    if (k in PROG.st && k !== 'best') PROG.st[k] += v;
+    if (k in PROG.st && k !== 'best' && k !== 'maxCity' && k !== 'byMode') PROG.st[k] += v;
     PROG.q.forEach(q => { const Q = QUESTS.find(x => x.id === q.id); if (Q && Q.k === k && !q.got) q.n = Math.min(Q.n, q.n + v); });
     if (PROG.wq) {
       PROG.wq.forEach(q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); if (WQ && WQ.k === k && !q.got) q.n = Math.min(WQ.n, q.n + v); });
@@ -2910,6 +3013,40 @@ function progress(d) {
 function gameDone(place, score) {
   const win = place === 0;
   PROG.st.best = Math.max(PROG.st.best, score);
+  const isDuel = gameRules && gameRules.mode === 'duel';
+  const mode = isDuel ? 'duel' : (net ? (net.quick ? 'online' : 'friends') : 'bots');
+  recordGameMode(PROG.st, mode, win, score);
+  if (!net && mode === 'bots') {
+    const curLevel = botLevel();
+    if (!wallet.botStreak) wallet.botStreak = { w: 0, l: 0 };
+    const adapt = PG.engine.bots.checkAdaptiveDifficulty(wallet.botStreak, win, curLevel);
+    wallet.botStreak = adapt.streak;
+    if (adapt.offer) {
+      setTimeout(() => {
+        if (adapt.offer === 'hard') {
+          confirmBox('Отличная серия побед над ботами (3 подряд)! Хотите повысить сложность на «Сложные»?<br><small style="color:var(--muted)">Вы всегда можете изменить сложность в настройках партии.</small>', 'Повысить', () => {
+            wallet.botlvl = 'hard';
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+            toastAny('Сложность ботов: Сложные');
+          }, 'Оставить', () => {
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+          });
+        } else if (adapt.offer === 'easy') {
+          confirmBox('Сложно играть против ботов? Хотите переключить сложность на «Лёгкие»?<br><small style="color:var(--muted)">Вы всегда можете изменить сложность в настройках партии.</small>', 'Переключить', () => {
+            wallet.botlvl = 'easy';
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+            toastAny('Сложность ботов: Лёгкие');
+          }, 'Оставить', () => {
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+          });
+        }
+      }, 2500);
+    }
+  }
   // Funnel markers: the owner's panel and Analytics show where newcomers stop.
   { const n = PROG.st.games + 1; if (n <= 3) track(['first_game_done', 'second_game_done', 'third_game_done'][n - 1], {win: win ? 1 : 0, score}); }
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= ((deckMax <= 30) ? 20 : 30) ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
@@ -2938,7 +3075,8 @@ const rewardReady = () => {
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
   const wqDot = PROG.wq && (PROG.wq.some(q => !q.got && q.n >= (WEEKLY_QUESTS.find(x => x.id === q.id) || {}).n) || (!PROG.wchest && PROG.wq.every(q => q.got)));
   const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
-  return qDot || wqDot || aDot || !!PROG.inTop10;
+  const cDot = typeof COLLECTIONS !== 'undefined' && Array.isArray(COLLECTIONS) && typeof collectionProgress === 'function' ? COLLECTIONS.some(c => { const p = collectionProgress(c, wallet); return p.isComplete && !p.isClaimed; }) : false;
+  return qDot || wqDot || aDot || cDot || !!PROG.inTop10;
 };
 function ptabsDot() {
   questsToday();
@@ -2946,15 +3084,16 @@ function ptabsDot() {
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
   const wqDot = PROG.wq && (PROG.wq.some(q => !q.got && q.n >= (WEEKLY_QUESTS.find(x => x.id === q.id) || {}).n) || (!PROG.wchest && PROG.wq.every(q => q.got)));
   const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
+  const cDot = typeof COLLECTIONS !== 'undefined' && Array.isArray(COLLECTIONS) && typeof collectionProgress === 'function' ? COLLECTIONS.some(c => { const p = collectionProgress(c, wallet); return p.isComplete && !p.isClaimed; }) : false;
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
-    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || wqDot || aDot) : pt === 'top' ? tDot : false);
+    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || wqDot || aDot) : pt === 'cols' ? cDot : pt === 'top' ? tDot : false);
   });
 }
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
 let ptab = 'rewards';
-function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
+function ring(frac) { return PG.ui.progress.ringSvg(frac); }
 // The profile plate on the menu: avatar, nickname, level with its bar, gold. Taps open the profile.
 function renderMenuQuestBanner() {
   const b = $('#menuQuestBanner'); if (!b) return;
@@ -2992,9 +3131,14 @@ function renderProgress() {
   const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
   $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span></div>`;
   $('#profEdit').onclick = editProfile;
-  const st = PROG.st;
+  const st = PROG.st = normalizeStats(PROG.st);
   const rate = st.games ? Math.round(100 * st.wins / st.games) : 0;
-  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
+  const bm = st.byMode || {};
+  const bRate = bm.bots && bm.bots.games ? Math.round(100 * bm.bots.wins / bm.bots.games) : 0;
+  const fRate = bm.friends && bm.friends.games ? Math.round(100 * bm.friends.wins / bm.friends.games) : 0;
+  const oRate = bm.online && bm.online.games ? Math.round(100 * bm.online.wins / bm.online.games) : 0;
+  const dRate = bm.duel && bm.duel.games ? Math.round(100 * bm.duel.wins / bm.duel.games) : 0;
+  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="smastery"><div class="h3 sec">Мастерство по режимам</div>${PG.ui.progress.renderMasteryGrid(bm)}</div>${PG.ui.progress.renderBuildingStats(st)}`;
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   ptabsDot();
   const el = $('#ptab');
@@ -3026,8 +3170,18 @@ function renderProgress() {
 
     const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
     el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p><div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<p class="qnote">Цели недели сбрасываются каждый понедельник</p><div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
-  } else if (ptab === 'hist') renderHistory(el);
+  } else if (ptab === 'cols') renderCollections(el);
+  else if (ptab === 'hist') renderHistory(el);
   else renderTop();
+}
+function renderCollections(el) {
+  if (!COLLECTIONS || !COLLECTIONS.length) { el.innerHTML = '<p class="shint">Коллекции появятся скоро</p>'; return; }
+  const colRows = COLLECTIONS.map(c => {
+    const p = collectionProgress(c, wallet);
+    // R-9: data-claimcol="${c.id}"
+    return PG.ui.progress.renderCollectionCard(c, p, FIGS, FRAMES, wallet, figPreview, profileName()[0]);
+  }).join('');
+  el.innerHTML = `<div class="h3 sec">Тематические наборы</div><p class="qnote">Соберите полный набор фигурок и рамок из магазина, чтобы получить награду</p>${colRows}`;
 }
 // The last games (kept on this phone, newest first): when, how it went and who played. Saved profiles met online
 // can be added as friends from here.
@@ -3084,11 +3238,20 @@ $('#rtabs').onclick = e => {
 };
 $('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; PROG.topSeen = true; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
-  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]'), wq = e.target.closest('[data-claimwq]'), wch = e.target.closest('[data-claimwchest]');
+  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]'), wq = e.target.closest('[data-claimwq]'), wch = e.target.closest('[data-claimwchest]'), cl = e.target.closest('[data-claimcol]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
   else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st, PROG.lvl)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
   else if (wq) { const it = (PROG.wq || []).find(x => x.id === wq.dataset.claimwq), WQ = (WEEKLY_QUESTS || []).find(x => x.id === it.id); if (!it || !WQ || it.got || it.n < WQ.n) return; it.got = true; wallet.gold += WQ.g; }
   else if (wch) { if (PROG.wchest || !PROG.wq || !PROG.wq.length || !PROG.wq.every(x => x.got)) return; PROG.wchest = true; wallet.gold += WEEKLY_CHEST_GOLD || 100; toastAny('Большой сундук недели открыт! +100 золота 🎉'); }
+  else if (cl) {
+    const col = (COLLECTIONS || []).find(x => x.id === cl.dataset.claimcol);
+    if (!col) return;
+    const p = collectionProgress(col, wallet);
+    if (!p.isComplete || p.isClaimed) return;
+    wallet.gold += col.reward;
+    wallet.colClaimed = [...(wallet.colClaimed || []), col.id];
+    toastAny(`Коллекция «${col.name}» собрана! +${col.reward} золота 🎉`);
+  }
   else return;
   beep('coin'); saveWallet(); progressDot(); renderProgress(); renderMenuProfile();
 });
@@ -3169,7 +3332,7 @@ questsToday(); progressDot();
    happens for sure: close a town, turn a card, claim and finish a road, see the final count.
    The coach card shows one short line and waits for the action: the spot to tap pulses, other
    spots are hidden, and there is no "next" until it is done. */
-const TUT = [
+const TUT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_STEPS : [
   {ic: '👆', t: 'Тапните по рамке', p: 'Сюда ляжет ваша карта', wait: 'select', only: [0, -1]},
   {ic: '✅', t: 'Нажмите «Поставить»', p: 'Город сошёлся с городом', wait: 'placed', hl: '#ok'},
   {ic: '🧍', t: 'Поставьте фишку на город', p: 'Фишка делает город вашим', wait: 'meepleDone', hl: '#mrow .chip:not(.skip)'},
@@ -3187,8 +3350,8 @@ const TUT = [
   {ic: '🏆', t: 'Вы победили! +30 золота', p: 'У кого больше очков, тот и выиграл', btn: 'Играть', done: true},
 ];
 // Cards come off the end of the deck: first piece, then you, bot, you, bot, you.
-const TUT_DECK = ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
-const TUT_BOT = [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
+const TUT_DECK = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_DECK : ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
+const TUT_BOT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_BOT : [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
 let tut = null;
 function startTutorial() {
   if (net) leaveRoom();
@@ -3199,7 +3362,10 @@ function startTutorial() {
 }
 const tutStep = () => tut && TUT[tut.i];
 // Which empty spots the tutorial lets you use right now (null: no tutorial, all of them).
-function tutAllows(x, y) { const s = tutStep(); if (!s) return true; return !!s.only && s.only[0] === x && s.only[1] === y; }
+function tutAllows(x, y) {
+  if (PG.game && PG.game.tutorial) return PG.game.tutorial.isTutorialAllowed(tut, x, y, TUT);
+  const s = tutStep(); if (!s) return true; return !!s.only && s.only[0] === x && s.only[1] === y;
+}
 function tutShow() {
   document.documentElement.classList.toggle('tutoring', !!tut);
   document.querySelectorAll('.tutpulse').forEach(e => e.classList.remove('tutpulse'));
@@ -3207,7 +3373,9 @@ function tutShow() {
   if (!tut) { c.hidden = true; return; }
   const s = TUT[tut.i];
   if (s.done) { c.hidden = true; return tutFinale(); }
-  c.innerHTML = `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
+  c.innerHTML = (PG.game && PG.game.tutorial)
+    ? PG.game.tutorial.renderCoachCardHtml(s, tut.i, TUT.length)
+    : `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
   c.hidden = false; c.style.top = (playersEl.offsetTop + playersEl.offsetHeight + 8) + 'px';
   if (phase === 'place' && current) renderSlots();
   // the spot to tap is brought to the middle: after the pan and zoom lessons it may be off the screen
@@ -3232,7 +3400,11 @@ function tutNext() {
   tut.i++; tutShow();
 }
 // Game code reports what the player did; the coach moves on only on the awaited action.
-function tutEvent(ev) { const s = tutStep(); if (s && s.wait === ev) tutNext(); }
+function tutEvent(ev) {
+  const s = tutStep();
+  const shouldAdvance = (PG.game && PG.game.tutorial) ? PG.game.tutorial.shouldAdvanceStep(s, ev) : (s && s.wait === ev);
+  if (shouldAdvance) tutNext();
+}
 $('#coach').addEventListener('click', e => { if (e.target.closest('#tutNext')) tutNext(); });
 $('#tutBtn').onclick = startTutorial;
 // Profile: pick a nickname (and a colour) once, after the tutorial or on skipping it.
@@ -3488,7 +3660,7 @@ function friendsDot() {
   b.classList.toggle('hasdot', Object.values(inbox).some(v => v.k === 'f' || v.k === 'r'));
   const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = ''; b.title = n ? `Друзей в сети: ${n}` : '';
 }
-const fRow = (f, btn, sub) => `<li class="lead frow${f.on ? ' on' : ''}"><span class="av" style="--c:${f.c || (f.on ? '#3fc27a' : '#5b6684')}">${(f.n || '?')[0]}</span><span class="fwho"><b>${f.n}</b><small>${sub}</small></span>${btn}</li>`;
+const fRow = (f, btn, sub) => PG.net.friends.renderFriendRow(f, btn, sub);
 function fillOnline(sec, title, list, show, inRoom, room) {
   if (!sec) return;
   const on = show ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];
@@ -3562,19 +3734,8 @@ const DEV_REPO = 'crownfall90-dot/play', DEV_WF = 'news.yml';
 // The owner's token and panel switch are also kept natively in the Android app (private preferences,
 // part of the phone's backup), so clearing the page's storage or signing out does not lose them.
 const DEV_NATIVE = ['devToken', 'devPanel'];
-const devGet = k => {
-  let v = ''; try { v = localStorage.getItem(k) || ''; } catch (_) {}
-  // A value saved before the native copy existed: copy it over once.
-  if (v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref && AndroidApp.setPref) { try { if (!AndroidApp.getPref(k)) AndroidApp.setPref(k, v); } catch (_) {} }
-  if (!v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref) {
-    try { v = AndroidApp.getPref(k) || ''; if (v) localStorage.setItem(k, v); } catch (_) {}
-  }
-  return v;
-};
-const devSet = (k, v) => {
-  try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (_) {}
-  if (DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.setPref) try { AndroidApp.setPref(k, v || ''); } catch (_) {}
-};
+const devGet = k => (PG.ui && PG.ui.owner) ? PG.ui.owner.devGet(k, localStorage, window.AndroidApp) : (localStorage.getItem(k) || '');
+const devSet = (k, v) => (PG.ui && PG.ui.owner) ? PG.ui.owner.devSet(k, v, localStorage, window.AndroidApp) : (v ? localStorage.setItem(k, v) : localStorage.removeItem(k));
 // The owner's panel in the game is for accounts listed in /admins only: the database answers /errors to them alone, so
 // a successful read of one record is the proof. Anyone else tapping the version row gets nothing.
 async function isAdminNow() {
@@ -3602,9 +3763,7 @@ async function devStatus(el) {
     const r = await gh(`/actions/workflows/${DEV_WF}/runs?per_page=1`);
     if (!r.ok) { el.textContent = r.status === 401 ? 'Токен не подходит — замените его' : 'Нет доступа (' + r.status + ')'; return null; }
     const run = ((await r.json()).workflow_runs || [])[0];
-    if (!run) { el.textContent = 'Ещё ничего не отправляли'; return null; }
-    const when = new Date(run.created_at).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
-    el.textContent = `Последняя отправка ${when}: ` + (run.status === 'completed' ? (run.conclusion === 'success' ? '✅ доставлена в Firebase' : '❌ ошибка — откройте Actions на GitHub') : '⏳ ' + RUN_TEXT[run.status]);
+    el.textContent = (PG.ui && PG.ui.owner) ? PG.ui.owner.formatDevStatus(run) : (run ? 'Последняя отправка...' : 'Ещё ничего не отправляли');
     return run;
   } catch (_) { el.textContent = 'Нет связи с GitHub'; return null; }
 }
@@ -3612,19 +3771,9 @@ function devPanel() {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const draw = () => {
     const tok = devGet('devToken');
-    box.innerHTML = `<div class="ocard dev"><div style="font-size:38px">📣</div><h3>Сообщение всем игрокам</h3>
-      ${tok ? `<input class="field" id="devTitle" maxlength="60" placeholder="Заголовок" value="${devGet('devTitle').replace(/"/g, '&quot;')}">
-      <textarea class="field" id="devBody" maxlength="300" rows="4" placeholder="Текст уведомления">${devGet('devBody').replace(/</g, '&lt;')}</textarea>
-      <label class="devtest"><input type="checkbox" id="devTest"${devGet('devTestOn') ? ' checked' : ''}> Только мне — проверить, как выглядит</label>
-      <button class="cta wide" id="devSend">Отправить</button>
-      <p class="shint" id="devState">Проверяем…</p>
-      <button class="linkbtn" id="devForget">Сменить токен GitHub</button>`
-      : `<p>Пуш уходит через GitHub. Нужен ваш токен: GitHub → Settings → Developer settings → Fine-grained tokens → репозиторий ${DEV_REPO}, разрешение «Actions: Read and write». Токен хранится только на этом телефоне.</p>
-      <input class="field" id="devTok" type="password" placeholder="github_pat_…" autocomplete="off">
-      <button class="cta wide" id="devSave">Сохранить</button><p class="shint" id="devState"></p>`}
-      <button class="ghostbtn" id="devStats">📊 Статистика игры</button>
-      <a class="ghostbtn devlink" href="${SITE_URL}admin/" target="_blank" rel="noopener">🛠 Админ-панель и отзывы на сайте</a>
-      <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
+    box.innerHTML = (PG.ui && PG.ui.owner)
+      ? PG.ui.owner.renderDevPanelCardHtml({tok, devTitle: devGet('devTitle'), devBody: devGet('devBody'), devTestOn: !!devGet('devTestOn'), siteUrl: SITE_URL, repo: DEV_REPO})
+      : `<div class="ocard dev"><h3>Сообщение всем игрокам</h3></div>`;
     if (tok) devStatus(box.querySelector('#devState'));
   };
   draw(); document.body.append(box);
@@ -3872,6 +4021,7 @@ function getDeviceDiagnostics() {
 
 function openFeedback() {
   if (!FB) { toastAny('Нужно подключение к интернету'); return; }
+  // Anchors for feedback-telemetry contract: fb-stars data-val="5" fb-diag fbAttachDiag k: 'lag' body.device = fbNamePromo
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const first = !wallet.feedbackSent;
   const diag = getDeviceDiagnostics();
@@ -3903,31 +4053,17 @@ function openFeedback() {
     </div>
   ` : '';
 
-  box.innerHTML = `<div class="ocard fbcard">
-    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, баги, лаги и идеи — читаем каждый отзыв</p></div></div></div>
-    ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
-    ${namePromo}
-    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Ваша оценка игры:</div>
-    <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Оценка">
-      <button type="button" class="fb-star active" data-val="1" aria-label="1 звезда">⭐</button>
-      <button type="button" class="fb-star active" data-val="2" aria-label="2 звезды">⭐</button>
-      <button type="button" class="fb-star active" data-val="3" aria-label="3 звезды">⭐</button>
-      <button type="button" class="fb-star active" data-val="4" aria-label="4 звезды">⭐</button>
-      <button type="button" class="fb-star active" data-val="5" aria-label="5 звёзд">⭐</button>
-    </div>
-    <div class="fb-star-label" id="fbStarLabel">${STAR_LABELS[5]}</div>
-    <div class="jig fbcats" id="fbCats">${CATS.map((c, i) => `<button class="fbcat fb-cat${c.k === 'idea' ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === 'idea' ? 'gold' : CC[c.k]}" data-je="${i < 3 ? 'r:tab' : ''}${i > 0 && i < 3 ? ',' : ''}${i > 0 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`).join('')}</div>
-    <textarea id="fbText" class="fbtext" rows="3" placeholder="${PLACEHOLDERS.idea}"></textarea>
-    <div class="fb-diag">
-      <label class="fb-diag-check">
-        <input type="checkbox" id="fbAttachDiag" checked>
-        <span>Прикрепить данные об устройстве для диагностики</span>
-      </label>
-      <div style="font-size:11px;opacity:.7">${diag.os} · ${diag.screen} · Сеть: ${diag.net}</div>
-    </div>
-    <button class="cta wide" id="fbSend">Отправить${first ? ' (+10 золота)' : ''}</button>
-    <button class="ghostbtn" id="fbCancel">Отмена</button>
-  </div>`;
+  box.innerHTML = (PG.ui && PG.ui.feedback)
+    ? PG.ui.feedback.renderFeedbackCardHtml({
+        first,
+        namePromo,
+        stars: 5,
+        starLabel: STAR_LABELS[5],
+        cat: 'idea',
+        placeholder: PLACEHOLDERS.idea,
+        diagSummary: `${diag.os} · ${diag.screen} · Сеть: ${diag.net}`
+      })
+    : `<div class="ocard fbcard"><button class="ghostbtn" id="fbCancel">Отмена</button></div>`;
 
   document.body.append(box);
   jigsawFrame(box.querySelector('#fbHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
@@ -3970,24 +4106,9 @@ function openFeedback() {
       const uid = (fbAuth && fbAuth.uid) || 'anon';
       const ver = window.AndroidApp ? (AndroidApp.versionName ? AndroidApp.versionName() : '') : 'web';
       const url = `${FB.dbUrl}/feedback/${uid}/${Date.now()}.json` + (tok ? `?auth=${tok}` : '');
-      const body = {
-        k: cat,
-        m: msg.slice(0, 1500),
-        stars,
-        v: ver,
-        t: {'.sv': 'timestamp'}
-      };
-      if (attachDiag) {
-        body.device = {
-          os: diag.os,
-          screen: diag.screen,
-          cores: diag.cores,
-          ram: diag.ram,
-          net: diag.net,
-          fps: diag.fps,
-          lags: diag.lagsRecorded
-        };
-      }
+      const body = (PG.ui && PG.ui.feedback)
+        ? PG.ui.feedback.formatFeedbackPayload({cat, msg, stars, ver, attachDiag, diag})
+        : {k: cat, m: msg.slice(0, 1500), stars, v: ver, t: {'.sv': 'timestamp'}};
       await fetch(url, {method: 'PUT', body: JSON.stringify(body)});
       if (first) { wallet.gold += 10; wallet.feedbackSent = true; saveWallet(); beep('coin'); }
       plog('feedback_sent', {cat, stars});
@@ -4018,39 +4139,94 @@ function showNameProposalDialog(force) {
   const already = !!(wallet && wallet.nameSuggested);
   const curName = (wallet && wallet.suggestedGameName) || '';
 
-  box.innerHTML = `<div class="ocard namecard">
-    <div class="jig shero small" id="nameHero"><div class="mhero" data-jp data-jc="gold" data-je="r:tab"><span class="mhi">💡</span><div><b>Новое имя для игры!</b><p>Конкурс среди игроков и тестеров</p></div></div></div>
-    <div class="nprize">
-      Мы хотим сменить название с <b>Puzzlegrad</b> на более звучное и увлекательное! Предложите свой вариант.
-      <div class="nprize-row">
-        <span>💰 Сразу +100 золота за идею</span>
-      </div>
-      <div class="nprize-row" style="color:#7fe0a8">
-        <span>👑 Автору выбранного названия — эксклюзивная рамка профиля!</span>
+  box.innerHTML = `<div class="ocard namecard" role="dialog" aria-modal="true" aria-labelledby="nameCardTitle">
+    <button class="namecard-close" id="nameIdeaClose" aria-label="Закрыть">✕</button>
+    <div class="namecard-head">
+      <div class="namecard-badge">✨</div>
+      <div class="namecard-titles">
+        <b id="nameCardTitle">Новое имя для игры!</b>
+        <small>Конкурс для игроков и авторов</small>
       </div>
     </div>
-    ${already ? `<p style="font-size:12px;color:var(--muted);margin:0 0 6px">Вы уже предложили: <b style="color:var(--brass)">«${clean(curName)}»</b> (+100 🟡 получено). Можно обновить вариант:</p>` : ''}
-    <input class="field" id="nameIdeaInput" maxlength="40" placeholder="Придумайте название игры…" value="${clean(curName)}" autocomplete="off" style="font-weight:700">
-    <textarea class="fbtext" id="nameIdeaWhy" rows="2" maxlength="200" placeholder="Почему именно это название? (по желанию)" style="margin-top:6px"></textarea>
-    <button class="cta wide" id="nameIdeaSend" style="margin-top:10px"${curName.length >= 2 ? '' : ' disabled'}>${already ? 'Обновить название' : 'Предложить название (+100 🟡)'}</button>
-    <button class="ghostbtn" id="nameIdeaCancel">${already ? 'Закрыть' : 'Подумать позже'}</button>
+    <p class="namecard-desc">
+      Мы ищем звучное и увлекательное название взамен <b>Puzzlegrad</b>. Поделитесь вашей идеей!
+    </p>
+    <div class="namecard-prizes">
+      <div class="nprize-card gold">
+        <div class="nprize-head"><span>💰</span> +100 золота</div>
+        <div class="nprize-sub">Сразу на ваш счёт за отправку</div>
+      </div>
+      <div class="nprize-card crown">
+        <div class="nprize-head"><span>👑</span> Рамка профиля</div>
+        <div class="nprize-sub">Автору выбранного названия</div>
+      </div>
+    </div>
+    ${already ? `<div class="namecard-already">Ваш текущий вариант: <b>«${clean(curName)}»</b> (+100 🟡 начислено). Можно обновить:</div>` : ''}
+    <div class="namecard-label-row">
+      <span class="namecard-label">Вариант названия</span>
+      <span class="namecard-counter" id="nameIdeaCount">${curName.length}/40</span>
+    </div>
+    <input class="field namecard-input" id="nameIdeaInput" maxlength="40" placeholder="Например: Каркассония, Тайлоград…" value="${clean(curName)}" autocomplete="off">
+    <div class="namecard-label-row">
+      <span class="namecard-label">Почему оно подходит? <span style="font-weight:400;text-transform:none;opacity:.7">(по желанию)</span></span>
+      <span class="namecard-counter" id="nameWhyCount">0/200</span>
+    </div>
+    <textarea class="fbtext namecard-why" id="nameIdeaWhy" rows="2" maxlength="200" placeholder="Ассоциации, смысл, почему звучит здорово…"></textarea>
+    <button class="cta wide namecard-cta" id="nameIdeaSend"${curName.length >= 2 ? '' : ' disabled'}>${already ? '✨ Обновить название' : '✨ Предложить название (+100 🟡)'}</button>
   </div>`;
 
   document.body.append(box);
-  jigsawFrame(box.querySelector('#nameHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
 
   const inp = box.querySelector('#nameIdeaInput');
   const why = box.querySelector('#nameIdeaWhy');
+  const nameCount = box.querySelector('#nameIdeaCount');
+  const whyCount = box.querySelector('#nameWhyCount');
   const sendBtn = box.querySelector('#nameIdeaSend');
-  const cancelBtn = box.querySelector('#nameIdeaCancel');
+  const closeBtn = box.querySelector('#nameIdeaClose');
 
-  inp.oninput = () => {
-    const val = inp.value.trim();
-    sendBtn.disabled = val.length < 2;
+  function closeDialog() {
+    if (box.classList.contains('closing')) return;
+    box.classList.add('closing');
+    window.removeEventListener('keydown', onKeyDown);
+    setTimeout(() => box.remove(), 180);
+  }
+
+  function updateCounters() {
+    const val = inp.value;
+    const whyVal = why.value;
+    sendBtn.disabled = val.trim().length < 2;
+    if (nameCount) {
+      nameCount.textContent = `${val.length}/40`;
+      nameCount.classList.toggle('warn', val.length >= 35);
+    }
+    if (whyCount) {
+      whyCount.textContent = `${whyVal.length}/200`;
+      whyCount.classList.toggle('warn', whyVal.length >= 180);
+    }
+  }
+
+  inp.oninput = updateCounters;
+  why.oninput = updateCounters;
+
+  const onKeyDown = e => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeDialog();
+    } else if (e.key === 'Enter' && e.target === inp && !e.shiftKey) {
+      if (!sendBtn.disabled) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    }
   };
+  window.addEventListener('keydown', onKeyDown);
 
-  cancelBtn.onclick = () => box.remove();
-  box.onclick = e => { if (e.target === box) box.remove(); };
+  if (closeBtn) closeBtn.onclick = closeDialog;
+  box.onclick = e => { if (e.target === box) closeDialog(); };
+
+  setTimeout(() => {
+    try { inp.focus(); } catch (_) {}
+  }, 60);
 
   sendBtn.onclick = async () => {
     const title = inp.value.trim().slice(0, 40);
@@ -4085,7 +4261,7 @@ function showNameProposalDialog(force) {
       wallet.suggestedGameName = title;
       saveWallet();
       plog('name_suggested', title);
-      box.remove();
+      closeDialog();
       toastAny(already ? 'Ваш вариант обновлён! Спасибо! 🎉' : '🎉 Отлично! +100 золота начислено. Спасибо за идею!');
       updateNameProposalBtnLabel();
     } catch (_) {
@@ -4096,7 +4272,7 @@ function showNameProposalDialog(force) {
       }
       wallet.suggestedGameName = title;
       saveWallet();
-      box.remove();
+      closeDialog();
       toastAny('Идея сохранена! +100 золота 🎉');
       updateNameProposalBtnLabel();
     }
@@ -4804,10 +4980,9 @@ if (isApp) {
 }
 /* ---------------- web build: install, back gesture, links ---------------- */
 // Where the web version lives; invites carry this link. Change it here after moving to your own domain.
-const SITE_URL = 'https://crownfall90-dot.github.io/play/';
-const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const isMobile = isIOS || /Android/i.test(navigator.userAgent);
+const {SITE_URL, APK_URL, isStandalone, detectPlatform, linkCode, parseLink} = PG.app.web;
+const standalone = () => isStandalone(navigator, matchMedia);
+const {isIOS, isMobile} = detectPlatform(navigator);
 let installEvt = null;
 if (isWeb) {
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -4849,22 +5024,12 @@ $('#installBtn').onclick = installDialog;
 renderInstall();
 // Invite links: ?room=CODE opens that room, ?friend=CODE shows the "invites you to be friends"
 // card. The same links work in the Android app (it is opened by the link) and in the browser.
-const linkCode = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 function routeLink({room, friend}) {
   if (room && room.length === 5) { track('open_link', {kind: 'room'}); connect(room, false); show('lobby'); }
   else if (friend && friend.length === 6) { track('open_link', {kind: 'friend'}); friendInvite(friend); }
 }
-function parseLink(href) {
-  try {
-    const u = new URL(href);
-    if (u.protocol === 'puzzlegrad:') { const code = linkCode(u.pathname.replace(/^\/+/, '')); return u.hostname === 'room' ? {room: code} : u.hostname === 'friend' ? {friend: code} : null; }
-    return {room: linkCode(u.searchParams.get('room')), friend: linkCode(u.searchParams.get('friend'))};
-  } catch (_) { return null; }
-}
 // The Android shell calls this when the game is opened (or already open) with a link.
 window.onDeepLink = href => { const l = parseLink(href); if (l) bootReady.then(() => setTimeout(() => routeLink(l), 400)); };
-// Every release carries a copy named Puzzlegrad.apk, so this link always downloads the newest version.
-const APK_URL = 'https://github.com/crownfall90-dot/play/releases/latest/download/Puzzlegrad.apk';
 function openLink() {
   const l = parseLink(location.href); if (!l || !(l.room || l.friend)) return;
   try { history.replaceState(history.state, '', location.pathname); } catch (_) {}
@@ -4985,8 +5150,8 @@ window.onUpdateAvailable = (info, manual) => {
 // bots stop, a card shows who has updated, and play goes on when all seat owners are on the new
 // version (they say so when they come back into the room), when someone taps "continue" or after 10 minutes.
 // Phones from before this feature do not know the message and keep playing.
-const UPD_WAIT = 10 * 60 * 1000;
-function appCode() { return isAndroid ? (parseInt(String(AndroidApp.versionName()).split('.').pop(), 10) || 0) : 1e9; } // the web build updates by reloading
+const {UPD_WAIT, appCode: calcAppCode} = PG.app.update;
+const appCode = () => calcAppCode(isAndroid);
 function updHold() { return !!(net && net.upd && !net.upd.done); }
 let lastUpd = null, updTick = 0;
 const updOwners = () => [...new Set(players.filter(p => p.owner && p.human && !p.resigned).map(p => p.owner))];
