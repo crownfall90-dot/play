@@ -1869,3 +1869,24 @@
 - Merge pull request #227 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.246
 
+## 1.0.248 — 2026-11-01
+
+**Игрокам:**
+- Профиль: кнопка «Выйти из аккаунта» снова внутри карточки профиля
+- Рейтинг «Среди друзей» теперь показывает ваших друзей и их кубки
+- Комната с друзьями: список показывает, кого вы пригласили (ждём ответа / не отвечает), друзья со статусами; можно пригласить ещё раз или убрать из приглашённых; если кого-то ещё ждёте, при старте спросит, начинать ли без них
+- В комнате видно, если друг отказался от приглашения («Отказался»)
+
+**В коде:**
+- Merge pull request #230 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs: record actual account regression and offline build results
+- feat(lobby): статус «Отказался» для приглашённого друга без новых правил базы
+- docs: record actual account regression and offline build results
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- docs(coordination): постановление C выполнено
+- feat(lobby): приглашённые друзья в списке комнаты со статусом, подтверждение старта
+- docs: record actual account regression and offline build results
+- fix(profile): выход из аккаунта в карточке профиля; рейтинг «Среди друзей» читает список друзей
+- Merge pull request #229 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.247
+
