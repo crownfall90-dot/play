@@ -447,8 +447,8 @@ html.lowgfx .tile.ghost,html.lowgfx .gm{animation:none}
 .sw:disabled{opacity:.18;cursor:not-allowed}
 .mycolor{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .col{display:flex;flex-direction:column;gap:14px}
-.field{width:100%;height:48px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--ink);font:600 16px var(--f-body);padding:0 14px}
-.field:focus{outline:none;border-color:var(--brass)}
+.field{width:100%;height:48px;border-radius:14px;border:1.5px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font:600 16px var(--f-body);padding:0 14px;box-sizing:border-box;transition:border-color .2s ease,box-shadow .2s ease,background-color .2s ease}
+.field:focus{outline:none;border-color:rgba(242,184,75,.75);background:rgba(255,255,255,.08);box-shadow:0 0 0 3px rgba(242,184,75,.16)}
 .joinrow{display:flex;gap:8px}.joinrow .field{flex:1;min-width:0}
 .codein{text-transform:uppercase;letter-spacing:.3em;font:800 18px var(--f-display)}
 #addBot{align-self:flex-start}
@@ -799,9 +799,8 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .pl:not(:last-child)::after{width:14px;height:14px;margin-top:-7px;right:-11px;background:#26315f;border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
 .pl:not(:first-child)::before{width:15px;height:15px;margin-top:-7.5px;left:-3px;background:#0b1129}
 
-/* dialogs: a little gold puzzle tab on the top edge, a warm line round the card */
-.ocard:not(.fin):not(.fgate){position:relative;border-color:rgba(242,184,75,.28);box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1)}
-.ocard:not(.fin):not(.fgate)::before{content:"";position:absolute;top:-10px;left:50%;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:linear-gradient(180deg,#ffdc82,#e29c2a);border:1px solid rgba(150,92,10,.7);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 3px 8px rgba(0,0,0,.35);z-index:-1}
+/* dialogs: clean minimalist silhouette with warm beveled border and obsidian gradient */
+.ocard:not(.fin):not(.fgate){position:relative;border:1.5px solid rgba(242,184,75,.35);border-top:1.5px solid rgba(255,230,150,.65);box-shadow:0 24px 64px rgba(0,0,0,.75),0 0 32px rgba(242,184,75,.12);background:linear-gradient(175deg,#182346 0%,#0d142a 100%)}
 .ocard.fbcard{width:min(360px,94vw);max-width:none;text-align:left}.ocard.fbcard .shero{margin-right:14px}
 .fbgift{margin:0;font-size:13px;font-weight:700;color:var(--brass);text-align:center}
 .fbcats{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 2px}
