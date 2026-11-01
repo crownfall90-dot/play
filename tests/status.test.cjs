@@ -63,3 +63,10 @@ test('screens: shop statuses and "my items" open without errors, buying puts the
     assert.deepEqual(errors, []);
   } finally { await browser.close(); }
 });
+
+test('source: rating "among friends" reads the real friends list; sign-out button is inside the profile card', () => {
+  const src = require('node:fs').readFileSync(__dirname + '/../web/game.html', 'utf8');
+  assert.match(src, /friends\.filter\(f => f\.mutual\)/);
+  assert.doesNotMatch(src, /Object\.keys\(wallet\.friends \|\| \{\}\)/);
+  assert.match(src, /data-hacct="out">Выйти из аккаунта/);
+});
