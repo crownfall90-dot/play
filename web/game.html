@@ -597,11 +597,14 @@ function centerCam(anim) {
 function ensureVisible(x, y) {
   const vw = board.clientWidth, vh = board.clientHeight;
   if (!vw) return;
-  // the zoom and hint buttons cover the right edge: keep a cell clear of them
-  const hx = (vw / 2 - 58) / cam.z / T - .6, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
-  // pan only as far as needed to bring the cell in, so the table does not jump about
-  const ox = x + cam.px / T, oy = y + cam.py / T;
-  if (Math.abs(ox) > hx || Math.abs(oy) > hy) return tweenCam({px: cam.px - (Math.abs(ox) > hx ? ox - Math.sign(ox) * hx : 0) * T, py: cam.py - (Math.abs(oy) > hy ? oy - Math.sign(oy) * hy : 0) * T}, 650);
+  const to = (typeof PG !== 'undefined' && PG.game && PG.game.camera)
+    ? PG.game.camera.ensureVisibleTarget(x, y, cam, vw, vh, T)
+    : (() => {
+        const hx = (vw / 2 - 58) / cam.z / T - .6, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
+        const ox = x + cam.px / T, oy = y + cam.py / T;
+        return (Math.abs(ox) > hx || Math.abs(oy) > hy) ? {px: cam.px - (Math.abs(ox) > hx ? ox - Math.sign(ox) * hx : 0) * T, py: cam.py - (Math.abs(oy) > hy ? oy - Math.sign(oy) * hy : 0) * T} : null;
+      })();
+  if (to) return tweenCam(to, 650);
 }
 // A finger move on screen, turned back into board directions (the board may be rotated and tilted).
 let panSum = 0;
@@ -1980,7 +1983,9 @@ function openGameMenu() {
   const online = !!net, seat = mySeat();
   const allBots = online && live && seat >= 0 && !players.some(p => p.human && p.owner !== myId && !p.resigned);
   const box = document.createElement('div'); box.className = 'over'; box.id = 'gmenu'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>${online ? 'Онлайн-партия' : live ? 'Пауза' : 'Меню'}</h3>
+  box.innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.menu)
+    ? PG.ui.menu.formatGameMenuHtml({online, live, seat, allBots})
+    : `<div class="ocard"><h3>${online ? 'Онлайн-партия' : live ? 'Пауза' : 'Меню'}</h3>
     <p>${online ? 'Партия идёт, пока вы в меню' : live ? 'Боты ждут, время хода остановлено' : ''}</p>
     <button class="cta wide" data-a="resume">Продолжить</button>
     <button class="ghostbtn" data-a="settings">Настройки</button>
