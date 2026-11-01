@@ -1814,3 +1814,16 @@
 - Merge pull request #221 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.243
 
+## 1.0.245 — 2026-11-01
+
+**Игрокам:**
+- Минималистичный и чистый интерфейс: убран лишний визуальный шум и громоздкие подсказки
+- Обновлённое окно конкурса названий игры с плавной анимацией и счётчиками
+- Улучшена контрастность и оформление карточек, полей ввода и настроек
+- Ускоренная и плавная работа приложения
+
+**В коде:**
+- style(ui): streamline UI micro-copy, eliminate text clutter and unify minimalist design across all screens (#224)
+- Merge pull request #223 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.244
+
