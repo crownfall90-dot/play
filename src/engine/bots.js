@@ -126,3 +126,16 @@ export function figurePick(tiles, meeples, opts, left, random, level) {
   const need = left <= 1 ? 9 : left <= 2 ? 6 : left <= 4 ? 4 : 2.5;
   return best && bs >= need * (level === 'hard' ? .75 : 1) ? best : null;
 }
+
+/** G-3: Adaptive difficulty helper. Proposes hard after 3 wins, easy after 3 losses. */
+export function checkAdaptiveDifficulty(streak = {w: 0, l: 0}, won, currentLevel = 'normal') {
+  const w = won ? (streak.w || 0) + 1 : 0;
+  const l = !won ? (streak.l || 0) + 1 : 0;
+  let offer = null;
+  if (w >= 3 && currentLevel !== 'hard') {
+    offer = 'hard';
+  } else if (l >= 3 && currentLevel !== 'easy') {
+    offer = 'easy';
+  }
+  return { offer, streak: { w, l } };
+}
