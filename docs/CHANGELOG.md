@@ -1890,3 +1890,19 @@
 - Merge pull request #229 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.247
 
+## 1.0.249 — 2026-11-01
+
+**Игрокам:**
+- Окно «Поддержка и отзывы» исправлено: ровная шапка во всю ширину и аккуратные цветные плитки категорий (Баг, Лаги, Идея, Другое)
+- Карточка профиля снова с ровной нижней линией
+
+**В коде:**
+- Merge pull request #232 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(coordination): передача исполнителю — выпуск 1.0.249 и список оставшегося
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- fix(profile): нижняя линия карточки профиля
+- docs: record actual account regression and offline build results
+- fix(ui): окно «Поддержка и отзывы» — ровная шапка и плитки категорий без обрезаний
+- Merge pull request #231 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.248
+
