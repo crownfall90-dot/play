@@ -5122,14 +5122,20 @@ async function cloudLoad() {
 var syncStart = Promise.race([new Promise(r => setTimeout(r, 4000)), new Promise(r => setTimeout(() => cloudSync(false).then(r, r), 800))]);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) cloudSync(false); });
 // mode: 'link' — protect this profile with an e-mail; 'login' — sign in to an existing one.
-const EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
-const EYE_SHUT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+const EYE_OPEN = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.EYE_OPEN)
+  ? PG.account.auth.EYE_OPEN
+  : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_SHUT = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.EYE_SHUT)
+  ? PG.account.auth.EYE_SHUT
+  : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
 function accountDialog(mode, prefill) {
   if (!FB) return toastAny('Профили доступны в приложении');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const link = mode === 'link';
   // One form for both: a known e-mail signs in, a new one becomes a profile (gold and progress stay).
-  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход в профиль</h3><p>Сохранение прогресса, фигурок и золота между устройствами</p>
+  box.innerHTML = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.renderAccountDialogHtml)
+    ? PG.account.auth.renderAccountDialogHtml({link, prefill})
+    : `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход в профиль</h3><p>Сохранение прогресса, фигурок и золота между устройствами</p>
     <div class="gslot" id="accGSlot"><button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button></div>
     <p class="phint acc-or" id="accOr">или по почте</p>
     <input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${(prefill || '').replace(/"/g, '')}">

@@ -57,3 +57,17 @@ export function checkAuthInput(mail, pass, link) {
   return null;
 }
 
+export const EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+export const EYE_SHUT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+
+export function renderAccountDialogHtml({link = false, prefill = ''} = {}) {
+  const safePrefill = String(prefill || '').replace(/"/g, '');
+  return `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход в профиль</h3><p>Сохранение прогресса, фигурок и золота между устройствами</p>` +
+    `<div class="gslot" id="accGSlot"><button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button></div>` +
+    `<p class="phint acc-or" id="accOr">или по почте</p>` +
+    `<input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${safePrefill}">` +
+    `<div class="pwrap"><input class="field" id="accPass" type="password" placeholder="Пароль" autocomplete="current-password" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>` +
+    `<p class="phint" id="accHint">Пароль от 6 символов</p>` +
+    `<p class="accErr" id="accErr" role="alert"></p><button class="cta wide" id="accGo">Продолжить</button><button class="linkbtn" id="accReset">Забыли пароль?</button><button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
+}
+
