@@ -1817,13 +1817,37 @@
 ## 1.0.245 — 2026-11-01
 
 **Игрокам:**
-- Минималистичный и чистый интерфейс: убран лишний визуальный шум и громоздкие подсказки
-- Обновлённое окно конкурса названий игры с плавной анимацией и счётчиками
-- Улучшена контрастность и оформление карточек, полей ввода и настроек
-- Ускоренная и плавная работа приложения
+- (без описания)
 
 **В коде:**
 - style(ui): streamline UI micro-copy, eliminate text clutter and unify minimalist design across all screens (#224)
 - Merge pull request #223 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.244
+
+## 1.0.246 — 2026-11-01
+
+**Игрокам:**
+- Новое правило: можно ставить ещё свои фишки на свой объект (по одной на новую карту), чтобы защитить его; при равных фишках очки получает тот, у кого на объекте больше своих карт
+- Быстрая игра: если соперник не нашёлся за 1 мин 24 с, к партии присоединяется игрок; такая партия идёт без рейтинга
+- Если соперник выпал из онлайн-партии и за него играет бот, оставшийся игрок может сразу закончить партию ничьёй, а не только сдаться
+- Кнопка «Вернуться в онлайн-партию» снова появляется в меню после вылета из партии
+- «Очки и правила» теперь маленькая кнопка с книжкой среди кнопок поля (рядом с подсказкой), а не плашка поверх поля
+
+**В коде:**
+- Merge pull request #226 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs: record actual account regression and offline build results
+- feat(ui): «Очки и правила» — кнопка среди кнопок поля вместо плашки поверх поля
+- docs(coordination): постановление C — переделать лобби онлайн-партии с приглашениями
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- fix(net): ничья сразу, если соперники выпали; кнопка возврата в онлайн-партию после вылета
+- docs: record actual account regression and offline build results
+- feat(rules): правила v2 — усиление своего объекта фишками и победа по картам; подставной игрок через 84 с
+- docs(coordination): постановления владельца — усиление объекта фишками и подставной игрок через 84 с
+- Merge branch 'main' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.245 (#225)
+- docs(release): журнал изменений и документация 1.0.245
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- Merge branch 'main' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- docs: record actual account regression and offline build results
+- style(ui): streamline UI micro-copy, eliminate text clutter and unify minimalist design across all screens
 
