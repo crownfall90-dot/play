@@ -1906,3 +1906,54 @@
 - Merge pull request #231 from crownfall90-dot/dev/stage2-account-network-20261029
 - docs(release): журнал изменений 1.0.248
 
+## 1.0.250 — 2026-11-02
+
+**Игрокам:**
+- Экран технических работ: кнопка «Попробовать снова» для быстрого перезапуска игры
+- Чистый минималистичный интерфейс: убран лишний визуальный шум во всех экранах и меню
+- Обновлённое лобби комнат: лаконичный выбор цвета, переключатель рейтинга и быстрые приглашения
+- Оптимизация и плавность: ускорена загрузка экранов и повышена стабильность сетевой игры
+
+**В коде:**
+- Merge pull request #234 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): подготовить заметки релиза 1.0.250 и обновить ассеты
+- docs: record actual account regression and offline build results
+- refactor(auth): extract account dialog HTML and eye icons to module (E-1)
+- refactor(state): delegate player localization and counting predicates to module (E-1)
+- refactor(friends): extract friend invite dialog and random code generator to module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(matchmaking): delegate match state initialization to module (E-1)
+- refactor(tutorial): extract tutorial config, step progression, and dialogs to module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(presence): extract online players dialog, isOn, and agoText to module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(rooms): extract room lobby seats, cups badge, and pending invites to module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(setup): extract setup screen seats, modes, and swatches to module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(world): extract procedural decor generation to module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(auth,update): extract auth errors/validation and update pause rendering (E-1)
+- docs: record actual account regression and offline build results
+- refactor(matchmaking): extract match seats rendering and status formatting to module (E-1)
+- refactor(owner): extract stats dialog calculation and grid rendering to module (E-1)
+- refactor(friends): extract friends list HTML rendering to module (E-1)
+- refactor(shop,progress): extract shop and rewards tabs rendering to modules (E-1)
+- docs: record actual account regression and offline build results
+- refactor(menu): extract in-game pause and options menu module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(world): delegate wall visibility calculation to game.world module (E-1)
+- docs: record actual account regression and offline build results
+- refactor(monolith): extract save state and setup ui modules (E-1)
+- docs: record actual account regression and offline build results
+- style(ui): global minimalist cleanup across settings, shop, friends and setup screens
+- docs: record actual account regression and offline build results
+- style(lobby): streamline lobby screen, eliminate text clutter and unify minimalist obsidian design
+- docs: record actual account regression and offline build results
+- feat(ui): кнопка «Попробовать снова» на экране технических работ
+- docs: record actual account regression and offline build results
+- feat(admin): сброс статуса игрока в админ-панели и поведенческие тесты вместо regex
+- feat: G-2 distinct bot archetypes, S-3 nightly database cleanup and collection claim guard tests
+- Merge pull request #233 from crownfall90-dot/docs/release-1.0.249
+- docs(release): журнал изменений 1.0.249
+
