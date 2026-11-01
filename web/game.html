@@ -68,7 +68,6 @@
             <div class="pitem wide"><i>👑</i><b>Королевский пропуск</b><small>30 дней: ×2 золота, фигурка и рамка, кубки без ограничений</small><span class="soon">Скоро</span></div>
           </div>
           <div class="h3">Статусы</div>
-          <p class="shint">Короткая подпись под ником: её видят в профиле, у друзей, в онлайне и в рейтинге.</p>
           <div class="stgrid" id="stgrid"></div>
           <div class="stcustom"><input class="field" id="stInput" maxlength="15" placeholder="Свой статус (до 15)" autocomplete="off"><button class="cta" id="stBuy">3000 <i class="coin"></i></button></div>
           <div class="h3">Рамки аватара</div>
@@ -90,7 +89,7 @@
           <div id="prefs"></div>
           <div class="h3">Поддержка</div>
           <div class="sgroup">
-            <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Идеи, отзывы и сообщения об ошибках</small></span><span class="sgo">›</span></button>
+            <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Идеи и отзывы</small></span><span class="sgo">›</span></button>
             <button class="srow btn" id="nameProposalBtn"><span class="sic">💡</span><span class="stx"><b>Конкурс на новое название</b><small id="nameProposalSub">Придумайте имя игры · +100 золота</small></span><span class="sgo">›</span></button>
           </div>
           <div class="h3">О приложении</div>
@@ -100,7 +99,7 @@
             <a class="srow btn" href="https://crownfall90-dot.github.io/play/privacy.html" target="_blank" rel="noopener"><span class="sic">🔒</span><span class="stx"><b>Политика конфиденциальности</b></span><span class="sgo">›</span></a>
             <button class="srow btn" id="devBtn" hidden><span class="sic">📣</span><span class="stx"><b>Панель владельца</b></span><span class="sgo">›</span></button>
           </div>
-          <p class="shint scenter">Puzzlegrad. Без рекламы и покупок</p>
+          <p class="shint scenter">Puzzlegrad</p>
         </div>
       </section>
 
@@ -2108,8 +2107,8 @@ $('#setupColor').addEventListener('click', e => {
 const SETUP_MODES = {
   bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Одиночная игра против ботов.'},
   local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Передавайте устройство перед каждым ходом.'},
-  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки онлайн.', seg: 'Количество игроков в матче'},
-  friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'Комната по коду для друзей. Свободные места займут боты.', seg: 'Вместимость комнаты'},
+  online: {title: 'Игра онлайн', go: 'Начать игру', hint: '', seg: 'Игроков в матче'},
+  friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: '', seg: 'Вместимость комнаты'},
 };
 let setupMode = 'bots';
 function openSetup(mode) {
@@ -2120,7 +2119,7 @@ function openSetup(mode) {
     if (mode === 'local' && i && x.name === PL0[i].name) x.name = 'Игрок ' + (i + 1);
     if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
   });
-  $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
+  $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint; $('#setupHint').hidden = !m.hint;
   const hero = $('#setupHero'), hm = {bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', ''];
   hero.dataset.jc = hm[0]; $('#shIcon').textContent = hm[1]; $('#shTitle').textContent = hm[2]; $('#shTag').textContent = hm[3]; hero.classList.toggle('gold', hm[0] === 'gold');
   // setupInvite removed; friends shown inline in lobby
@@ -3885,7 +3884,7 @@ function renderFriends() {
   h += `<div class="h3">В сети · ${on.length}</div><ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-finv="${f.uid}">${room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('') || '<li class="qnote">Никого из друзей нет в сети</li>'}</ul>`;
   if (off.length) h += `<div class="h3">Не в сети · ${off.length}</div><ul class="flist">${off.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Удалить из друзей">✕</button>`, agoText(f.p && f.p.t))).join('')}</ul>`;
   if (wait.length) h += `<div class="h3">Ждут ответа</div><ul class="flist">${wait.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Отменить заявку">✕</button>`, 'заявка отправлена')).join('')}</ul>`;
-  if (!friends.length && !reqs.length) h += '<p class="shint">Добавьте друга по его коду или из списка «в сети» на главном экране</p>';
+  if (!friends.length && !reqs.length) h += '<p class="shint">Добавьте друга по коду выше</p>';
   box.innerHTML = h;
   renderLobbyFriends();
 }
@@ -4517,13 +4516,9 @@ function jigsawFrame(host, o) {
   requestAnimationFrame(draw); document.fonts && document.fonts.ready && document.fonts.ready.then(draw);
   return draw;
 }
-// Every section opens with the same kind of card: a coloured jigsaw piece with an icon, a title and a line about it.
+// Minimalist layout: section heroes removed to avoid visual clutter and vertical space consumption.
 (function sectionHeroes() {
-  const H = {
-    settings: ['#6a7dff', '⚙️', 'Настройте под себя', 'Звук, подсказки и вид игры'],
-    shop: ['#f2994a', '🛍', 'Коллекция фигурок', 'Подарки, сундуки и новые фигурки'],
-    friends: ['#4c8dff', '👥', 'Ваша компания', 'Играйте и общайтесь вместе']
-  };
+  const H = {};
   for (const [id, [c, ic, t, tag]] of Object.entries(H)) {
     const lb = document.querySelector(`#scr-${id} .lb`), top = lb && lb.querySelector('.ltop'); if (!top) continue;
     const host = document.createElement('div'); host.className = 'jig shero small';
