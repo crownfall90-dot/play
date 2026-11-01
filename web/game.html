@@ -4662,6 +4662,14 @@ const AUTH_ERR = {
 // Server-side setup problems (sign-in method off, e-mail change blocked…) are not the player's
 // fault: they get a calm message, and the exact answer goes to the crash reports for the owner.
 const authErr = (j, link) => {
+  if (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.classifyAuthError) {
+    const res = PG.account.auth.classifyAuthError(j, link);
+    if (!j || !j.error) return res;
+    const c = String(j.error.message || '').split(' ')[0];
+    if (AUTH_ERR[c]) return res;
+    try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError('auth ' + (link ? 'link' : 'login') + ': ' + String(j.error.message).slice(0, 300)); } catch (_) {}
+    return res;
+  }
   if (!j || !j.error) return ['Нет связи с сервером — проверьте интернет', ''];
   const c = String(j.error.message || '').split(' ')[0];
   if (AUTH_ERR[c]) return AUTH_ERR[c];
@@ -4673,6 +4681,9 @@ const MAIL_FIX = {'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co':
   'mail.ri': 'mail.ru', 'mail.r': 'mail.ru', 'mial.ru': 'mail.ru', 'yandex.ry': 'yandex.ru', 'yandex.com.ru': 'yandex.ru', 'yandeks.ru': 'yandex.ru', 'yndex.ru': 'yandex.ru', 'ya.ry': 'ya.ru', 'rambler.ry': 'rambler.ru', 'icloud.con': 'icloud.com', 'outlok.com': 'outlook.com', 'hotmail.con': 'hotmail.com'};
 // Checks before asking the server: [text, field] or null.
 function checkAuthInput(mail, pass, link) {
+  if (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.checkAuthInput) {
+    return PG.account.auth.checkAuthInput(mail, pass, link);
+  }
   if (!mail) return ['Введите почту', 'mail'];
   if (/\s/.test(mail)) return ['В почте не должно быть пробелов', 'mail'];
   if (!/^[^@]+@[^@]+\.[^@.]{2,}$/.test(mail)) return [mail.includes('@') ? 'После @ нужен адрес почты целиком, например name@mail.ru' : 'В почте не хватает «@». Пример: name@mail.ru', 'mail'];
@@ -5421,16 +5432,25 @@ function renderUpdPause() {
   const u = net.upd; let box = $('#updpause');
   if (!box) { box = document.createElement('div'); box.id = 'updpause'; box.className = 'over'; box.style.position = 'fixed'; document.body.append(box); }
   const left = Math.max(0, Math.ceil((u.since + UPD_WAIT - Date.now()) / 1000));
-  const rows = players.filter(p => p.owner && p.human && !p.resigned).map(p => `<li class="${u.ready.has(p.owner) ? 'ok' : ''}"><i style="background:${p.col}"></i><b>${p.name}</b><span>${u.ready.has(p.owner) ? '✓ обновился' : 'обновляется…'}</span></li>`).join('');
+  const rows = (typeof PG !== 'undefined' && PG.app && PG.app.update && PG.app.update.renderUpdPlayerRowsHtml)
+    ? PG.app.update.renderUpdPlayerRowsHtml(players, u.ready)
+    : players.filter(p => p.owner && p.human && !p.resigned).map(p => `<li class="${u.ready.has(p.owner) ? 'ok' : ''}"><i style="background:${p.col}"></i><b>${p.name}</b><span>${u.ready.has(p.owner) ? '✓ обновился' : 'обновляется…'}</span></li>`).join('');
   const mine = appCode() < u.c;
   const key = rows + mine + (left < 1);
   if (box.dataset.k !== key) {
     box.dataset.k = key;
-    box.innerHTML = `<div class="ocard"><div style="font-size:38px">⏸</div><h3>Партия на паузе</h3><p>Вышло обновление. Время хода остановлено, пока все игроки не обновятся.</p><ul class="updlist">${rows}</ul>${mine ? '<button class="cta wide" id="updGo">Обновить</button>' : ''}<button class="ghostbtn" id="updSkip">Продолжить без ожидания</button><small id="updLeft"></small></div>`;
+    box.innerHTML = (typeof PG !== 'undefined' && PG.app && PG.app.update && PG.app.update.formatUpdPauseHtml)
+      ? PG.app.update.formatUpdPauseHtml({rowsHtml: rows, mine})
+      : `<div class="ocard"><div style="font-size:38px">⏸</div><h3>Партия на паузе</h3><p>Вышло обновление. Время хода остановлено, пока все игроки не обновятся.</p><ul class="updlist">${rows}</ul>${mine ? '<button class="cta wide" id="updGo">Обновить</button>' : ''}<button class="ghostbtn" id="updSkip">Продолжить без ожидания</button><small id="updLeft"></small></div>`;
     $('#updSkip').onclick = () => { netSend({t: 'upresume', g: net.gameId, c: u.c}); updEnd('Партия продолжается'); };
     const go = $('#updGo'); if (go) go.onclick = () => { if (lastUpd) window.onUpdateAvailable(lastUpd, true); else if (window.AndroidApp && AndroidApp.checkUpdates) AndroidApp.checkUpdates(); };
   }
-  const t = $('#updLeft'); if (t) t.textContent = `Само продолжится через ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  const t = $('#updLeft');
+  if (t) {
+    t.textContent = (typeof PG !== 'undefined' && PG.app && PG.app.update && PG.app.update.formatUpdCountdown)
+      ? PG.app.update.formatUpdCountdown(left)
+      : `Само продолжится через ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  }
 }
 
 // Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.

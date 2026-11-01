@@ -73,4 +73,20 @@ test('account/auth: sanitizeNickname, isValidNickname, getDisplayName', async ()
   assert.equal(getDisplayName({name: 'Боб'}), 'Боб');
   assert.equal(getDisplayName({guest: 'Гость_42'}), 'Гость_42');
   assert.equal(getDisplayName({}), 'Игрок');
+
+  // classifyAuthError and checkAuthInput
+  const {classifyAuthError, checkAuthInput} = await import('../src/account/auth.js');
+  const errExists = classifyAuthError({error: {message: 'EMAIL_EXISTS detail'}}, true);
+  assert.ok(errExists[0].includes('уже привязана'));
+  assert.equal(errExists[1], 'mail');
+
+  const errNetwork = classifyAuthError(null, false);
+  assert.ok(errNetwork[0].includes('Нет связи'));
+
+  assert.deepEqual(checkAuthInput('', 'pass123', true), ['Введите почту', 'mail']);
+  assert.deepEqual(checkAuthInput('test @mail.ru', 'pass123', true), ['В почте не должно быть пробелов', 'mail']);
+  assert.deepEqual(checkAuthInput('test@gmial.com', 'pass123', true), ['Возможно, опечатка: test@gmail.com?', 'mail', 'typo', 'test@gmail.com']);
+  assert.deepEqual(checkAuthInput('test@mail.ru', '', true), ['Введите пароль', 'pass']);
+  assert.deepEqual(checkAuthInput('test@mail.ru', '123', true), ['Пароль слишком короткий: 3 из 6 символов', 'pass']);
+  assert.equal(checkAuthInput('test@mail.ru', 'validPass123', true), null);
 });

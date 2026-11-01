@@ -56,4 +56,26 @@ test('app/update: UPD_WAIT and appCode', async () => {
 
   // Non-android returns 1e9 (infinity so web never pauses for android APK)
   assert.equal(U.appCode(false), 1e9);
+
+  // Update pause rendering
+  const players = [
+    {owner: 'o1', human: true, resigned: false, name: 'Анна', col: '#ef5350'},
+    {owner: 'o2', human: true, resigned: false, name: 'Борис', col: '#4c8dff'},
+    {owner: null, human: false, resigned: false, name: 'Бот'}
+  ];
+  const readySet = new Set(['o1']);
+  const rows = U.renderUpdPlayerRowsHtml(players, readySet);
+  assert.ok(rows.includes('Анна'));
+  assert.ok(rows.includes('class="ok"'));
+  assert.ok(rows.includes('✓ обновился'));
+  assert.ok(rows.includes('Борис'));
+  assert.ok(rows.includes('обновляется…'));
+  assert.ok(!rows.includes('Бот')); // bot omitted
+
+  const pauseHtml = U.formatUpdPauseHtml({rowsHtml: rows, mine: true});
+  assert.ok(pauseHtml.includes('Партия на паузе'));
+  assert.ok(pauseHtml.includes('id="updGo"'));
+  assert.ok(pauseHtml.includes('id="updSkip"'));
+
+  assert.equal(U.formatUpdCountdown(125), 'Само продолжится через 2:05');
 });
