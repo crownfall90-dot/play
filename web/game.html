@@ -2065,8 +2065,12 @@ function onDrawReply(m) {
 // The nickname the player chose; until then a numbered guest name (nickname1, nickname2…) handed
 // out once per device by the shared counter /guestN, never the placeholder «Вы».
 function profileName() {
-  const old = clean(setup.seats[0].name);
-  return clean(wallet.name) || clean(wallet.guest) || (old && old !== 'Вы' && old !== 'Игрок' ? old : '') || 'nickname';
+  return (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.formatProfileName)
+    ? PG.ui.setup.formatProfileName(setup.seats, wallet, clean)
+    : (() => {
+      const old = clean(setup.seats[0].name);
+      return clean(wallet.name) || clean(wallet.guest) || (old && old !== 'Вы' && old !== 'Игрок' ? old : '') || 'nickname';
+    })();
 }
 // Every player gets a hidden player number once (/playerNo/{uid}), in the order they first went
 // online; a player without a nickname is shown as nickname<number>. Players from before numbers
@@ -2098,6 +2102,21 @@ function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
 // «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
 $('#setupQuick').onclick = () => quickMatch();
+const SETUP_MODES = (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.SETUP_MODES)
+  ? PG.ui.setup.SETUP_MODES
+  : {
+    bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Одиночная игра против ботов.'},
+    local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Передавайте устройство перед каждым ходом.'},
+    online: {title: 'Игра онлайн', go: 'Начать игру', hint: '', seg: 'Игроков в матче'},
+    friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: '', seg: 'Вместимость комнаты'},
+  };
+let setupMode = 'bots';
+const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
+let colorEdit = -1;
+const swatches = (cur, taken) => (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSwatchesHtml)
+  ? PG.ui.setup.renderSwatchesHtml(cur, taken, PALETTE)
+  : `<span class="swatches">${PALETTE.map(c => `<button class="sw${c.col === cur ? ' on' : ''}" style="--c:${c.col}" data-sw="${c.col}" ${taken.includes(c.col) ? 'disabled' : ''} aria-label="${c.name}"></button>`).join('')}</span>`;
+
 function renderSetup() {
   $('#setupQuick').hidden = $('#setupOwn').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
@@ -2105,19 +2124,24 @@ function renderSetup() {
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
   $('#segHint').hidden = !on; $('#segHint').textContent = m.seg || '';
   if (on) {
-    $('#setupName').innerHTML = `<span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b><small>изменить — в настройках</small>`;
-    $('#setupColor').innerHTML = swatches(wallet.color, []);
+    if (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSetupMeHtml) {
+      const me = PG.ui.setup.renderSetupMeHtml(profileName(), wallet.color, PALETTE);
+      $('#setupName').innerHTML = me.infoHtml;
+      $('#setupColor').innerHTML = me.swHtml;
+    } else {
+      $('#setupName').innerHTML = `<span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b><small>изменить — в настройках</small>`;
+      $('#setupColor').innerHTML = swatches(wallet.color, []);
+    }
     $('#start').disabled = false; $('#start').textContent = m.go;
     return;
   }
-  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span>${s.human ? '' : '<span class="botmark" title="Бот">🤖 бот</span>'}${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
+  $('#slist').innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSetupSeatsHtml)
+    ? PG.ui.setup.renderSetupSeatsHtml(setup.seats, setup.n, {profileName: profileName(), colorEdit, palette: PALETTE})
+    : setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span>${s.human ? '' : '<span class="botmark" title="Бот">🤖 бот</span>'}${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
   $('#start').disabled = false; $('#start').textContent = m.go;
 }
 $('#seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (onlineMode()) setup.onN = +b.textContent; else setup.n = +b.textContent; saveSetup(); renderSetup(); };
 $('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
-// Seats pick colours in turn: a colour another seat already holds can't be taken.
-let colorEdit = -1;
-const swatches = (cur, taken) => `<span class="swatches">${PALETTE.map(c => `<button class="sw${c.col === cur ? ' on' : ''}" style="--c:${c.col}" data-sw="${c.col}" ${taken.includes(c.col) ? 'disabled' : ''} aria-label="${c.name}"></button>`).join('')}</span>`;
 $('#slist').addEventListener('click', e => {
   const cb = e.target.closest('[data-col]'); if (cb) { colorEdit = colorEdit === +cb.dataset.col ? -1 : +cb.dataset.col; return renderSetup(); }
   const sw = e.target.closest('[data-sw]'); if (sw && colorEdit >= 0) { setup.seats[colorEdit].col = sw.dataset.sw; if (colorEdit === 0) { wallet.color = sw.dataset.sw; saveWallet(); } colorEdit = -1; saveSetup(); return renderSetup(); }
@@ -2132,32 +2156,28 @@ $('#setupColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = setup.seats[0].col = sw.dataset.sw; saveWallet(); saveSetup(); renderSetup();
 });
-// "С ботами": you against bots; "Локально": everyone at the table passes one phone. The mode decides who is who.
-// Every way to play opens this screen first: how many players, who they are, the rules.
-// bots / local play on this phone; online looks for strangers; friends opens a room by code.
-const SETUP_MODES = {
-  bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Одиночная игра против ботов.'},
-  local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Передавайте устройство перед каждым ходом.'},
-  online: {title: 'Игра онлайн', go: 'Начать игру', hint: '', seg: 'Игроков в матче'},
-  friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: '', seg: 'Вместимость комнаты'},
-};
-let setupMode = 'bots';
+
 function openSetup(mode) {
   const m = SETUP_MODES[mode];
   setupMode = mode;
-  if (mode === 'bots' || mode === 'local') setup.seats.forEach((x, i) => {
-    x.human = mode === 'local' || i === 0;
-    if (mode === 'local' && i && x.name === PL0[i].name) x.name = 'Игрок ' + (i + 1);
-    if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
-  });
+  if (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.adjustSeatsForMode) {
+    PG.ui.setup.adjustSeatsForMode(setup.seats, mode, PL0);
+  } else if (mode === 'bots' || mode === 'local') {
+    setup.seats.forEach((x, i) => {
+      x.human = mode === 'local' || i === 0;
+      if (mode === 'local' && i && x.name === PL0[i].name) x.name = 'Игрок ' + (i + 1);
+      if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
+    });
+  }
   $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint; $('#setupHint').hidden = !m.hint;
-  const hero = $('#setupHero'), hm = {bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', ''];
+  const hero = $('#setupHero');
+  const hm = (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.getSetupHeroMeta)
+    ? PG.ui.setup.getSetupHeroMeta(mode)
+    : ({bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', '']);
   hero.dataset.jc = hm[0]; $('#shIcon').textContent = hm[1]; $('#shTitle').textContent = hm[2]; $('#shTag').textContent = hm[3]; hero.classList.toggle('gold', hm[0] === 'gold');
-  // setupInvite removed; friends shown inline in lobby
   colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
 }
-const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
 document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 let rulesOpen = false;
 function renderRules() {

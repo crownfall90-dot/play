@@ -38,3 +38,58 @@ test('ui/setup: renderRuleRowsHtml filters rules and marks active options', () =
   assert.ok(onlineHtml.includes('data-k="tie"'));
   assert.ok(!onlineHtml.includes('Без лимита')); // 'no limit' (0) omitted for online timer
 });
+
+test('ui/setup: profileName and hero meta', () => {
+  const heroBots = setup.getSetupHeroMeta('bots');
+  assert.equal(heroBots[1], '🤖');
+
+  const heroFriends = setup.getSetupHeroMeta('friends');
+  assert.equal(heroFriends[1], '👥');
+
+  // formatProfileName
+  assert.equal(setup.formatProfileName([], {name: 'Alice'}), 'Alice');
+  assert.equal(setup.formatProfileName([], {guest: 'guest99'}), 'guest99');
+  assert.equal(setup.formatProfileName([{name: 'Bob'}], {}), 'Bob');
+  assert.equal(setup.formatProfileName([{name: 'Вы'}], {}), 'nickname');
+  assert.equal(setup.formatProfileName([], {}), 'nickname');
+});
+
+test('ui/setup: adjustSeatsForMode switches between local players and bots', () => {
+  const seats = [
+    {name: 'Me', human: true},
+    {name: 'Бот 2', human: false},
+    {name: 'Бот 3', human: false}
+  ];
+  const defaultBots = [{name: 'Me'}, {name: 'Бот 2'}, {name: 'Бот 3'}];
+
+  setup.adjustSeatsForMode(seats, 'local', defaultBots);
+  assert.equal(seats[1].human, true);
+  assert.equal(seats[1].name, 'Игрок 2');
+  assert.equal(seats[2].name, 'Игрок 3');
+
+  setup.adjustSeatsForMode(seats, 'bots', defaultBots);
+  assert.equal(seats[1].human, false);
+  assert.equal(seats[1].name, 'Бот 2');
+  assert.equal(seats[2].name, 'Бот 3');
+});
+
+test('ui/setup: renderSwatchesHtml, renderSetupMeHtml and renderSetupSeatsHtml', () => {
+  const palette = [{col: '#f00', name: 'Красный'}, {col: '#00f', name: 'Синий'}];
+  const sw = setup.renderSwatchesHtml('#f00', ['#00f'], palette);
+  assert.ok(sw.includes('swatches'));
+  assert.ok(sw.includes('--c:#f00'));
+  assert.ok(sw.includes('disabled')); // #00f is taken
+
+  const me = setup.renderSetupMeHtml('Alice', '#f00', palette);
+  assert.ok(me.infoHtml.includes('Alice'));
+  assert.ok(me.swHtml.includes('swatches'));
+
+  const seats = [
+    {name: 'Alice', col: '#f00', human: true},
+    {name: 'Бот 2', col: '#00f', human: false}
+  ];
+  const seatsHtml = setup.renderSetupSeatsHtml(seats, 2, {profileName: 'Alice', colorEdit: 0, palette});
+  assert.ok(seatsHtml.includes('Alice'));
+  assert.ok(seatsHtml.includes('🤖 бот'));
+  assert.ok(seatsHtml.includes('swatches')); // colorEdit === 0
+});
