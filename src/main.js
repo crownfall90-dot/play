@@ -22,6 +22,7 @@ import * as shop from './ui/shop.js';
 import * as progressUi from './ui/progress.js';
 import * as owner from './ui/owner.js';
 import * as feedback from './ui/feedback.js';
+import * as stateGame from './game/state.js';
 
 export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTile, board, scoring, bots};
 
@@ -32,3 +33,4 @@ export const net = {createFirebase, friends, presence};
 export const app = {web, update};
 export const account = {google, sync, auth};
 export const ui = {shop, progress: progressUi, owner, feedback};
+export const game = stateGame;

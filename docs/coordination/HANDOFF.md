@@ -515,7 +515,7 @@ tests/
 - Составлен подробный аналитический отчёт `docs/security/SECURITY-AUDIT-2026-11-01.md`.
 - Создан тестовый сьют `tests/security-audit.test.cjs` (правила базы, санитизация DOM, защита промокодов).
 
-#### C. Пункт 2: Декомпозиция монолита (MONOLITH-PLAN.md: E-1.2, E-1.3, E-1.4, E-1.5, E-1.6):
+#### C. Пункт 2: Декомпозиция монолита (MONOLITH-PLAN.md: E-1.2, E-1.3, E-1.4, E-1.5, E-1.6, E-1.7):
 - Вынесены модули:
   - `src/account/google.js`: чистый парсер токенов UTF-8 `jwtPayload`, `jwtEmail`, `googleIdpBody`, классификатор ошибок.
   - `src/account/sync.js`: сериализация `encodeProfilePayload`, десериализация `decodeProfilePayload`, объединение профилей `mergeWallets`.
@@ -527,8 +527,9 @@ tests/
   - `src/net/friends.js` (E-1.5): санитизация кода дружбы `cleanFriendCode`, форматирование инвайтов `formatInvitePayload`, запросов `formatFriendRequestPayload`, верстка строки списка друзей `renderFriendRow`.
   - `src/ui/feedback.js` (E-1.6): форматирование телеметрии отзывов `formatFeedbackPayload`, рендеринг диалога обратной связи `renderFeedbackCardHtml`, константы категорий и оценок.
   - `src/ui/owner.js` (E-1.6): синхронизация настроек панели `devGet`/`devSet` с нативным мостом Android, форматирование статуса GitHub Actions `formatDevStatus`, рендеринг карточки панели владельца `renderDevPanelCardHtml`.
-- Модули подключены в `src/main.js` под пространствами `PG.account`, `PG.ui.shop`, `PG.ui.progress`, `PG.ui.owner`, `PG.ui.feedback`, `PG.net.friends`, `PG.net.presence`.
-- Созданы сьюты тестов `tests/account-modules.test.cjs`, `tests/ui-shop-progress.test.cjs`, `tests/net-presence-friends.test.cjs`, `tests/ui-owner-feedback.test.cjs`.
+  - `src/game/state.js` (E-1.7): фабрика общего состояния партии `createGameState`, сброс `resetGameState`, предикаты терминальной фазы `isTerminalPhase`, локального игрока `isLocalPlayer`, выборки живых и активных мест `humanPlayers`/`activePlayers`/`findCurrentPlayer`.
+- Модули подключены в `src/main.js` под пространствами `PG.account`, `PG.ui.shop`, `PG.ui.progress`, `PG.ui.owner`, `PG.ui.feedback`, `PG.net.friends`, `PG.net.presence`, `PG.game`.
+- Созданы сьюты тестов `tests/account-modules.test.cjs`, `tests/ui-shop-progress.test.cjs`, `tests/net-presence-friends.test.cjs`, `tests/ui-owner-feedback.test.cjs`, `tests/game-state.test.cjs`.
 
 #### D. Пункт 4: Подготовка к Google Play (H-3, D-4):
 - Подготовлены локализованные тексты для карточки магазина:
@@ -572,13 +573,13 @@ tests/
 ---
 
 ### 2. Результаты тестов и сборки
-- **`node --test tests/*.test.cjs`**: **159 тестов (141 pass, 0 fail, 18 skipped — playwright)**.
-- **`npm run build`**: Vite v6.3.5, 24 модуля трансформировано, бандл `build/bundle/pg.js` — **81.42 kB** (gzip: 31.97 kB).
+- **`node --test tests/*.test.cjs`**: **162 теста (144 pass, 0 fail, 18 skipped — playwright)**.
+- **`npm run build`**: Vite v6.3.5, 25 модулей трансформировано, бандл `build/bundle/pg.js` — **82.59 kB** (gzip: 32.43 kB).
 - Детерминизм и целостность golden-партий полностью сохранены.
 
 ---
 
 ### 3. Что делаем сейчас дальше
-1. Декомпозиция монолита: следующий шаг E-1.7 «Состояние партии G» (`src/game/state.js`) по `docs/product/MONOLITH-PLAN.md`.
-2. Ожидаем ревью от Claude по закрытым блокерам (testerPin, promo_claims, docs, tiles LF).
+1. Декомпозиция монолита: следующий шаг E-1.8 «Камера и ввод, поле» (`src/game/{camera,world}.js`) и E-1.9 «HUD и итоги» (`src/ui/{hud,results}.js`) по `docs/product/MONOLITH-PLAN.md`.
+2. Ожидаем ревью от Claude по закрытым блокерам и новым модулям декомпозиции.
 3. Подготовка релизной ветки и согласование выпуска «B» (ротация ключа подписи по `docs/SIGNING-KEY-ROTATION.md`).
