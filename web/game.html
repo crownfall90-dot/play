@@ -2970,16 +2970,28 @@ function matchRender() {
     mm.startAt = Date.now() + START_IN * 1000;
     matchSay({t: 'close', code: net.code});
   }
-  const others = Math.max(0, seats.length - 1), full = seats.length >= want;
-  const left = mm.startAt && mm.startAt !== Infinity ? Math.max(0, Math.ceil((mm.startAt - Date.now()) / 1000)) : 0;
-  $('#mLoad').classList.toggle('found', full);
-  $('#mTitle').textContent = full ? (left ? `Старт через ${left}…` : 'Начинаем!') : others ? `Найдено ${others} из ${want - 1}` : 'Ищем соперников…';
+  const status = (typeof PG !== 'undefined' && PG.net && PG.net.matchmaking)
+    ? PG.net.matchmaking.formatMatchStatus({seatsCount: seats.length, wantCount: want, startAt: mm.startAt, now: Date.now()})
+    : {
+        full: seats.length >= want,
+        left: mm.startAt && mm.startAt !== Infinity ? Math.max(0, Math.ceil((mm.startAt - Date.now()) / 1000)) : 0,
+        title: (seats.length >= want)
+          ? ((mm.startAt && mm.startAt !== Infinity && Math.ceil((mm.startAt - Date.now()) / 1000) > 0) ? `Старт через ${Math.ceil((mm.startAt - Date.now()) / 1000)}…` : 'Начинаем!')
+          : (Math.max(0, seats.length - 1) ? `Найдено ${Math.max(0, seats.length - 1)} из ${want - 1}` : 'Ищем соперников…')
+      };
+  $('#mLoad').classList.toggle('found', status.full);
+  $('#mTitle').textContent = status.title;
   const hasBot = seats.some(x => !x.owner);
-  $('#mSub').textContent = full ? (hasBot && !seats.some(x => x.ghost) ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
-  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner && !x.ghost ? ' <span class="botpill">бот</span>' : ''}</li>`);
-  if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
-  while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
-  const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
+  $('#mSub').textContent = status.full ? (hasBot && !seats.some(x => x.ghost) ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
+  const html = (typeof PG !== 'undefined' && PG.net && PG.net.matchmaking && PG.net.matchmaking.renderMatchSeatsHtml)
+    ? PG.net.matchmaking.renderMatchSeatsHtml({seats, want, myId, myName: myName(), myColor: wallet.color, palette: PL0, cleanFn: clean, meLabelFn: meLabel})
+    : (() => {
+        const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner && !x.ghost ? ' <span class="botpill">бот</span>' : ''}</li>`);
+        if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
+        while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
+        return list.join('');
+      })();
+  if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
   // Nobody for our size yet, but a room of the same mode waits for another number of players.
   const alt = !full && seats.length <= 1 && Date.now() - mm.t0 > 4000 ? [...mm.other].filter(([c, o]) => !mm.closed.has(c) && !mm.skip.has(c) && Date.now() - o.ts < SEEK_FRESH && o.n < o.want).sort((a, b) => b[1].n - a[1].n)[0] : null;
   renderLobbyFriends();

@@ -152,4 +152,17 @@ test('net/matchmaking: H-5 bot fallback triggers and fills seats', async () => {
   assert.equal(statusStart.full, true);
   assert.equal(statusStart.left, 3);
   assert.equal(statusStart.title, 'Старт через 3…');
+
+  // renderMatchSeatsHtml
+  const seatsHtml = mm.renderMatchSeatsHtml({
+    seats: [{owner: 'me', name: 'Игрок', col: '#ef5350'}, {owner: null, name: 'Бот Ёж', bot: true}],
+    want: 3,
+    myId: 'me',
+    myName: 'Игрок',
+    myColor: '#ef5350'
+  });
+  assert.ok(seatsHtml.includes('Игрок (вы)'));
+  assert.ok(seatsHtml.includes('Бот Ёж'));
+  assert.ok(seatsHtml.includes('botpill'));
+  assert.ok(seatsHtml.includes('Ищем'));
 });
