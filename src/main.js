@@ -13,6 +13,8 @@ import {createArt} from './render/art.js';
 import {createFirebase} from './net/firebase.js';
 import * as friends from './net/friends.js';
 import * as presence from './net/presence.js';
+import * as rooms from './net/rooms.js';
+import * as matchmaking from './net/matchmaking.js';
 import * as web from './app/web.js';
 import * as update from './app/update.js';
 import * as google from './account/google.js';
@@ -35,7 +37,7 @@ export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTil
 export const audio = {createSound};
 export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config};
 export const render = {createArt};
-export const net = {createFirebase, friends, presence};
+export const net = {createFirebase, friends, presence, rooms, matchmaking};
 export const app = {web, update};
 export const account = {google, sync, auth};
 export const ui = {shop, progress: progressUi, owner, feedback, hud, results};

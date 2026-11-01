@@ -2379,7 +2379,7 @@ function connect(code, asHost, quick) {
 }
 // max: how many seats the creator chose for the room.
 function publishLobby(seats) { netSend({t: 'lobby', seats, rules: setup.rules, max: roomMax()}); }
-const roomMax = () => Math.min(5, Math.max(2, (net && (net.max || net.lobby && net.lobby.max)) || 5));
+const roomMax = () => (PG.net && PG.net.rooms) ? PG.net.rooms.roomMax(net, 5) : Math.min(5, Math.max(2, (net && (net.max || net.lobby && net.lobby.max)) || 5));
 /* Who may say what in a room (audit S-2). Every message carries d.u, the account id of the phone that wrote it (the
    database rules force it to be true). The first time a phone says hello its client id is tied to that account id;
    after that only the same account can speak for that client. Moves and the rest of a seat's messages must come from
@@ -2387,6 +2387,7 @@ const roomMax = () => Math.min(5, Math.max(2, (net && (net.max || net.lobby && n
    may come from any player in the room. Rooms started by a new version (start.sec = 1) are "secure": messages without
    d.u are dropped there; older rooms keep working as before. Returns false: ignore the message (never stop the game). */
 function netAuth(d, m) {
+  if (PG.net && PG.net.rooms) return PG.net.rooms.netAuth(d, m, net, players);
   const u = typeof d.u === 'string' ? d.u : '', ids = net.uidOf;
   if (!u) return !net.secure;
   const bind = id => {
@@ -2657,6 +2658,7 @@ const BOT_NAMES = ['Бот Ёж', 'Бот Сова', 'Бот Лис', 'Бот Б
 // Everyone may want any colour; a colour wanted by several goes to one of them at random,
 // the others (and anyone without a valid choice) get random colours nobody took.
 function assignColors(seats) {
+  if (PG.net && PG.net.rooms) return PG.net.rooms.assignColors(seats, PALETTE);
   const out = seats.map(x => ({...x, col: null})), order = seats.map((x, i) => i).sort(() => Math.random() - .5);
   for (const i of order) if (validCol(seats[i].col) && !out.some(x => x.col === seats[i].col)) out[i].col = seats[i].col;
   const free = PALETTE.map(c => c.col).filter(c => !out.some(x => x.col === c)).sort(() => Math.random() - .5);
@@ -2672,7 +2674,7 @@ $('#myColor').addEventListener('click', e => {
   if (net) netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
 });
 $('#create').onclick = () => openSetup('friends');
-const newCode = () => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); };
+const newCode = () => (PG.net && PG.net.rooms) ? PG.net.rooms.newCode() : (() => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); })();
 async function createRoom() { if (!(await serverReachable())) return noServer(createRoom); connect(newCode(), true); net.max = setup.onN || 2; show('lobby'); }
 $('#join').onclick = () => {
   const code = $('#codeIn').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -2687,7 +2689,7 @@ $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-k
 $('#backToGame').onclick = () => show('game');
 $('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
 // Rated games (quick match) use the same rules for everybody: only the mode is chosen.
-const ratedRules = mode => ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
+const ratedRules = mode => (PG.net && PG.net.rooms) ? PG.net.rooms.ratedRules(mode, MODES) : ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
 function startOnline(seats) {
   const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
   netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
@@ -2824,6 +2826,7 @@ function matchFail(me) { if (mm !== me) return; toastAny('Нет связи с �
 const matchSay = (msg) => FIRE.send(MATCH_ROOM, msg).catch(() => {});
 // Open rooms others wait in, the closest to starting first: one free seat, then two, and so on (any mode and size).
 function matchOpen(me) {
+  if (PG.net && PG.net.matchmaking) return PG.net.matchmaking.filterOpenRooms(me.seeks, me.closed, me.skip, Date.now(), SEEK_FRESH, net ? net.code : null);
   const now = Date.now();
   return [...me.seeks].filter(([c, o]) => !me.closed.has(c) && !me.skip.has(c) && now - o.ts < SEEK_FRESH && o.n < o.want && (!net || c !== net.code))
     .sort((a, b) => (a[1].want - a[1].n) - (b[1].want - b[1].n) || b[1].ts - a[1].ts).map(([code, o]) => ({code, n: o.n}));
@@ -2866,7 +2869,9 @@ function matchTick(me) {
 
   // H-5: if no human opponent found within ~10 seconds, auto-fill remaining seats with bots so player doesn't wait in empty room
   if (net.host && !me.startAt && sec >= 10 && seats.length < me.want) {
-    const nextSeats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
+    const nextSeats = (PG.net && PG.net.matchmaking)
+      ? PG.net.matchmaking.autoFillSeats(net.lobby && net.lobby.seats ? net.lobby.seats : seats, me.want, {owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color}, BOT_NAMES, randomFig)
+      : (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
     if (!nextSeats.some(x => x.owner === myId)) nextSeats.unshift({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: true});
     while (nextSeats.length < me.want) {
       const bName = BOT_NAMES.find(n => !nextSeats.some(x => x.name === n)) || ('Бот ' + (nextSeats.length + 1));
