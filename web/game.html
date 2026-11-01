@@ -397,6 +397,7 @@ const hasPlacement = type => B.hasPlacement(tiles, type);
 const fortComp = t => B.fortComp(tiles, meeples, t);
 const component = (t, g) => B.component(tiles, meeples, t, g);
 function groupPos(t, g) {
+  if (PG.game && PG.game.world) return PG.game.world.groupPos(t, g);
   if (g.kind === 'f') return [0.24, 0.18];
   if (g.kind === 'c') {
     if (g.edges.length === 1) { const [x, y] = V[g.edges[0]]; return [x * .3, y * .3]; }
@@ -525,7 +526,9 @@ let camFrame = 0;
 // Finger moves arrive faster than the screen redraws; move the 3D scene once per frame.
 function applyCamSoon() { if (!camFrame) camFrame = requestAnimationFrame(() => { camFrame = 0; applyCam(); }); }
 function applyCam() {
-  world.style.transform = `rotateX(${cam.tilt}deg) rotateZ(${cam.rot}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
+  world.style.transform = (PG.game && PG.game.camera)
+    ? PG.game.camera.formatTransform(cam)
+    : `rotateX(${cam.tilt}deg) rotateZ(${cam.rot}deg) scale3d(${cam.z},${cam.z},${cam.z}) translate3d(${cam.px}px,${cam.py}px,0)`;
   if (cam.tilt !== lastTilt || cam.rot !== lastRot) {
     world.style.setProperty('--tilt', cam.tilt + 'deg'); world.style.setProperty('--rot', cam.rot + 'deg');
     lastTilt = cam.tilt; lastRot = cam.rot;
@@ -535,12 +538,20 @@ function applyCam() {
 }
 let boundsCache = null;
 function bounds() { if (boundsCache && boundsCache.n === tiles.size) return boundsCache; boundsCache = calcBounds(); boundsCache.n = tiles.size; return boundsCache; }
-function calcBounds() { let x0 = 0, x1 = 0, y0 = 0, y1 = 0; for (const t of tiles.values()) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); } return {x0, x1, y0, y1}; }
+function calcBounds() {
+  if (PG.game && PG.game.camera) return PG.game.camera.calcBounds(tiles);
+  let x0 = 0, x1 = 0, y0 = 0, y1 = 0;
+  for (const t of tiles.values()) { x0 = Math.min(x0, t.x); x1 = Math.max(x1, t.x); y0 = Math.min(y0, t.y); y1 = Math.max(y1, t.y); }
+  return {x0, x1, y0, y1};
+}
 function clampCam() {
   const b = bounds();
-  cam.px = Math.max(-(b.x1 + 1.5) * T, Math.min(-(b.x0 - 1.5) * T, cam.px));
-  cam.py = Math.max(-(b.y1 + 1.5) * T, Math.min(-(b.y0 - 1.5) * T, cam.py));
-  cam.z = Math.max(.45, Math.min(1.8, cam.z));
+  if (PG.game && PG.game.camera) PG.game.camera.clampCam(cam, b, T);
+  else {
+    cam.px = Math.max(-(b.x1 + 1.5) * T, Math.min(-(b.x0 - 1.5) * T, cam.px));
+    cam.py = Math.max(-(b.y1 + 1.5) * T, Math.min(-(b.y0 - 1.5) * T, cam.py));
+    cam.z = Math.max(.45, Math.min(1.8, cam.z));
+  }
   if (tut && pinch) tutEvent('zoom');
 }
 function tweenCam(to, ms = 600) {
@@ -557,7 +568,12 @@ function tweenCam(to, ms = 600) {
     requestAnimationFrame(step);
   });
 }
-function centerCam(anim) { const b = bounds(); const to = {px: -(b.x0 + b.x1) / 2 * T, py: -(b.y0 + b.y1) / 2 * T}; if (anim) return tweenCam(to, 500); Object.assign(cam, to); applyCam(); }
+function centerCam(anim) {
+  const b = bounds();
+  const to = (PG.game && PG.game.camera) ? PG.game.camera.centerCamTarget(b, T) : {px: -(b.x0 + b.x1) / 2 * T, py: -(b.y0 + b.y1) / 2 * T};
+  if (anim) return tweenCam(to, 500);
+  Object.assign(cam, to); applyCam();
+}
 function ensureVisible(x, y) {
   const vw = board.clientWidth, vh = board.clientHeight;
   if (!vw) return;
@@ -571,9 +587,15 @@ function ensureVisible(x, y) {
 let panSum = 0;
 function panBy(dx, dy) {
   if (tut && (panSum += Math.abs(dx) + Math.abs(dy)) > 60) { panSum = 0; tutEvent('pan'); }
-  const r = cam.rot * Math.PI / 180, sy = dy / Math.cos(cam.tilt * Math.PI / 180);
-  cam.px += (dx * Math.cos(r) + sy * Math.sin(r)) / cam.z;
-  cam.py += (-dx * Math.sin(r) + sy * Math.cos(r)) / cam.z;
+  if (PG.game && PG.game.camera) {
+    const d = PG.game.camera.panDelta(dx, dy, cam);
+    cam.px += d.dpx;
+    cam.py += d.dpy;
+  } else {
+    const r = cam.rot * Math.PI / 180, sy = dy / Math.cos(cam.tilt * Math.PI / 180);
+    cam.px += (dx * Math.cos(r) + sy * Math.sin(r)) / cam.z;
+    cam.py += (-dx * Math.sin(r) + sy * Math.cos(r)) / cam.z;
+  }
   clampCam(); applyCamSoon();
 }
 const hint = $('#hint');
