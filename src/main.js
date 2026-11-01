@@ -31,6 +31,7 @@ import * as camera from './game/camera.js';
 import * as world from './game/world.js';
 import * as turns from './game/turns.js';
 import * as timers from './game/timers.js';
+import * as tutorial from './game/tutorial.js';
 
 export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTile, board, scoring, bots};
 
@@ -41,4 +42,4 @@ export const net = {createFirebase, friends, presence, rooms, matchmaking};
 export const app = {web, update};
 export const account = {google, sync, auth};
 export const ui = {shop, progress: progressUi, owner, feedback, hud, results};
-export const game = {...stateGame, camera, world, turns, timers};
+export const game = {...stateGame, camera, world, turns, timers, tutorial};

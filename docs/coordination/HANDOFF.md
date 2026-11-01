@@ -582,24 +582,35 @@ tests/
 ---
 
 ### 2. Результаты тестов и сборки
-- **`node --test tests/*.test.cjs`**: **173 теста (155 pass, 0 fail, 18 skipped — playwright)**.
-- **`npm run build`**: Vite v6.3.5, 29 модулей трансформировано, бандл `build/bundle/pg.js` — **89.03 kB** (gzip: 35.09 kB).
+- **`node --test tests/*.test.cjs`**: **184 теста (166 pass, 0 fail, 18 skipped — playwright)**.
+- **`npm run build`**: Vite v6.3.5, 34 модуля трансформировано, бандл `build/bundle/pg.js` — **97.78 kB** (gzip: 38.64 kB).
 - Детерминизм и целостность golden-партий полностью сохранены.
 
 ---
 
-### 3. Текущий шаг: E-1.9 (HUD и итоги) выполнен
-- Вынесены модули:
-  - `src/ui/hud.js`: геометрические SVG-контуры городов `cityD`, SVG data-URI ленточек владения `ownSvg`, верстка списка игроков с бейджами и таймерами `renderPlayersListHtml`.
-  - `src/ui/results.js`: генерация заголовка победы `winTitle`, разметка подиума `renderPodiumHtml`, детальная таблица очков `renderBreakdownTableHtml`, сводная строка партии `renderSummaryLineHtml`.
-- Подключены в `src/main.js` под пространствами `PG.ui.hud` и `PG.ui.results`.
-- Создан тестовый сьют `tests/ui-hud-results.test.cjs` (5 тестов: геометрия cityD, ленточки ownSvg, список игроков, заголовок победы, подиум и таблица очков).
-- В `web/game.html` функции `cityD`, `ownSvg`, `renderPlayers` и `renderResults` делегированы модулям `PG.ui.hud` и `PG.ui.results`.
+### 3. Декомпозиция монолита (E-1.1 … E-1.12) ПОЛНОСТЬЮ ВЫПОЛНЕНА
+Все ключевые функциональные блоки `web/game.html` вынесены в чистые модули `src/`:
+- **E-1.1**: `src/app/{web,update}.js` (платформа, ссылки, PWA, версионирование).
+- **E-1.2**: `src/account/google.js` (парсер Google Credential Manager, декодер UTF-8).
+- **E-1.3**: `src/account/{auth,sync}.js` (валидация ников, кошелёк, профиль).
+- **E-1.4**: `src/ui/{shop,progress}.js` (сетки магазина, рамки, фигурки, SVG-кольца).
+- **E-1.5**: `src/net/{friends,presence}.js` (присутствие, инвайты, друзья).
+- **E-1.6**: `src/ui/{owner,feedback}.js` (панель владельца, телеметрия отзывов).
+- **E-1.7**: `src/game/state.js` (общее состояние `G`, предикаты, фабрика).
+- **E-1.8**: `src/game/{camera,world}.js` (3D-камера, границы, стены, фишки).
+- **E-1.9**: `src/ui/{hud,results}.js` (ленточки, геометрия городов, подиум, счёт).
+- **E-1.10**: `src/game/{turns,timers}.js` (таймеры, адаптивные ходы, botLevel, авто-ходы).
+- **E-1.11**: `src/net/{rooms,matchmaking}.js` (коды комнат, цвета, S-2 netAuth, H-5 боты).
+- **E-1.12**: `src/game/tutorial.js` (шаги обучения, карточки тренера, колода, скрипт бота).
+
+Все модули экспортируются через единый фасад `PG` в `src/main.js` и покрыты unit-тестами.
 
 ---
 
 ### 4. Что делаем дальше
-1. Декомпозиция монолита по `docs/product/MONOLITH-PLAN.md`: шаг E-1.10 «Ходы и таймеры» (`src/game/{turns,timers}.js`).
-2. Шаг E-1.11 «Комнаты и матчмейкинг» (`src/net/{rooms,matchmaking}.js`).
-3. Шаг E-1.12 «Обучение» (`src/game/tutorial.js`).
-4. Подготовка релиза 1.0.244 (напоминание владельцу: опубликовать `docs/firebase-rules.json` перед выпуском).
+1. Релиз **1.0.244**:
+   - Правила Firebase опубликованы владельцем.
+   - Claude дал вердикт «ВЫПУСК 1.0.244 РАЗРЕШЁН».
+   - Заполнить `release-notes.md` строками для игроков.
+   - Оформить PR из `dev/stage2-account-network-20261029` в `main`.
+   - Запустить промоушен «Promote to Production».

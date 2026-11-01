@@ -3332,7 +3332,7 @@ questsToday(); progressDot();
    happens for sure: close a town, turn a card, claim and finish a road, see the final count.
    The coach card shows one short line and waits for the action: the spot to tap pulses, other
    spots are hidden, and there is no "next" until it is done. */
-const TUT = [
+const TUT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_STEPS : [
   {ic: '👆', t: 'Тапните по рамке', p: 'Сюда ляжет ваша карта', wait: 'select', only: [0, -1]},
   {ic: '✅', t: 'Нажмите «Поставить»', p: 'Город сошёлся с городом', wait: 'placed', hl: '#ok'},
   {ic: '🧍', t: 'Поставьте фишку на город', p: 'Фишка делает город вашим', wait: 'meepleDone', hl: '#mrow .chip:not(.skip)'},
@@ -3350,8 +3350,8 @@ const TUT = [
   {ic: '🏆', t: 'Вы победили! +30 золота', p: 'У кого больше очков, тот и выиграл', btn: 'Играть', done: true},
 ];
 // Cards come off the end of the deck: first piece, then you, bot, you, bot, you.
-const TUT_DECK = ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
-const TUT_BOT = [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
+const TUT_DECK = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_DECK : ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
+const TUT_BOT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_BOT : [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
 let tut = null;
 function startTutorial() {
   if (net) leaveRoom();
@@ -3362,7 +3362,10 @@ function startTutorial() {
 }
 const tutStep = () => tut && TUT[tut.i];
 // Which empty spots the tutorial lets you use right now (null: no tutorial, all of them).
-function tutAllows(x, y) { const s = tutStep(); if (!s) return true; return !!s.only && s.only[0] === x && s.only[1] === y; }
+function tutAllows(x, y) {
+  if (PG.game && PG.game.tutorial) return PG.game.tutorial.isTutorialAllowed(tut, x, y, TUT);
+  const s = tutStep(); if (!s) return true; return !!s.only && s.only[0] === x && s.only[1] === y;
+}
 function tutShow() {
   document.documentElement.classList.toggle('tutoring', !!tut);
   document.querySelectorAll('.tutpulse').forEach(e => e.classList.remove('tutpulse'));
@@ -3370,7 +3373,9 @@ function tutShow() {
   if (!tut) { c.hidden = true; return; }
   const s = TUT[tut.i];
   if (s.done) { c.hidden = true; return tutFinale(); }
-  c.innerHTML = `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
+  c.innerHTML = (PG.game && PG.game.tutorial)
+    ? PG.game.tutorial.renderCoachCardHtml(s, tut.i, TUT.length)
+    : `<span class="cic">${s.ic}</span><span class="ctx"><b>${s.t}</b><small>${s.p}</small></span>${s.btn ? `<button class="cta" id="tutNext">${s.btn}</button>` : ''}${s.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${(100 * tut.i / (TUT.length - 1)).toFixed(0)}%"></i></span>`;
   c.hidden = false; c.style.top = (playersEl.offsetTop + playersEl.offsetHeight + 8) + 'px';
   if (phase === 'place' && current) renderSlots();
   // the spot to tap is brought to the middle: after the pan and zoom lessons it may be off the screen
@@ -3395,7 +3400,11 @@ function tutNext() {
   tut.i++; tutShow();
 }
 // Game code reports what the player did; the coach moves on only on the awaited action.
-function tutEvent(ev) { const s = tutStep(); if (s && s.wait === ev) tutNext(); }
+function tutEvent(ev) {
+  const s = tutStep();
+  const shouldAdvance = (PG.game && PG.game.tutorial) ? PG.game.tutorial.shouldAdvanceStep(s, ev) : (s && s.wait === ev);
+  if (shouldAdvance) tutNext();
+}
 $('#coach').addEventListener('click', e => { if (e.target.closest('#tutNext')) tutNext(); });
 $('#tutBtn').onclick = startTutorial;
 // Profile: pick a nickname (and a colour) once, after the tutorial or on skipping it.
