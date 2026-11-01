@@ -15,7 +15,9 @@
   if (old) document.addEventListener('DOMContentLoaded', fail); else setTimeout(fail, 8000);
 })();
 </script>
-<script>window.RELEASE_NOTES = "- Проверка обновлений в настройках стала надёжнее: если вы отложили обновление кнопкой «Позже», оно снова предлагается, а не сообщает, что версия актуальна"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app"};</script>
+<script>window.RELEASE_NOTES = "- В приложении долгое нажатие на надписи больше не выделяет текст; поля ввода, коды друга и комнаты по-прежнему можно выделять и копировать\n- В главном меню подпись «С друзьями» не разрывается на узких экранах"; window.FIREBASE = {"apiKey": "AIzaSyAZJ-TccHzYfaAlXTFdaWRWH6vzxC0yIGw", "dbUrl": "https://puzzlegrad-default-rtdb.europe-west1.firebasedatabase.app", "googleClientId": "467929090444-ne3f4lniesmca4q4v08vg3eg2ff5o5m1.apps.googleusercontent.com"};</script>
+<script>var PG=(function(te){"use strict";const de=l=>()=>{l|=0,l=l+1831565813|0;let a=Math.imul(l^l>>>15,1|l);return a=a+Math.imul(a^a>>>7,61|a)^a,((a^a>>>14)>>>0)/4294967296},Te=l=>[...l].reduce((a,n)=>a*31+n.charCodeAt(0)|0,7),K={cap:{e:"cfff",n:5,name:"Край города"},capRS:{e:"crfr",n:4,name:"Город и дорога"},capRL:{e:"cfrr",n:3,name:"Город и поворот"},capRR:{e:"crrf",n:3,name:"Город и поворот"},c2:{e:"ccff",n:3,name:"Угол города"},c2r:{e:"ccrr",n:3,name:"Угол города с дорогой"},band:{e:"fcfc",n:2,name:"Городская улица"},c3:{e:"cccf",n:3,name:"Большой город"},c3r:{e:"cccr",n:2,name:"Город с воротами"},c4:{e:"cccc",n:1,name:"Центр города"},rS:{e:"rfrf",n:6,name:"Прямая дорога"},rC:{e:"ffrr",n:6,name:"Поворот дороги"},r3:{e:"frrr",n:3,name:"Развилка"},r4:{e:"rrrr",n:1,name:"Перекрёсток"},fort:{e:"ffff",n:3,fort:!0,name:"Крепость"},fortR:{e:"ffrf",n:2,fort:!0,name:"Крепость с дорогой"},wS:{e:"wfwf",n:2,name:"Река"},wC:{e:"wwff",n:2,name:"Излучина реки"},wBr:{e:"wrwr",n:2,name:"Мост через реку"},brHalf:{e:"fbfr",n:2,bridge:!0,name:"Половина большого моста"},wCity:{e:"wcwf",n:1,name:"Город у реки"},wEnd:{e:"wfff",n:2,name:"Исток реки"},wRC:{e:"wwrr",n:1,name:"Излучина и дорога"},wLake:{e:"wwww",n:2,lake:!0,name:"Разлив реки"},wTee:{e:"wwwf",n:2,lake:!0,name:"Заводь с протокой"},rRock:{e:"rfff",n:2,end:"boulders",name:"Тупик у валунов"},rMine:{e:"rfff",n:2,end:"mine",name:"Вход в шахту"},rEnd:{e:"rfxf",n:1,end:"cliff",name:"Дорога к обрыву"},rocks:{e:"ffff",n:2,rocks:!0,name:"Валуны"}},ce=l=>l;(()=>{const l=h=>[0,1,2,3].map(u=>[0,1,2,3].map(C=>h[(C-u+4)%4]).join("")),a=new Set;for(const h in K)l([...K[h].e].map(ce).join("")).forEach(u=>a.add(u));const n="crf";for(const h of n)for(const u of n)for(const C of n)for(const x of n){const M=h+u+C+x;a.has(M)||(l(M).forEach(R=>a.add(R)),K["x"+M]={e:M,n:1,rare:!0,name:Pe(M)})}})();function Pe(l){const a=u=>[...l].filter(C=>C===u).length,n=[];a("c")&&n.push("город"),a("w")&&n.push(a("w")>=3?"слияние рек":"река"),a("r")&&n.push(a("r")>=3?"развилка":"дорога");const h=n.length>1?n.slice(0,-1).join(", ")+" и "+n[n.length-1]:n[0]||"поле";return h[0].toUpperCase()+h.slice(1)}function We(l){const a=[],n=l.mode==="epic"?2:1;for(const h in K){const u=K[h];if(!(!l.rivers&&u.e.includes("w"))&&!(l.mode==="fast"&&u.rare))for(let C=0;C<u.n*(u.rare?1:n);C++)a.push(h)}return a}const le=[0,1,0,-1],oe=[-1,0,1,0],Y=(l,a)=>l+","+a,ie=(l,a,n)=>l.get(Y(a,n)),ne=(l,a)=>K[l.type].e[(a-l.r+4)%4];function ve(l,a,n,h,u){if(ie(l,h,u))return!1;let C=0;for(let x=0;x<4;x++){const M=ie(l,h+le[x],u+oe[x]);if(M&&(C++,ce(ne(M,(x+2)%4))!==ce(K[a].e[(x-n+4)%4])))return!1}return C>0}function he(l){const a=new Map;for(const n of l.values())for(let h=0;h<4;h++){const u=n.x+le[h],C=n.y+oe[h];ie(l,u,C)||a.set(Y(u,C),{x:u,y:C})}return[...a.values()]}const be=(l,a,n,h)=>[0,1,2,3].filter(u=>ve(l,a,u,n,h));function ue(l,a){const n=[];for(const h of he(l))for(const u of be(l,a,h.x,h.y))n.push({x:h.x,y:h.y,r:u});return n}function _e(l,a){for(const n of he(l))if(be(l,a,n.x,n.y).length)return!0;return!1}function ee(l){const a={c:[],r:[]};for(let h=0;h<4;h++){const u=ne(l,h);a[u==="b"?"r":u]&&a[u==="b"?"r":u].push(h)}const n=[];return a.c.length&&n.push({kind:"c",edges:a.c}),a.r.length===2?n.push({kind:"r",edges:a.r}):a.r.forEach(h=>n.push({kind:"r",edges:[h]})),K[l.type].fort&&n.push({kind:"f",edges:[]}),n}const fe=(l,a)=>Y(l.x,l.y)+"|"+a.kind+a.edges.join("");function Se(l,a,n){const h=[];for(let C=-1;C<=1;C++)for(let x=-1;x<=1;x++){const M=ie(l,n.x+x,n.y+C);M&&h.push(M)}const u=Y(n.x,n.y)+"|f";return{kind:"f",tiles:h,complete:h.length===9,ids:new Set([u]),meeples:a.filter(C=>C.gid===u)}}function ae(l,a,n,h){if(h.kind==="f")return Se(l,a,n);const u=new Set,C=new Set,x=[[n,h]];let M=!1;for(;x.length;){const[R,I]=x.pop(),z=fe(R,I);if(!u.has(z)){u.add(z),C.add(R);for(const F of I.edges){const v=ie(l,R.x+le[F],R.y+oe[F]);if(!v){M=!0;continue}const w=ee(v).find(A=>A.kind===I.kind&&A.edges.includes((F+2)%4));w&&x.push([v,w])}}}return{kind:h.kind,tiles:[...C],complete:!M,ids:u,meeples:a.filter(R=>u.has(R.gid))}}const Me=(l,a,n)=>ee(n).filter(h=>{const u=ae(l,a,n,h);return u.meeples.length===0&&!u.complete}),Oe=Object.freeze(Object.defineProperty({__proto__:null,DX:le,DY:oe,allMoves:ue,claimable:Me,claimableAll:(l,a)=>{const n=[];for(const h of l.values())for(const u of Me(l,a,h))n.push({t:h,g:u});return n},component:ae,edgeAt:ne,emptyCells:he,fits:ve,fortComp:Se,gid:fe,groupsOf:ee,hasPlacement:_e,key:Y,legalRots:be},Symbol.toStringTag,{value:"Module"})),pe=(l,a,n)=>l.get(Y(a,n));function ye(l,a){const n=a.tiles.filter(u=>K[u.type].bridge);return n.some(u=>{const C=[0,1,2,3].find(M=>ne(u,M)==="b"),x=pe(l,u.x+le[C],u.y+oe[C]);return x&&ne(x,(C+2)%4)==="b"})?(a.tiles.length-n.length)*2+n.length:a.tiles.length}const Re=(l,a,n)=>a.kind==="c"?a.tiles.length*(n?1:2):a.kind==="f"?n?a.tiles.length:9:ye(l,a);function Ae(l,a,n,h,u,C){const x=Re(l,a,n),M=Array.from({length:h},()=>0);a.meeples.forEach(v=>M[v.p]++);const R=Math.max(...M);if(!R)return{pts:x,win:[],each:0,helped:!1};const I=M.map((v,w)=>v===R?w:-1).filter(v=>v>=0),z=I.length>1&&u==="split"?Math.floor(x/I.length):x,F=!n&&C!=null&&!I.includes(C);return{pts:x,win:I,each:z,helped:F}}function De(l,a,n){const h=[],u=new Set,C=(x,M)=>{if(u.has(fe(x,M)))return;const R=ae(l,a,x,M);R.ids.forEach(I=>u.add(I)),R.complete&&h.push(R)};ee(n).forEach(x=>x.kind!=="f"&&C(n,x));for(let x=-1;x<=1;x++)for(let M=-1;M<=1;M++){const R=pe(l,n.x+M,n.y+x);R&&K[R.type].fort&&C(R,{kind:"f",edges:[]})}return h}function Ie(l,a,n,h){const u=[],C=new Set,x=(M,R)=>{if(C.has(fe(M,R)))return;const I=ae(l,a,M,R);I.ids.forEach(z=>C.add(z)),I.complete&&!I.meeples.length&&I.tiles.every(z=>z.by===h)&&u.push({t:M,g:R,c:I})};ee(n).forEach(M=>M.kind!=="f"&&x(n,M));for(let M=-1;M<=1;M++)for(let R=-1;R<=1;R++){const I=pe(l,n.x+R,n.y+M),z=I&&K[I.type].fort&&ee(I).find(F=>F.kind==="f");z&&x(I,z)}return u}const ge=Object.freeze(Object.defineProperty({__proto__:null,completedAround:De,doneMine:Ie,featurePoints:Re,roadPoints:ye,settle:Ae},Symbol.toStringTag,{value:"Module"})),xe=(l,a)=>{let n=0;for(let h=0;h<4;h++)l.get(Y(a.x+le[h],a.y+oe[h]))&&n++;return n};function Ce(l,a,n){let h=null,u=-1e9;for(const C of ue(l,a)){const x=xe(l,C)*1.5+n()*2.5;x>u&&(u=x,h=C)}return h}function qe(l,a,n,h,u,C){let x=null,M=-1e9;for(const R of ue(l,n)){const I={x:R.x,y:R.y,type:n,r:R.r,seed:1};l.set(Y(I.x,I.y),I);let z=C()*.6;for(const F of ee(I)){if(F.kind==="f")continue;const v=ae(l,a,I,F);if(!v.meeples.length)continue;const w=Array.from({length:u},()=>0);v.meeples.forEach(t=>w[t.p]++);const A=Math.max(...w),c=w.filter(t=>t===A).length>1,L=v.complete?v.kind==="c"?v.tiles.length*2:ye(l,v):v.tiles.length*.8;w[h]===A?z+=6+L*(c?.5:1.5)+(v.complete?8:0):z-=5+L*1.2+(v.complete?8:0)}l.delete(Y(I.x,I.y)),z+=xe(l,R)*.15,z>M&&(M=z,x=R)}return x||Ce(l,n,C)}const ze=Object.freeze(Object.defineProperty({__proto__:null,botPick:Ce,helperPick:qe},Symbol.toStringTag,{value:"Module"}));function je({sfxOn:l,musicLevel:a}){let n=null,h=null,u=null;function C(){if(!n){n=new(window.AudioContext||window.webkitAudioContext);const e=n.createDynamicsCompressor();e.connect(n.destination),h=n.createGain(),h.gain.value=.9,h.connect(e),u=n.createGain(),u.gain.value=0,u.connect(e)}return n.state==="suspended"&&!document.hidden&&n.resume(),n}function x(e,i,o,f,p){e.gain.setValueAtTime(1e-4,i),e.gain.exponentialRampToValueAtTime(o,i+f),e.gain.exponentialRampToValueAtTime(1e-4,i+f+p)}function M(e,i,o,f,p,T=h,k){const r=n.createOscillator(),G=n.createGain();r.type=f,r.frequency.setValueAtTime(i,e),k&&r.frequency.exponentialRampToValueAtTime(k,e+o),x(G,e,p,.008,o),r.connect(G).connect(T),r.start(e),r.stop(e+o+.05)}let R=null;function I(e,i,o,f,p=h){if(!R){R=n.createBuffer(1,n.sampleRate*.5,n.sampleRate);const G=R.getChannelData(0);for(let j=0;j<G.length;j++)G[j]=Math.random()*2-1}const T=n.createBufferSource(),k=n.createBiquadFilter(),r=n.createGain();T.buffer=R,k.type="bandpass",k.frequency.value=o,k.Q.value=1.2,x(r,e,f,.004,i),T.connect(k).connect(r).connect(p),T.start(e),T.stop(e+i+.05)}function z(e,i,o,f,p=h){const T=n.createOscillator(),k=n.createOscillator(),r=n.createBiquadFilter(),G=n.createGain();T.type="triangle",k.type="sawtooth",T.frequency.value=i,k.frequency.value=i*1.002,r.type="lowpass",r.frequency.setValueAtTime(i*6,e),r.frequency.exponentialRampToValueAtTime(i*1.2,e+o);const j=n.createGain();j.gain.value=.25,T.connect(r),k.connect(j).connect(r),r.connect(G).connect(p),x(G,e,f,.005,o),T.start(e),k.start(e),T.stop(e+o+.05),k.stop(e+o+.05)}const F=e=>440*Math.pow(2,(e-69)/12),v={place:e=>{M(e,180,.16,"sine",.5,h,70),I(e,.07,700,.35)},rotate:e=>I(e,.035,2600,.12),meeple:e=>{M(e,440,.09,"sine",.25,h,880),M(e+.06,990,.12,"sine",.15)},score:e=>[76,79,83].forEach((i,o)=>z(e+o*.08,F(i),.45,.16)),big:e=>{[72,76,79,84].forEach((i,o)=>z(e+o*.1,F(i),.6,.18)),z(e+.42,F(88),1,.14)},turn:e=>{M(e,F(81),.45,"sine",.12),M(e+.1,F(86),.55,"sine",.09)},coin:e=>{M(e,1319,.06,"square",.04),M(e+.06,1760,.16,"square",.04)},tap:e=>I(e,.02,3200,.06),win:e=>{[[72,0],[76,.14],[79,.28],[84,.42],[79,.62],[84,.76]].forEach(([i,o])=>z(e+o,F(i),.7,.18)),M(e+.76,F(60),1.4,"triangle",.1)},lose:e=>[[76,0],[74,.22],[72,.44],[71,.7]].forEach(([i,o])=>z(e+o,F(i),.8,.13))};function w(e){if(!(!v[e]||!l()))try{C(),v[e](n.currentTime+.01)}catch{}}const A=[[50,57,62,65],[48,55,60,64],[46,53,58,62],[48,55,60,67]],c=[62,64,65,67,69,71,72,74,76,77,79];let L={on:!1,timer:0,next:0,step:0,note:4};function t(){if(!n||!u)return;const e=a();u.gain.cancelScheduledValues(n.currentTime),u.gain.setTargetAtTime(e,n.currentTime,.6),e&&!L.on?$():!e&&L.on&&setTimeout(()=>{a()||Q()},2500)}function $(){if(L.on)return;L.on=!0,L.next=n.currentTime+.1;const e=60/76/2;L.timer=setInterval(()=>{for(;L.next<n.currentTime+.6;){const i=L.next,o=Math.floor(L.step/8)%A.length,f=L.step%8,p=A[o];f===0&&(M(i,F(p[0]-12),e*7,"triangle",.5,u),p.slice(1).forEach(T=>{const k=n.createOscillator(),r=n.createGain();k.type="sine",k.frequency.value=F(T),r.gain.setValueAtTime(1e-4,i),r.gain.linearRampToValueAtTime(.09,i+e*2),r.gain.linearRampToValueAtTime(1e-4,i+e*8),k.connect(r).connect(u),k.start(i),k.stop(i+e*8+.1)})),f===4&&z(i,F(p[1]),e*3,.2,u),Math.random()<(f%2?.35:.7)&&(L.note=Math.max(0,Math.min(c.length-1,L.note+[-2,-1,-1,0,1,1,2][Math.random()*7|0])),z(i,F(c[L.note]),e*2.2,.26,u)),L.next+=e,L.step++}},150)}function Q(){clearInterval(L.timer),L.on=!1}return document.addEventListener("pointerdown",()=>{try{C(),t()}catch{}},{once:!0,capture:!0}),document.addEventListener("visibilitychange",()=>{n&&(document.hidden?(t(),n.suspend()):(n.resume(),t()))}),{audio:C,beep:w,musicUpdate:t}}const Ge=()=>({gold:100,owned:["classic"],fig:"classic",daily:"",dailyBox:"",paid:[],sound:!0,color:"#ef5350"});function me(l){if(!l)return"";const a="pg_sec_"+(l.gold||0)+"_"+(l.owned?l.owned.slice().sort().join(","):"")+"_"+(l.fcode||"")+"_salt90";let n=2166136261;for(let h=0;h<a.length;h++)n^=a.charCodeAt(h),n=Math.imul(n,16777619);return(n>>>0).toString(16)}function Be(l,a,n,h){let u=null,C=null;try{u=JSON.parse(l.getItem("wallet")),C=l.getItem("wallet_sig")}catch{}if(u&&C&&C!==me(u)&&h)try{h({gold:+u.gold||0})}catch{}const x=Object.assign(Ge(),u);return x.boosts=Object.assign({double:0,meeple:0},x.boosts),a(x.color)||(x.color=n),x}function Fe(l,a){try{l.setItem("wallet",JSON.stringify(a)),l.setItem("wallet_sig",me(a))}catch{}}const ke=l=>50+50*l,we=[{id:"c3",ic:"🏰",t:"Достройте 3 города",k:"c",n:3,g:15},{id:"r3",ic:"🛤️",t:"Достройте 3 дороги",k:"r",n:3,g:10},{id:"f1",ic:"⛪",t:"Окружите крепость",k:"f",n:1,g:15},{id:"w1",ic:"🏆",t:"Победите в партии",k:"win",n:1,g:20},{id:"g2",ic:"🎲",t:"Сыграйте 2 партии",k:"games",n:2,g:10},{id:"s30",ic:"⭐",t:"Наберите 30 очков за одну партию",k:"s30",n:1,g:15},{id:"o1",ic:"🌍",t:"Сыграйте онлайн",k:"online",n:1,g:20},{id:"p50",ic:"💎",t:"Заработайте 50 очков за день",k:"pts",n:50,g:15}],Ue=[{id:"w1",ic:"🥇",t:"Первая победа",d:"Победите в партии",ok:l=>l.wins>=1,g:20},{id:"w10",ic:"🏅",t:"Опытный правитель",d:"10 побед",ok:l=>l.wins>=10,g:50},{id:"w50",ic:"👑",t:"Король Пазлграда",d:"50 побед",ok:l=>l.wins>=50,g:150},{id:"g25",ic:"🎲",t:"Завсегдатай",d:"Сыграйте 25 партий",ok:l=>l.games>=25,g:40},{id:"c10",ic:"🏰",t:"Градостроитель",d:"Достройте 10 городов",ok:l=>l.c>=10,g:30},{id:"c50",ic:"🏙️",t:"Архитектор",d:"Достройте 50 городов",ok:l=>l.c>=50,g:80},{id:"r20",ic:"🛤️",t:"Дорожный мастер",d:"Достройте 20 дорог",ok:l=>l.r>=20,g:30},{id:"f5",ic:"⛪",t:"Хранитель крепостей",d:"Окружите 5 крепостей",ok:l=>l.f>=5,g:30},{id:"b50",ic:"⭐",t:"Полсотни",d:"50 очков за одну партию",ok:l=>l.best>=50,g:40},{id:"b80",ic:"🌟",t:"Рекордсмен",d:"80 очков за одну партию",ok:l=>l.best>=80,g:80},{id:"o1",ic:"🌍",t:"Покоритель сети",d:"Победите в онлайн-партии",ok:l=>l.owins>=1,g:40},{id:"l5",ic:"🎖️",t:"Пятый уровень",d:"Достигните 5 уровня",ok:(l,a)=>a>=5,g:50},{id:"l10",ic:"💠",t:"Десятый уровень",d:"Достигните 10 уровня",ok:(l,a)=>a>=10,g:100}];function He(l){let a=0;for(const u of l)a=a*31+u.charCodeAt(0)>>>0;const n=we.slice(),h=[];for(;h.length<3;)a=a*1103515245+12345>>>0,h.push(n.splice((a>>>16)%n.length,1)[0].id);return h}function Qe(l,a){l.xp+=a;let n=0;for(;l.xp>=ke(l.lvl);)l.xp-=ke(l.lvl),l.lvl++,n++;return n}const Ve=Object.freeze(Object.defineProperty({__proto__:null,ACH:Ue,QUESTS:we,addXp:Qe,dailyQuests:He,xpNeed:ke},Symbol.toStringTag,{value:"Module"})),$e=Object.freeze(Object.defineProperty({__proto__:null,CHEST_SVG:'<svg viewBox="0 0 64 56" width="72" height="63" aria-hidden="true"><rect x="6" y="22" width="52" height="30" rx="4" fill="#9a5b2c"/><rect x="6" y="22" width="52" height="7" fill="#7b4521"/><path d="M6 22 Q32 0 58 22 Z" fill="#b36a32"/><rect x="28" y="14" width="8" height="38" fill="#f2b84b"/><rect x="26" y="26" width="12" height="10" rx="2" fill="#ffd36b" stroke="#8a5a12" stroke-width="1.5"/><rect x="6" y="38" width="52" height="3" fill="#f2b84b"/></svg>',FIGS:{classic:{name:"Классика",price:0},peasant:{name:"Крестьянин",price:150},monk:{name:"Монах",price:300},knight:{name:"Рыцарь",price:600},archer:{name:"Лучник",price:900},king:{name:"Король",price:1500},queen:{name:"Королева",price:2500}},LOCS:[{name:"Деревня",desc:"Дороги, города, реки и крепости",open:!0,art:'<rect width="160" height="90" fill="#7cb85a"/><path d="M0 60Q40 40 80 58T160 52V90H0z" fill="#5f9e40"/><path d="M0 70L160 64" stroke="#e2c690" stroke-width="7"/><path d="M110 0Q100 40 120 90" stroke="#3b88cf" stroke-width="9" fill="none"/><g fill="#c1452f"><path d="M28 40l10-10 10 10z"/><path d="M50 44l9-9 9 9z"/></g><g fill="#eadcbc"><rect x="30" y="40" width="16" height="10"/><rect x="52" y="44" width="14" height="9"/></g><path d="M130 30h12v24h-12z" fill="#b7ae9b"/><path d="M136 18l8 4-8 4z" fill="#e04a3a"/>'},{name:"Мегаполис",desc:"Проспекты, кварталы, метро и небоскрёбы",art:'<rect width="160" height="90" fill="#1d2550"/><circle cx="130" cy="18" r="8" fill="#f4e7b0"/><g fill="#2f3a72"><rect x="8" y="40" width="22" height="50"/><rect x="34" y="22" width="18" height="68"/><rect x="56" y="48" width="24" height="42"/><rect x="84" y="12" width="20" height="78"/><rect x="108" y="34" width="22" height="56"/><rect x="134" y="52" width="20" height="38"/></g><g fill="#ffd36b"><rect x="38" y="30" width="4" height="4"/><rect x="45" y="40" width="4" height="4"/><rect x="88" y="22" width="4" height="4"/><rect x="96" y="36" width="4" height="4"/><rect x="88" y="50" width="4" height="4"/><rect x="12" y="50" width="4" height="4"/><rect x="114" y="44" width="4" height="4"/><rect x="62" y="58" width="4" height="4"/></g>'},{name:"Сибирь",desc:"Зимники, остроги и замёрзшие реки",art:'<rect width="160" height="90" fill="#a9c7e8"/><path d="M0 60L40 22L70 52L100 18L160 64V90H0z" fill="#e8f1fb"/><path d="M40 22L52 34L44 34L36 30zM100 18L114 32L104 30z" fill="#fff"/><g fill="#2d5a46"><path d="M20 78l8-22 8 22z"/><path d="M120 80l9-26 9 26z"/><path d="M140 84l7-18 7 18z"/></g><path d="M0 82h160v8H0z" fill="#fff"/><g fill="#fff"><circle cx="70" cy="10" r="1.6"/><circle cx="20" cy="16" r="1.4"/><circle cx="140" cy="10" r="1.6"/><circle cx="90" cy="40" r="1.2"/></g>'},{name:"Джунгли",desc:"Тропы, руины, реки и пирамиды",art:'<rect width="160" height="90" fill="#1f5a3a"/><path d="M60 90L80 40L100 90z" fill="#8f8a6a"/><path d="M66 74h28M70 64h20M74 54h12" stroke="#6d684e" stroke-width="3"/><g fill="#2e8a4e"><ellipse cx="18" cy="30" rx="30" ry="12" transform="rotate(-25 18 30)"/><ellipse cx="146" cy="24" rx="32" ry="12" transform="rotate(25 146 24)"/><ellipse cx="20" cy="80" rx="30" ry="10" transform="rotate(20 20 80)"/><ellipse cx="140" cy="78" rx="30" ry="10" transform="rotate(-20 140 78)"/></g><path d="M0 0Q30 40 10 90" stroke="#3a9e5a" stroke-width="3" fill="none"/>'}]},Symbol.toStringTag,{value:"Module"})),Je=[{name:"Вы",col:"#ef5350",human:!0},{name:"Маша",col:"#4c8dff",human:!1},{name:"Дима",col:"#f7c948",human:!1},{name:"Лёша",col:"#3fc27a",human:!1},{name:"Катя",col:"#b06cf0",human:!1}],Ee=[{col:"#ef5350",name:"Красный"},{col:"#4c8dff",name:"Синий"},{col:"#f7c948",name:"Жёлтый"},{col:"#3fc27a",name:"Зелёный"},{col:"#b06cf0",name:"Фиолетовый"},{col:"#ff8c42",name:"Оранжевый"},{col:"#ff6fae",name:"Розовый"}],Le={fast:{label:"Быстрая",desc:"40 карт · 5 фишек · 10–15 минут",set:{deck:40,meeples:5}},classic:{label:"Классика",desc:"Вся колода · 7 фишек · золотая середина",set:{deck:0,meeples:7}},epic:{label:"Большая",desc:"Двойная колода · 9 фишек · огромное королевство",set:{deck:0,meeples:9}}},Ke=[{k:"mode",label:"Режим",opts:Object.entries(Le).map(([l,a])=>[l,a.label])},{k:"deck",label:"Карт в стопке",opts:[[40,"40"],[60,"60"],[0,"Все"]]},{k:"rivers",label:"Реки",opts:[[!0,"Есть"],[!1,"Нет"]]},{k:"meeples",label:"Фигурок у игрока",opts:[[5,"5"],[7,"7"],[9,"9"]]},{k:"timer",label:"Время на ход",opts:[[0,"Без"],[30,"30 с"],[60,"60 с"]]},{k:"hints",label:"Подсветка мест",opts:[[!0,"Вкл"],[!1,"Выкл"]]},{k:"tie",label:"Спорный объект: очки",opts:[["all","Каждому"],["split","Поровну"]]}],Ne=Object.freeze(Object.defineProperty({__proto__:null,MODES:Le,PALETTE:Ee,PL0:Je,PREFS:[{k:"sound",ic:"🔊",label:"Звуки",hint:"Стук карт, фишки, фанфары",opts:[[!0,"Вкл"],[!1,"Выкл"]]},{k:"music",ic:"🎵",label:"Музыка",hint:"Спокойная музыка в меню и партии",opts:[[!0,"Вкл"],[!1,"Выкл"]]},{k:"view",ic:"🧊",label:"Вид поля",hint:"Объёмное поле или вид сверху",opts:[["3d","3D"],["top","Сверху"]]},{k:"speed",ic:"⚡",label:"Скорость ботов",hint:"Как быстро ходят соперники-боты",opts:[["normal","Обычная"],["fast","Быстрая"]]},{k:"alert",ic:"💡",label:"Подсветка хода",hint:"Экран мигает на вашем ходу и краснеет, если время на исходе, а вы бездействуете; в последние 5 секунд лёгкая вибрация",opts:[[!0,"Вкл"],[!1,"Выкл"]]},{k:"zones",ic:"🎨",label:"Цвет владельца",hint:"Закрашивать дороги и города цветом игрока",opts:[[!0,"Вкл"],[!1,"Выкл"]]},{k:"gfx",ic:"✨",label:"Графика",hint:"Экономная — для слабых телефонов",opts:[["high","Красивая"],["low","Экономная"]]},{k:"notify",ic:"🔔",label:"Уведомления",hint:"Новые версии и новости игры",opts:[[!0,"Вкл"],[!1,"Выкл"]],app:!0}],PREF_GROUPS:[["Звук",["sound","music"]],["Игра",["view","speed","alert","zones"]],["Экран",["gfx"]],["Уведомления",["notify"]]],RULES:Ke,STREAK_GOLD:[10,15,20,25,35,50,100],validCol:l=>Ee.some(a=>a.col===l)},Symbol.toStringTag,{value:"Module"}));function Xe({S:l,V:a,PL0:n,MEEPLE_D:h}){function u(v,w,A=2){const c=document.createElement("canvas");c.width=Math.round(v*A),c.height=Math.round(w*A);const L=c.getContext("2d");return L.scale(A,A),[c,L]}function C(v){const w=[0,1,2,3].filter(f=>v[f]==="c"),A=w.length;if(!A)return null;const c=[[0,0],[l,0],[l,l],[0,l]],L=[[l/2,0],[l,l/2],[l/2,l],[0,l/2]],t=l/2,$=new Path2D,Q=new Path2D;if(A===4)return $.rect(0,0,l,l),{fill:$,wall:null};if(A===1){const f=w[0],p=([G,j])=>{let B=G-t,V=j-t;for(let U=0;U<f;U++)[B,V]=[-V,B];return[t+B,t+V]},T=p([0,0]),k=p([l,0]),r=p([l/2,l*.64]);return $.moveTo(...T),$.lineTo(...k),$.quadraticCurveTo(...r,...T),Q.moveTo(...k),Q.quadraticCurveTo(...r,...T),{fill:$,wall:Q}}const e=w.find(f=>v[(f+3)%4]!=="c");$.moveTo(...c[e]);let i=e,o=0;for(;o<4;){if(v[i]==="c"){$.lineTo(...c[(i+1)%4]),i=(i+1)%4,o++;continue}let f=0;for(;v[(i+f)%4]!=="c";)f++;const p=c[i],T=c[(i+f)%4],k=f===1?L[i]:c[(i+1)%4],r=f===1?.88:.86,G=[k[0]+(t-k[0])*r,k[1]+(t-k[1])*r];$.quadraticCurveTo(...G,...T),Q.moveTo(...p),Q.quadraticCurveTo(...G,...T),i=(i+f)%4,o+=f}return $.closePath(),{fill:$,wall:Q}}function x(v){const w=K[v],A=w.e,c=de(Te(v)),[L,t]=u(l,l,1),$=t.createLinearGradient(0,0,l,l);$.addColorStop(0,"#80be56"),$.addColorStop(1,"#62a242"),t.fillStyle=$,t.fillRect(0,0,l,l);for(let b=0;b<14;b++){const d=c()*l,y=c()*l,s=18+c()*30,m=t.createRadialGradient(d,y,0,d,y,s);m.addColorStop(0,c()<.5?"rgba(40,90,25,.2)":"rgba(200,230,120,.16)"),m.addColorStop(1,"rgba(0,0,0,0)"),t.fillStyle=m,t.fillRect(d-s,y-s,2*s,2*s)}for(let b=0;b<700;b++)t.fillStyle=c()<.5?"rgba(230,255,170,.10)":"rgba(25,70,20,.14)",t.fillRect(c()*l,c()*l,1.6,2.6);t.strokeStyle="rgba(40,95,30,.55)",t.lineWidth=1.2;for(let b=0;b<38;b++){const d=c()*l,y=c()*l;t.beginPath(),t.moveTo(d-2.5,y-3),t.lineTo(d,y),t.lineTo(d+2.5,y-3.5),t.stroke()}for(let b=0;b<12;b++)t.fillStyle=["#fff6d8","#ffd75e","#f3a6c8"][b%3],t.beginPath(),t.arc(c()*l,c()*l,1.7,0,7),t.fill();const Q=[[l/2,0],[l,l/2],[l/2,l],[0,l/2]],e=[l/2,l/2],i=b=>[0,1,2,3].filter(d=>A[d]===b),o=(b,d,y)=>{for(const[s,m,S]of y)t.beginPath(),t.moveTo(...Q[b]),d==null?t.lineTo(...e):t.quadraticCurveTo(e[0],e[1],...Q[d]),t.lineWidth=s,t.strokeStyle=m,t.lineCap="butt",t.setLineDash(S||[]),t.stroke();t.setLineDash([])},f=(b,d,y)=>[b[0]+(d[0]-b[0])*y,b[1]+(d[1]-b[1])*y],p=(b,d,y,s,m)=>{const S=f(b,d,m),D=f(d,y,m),_=f(y,s,m),W=f(S,D,m),q=f(D,_,m);return[f(W,q,m),[q[0]-W[0],q[1]-W[1]]]},T=(b,d)=>{const y=Q[b],s=[-a[b][0],-a[b][1]];if(d==null){const P=[e[0]+(c()-.5)*16,e[1]+(c()-.5)*16];return[[y,[y[0]+s[0]*l*.22+s[1]*l*.12,y[1]+s[1]*l*.22-s[0]*l*.12],[P[0]-s[0]*10,P[1]-s[1]*10],P]]}const m=Q[d],S=[-a[d][0],-a[d][1]],D=v==="wBr"?[e[0],e[1]]:[e[0]+(c()-.5)*l*.24,e[1]+(c()-.5)*l*.24];let _=m[0]-y[0]+(S[0]-s[0])*0,W=m[1]-y[1];const q=Math.hypot(_,W)||1;return _=_/q*l*.2,W=W/q*l*.2,[[y,[y[0]+s[0]*l*.26,y[1]+s[1]*l*.26],[D[0]-_,D[1]-W],D],[D,[D[0]+_,D[1]+W],[m[0]+S[0]*l*.26,m[1]+S[1]*l*.26],m]]},k=(b,d,y,s)=>{t.beginPath(),t.moveTo(...b[0][0]),b.forEach(m=>t.bezierCurveTo(...m[1],...m[2],...m[3])),t.lineWidth=d,t.strokeStyle=y,t.lineCap="butt",t.lineJoin="round",t.setLineDash(s||[]),t.stroke(),t.setLineDash([])},r=(b,d)=>b.forEach(y=>{for(let s=.06;s<.96;s+=.08){const[m,S]=p(...y,s),D=Math.hypot(...S)||1;d(m,[-S[1]/D,S[0]/D])}}),G=b=>{k(b,40,"#b9b07a"),k(b,34,"#cdbf86"),k(b,28,"#2f7cc2"),k(b,18,"#4a9fe3"),k(b,7,"rgba(140,205,250,.75)"),k(b,2,"rgba(225,245,255,.8)",[6,13]),r(b,([d,y],[s,m])=>{for(const S of[-1,1]){const D=c();if(D<.35){const _=d+s*S*21,W=y+m*S*21;t.strokeStyle=D<.2?"#3f7d2c":"#56932f",t.lineWidth=1.4;for(let q=-1;q<=1;q++)t.beginPath(),t.moveTo(_+q*1.5,W+3),t.lineTo(_+q*2.6,W-4-c()*3),t.stroke()}else D<.45&&(t.fillStyle="#9c968a",t.beginPath(),t.ellipse(d+s*S*15,y+m*S*15,2.6,1.8,c(),0,7),t.fill())}c()<.25&&(t.strokeStyle="rgba(230,248,255,.55)",t.lineWidth=1,t.beginPath(),t.arc(d+(c()-.5)*10,y+(c()-.5)*10,3+c()*2,Math.PI*1.1,Math.PI*1.9),t.stroke())})},j=[[26,"rgba(60,90,30,.35)"],[22,"#80653e"],[18,"#d9bf88"],[12,"#c7a874"],[8,"#e2cb98"],[2,"rgba(150,120,70,.45)",[2,7]]],B=(b,d,y)=>{const s=Q[b],m=d==null?e:Q[d];for(let S=.08;S<.95;S+=.07){const D=1-S,_=d==null?s[0]+(m[0]-s[0])*S:D*D*s[0]+2*D*S*e[0]+S*S*m[0],W=d==null?s[1]+(m[1]-s[1])*S:D*D*s[1]+2*D*S*e[1]+S*S*m[1];y(_,W)}},V=(b,d)=>B(b,d,(y,s)=>{if(c()<.55&&(t.fillStyle=c()<.5?"rgba(120,96,60,.55)":"rgba(250,236,200,.7)",t.beginPath(),t.arc(y+(c()-.5)*14,s+(c()-.5)*14,.9+c()*.9,0,7),t.fill()),c()<.3){t.strokeStyle="#4f8e33",t.lineWidth=1.2;const m=y+(c()<.5?-12:12)*(Math.abs(Q[b][0]-e[0])<1?1:0),S=s+(c()<.5?-12:12)*(Math.abs(Q[b][1]-e[1])<1?1:0);t.beginPath(),t.moveTo(m-2,S+2),t.lineTo(m,S-3),t.lineTo(m+2,S+2),t.stroke()}}),U=i("w");if(U.length===2?G(T(U[0],U[1])):U.forEach(b=>G(T(b,null))),U.length===1){const b=U[0],d=a[b][0],y=a[b][1],s=-y,m=d,S=(_,W)=>[e[0]+d*_+s*W,e[1]+y*_+m*W];t.fillStyle="rgba(70,110,40,.35)",t.beginPath(),t.ellipse(...S(-4,0),40,34,0,0,7),t.fill(),[[30,"#d8cf9c"],[27,"#b9ae78"],[24,"#2468ad"],[19,"#3f95dc"],[12,"#6fbdf0"]].forEach(([_,W])=>{t.beginPath(),t.ellipse(...S(-8,0),_,_*.9,0,0,7),t.fillStyle=W,t.fill()}),t.strokeStyle="rgba(235,250,255,.8)",t.lineWidth=1.4,[5,10,15].forEach((_,W)=>{t.globalAlpha=1-W*.25,t.beginPath(),t.ellipse(...S(-8,0),_,_*.88,0,0,7),t.stroke()}),t.globalAlpha=1,t.fillStyle="rgba(255,255,255,.85)",[[-12,-4,2.4],[-3,2,1.8],[-9,5,1.4],[-14,2,1.2],[-5,-7,1.2]].forEach(([_,W,q])=>{t.beginPath(),t.arc(...S(_,W),q,0,7),t.fill()}),[[-44,-20,15,11,"#7d776b"],[-48,-3,17,13,"#8d8779"],[-44,15,15,11,"#7d776b"],[-38,-9,12,10,"#a39d90"],[-38,8,12,10,"#a39d90"],[-30,-26,9,7,"#8d8779"],[-30,24,9,7,"#8d8779"]].forEach(([_,W,q,P,E])=>{const[O,g]=S(_,W);t.fillStyle="rgba(0,0,0,.28)",t.beginPath(),t.ellipse(O+2,g+3,q,P*.85,0,0,7),t.fill(),t.fillStyle=E,t.beginPath(),t.ellipse(O,g,q,P,0,0,7),t.fill(),t.fillStyle="rgba(255,255,255,.22)",t.beginPath(),t.ellipse(O-3,g-3,q*.55,P*.45,0,0,7),t.fill(),t.fillStyle="rgba(90,150,60,.75)",t.beginPath(),t.ellipse(O+q*.25,g-P*.5,q*.55,P*.3,0,0,7),t.fill()}),t.strokeStyle="#8fd0f6",t.lineWidth=3,t.lineCap="round",t.beginPath(),t.moveTo(...S(-34,0)),t.quadraticCurveTo(...S(-26,2),...S(-20,0)),t.stroke(),t.lineCap="butt",[[-14,34],[-26,38],[-6,-36],[-22,-38],[16,38],[22,-40]].forEach(([_,W],q)=>{const[P,E]=S(_,W);t.strokeStyle="#4f8a2c",t.lineWidth=1.8;for(let O=-1;O<=1;O++)t.beginPath(),t.moveTo(P+O*2,E+4),t.lineTo(P+O*4,E-9-c()*3),t.stroke();q%2&&(t.fillStyle=["#f4d35e","#fff","#f08fb0"][q%3],t.beginPath(),t.arc(P+4,E-4,2.2,0,7),t.fill())})}if(w.lake){const b=document.createElement("canvas");b.width=l,b.height=l,b.getContext("2d").drawImage(L,0,0);const d=[0,1,2,3].filter(P=>A[P]!=="w"),y=50,s=d.length?d[0]*Math.PI/2:0,m=t.createRadialGradient(e[0],e[1],8,e[0],e[1],125);m.addColorStop(0,"#74c6f4"),m.addColorStop(.5,"#3f95dc"),m.addColorStop(1,"#2468ad"),t.fillStyle=m,t.fillRect(0,0,l,l);for(const P of U){const E=Q[P],O=a[P][0],g=a[P][1];for(let H=-3;H<=3;H++){const J=H*9,N=e[0]-g*J*.45+O*6,X=e[1]+O*J*.45+g*6;t.beginPath(),t.moveTo(N,X),t.quadraticCurveTo((N+E[0])/2-g*J*.4,(X+E[1])/2+O*J*.4,E[0]-g*J*.55,E[1]+O*J*.55),t.lineWidth=1.5,t.strokeStyle=H%2?"rgba(230,248,255,.4)":"rgba(230,248,255,.68)",t.setLineDash([10,12]),t.lineDashOffset=H*5,t.stroke()}}t.setLineDash([]),t.strokeStyle="rgba(225,245,255,.34)",t.lineWidth=1;for(let P=0;P<10;P++){const E=20+c()*(l-40),O=20+c()*(l-40);t.beginPath(),t.ellipse(E,O,8+c()*9,3+c()*3,(c()-.5)*.5,Math.PI*1.05,Math.PI*1.95),t.stroke()}t.fillStyle="rgba(255,255,255,.55)";for(let P=0;P<14;P++)t.beginPath(),t.arc(14+c()*(l-28),14+c()*(l-28),.8+c()*.9,0,7),t.fill();const S=(P,E)=>{const O=P-e[0],g=E-e[1],H=O*Math.cos(s)+g*Math.sin(s)+e[0],J=-O*Math.sin(s)+g*Math.cos(s)+e[1];return(d.length?[[l,l],[0,l]]:[[0,0],[l,0],[l,l],[0,l]]).every(([X,re])=>Math.hypot(H-X,J-re)>y+12)&&(!d.length||J>y*1.15+14)},D=(P,E)=>U.every(O=>{const g=Q[O][0]-e[0],H=Q[O][1]-e[1],J=Math.hypot(g,H),N=Math.max(0,Math.min(1,((P-e[0])*g+(E-e[1])*H)/(J*J)));return Math.hypot(P-e[0]-g*N,E-e[1]-H*N)>15});let _=0;for(let P=0;P<160&&_<9;P++){const E=22+c()*(l-44),O=22+c()*(l-44);if(!S(E,O)||!D(E,O))continue;const g=7+c()*5,H=c()*6.28;t.fillStyle="rgba(0,40,80,.28)",t.beginPath(),t.ellipse(E+1.5,O+2,g,g*.8,0,0,7),t.fill(),t.save(),t.translate(E,O),t.scale(1,.82),t.beginPath(),t.moveTo(0,0),t.arc(0,0,g,H+.3,H+6.28-.3),t.closePath();const J=t.createRadialGradient(-g*.3,-g*.3,1,0,0,g);J.addColorStop(0,"#7cc65a"),J.addColorStop(1,"#2f8a3e"),t.fillStyle=J,t.fill(),t.strokeStyle="#256b30",t.lineWidth=1,t.stroke(),t.strokeStyle="rgba(210,245,170,.5)",t.lineWidth=.7;for(let N=0;N<4;N++){const X=H+1+N*1.2;t.beginPath(),t.moveTo(0,0),t.lineTo(Math.cos(X)*g*.85,Math.sin(X)*g*.85),t.stroke()}if(t.restore(),_%3===1){const N=_%2===1;for(let X=0;X<8;X++){const re=X/8*6.28;t.fillStyle=X%2?N?"#f7b4d2":"#ffffff":N?"#ec7fb0":"#e9f2ff",t.beginPath(),t.ellipse(E+Math.cos(re)*3.4,O-1+Math.sin(re)*2.8,3.6,1.8,re,0,7),t.fill()}t.fillStyle="#ffd75e",t.beginPath(),t.arc(E,O-1,1.8,0,7),t.fill()}_++}t.save(),t.translate(e[0],e[1]),t.rotate(s),t.translate(-e[0],-e[1]);const W=new Path2D;(d.length?[[l,l],[0,l]]:[[0,0],[l,0],[l,l],[0,l]]).forEach(([P,E])=>{W.moveTo(P+y,E),W.arc(P,E,y,0,7)}),d.length&&(W.moveTo(-6,-6),W.lineTo(l+6,-6),W.lineTo(l+6,y*.95),W.bezierCurveTo(l*.82,y*1.2,l*.64,y*.78,l*.5,y*1),W.bezierCurveTo(l*.36,y*1.22,l*.18,y*.8,-6,y*.95),W.closePath()),t.save(),t.clip(W),t.setTransform(1,0,0,1,0,0),t.drawImage(b,0,0),t.restore(),t.lineJoin="round";for(const[P,E]of[[16,"rgba(50,80,30,.35)"],[11,"#b9b07a"],[7,"#cdbf86"],[2,"rgba(255,255,255,.4)"]])t.lineWidth=P,t.strokeStyle=E,t.stroke(W);const q=[];if((d.length?[[l,l,Math.PI,1.5*Math.PI],[0,l,1.5*Math.PI,2*Math.PI]]:[[0,0,0,Math.PI/2],[l,0,Math.PI/2,Math.PI],[l,l,Math.PI,1.5*Math.PI],[0,l,1.5*Math.PI,2*Math.PI]]).forEach(([P,E,O,g])=>{for(let H=0;H<9;H++){const J=O+(g-O)*(.08+.84*c());q.push([P+Math.cos(J)*(y+7),E+Math.sin(J)*(y+7)])}}),d.length)for(let P=0;P<11;P++){const E=14+c()*(l-28);q.push([E,y*(.98+Math.sin(E/l*6.28)*.1)+8])}for(const[P,E]of q){if(P<4||E<4||P>l-4||E>l-4)continue;const O=(c()-.5)*5,g=12+c()*9;t.strokeStyle=c()<.5?"#3f7d2c":"#56932f",t.lineWidth=1.5,t.lineCap="round";for(let H=-1;H<=1;H++)t.beginPath(),t.moveTo(P+H*2.4,E+3),t.quadraticCurveTo(P+H*2.8+O*.4,E-g*.5,P+H*3+O,E-g+Math.abs(H)*3),t.stroke();c()<.45&&(t.strokeStyle="#4c8a30",t.beginPath(),t.moveTo(P+1,E+3),t.lineTo(P+1+O*.6,E-g-3),t.stroke(),t.fillStyle="#7a4f2c",t.beginPath(),t.ellipse(P+1+O*.6,E-g-6,1.9,4.4,0,0,7),t.fill())}t.lineCap="butt";for(let P=0;P<14;P++){const[E,O]=q[c()*q.length|0];t.fillStyle=P%3?"#a39d90":"#8a8476",t.beginPath(),t.ellipse(E+(c()-.5)*10,O+6+c()*4,3.5+c()*2,2.4,c(),0,7),t.fill()}t.restore()}const Z=i("r");if(Z.length===2?(o(Z[0],Z[1],j),V(Z[0],Z[1])):Z.forEach(b=>{o(b,null,j),V(b,null)}),w.end==="cliff"||(w.end?(t.beginPath(),t.ellipse(e[0],e[1],22,18,0,0,7),t.fillStyle="#c7a874",t.fill(),t.beginPath(),t.ellipse(e[0],e[1],17,13,0,0,7),t.fillStyle="#d9bf88",t.fill()):(Z.length>=3||Z.length===1&&!w.fort&&!w.bridge)&&(t.beginPath(),t.arc(e[0],e[1],15,0,7),t.fillStyle="#7a603b",t.fill(),t.beginPath(),t.arc(e[0],e[1],12,0,7),t.fillStyle="#d9bf88",t.fill(),t.beginPath(),t.arc(e[0],e[1],5,0,7),t.fillStyle="#5a6e7c",t.fill(),t.strokeStyle="#8b8478",t.lineWidth=2.5,t.stroke())),w.rocks)for(let b=0;b<10;b++)t.fillStyle="rgba(110,100,85,.35)",t.beginPath(),t.ellipse(30+c()*132,30+c()*132,3+c()*4,2+c()*2,c()*3,0,7),t.fill();if(v==="wBr"){t.fillStyle="rgba(0,30,60,.35)",t.beginPath(),t.ellipse(e[0]+3,e[1]+5,32,17,0,0,7),t.fill();const b=t.createLinearGradient(0,e[1]-15,0,e[1]+15);b.addColorStop(0,"#c08a4d"),b.addColorStop(.5,"#a8743f"),b.addColorStop(1,"#8a5a2e"),t.fillStyle=b,t.fillRect(e[0]-32,e[1]-14,64,28),t.fillStyle="rgba(60,35,15,.55)";for(let d=e[0]-30;d<e[0]+32;d+=5.5)t.fillRect(d,e[1]-14,1.2,28);t.fillStyle="rgba(255,230,190,.25)",t.fillRect(e[0]-32,e[1]-14,64,4);for(const d of[e[1]-17,e[1]+13]){t.fillStyle="#5d3c1d",t.fillRect(e[0]-34,d,68,4),t.fillStyle="#7e532a",t.fillRect(e[0]-34,d,68,1.5);for(let y=e[0]-33;y<=e[0]+30;y+=15.5)t.fillStyle="#4a2f17",t.fillRect(y,d-3,4,7)}}if(v==="brHalf"){const b=new Path2D;b.moveTo(l,l*.14),b.bezierCurveTo(l*.6,l*.12,l*.38,l*.3,l*.4,l*.5),b.bezierCurveTo(l*.38,l*.7,l*.6,l*.88,l,l*.86),b.closePath(),t.save(),t.fillStyle="#cdbf86",t.lineWidth=12,t.strokeStyle="#cdbf86",t.stroke(b),t.fill(b),t.restore();const d=t.createLinearGradient(l*.4,0,l,0);d.addColorStop(0,"#4a9fe3"),d.addColorStop(1,"#2a6fb4"),t.fillStyle=d,t.fill(b),t.save(),t.clip(b),t.strokeStyle="rgba(225,245,255,.5)",t.lineWidth=1.2;for(let s=0;s<9;s++){const m=l*.5+c()*l*.48,S=l*.2+c()*l*.6;t.beginPath(),t.arc(m,S,4+c()*3,Math.PI*1.1,Math.PI*1.9),t.stroke()}t.restore(),t.strokeStyle="#3f7d2c",t.lineWidth=1.4;for(let s=0;s<8;s++){const m=c(),S=l*.42+Math.sin(m*3.14)*-4,D=l*(.25+m*.5);t.beginPath(),t.moveTo(S-8,D+3),t.lineTo(S-9-c()*2,D-5),t.stroke()}t.fillStyle="rgba(0,25,55,.45)";for(const s of[l*.62,l*.9])for(const m of[-1,1])t.beginPath(),t.ellipse(s,e[1]+m*22,13,9,0,0,7),t.fill();const y=t.createLinearGradient(0,e[1]-18,0,e[1]+18);y.addColorStop(0,"#d6ccb6"),y.addColorStop(.5,"#c2b69c"),y.addColorStop(1,"#a89b80"),t.fillStyle=y,t.fillRect(l*.36,e[1]-18,l*.64,36),t.strokeStyle="rgba(80,70,55,.35)",t.lineWidth=.8;for(let s=l*.36+6;s<l;s+=9)t.beginPath(),t.moveTo(s,e[1]-12),t.lineTo(s,e[1]+12),t.stroke();t.beginPath(),t.moveTo(l*.36,e[1]),t.lineTo(l,e[1]),t.stroke();for(const s of[e[1]-21,e[1]+15]){t.fillStyle="#8f8470",t.fillRect(l*.34,s,l*.66,6),t.fillStyle="#e4dbc6",t.fillRect(l*.34,s,l*.66,2);for(let m=l*.34;m<l;m+=12)t.fillStyle="rgba(60,50,40,.35)",t.fillRect(m,s,1,6)}t.fillStyle="#7d725f",t.fillRect(l*.33,e[1]-23,6,46)}if(w.end==="cliff"){const b=Z[0],d=l/2+3;t.save(),t.translate(e[0],e[1]),t.rotate(Math.atan2(-a[b][1],-a[b][0]));const y=new Path2D;y.rect(0,-d,d,2*d),t.globalCompositeOperation="destination-out",t.fillStyle="#000",t.fill(y),t.globalCompositeOperation="source-over";for(const[s,m]of[[10,"rgba(60,40,22,.55)"],[6,"#7a5a38"],[3,"#a98255"]])t.strokeStyle=m,t.lineWidth=s,t.beginPath(),t.moveTo(-s/2+1,-d),t.lineTo(-s/2+1,d),t.stroke();for(let s=-d+4;s<d;s+=7+c()*5)t.fillStyle=c()<.5?"#8a6a44":"#5e4630",t.beginPath(),t.moveTo(-1,s-3),t.lineTo(-6-c()*7,s+c()*3),t.lineTo(-1,s+4),t.closePath(),t.fill();for(let s=-d+10;s<d;s+=14+c()*12){t.strokeStyle="#4f8e33",t.lineWidth=1.2;for(let m=-1;m<=1;m++)t.beginPath(),t.moveTo(-9-c()*4,s+m*2),t.lineTo(-13-c()*4,s+m*2+3+c()*3),t.stroke()}for(let s=0;s<6;s++)t.fillStyle=s%2?"#a39d90":"#8a8476",t.beginPath(),t.ellipse(-12-c()*14,(c()-.5)*150,2.4+c()*2.4,1.8+c()*1.2,c()*3,0,7),t.fill();t.restore()}const se=C(A);if(se){t.save(),t.clip(se.fill),t.fillStyle="#cdb48c",t.fillRect(0,0,l,l);for(let d=0;d<520;d++)t.fillStyle=c()<.5?"rgba(120,100,70,.35)":"rgba(250,235,205,.45)",t.beginPath(),t.ellipse(c()*l,c()*l,2.2,1.6,c()*3,0,7),t.fill();const b=[["#c8503a","#8f3020"],["#d4733f","#9c4a24"],["#a9432f","#73281b"],["#5f7488","#3a4a5a"],["#c79a45","#8a6420"]];for(let d=-6,y=0;d<l;d+=16,y++)for(let s=y%2?-4:6;s<l;s+=19){if(c()<.08){t.fillStyle="#4f8e3a",t.beginPath(),t.arc(s+8,d+6,6,0,7),t.fill(),t.fillStyle="#6fb050",t.beginPath(),t.arc(s+6.5,d+4.5,3.5,0,7),t.fill();continue}const m=s+c()*4,S=d+c()*3,D=13+c()*4,_=10+c()*2,[W,q]=b[c()*b.length|0];t.fillStyle="rgba(0,0,0,.28)",t.fillRect(m+2,S+2.5,D,_),t.fillStyle=W,t.fillRect(m,S,D,_/2),t.fillStyle=q,t.fillRect(m,S+_/2,D,_/2),t.fillStyle="rgba(255,240,220,.45)",t.fillRect(m,S+_/2-.6,D,1.2),t.strokeStyle="rgba(0,0,0,.18)",t.lineWidth=.6;for(let P=3;P<D;P+=3)t.beginPath(),t.moveTo(m+P,S),t.lineTo(m+P,S+_),t.stroke();c()<.35&&(t.fillStyle="#6d4a36",t.fillRect(m+D*.7,S+1,2.4,3.2))}if(t.restore(),se.wall){t.lineJoin="round",t.lineCap="round";for(const[d,y,s]of[[13,"rgba(0,0,0,.25)"],[10,"#6d665a"],[6,"#d7cdb7"],[6,"#9a917f",[3,5]]])t.setLineDash(s||[]),t.lineWidth=d,t.strokeStyle=y,t.stroke(se.wall);t.setLineDash([])}}if(w.fort){const b=(d,y,s,m,S)=>{t.beginPath(),t.roundRect?t.roundRect(d,y,s,m,S):t.rect(d,y,s,m)};t.fillStyle="rgba(0,0,0,.25)",b(e[0]-39,e[1]-35,84,84,12),t.fill(),t.fillStyle="#9f937c",b(e[0]-42,e[1]-42,84,84,12),t.fill(),t.fillStyle="#bdb299",b(e[0]-36,e[1]-36,72,72,9),t.fill(),t.fillStyle="rgba(120,108,88,.5)";for(let d=0;d<40;d++)t.fillRect(e[0]-34+c()*62,e[1]-34+c()*62,6,4)}return w.end==="cliff"?L.toDataURL("image/png"):(t.strokeStyle="rgba(0,0,0,.22)",t.lineWidth=3,t.strokeRect(1.5,1.5,l-3,l-3),t.strokeStyle="rgba(255,255,255,.12)",t.lineWidth=1.5,t.beginPath(),t.moveTo(2,l-2),t.lineTo(2,2),t.lineTo(l-2,2),t.stroke(),L.toDataURL("image/jpeg",.88))}const M={};function R(v,w,A,c){const[L,t]=u(w,A,4);c(t,w,A),M[v]={url:L.toDataURL(),w,h:A}}function I(){const v=(e,i,o,f)=>{e.beginPath(),i.forEach(([p,T],k)=>k?e.lineTo(p,T):e.moveTo(p,T)),e.closePath(),e.fillStyle=o,e.fill(),f&&(e.strokeStyle=f,e.lineWidth=.45,e.stroke())},w=(e,i,o,f,p,T)=>{const k=e.createLinearGradient(i,o,f,p);return T.forEach(([r,G])=>k.addColorStop(r,G)),k},A=(e,i,o,f,p,T)=>{const k=e.createRadialGradient(i-f*.35,o-f*.4,f*.1,i,o,f);k.addColorStop(0,p),k.addColorStop(1,T),e.fillStyle=k,e.beginPath(),e.arc(i,o,f,0,7),e.fill()},c=(e,i,o,f,p,T=.28)=>{const k=e.createRadialGradient(i,o,0,i,o,f);k.addColorStop(0,`rgba(10,20,5,${T})`),k.addColorStop(1,"rgba(10,20,5,0)"),e.save(),e.translate(i,o),e.scale(1,p/f),e.translate(-i,-o),e.fillStyle=k,e.beginPath(),e.arc(i,o,f,0,7),e.fill(),e.restore()},L="rgba(45,28,16,.55)",t=({wall:e,wallD:i,roof:o,roofD:f,frame:p,chimney:T,win:k="#ffd877"})=>r=>{c(r,12.5,24.6,12,2.2),v(r,[[15,13],[21,11],[21,22.2],[15,24.2]],w(r,15,0,21,0,[[0,i],[1,e]]),L),v(r,[[15,13],[18,5],[21,11]],i,L),v(r,[[3,13],[15,13],[15,24.2],[3,24.2]],w(r,0,13,0,24,[[0,e],[1,i]]),L),p&&(r.strokeStyle=p,r.lineWidth=.9,r.beginPath(),[[3.4,17.5,14.6,17.5],[5.5,13,5.5,24],[12.5,13,12.5,24],[5.5,13,9,17.5],[12.5,13,9,17.5]].forEach(([j,B,V,U])=>{r.moveTo(j,B),r.lineTo(V,U)}),r.stroke()),r.fillStyle="#4a2f1b",r.beginPath(),r.moveTo(7.6,24.2),r.lineTo(7.6,20),r.arc(9.2,20,1.6,Math.PI,0),r.lineTo(10.8,24.2),r.fill(),r.fillStyle="rgba(255,220,150,.35)",r.fillRect(8,20.5,.5,3.2),r.fillStyle="#d9c7a2",r.fillRect(7,24,4.6,.9);const G=(j,B,V,U)=>{r.fillStyle="#3a2a1c",r.fillRect(j-.5,B-.5,V+1,U+1),r.fillStyle=k,r.fillRect(j,B,V,U),r.fillStyle="rgba(255,255,255,.55)",r.fillRect(j,B,V*.45,U*.4),r.fillStyle="#3a2a1c",r.fillRect(j+V/2-.2,B,.4,U),r.fillRect(j,B+U/2-.2,V,.4),r.fillStyle="#e8dcc0",r.fillRect(j-.8,B+U+.3,V+1.6,.7)};G(12,19,2.2,2.6),G(4.3,19,2.2,2.6),v(r,[[17.2,15],[19.2,14.4],[19.2,17],[17.2,17.6]],k,"rgba(58,42,28,.9)"),v(r,[[1.6,13.8],[16,13.8],[19,4.4],[4.6,4.4]],w(r,0,4,0,14,[[0,f],[1,o]]),L),r.save(),r.beginPath(),r.moveTo(1.6,13.8),r.lineTo(16,13.8),r.lineTo(19,4.4),r.lineTo(4.6,4.4),r.closePath(),r.clip(),r.strokeStyle="rgba(0,0,0,.22)",r.lineWidth=.45;for(let j=1;j<5;j++){const B=13.8-j*1.9,V=(13.8-B)*.32;r.beginPath(),r.moveTo(1.6+V,B),r.lineTo(16+V,B),r.stroke();for(let U=2.5+V+j%2*1.2;U<16+V;U+=2.4)r.beginPath(),r.moveTo(U,B),r.lineTo(U+.5,B+1.9),r.stroke()}r.restore(),r.strokeStyle="rgba(255,230,200,.45)",r.lineWidth=.7,r.beginPath(),r.moveTo(4.8,4.5),r.lineTo(18.8,4.5),r.stroke(),r.strokeStyle="rgba(0,0,0,.35)",r.lineWidth=.8,r.beginPath(),r.moveTo(1.6,14),r.lineTo(16,14),r.stroke(),T&&(v(r,[[11,8.6],[13,8.6],[13,2.2],[11,2.2]],w(r,11,0,13,0,[[0,"#9b6a4f"],[1,"#6f4835"]]),L),r.fillStyle="#5a3a2a",r.fillRect(10.6,1.6,2.8,1),r.fillStyle="rgba(235,235,240,.55)",[[12.4,.9,1.1],[13.8,-.2,1.4]].forEach(([j,B,V])=>{r.beginPath(),r.arc(j,B+1,V,0,7),r.fill()}))};R("house",24,26,t({wall:"#f1e4c6",wallD:"#c9b590",roof:"#cf4d32",roofD:"#8f2f1f",chimney:!0})),R("house2",24,26,t({wall:"#efe0bf",wallD:"#c2ab83",roof:"#b4462d",roofD:"#7a2a1c",frame:"#6b4426"})),R("house3",24,26,t({wall:"#d9d3c7",wallD:"#a59d8f",roof:"#5f7488",roofD:"#3a4a5a",chimney:!0})),R("house4",24,26,t({wall:"#ecd9b0",wallD:"#bfa477",roof:"#d6a94a",roofD:"#9a7326",frame:"#7a5232"})),R("pine",24,42,(e,i,o)=>{c(e,i/2,o-1.6,9,2),e.fillStyle=w(e,i/2-2,0,i/2+2,0,[[0,"#7a5434"],[1,"#4a3020"]]),e.fillRect(i/2-1.8,o-11,3.6,10);for(let f=3;f>=0;f--){const p=1+f*7.6,T=p+16.5,k=4.8+f*2.7,r=[[i/2,p]];for(let G=4;G>=-4;G--)r.push([i/2+k*G/4,T-(G%2?1.6:0)]);v(e,r,w(e,i/2-k,0,i/2+k,0,[[0,["#3f8a45","#3a8040","#35763b","#2f6b35"][f]],[.55,["#2b6a33","#28622f","#245a2b","#215228"][f]],[1,"#173f1d"]]),"rgba(15,40,18,.5)"),e.fillStyle="rgba(190,240,140,.22)",e.beginPath(),e.moveTo(i/2,p+1),e.lineTo(i/2-k*.8,T-1),e.lineTo(i/2-k*.3,T-1.5),e.closePath(),e.fill()}}),R("oak",28,36,(e,i,o)=>{c(e,i/2,o-1.6,11,2.3),v(e,[[i/2-2.2,o-1.5],[i/2-1.3,o-13],[i/2-4,o-17],[i/2-2.6,o-17.6],[i/2,o-14.5],[i/2+2.5,o-18],[i/2+3.6,o-17.2],[i/2+1.4,o-13],[i/2+2.4,o-1.5]],w(e,i/2-2,0,i/2+2,0,[[0,"#7a5434"],[1,"#4a3020"]]),"rgba(40,25,12,.6)"),[[i/2,o-21,10.5,"#4f9e4c","#22592a"],[i/2-6.5,o-19.5,6.8,"#58a853","#285f2c"],[i/2+6.5,o-20,7,"#4c9a48","#225628"],[i/2-4,o-26.5,7.2,"#64b35c","#2c6630"],[i/2+4,o-27,7,"#5cab55","#29602d"],[i/2,o-30,5.6,"#7cc66c","#356f36"]].forEach(([f,p,T,k,r])=>A(e,f,p,T,k,r)),e.fillStyle="rgba(220,255,180,.35)",[[i/2-5,o-29,1.4],[i/2+2,o-32,1.1],[i/2-8,o-22,1]].forEach(([f,p,T])=>{e.beginPath(),e.arc(f,p,T,0,7),e.fill()}),e.fillStyle="#d8423a",[[i/2+6,o-18],[i/2-3,o-23],[i/2+2,o-26]].forEach(([f,p])=>{e.beginPath(),e.arc(f,p,.9,0,7),e.fill()})}),R("birch",20,36,(e,i,o)=>{c(e,i/2,o-1.5,8,1.8),e.fillStyle="#efece4",e.fillRect(i/2-1.3,o-22,2.6,21),e.fillStyle="#b9b4a6",e.fillRect(i/2+.5,o-22,.8,21),e.fillStyle="#2a2a2a",[[o-6,1.6],[o-11,1.1],[o-15,1.8],[o-19,1]].forEach(([f,p])=>e.fillRect(i/2-1.3,f,p,.7)),[[i/2,o-24,6.4,"#a6d66a","#4e8a33"],[i/2-4,o-20,4.6,"#9bcf62","#4a8530"],[i/2+4,o-21,4.6,"#9bcf62","#46802e"],[i/2,o-29.5,4.8,"#b8e27a","#5a9a3a"]].forEach(([f,p,T,k,r])=>A(e,f,p,T,k,r))}),R("bush",16,11,(e,i,o)=>{c(e,i/2,o-1.2,7.5,1.5),[[4.5,6.8,3.8],[11.5,7,3.6],[8,5,4.4]].forEach(([f,p,T])=>A(e,f,p,T,"#6fb85e","#2b6a2e")),e.fillStyle="#e8584e",[[5,5.5],[9.6,4],[12,6.6],[7.4,7.5]].forEach(([f,p])=>{e.beginPath(),e.arc(f,p,.6,0,7),e.fill()})}),R("rock",15,10,(e,i,o)=>{c(e,i/2,o-1,7,1.4,.35),v(e,[[1.5,9],[3,4.5],[6.5,2],[10.5,2.8],[13.5,6],[13,9]],w(e,2,2,12,9,[[0,"#c3c0b8"],[.6,"#8f8b82"],[1,"#6a665e"]]),"rgba(40,38,34,.55)"),v(e,[[6.5,2],[10.5,2.8],[9,5.5],[5.5,5]],"rgba(255,255,255,.25)"),e.fillStyle="rgba(90,140,60,.7)",e.beginPath(),e.ellipse(4.6,8.2,2.4,.9,0,0,7),e.fill()}),R("hay",15,14,(e,i,o)=>{c(e,i/2,o-1.2,7,1.6),e.fillStyle=w(e,2,2,13,13,[[0,"#f3d47a"],[.6,"#d7a945"],[1,"#a67a26"]]),e.beginPath(),e.moveTo(1.5,o-1.5),e.quadraticCurveTo(1.5,1.5,i/2,1.5),e.quadraticCurveTo(i-1.5,1.5,i-1.5,o-1.5),e.closePath(),e.fill(),e.strokeStyle="rgba(120,80,20,.45)",e.lineWidth=.4;for(let f=0;f<9;f++){const p=3+f*1.2;e.beginPath(),e.moveTo(p,o-2),e.lineTo(p+(f-4)*.4,4),e.stroke()}e.strokeStyle="#8a5a22",e.lineWidth=.8,e.beginPath(),e.moveTo(2.2,o-6),e.quadraticCurveTo(i/2,o-4.4,i-2.2,o-6),e.stroke()}),R("poplar",14,40,(e,i,o)=>{c(e,i/2,o-1.4,6,1.5),e.fillStyle="#5a3d24",e.fillRect(i/2-1,o-7,2,6),e.fillStyle=w(e,1,0,i-1,0,[[0,"#6fb04f"],[.5,"#3f8a3a"],[1,"#1f5226"]]),e.beginPath(),e.moveTo(i/2,1),e.bezierCurveTo(i+1,10,i-.5,o-9,i/2,o-5),e.bezierCurveTo(.5,o-9,-1,10,i/2,1),e.fill(),e.strokeStyle="rgba(20,60,25,.35)",e.lineWidth=.5;for(let f=8;f<o-8;f+=4)e.beginPath(),e.moveTo(i/2-3,f+2),e.quadraticCurveTo(i/2,f,i/2+3,f+2),e.stroke()});const $=(e,i,o,f,p,T,k)=>{v(e,[[i-f,o],[i-f*.8,o-p*.6],[i-f*.2,o-p],[i+f*.5,o-p*.85],[i+f,o-p*.3],[i+f*.9,o]],w(e,i-f,o-p,i+f,o,[[0,T],[.55,k],[1,"#5b574f"]]),"rgba(40,38,34,.6)"),v(e,[[i-f*.2,o-p],[i+f*.5,o-p*.85],[i+f*.15,o-p*.45],[i-f*.45,o-p*.55]],"rgba(255,255,255,.28)")};R("boulders",32,22,(e,i,o)=>{c(e,i/2,o-2,15,2.6,.35),$(e,9,o-2.5,8,11,"#c9c5bb","#958f84"),$(e,23,o-2.2,8.5,13,"#bdb8ad","#888277"),$(e,16,o-1.6,7,8,"#d3cfc6","#a29c90"),e.fillStyle="rgba(90,140,60,.75)",[[5,o-2.6],[28,o-2.4],[16,o-1.8]].forEach(([f,p])=>{e.beginPath(),e.ellipse(f,p,2.6,1,0,0,7),e.fill()})}),R("mine",40,32,(e,i,o)=>{c(e,i/2,o-2,19,3,.35),v(e,[[1,o-2],[5,o-13],[12,o-24],[21,o-30],[30,o-24],[37,o-12],[39,o-2]],w(e,2,o-30,38,o-2,[[0,"#b7b0a2"],[.5,"#8c8578"],[1,"#5f5a50"]]),"rgba(40,36,30,.6)"),e.fillStyle="rgba(255,255,255,.18)",e.beginPath(),e.moveTo(12,o-24),e.lineTo(21,o-30),e.lineTo(18,o-20),e.closePath(),e.fill(),e.fillStyle="rgba(90,140,60,.8)",[[6,o-12,3],[33,o-13,2.6],[24,o-27,2.2]].forEach(([f,p,T])=>{e.beginPath(),e.arc(f,p,T,0,7),e.fill()}),e.fillStyle="#17120f",e.beginPath(),e.moveTo(13,o-2),e.lineTo(13,o-13),e.quadraticCurveTo(20,o-19,27,o-13),e.lineTo(27,o-2),e.fill(),e.fillStyle="#7a5130",e.fillRect(12,o-15,2.4,13),e.fillRect(25.6,o-15,2.4,13),e.fillStyle="#8c5f38",e.fillRect(11,o-16.5,18,2.6),e.fillStyle="#5a3a20",e.fillRect(11,o-14,18,.8),e.strokeStyle="#6b6b70",e.lineWidth=.7,e.beginPath(),e.moveTo(16.5,o-2),e.lineTo(18,o-9),e.moveTo(23.5,o-2),e.lineTo(22,o-9),e.stroke(),e.strokeStyle="#6e4a2a",e.lineWidth=.8;for(let f=o-3;f>o-9;f-=2)e.beginPath(),e.moveTo(16+(o-f)*.1,f),e.lineTo(24-(o-f)*.1,f),e.stroke();e.fillStyle="#ffcf5a",e.beginPath(),e.arc(30,o-12,1.3,0,7),e.fill(),e.fillStyle="rgba(255,210,90,.35)",e.beginPath(),e.arc(30,o-12,3,0,7),e.fill()}),R("gravel",40,14,(e,i,o)=>{const f=de(77);e.fillStyle="rgba(120,96,60,.35)",e.beginPath(),e.ellipse(i/2,o-4,17,4.6,0,0,7),e.fill();for(let p=0;p<16;p++)e.fillStyle=p%3?"rgba(235,222,190,.9)":"rgba(110,90,58,.7)",e.beginPath(),e.ellipse(6+f()*(i-12),o-3-f()*5,.9+f()*1.1,.6+f()*.7,f()*3,0,7),e.fill();for(const[p,T,k,r,G,j]of[[10,o-3,4.6,3.2,"#bdb8ad","#8d887c"],[27,o-3.5,5.4,3.8,"#c9c5bb","#97917f"],[19,o-2.2,3.2,2.2,"#d3cfc6","#a29c90"],[33,o-2.4,3,2,"#b4afa4","#868072"]]){const B=e.createLinearGradient(p-k,T-r,p+k,T+r);B.addColorStop(0,G),B.addColorStop(1,j),e.fillStyle="rgba(30,25,15,.3)",e.beginPath(),e.ellipse(p+1,T+1,k,r*.8,0,0,7),e.fill(),e.fillStyle=B,e.beginPath(),e.ellipse(p,T-r*.3,k,r,0,0,7),e.fill(),e.fillStyle="rgba(255,255,255,.35)",e.beginPath(),e.ellipse(p-k*.25,T-r*.7,k*.45,r*.3,0,0,7),e.fill()}e.strokeStyle="#4f8e33",e.lineWidth=.9;for(const p of[3,37,22])for(let T=-1;T<=1;T++)e.beginPath(),e.moveTo(p+T,o-1.5),e.lineTo(p+T*1.6,o-5.5),e.stroke()}),R("tower",38,60,e=>{c(e,19,58.2,16,2.6,.32),v(e,[[6,58.5],[7.5,54],[30.5,54],[32,58.5]],"#8d8676",L),v(e,[[8,54.5],[8,17],[30,17],[30,54.5]],w(e,8,0,30,0,[[0,"#d5ccb8"],[.55,"#b9b09c"],[.62,"#9a917f"],[1,"#7f7767"]]),L),e.save(),e.beginPath(),e.rect(8,17,22,37.5),e.clip(),e.strokeStyle="rgba(60,50,40,.35)",e.lineWidth=.5;for(let i=20,o=0;i<55;i+=3.2,o++){e.beginPath(),e.moveTo(8,i),e.lineTo(30,i),e.stroke();for(let f=8+o%2*2.6;f<30;f+=5.2)e.beginPath(),e.moveTo(f,i),e.lineTo(f,i+3.2),e.stroke()}e.fillStyle="rgba(80,120,50,.35)";for(let i=0;i<6;i++)e.beginPath(),e.ellipse(9+i*1.6,54-i%3*2,1.6,2.6,0,0,7),e.fill();e.restore(),v(e,[[6.5,17.5],[6.5,14.5],[31.5,14.5],[31.5,17.5]],"#a49b88",L);for(let i=6.5;i<31;i+=5)v(e,[[i,14.6],[i,9.5],[i+3.4,9.5],[i+3.4,14.6]],w(e,i,0,i+3.4,0,[[0,"#d8cfbc"],[1,"#9c937f"]]),L),e.fillStyle="#eee6d4",e.fillRect(i,9.5,3.4,.9);[[13,23],[24,23],[13,34]].forEach(([i,o])=>{e.fillStyle="#231b16",e.fillRect(i,o,1.6,5),e.fillRect(i-.9,o+1.8,3.4,1.2)}),e.fillStyle="#231b16",e.beginPath(),e.moveTo(21.5,38),e.lineTo(21.5,34.5),e.arc(23.2,34.5,1.7,Math.PI,0),e.lineTo(24.9,38),e.fill(),e.fillStyle="#ffd877",e.beginPath(),e.moveTo(22,37.6),e.lineTo(22,34.6),e.arc(23.2,34.6,1.2,Math.PI,0),e.lineTo(24.4,37.6),e.fill(),e.fillStyle="#8a8270",e.beginPath(),e.moveTo(12.5,54.5),e.lineTo(12.5,46),e.arc(18.5,46,6,Math.PI,0),e.lineTo(24.5,54.5),e.fill(),e.fillStyle=w(e,13.5,0,23.5,0,[[0,"#6a4426"],[1,"#43291a"]]),e.beginPath(),e.moveTo(13.6,54.5),e.lineTo(13.6,46.4),e.arc(18.5,46.4,4.9,Math.PI,0),e.lineTo(23.4,54.5),e.fill(),e.strokeStyle="rgba(0,0,0,.35)",e.lineWidth=.4;for(let i=15.2;i<23;i+=1.6)e.beginPath(),e.moveTo(i,54.5),e.lineTo(i,43),e.stroke();e.fillStyle="#2b2b2e",e.fillRect(13.6,47.5,9.8,.8),e.fillRect(13.6,51.5,9.8,.8),e.fillStyle="#c9a24a",e.beginPath(),e.arc(20.8,50.2,.55,0,7),e.fill(),e.strokeStyle="#3a2c20",e.lineWidth=1,e.beginPath(),e.moveTo(19,10),e.lineTo(19,.6),e.stroke(),e.fillStyle="#e04a3a",e.beginPath(),e.moveTo(19.4,1),e.quadraticCurveTo(24,-.2,30,2.6),e.quadraticCurveTo(25,4.6,19.4,6.4),e.closePath(),e.fill(),e.fillStyle="rgba(0,0,0,.2)",e.beginPath(),e.moveTo(24,1.4),e.quadraticCurveTo(27,2.4,30,2.6),e.quadraticCurveTo(27,3.8,24,5),e.closePath(),e.fill(),e.fillStyle="#f6d36a",e.beginPath(),e.arc(23,3.7,.9,0,7),e.fill()});const Q=(e,i)=>(o,f,p)=>{const T=new Path2D(h);o.save(),o.translate(1,1),o.scale((f-2)/100,(p-2)/110),o.fillStyle=e,o.fill(T),o.save(),o.clip(T),o.fillStyle="rgba(255,255,255,.3)",o.beginPath(),o.ellipse(36,32,20,40,-.3,0,7),o.fill(),o.fillStyle="rgba(0,0,0,.18)",o.fillRect(0,84,100,30),o.restore(),o.lineWidth=6,o.strokeStyle=i,o.stroke(T),o.restore()};n.forEach((e,i)=>R("m"+i,20,22,Q(e.col,"rgba(0,0,0,.4)"))),R("mg",20,22,Q("rgba(255,255,255,.7)","#f2b84b"))}const z={};function F(){I();let v="";for(const A in K)z[A]=x(A),v+=`.t-${A}{background-image:url(${z[A]})}`;for(const A in M)v+=`.s-${A}{background-image:url(${M[A].url})}`;const w=document.createElement("style");w.textContent=v,document.head.appendChild(w)}return{cv:u,drawTile:x,SPR:M,sprite:R,TILE_URL:z,injectArt:F}}const Ye={rng:de,hash:Te,TYPES:K,normEdge:ce,rareName:Pe,deckList:We,board:Oe,scoring:ge,bots:ze},Ze={createSound:je},et={walletSig:me,loadWallet:Be,storeWallet:Fe,progress:Ve,catalog:$e,config:Ne},tt={createArt:Xe};return te.audio=Ze,te.engine=Ye,te.render=tt,te.state=et,Object.defineProperty(te,Symbol.toStringTag,{value:"Module"}),te})({});
+</script>
 </head><body>
 <title>Puzzlegrad</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -85,6 +87,10 @@ html.web{--it:env(safe-area-inset-top,0px);--ib:env(safe-area-inset-bottom,0px);
 html.web,html.web body{height:100%;overflow:hidden;overscroll-behavior:none}
 html.web body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-text-size-adjust:100%}
 html.web input,html.web textarea{-webkit-user-select:text;user-select:text}
+/* The app is not a document: long-pressing a label must not start a text selection. Typing fields, links and codes people copy stay selectable. */
+html.app body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+html.app input,html.app textarea,html.app a,html.app [contenteditable],html.app .code,html.app .code *,html.app .copyable,html.web a,html.web .code,html.web .code *,html.web .copyable{-webkit-user-select:text;user-select:text}
+
 @supports (height:100dvh){html.web .page{height:100dvh}}
 /* On a computer or tablet the game stays phone-shaped in the middle of the screen. */
 @media (min-width:700px){html.web body{background:#0a0e1a radial-gradient(900px 600px at 50% 0%,#1d2848,transparent 70%)}
@@ -305,6 +311,10 @@ html.tutoring #mrow .skip{display:none}
 .pwrap{position:relative}.pwrap .field{padding-right:52px}
 .peye{position:absolute;right:6px;top:calc(50% + 4px);transform:translateY(-50%);width:40px;height:40px;border:0;border-radius:10px;background:transparent;color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .peye[aria-pressed="true"]{color:var(--brass)}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);background:rgba(255,255,255,.06)}
+.gbtn .gicon{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#fff;color:#4285f4;font:800 14px var(--f-display)}
+.phint.acc-or{margin:-6px 0 0!important;text-align:center;color:var(--muted)}
+.gisbtn{display:flex;justify-content:center;min-height:44px;width:100%}.gisbtn>div{margin:0 auto}
 .phint{margin:2px 0 0!important;min-height:0;font-size:12px;color:var(--muted);text-align:left}.phint:empty{display:none}.phint.ok{color:#7fe0a8}
 .linkbtn{border:0;background:none;color:var(--muted);font:inherit;text-decoration:underline;cursor:pointer;padding:4px}
 .coin{display:inline-block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#f2b84b 45%,#b97a1c);box-shadow:inset 0 0 0 1.5px rgba(120,70,0,.5);flex:0 0 auto}
@@ -623,6 +633,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
 .plist:empty{display:none}
 .lead.me{border-radius:0}
 #ptab>.lead{border-radius:18px;background:rgba(255,255,255,.04);border:1px solid var(--line);padding:10px 14px;min-height:56px;box-sizing:border-box}
+.devlink{display:grid;place-items:center;text-decoration:none}
 </style>
 
 <div class="page">
@@ -660,7 +671,7 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
             <span class="pic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></span>
             <span class="ptx"><b>Играть онлайн</b><span class="psub"><small>Поиск соперников</small><em class="online onlineN" hidden><i></i><b>0</b> в сети</em></span></span></button>
           <div class="modes">
-            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С друзьями</b><small>Комната по коду</small></button>
+            <button class="mode" data-go="lobby"><span class="mic" style="--m:#4c8dff"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16.5 14.3c2.4.2 4 1.7 4.5 4.2"/></svg></span><b>С&nbsp;друзьями</b><small>Комната по коду</small></button>
             <button class="mode" data-mode="bots"><span class="mic" style="--m:#3fc27a"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="8" width="15" height="11" rx="3.5"/><path d="M12 8V4.5M9.2 13h.01M14.8 13h.01M9.5 16.2h5"/><circle cx="12" cy="4" r=".6"/></svg></span><b>С ботами</b><small>Против компьютера</small></button>
             <button class="mode" data-mode="local"><span class="mic" style="--m:#b06cf0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="3" width="11" height="18" rx="2.5"/><path d="M10.5 18h3"/></svg></span><b>Локально</b><small>Один телефон</small></button>
           </div>
@@ -675,6 +686,11 @@ table.bd{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric
           <div class="figgrid" id="figgrid"></div>
           <div class="h3">Локации</div>
           <div class="locgrid" id="locgrid"></div>
+          <div class="h3">Промокод</div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <input class="field" id="promoInput" placeholder="Введите промокод" style="flex:1;text-transform:uppercase;font-weight:700;letter-spacing:1px">
+            <button class="cta" id="promoApplyBtn">Применить</button>
+          </div>
         </div>
       </section>
 
@@ -901,37 +917,13 @@ const ARROW = ['↑','→','↓','←'];
 const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const MEEPLE_D = 'M50 4C62 4 68 12 68 22C68 30 64 34 60 37L88 46C96 49 98 56 96 62C94 68 88 70 82 68L68 64L76 100C77 106 73 108 68 108L56 108L50 86L44 108L32 108C27 108 23 106 24 100L32 64L18 68C12 70 6 68 4 62C2 56 4 49 12 46L40 37C36 34 32 30 32 22C32 12 38 4 50 4Z';
 // Five seats: colours are fixed per seat, names and human/bot are chosen before the game.
-const PL0 = [
-  {name:'Вы',col:'#ef5350',human:true},
-  {name:'Маша',col:'#4c8dff',human:false},
-  {name:'Дима',col:'#f7c948',human:false},
-  {name:'Лёша',col:'#3fc27a',human:false},
-  {name:'Катя',col:'#b06cf0',human:false},
-];
+// Seats, palette, modes, rules, settings rows and streak gold live in src/state/config.js.
+const {PL0, PALETTE, MODES, RULES, PREFS, PREF_GROUPS, STREAK_GOLD, validCol} = PG.state.config;
 // Colours players can pick; seats start with the first five.
-const PALETTE = [
-  {col: '#ef5350', name: 'Красный'}, {col: '#4c8dff', name: 'Синий'}, {col: '#f7c948', name: 'Жёлтый'}, {col: '#3fc27a', name: 'Зелёный'},
-  {col: '#b06cf0', name: 'Фиолетовый'}, {col: '#ff8c42', name: 'Оранжевый'}, {col: '#ff6fae', name: 'Розовый'}, {col: '#2ec4d6', name: 'Бирюзовый'},
-];
-const validCol = c => PALETTE.some(x => x.col === c);
 const setup = {n: 4, onN: 2, seats: PL0.map(p => ({name: p.name, human: p.human, col: p.col}))};
 try { const saved = JSON.parse(localStorage.getItem('setup')); if (saved && saved.seats && saved.seats.length === 5) Object.assign(setup, saved); } catch (_) {}
 setup.seats.forEach((x, i) => { if (!validCol(x.col) || setup.seats.slice(0, i).some(y => y.col === x.col)) x.col = PALETTE.find(c => !setup.seats.slice(0, i).some(y => y.col === c.col)).col; });
 // Game modes are presets of the rules below; any rule can still be changed after picking one.
-const MODES = {
-  fast: {label: 'Быстрая', desc: '40 карт · 5 фишек · 10–15 минут', set: {deck: 40, meeples: 5}},
-  classic: {label: 'Классика', desc: 'Вся колода · 7 фишек · золотая середина', set: {deck: 0, meeples: 7}},
-  epic: {label: 'Большая', desc: 'Двойная колода · 9 фишек · огромное королевство', set: {deck: 0, meeples: 9}},
-};
-const RULES = [
-  {k: 'mode', label: 'Режим', opts: Object.entries(MODES).map(([k, m]) => [k, m.label])},
-  {k: 'deck', label: 'Карт в стопке', opts: [[40, '40'], [60, '60'], [0, 'Все']]},
-  {k: 'rivers', label: 'Реки', opts: [[true, 'Есть'], [false, 'Нет']]},
-  {k: 'meeples', label: 'Фигурок у игрока', opts: [[5, '5'], [7, '7'], [9, '9']]},
-  {k: 'timer', label: 'Время на ход', opts: [[0, 'Без'], [30, '30 с'], [60, '60 с']]},
-  {k: 'hints', label: 'Подсветка мест', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'tie', label: 'Спорный объект: очки', opts: [['all', 'Каждому'], ['split', 'Поровну']]},
-];
 setup.rules = Object.assign({mode: 'classic', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, setup.rules);
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
 if (![40, 60, 0].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck;
@@ -943,50 +935,14 @@ const localHumans = () => players.filter((p, i) => isLocal(i)).length;
 const isMe = p => net ? p.owner === myId : p.human && humanCount() === 1;
 let gameRules = setup.rules, turnTok = 0;
 const humanCount = () => players.filter(p => p.human).length;
-// edges N E S W: c city, r road, w river, f field
-const TYPES = {
-  cap:{e:'cfff',n:5,name:'Край города'}, capRS:{e:'crfr',n:4,name:'Город и дорога'},
-  capRL:{e:'cfrr',n:3,name:'Город и поворот'}, capRR:{e:'crrf',n:3,name:'Город и поворот'},
-  c2:{e:'ccff',n:3,name:'Угол города'}, c2r:{e:'ccrr',n:3,name:'Угол города с дорогой'},
-  band:{e:'fcfc',n:2,name:'Городская улица'}, c3:{e:'cccf',n:3,name:'Большой город'},
-  c3r:{e:'cccr',n:2,name:'Город с воротами'}, c4:{e:'cccc',n:1,name:'Центр города'},
-  rS:{e:'rfrf',n:6,name:'Прямая дорога'}, rC:{e:'ffrr',n:6,name:'Поворот дороги'},
-  r3:{e:'frrr',n:3,name:'Развилка'}, r4:{e:'rrrr',n:1,name:'Перекрёсток'},
-  fort:{e:'ffff',n:3,fort:true,name:'Крепость'}, fortR:{e:'ffrf',n:2,fort:true,name:'Крепость с дорогой'},
-  wS:{e:'wfwf',n:2,name:'Река'}, wC:{e:'wwff',n:2,name:'Излучина реки'},
-  wBr:{e:'wrwr',n:2,name:'Мост через реку'}, brHalf:{e:'fbfr',n:2,bridge:true,name:'Половина большого моста'}, wCity:{e:'wcwf',n:1,name:'Город у реки'},
-  wEnd:{e:'wfff',n:2,name:'Исток реки'}, wRC:{e:'wwrr',n:1,name:'Излучина и дорога'},
-  wLake:{e:'wwww',n:2,lake:true,name:'Разлив реки'}, wTee:{e:'wwwf',n:2,lake:true,name:'Заводь с протокой'},
-  rRock:{e:'rfff',n:2,end:'boulders',name:'Тупик у валунов'}, rMine:{e:'rfff',n:2,end:'mine',name:'Вход в шахту'},
-  rEnd:{e:'rfxf',n:1,end:'cliff',name:'Дорога к обрыву'}, rocks:{e:'ffff',n:2,rocks:true,name:'Валуны'},
-};
-/* Rare pieces: one for every combination of town, road and field edges the regular set lacks,
-   so towns and roads can nearly always be finished. Odd river mixes (three or four rivers, a river
-   running into a town from several sides) stay impossible on purpose: blocking a spot is part of
-   the game. A big-bridge edge only fits the other half of the bridge. */
-const normEdge = k => k;
-(() => {
-  const rots = s => [0, 1, 2, 3].map(r => [0, 1, 2, 3].map(d => s[(d - r + 4) % 4]).join(''));
-  const have = new Set(); for (const id in TYPES) rots([...TYPES[id].e].map(normEdge).join('')).forEach(x => have.add(x));
-  const K = 'crf';
-  for (const a of K) for (const b of K) for (const c of K) for (const d of K) {
-    const e = a + b + c + d; if (have.has(e)) continue;
-    rots(e).forEach(x => have.add(x));
-    TYPES['x' + e] = {e, n: 1, rare: true, name: rareName(e)};
-  }
-})();
-function rareName(e) {
-  const n = k => [...e].filter(x => x === k).length, parts = [];
-  if (n('c')) parts.push('город'); if (n('w')) parts.push(n('w') >= 3 ? 'слияние рек' : 'река'); if (n('r')) parts.push(n('r') >= 3 ? 'развилка' : 'дорога');
-  const t = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' и ' + parts[parts.length - 1] : parts[0] || 'поле';
-  return t[0].toUpperCase() + t.slice(1);
-}
+// Card types (edges N E S W) live in src/engine/tiles.js.
+const {TYPES, normEdge, rareName, deckList} = PG.engine;
 const KIND = {c:'Город',r:'Дорога',f:'Крепость'};
 
-const rng = seed => () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
-const hash = s => [...s].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) | 0, 7);
+// Seeded randomness lives in src/engine/rng.js (bundled into window.PG by scripts/wrap-web.sh).
+const {rng, hash} = PG.engine;
 let net = null;
-let queue = [], applied = 0, gameLog = null;
+let queue = [], applied = 0, gameLog = null, ending = false;
 // catchUp: moves taken from the history (coming back to a game) are applied at once, without animation, sound or
 // messages; only the last tile is shown (see focusLast).
 let catchUp = false, lastPlaced = null;
@@ -1000,494 +956,21 @@ const $ = s => document.querySelector(s);
 const meepleSvg = col => `<svg viewBox="0 0 100 110"><path d="${MEEPLE_D}" fill="${col}" stroke="rgba(0,0,0,.35)" stroke-width="6"/></svg>`;
 
 /* ---------------- art ---------------- */
-function cv(w, h, k = 2) { const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k); const g = c.getContext('2d'); g.scale(k, k); return [c, g]; }
-
-function cityPaths(E) {
-  const city = [0,1,2,3].filter(d => E[d] === 'c'), k = city.length;
-  if (!k) return null;
-  const corner = [[0,0],[S,0],[S,S],[0,S]], mid = [[S/2,0],[S,S/2],[S/2,S],[0,S/2]], C = S / 2;
-  const fill = new Path2D(), wall = new Path2D();
-  if (k === 4) { fill.rect(0, 0, S, S); return {fill, wall: null}; }
-  if (k === 1) {
-    const i = city[0];
-    const rot = ([x, y]) => { let dx = x - C, dy = y - C; for (let n = 0; n < i; n++) [dx, dy] = [-dy, dx]; return [C + dx, C + dy]; };
-    const A = rot([0,0]), B = rot([S,0]), K = rot([S/2, S*0.64]);
-    fill.moveTo(...A); fill.lineTo(...B); fill.quadraticCurveTo(...K, ...A);
-    wall.moveTo(...B); wall.quadraticCurveTo(...K, ...A);
-    return {fill, wall};
-  }
-  const s = city.find(d => E[(d + 3) % 4] !== 'c');
-  fill.moveTo(...corner[s]);
-  let i = s, n = 0;
-  while (n < 4) {
-    if (E[i] === 'c') { fill.lineTo(...corner[(i + 1) % 4]); i = (i + 1) % 4; n++; continue; }
-    let L = 0; while (E[(i + L) % 4] !== 'c') L++;
-    const from = corner[i], to = corner[(i + L) % 4];
-    const p = L === 1 ? mid[i] : corner[(i + 1) % 4], f = L === 1 ? 0.88 : 0.86;
-    const K = [p[0] + (C - p[0]) * f, p[1] + (C - p[1]) * f];
-    fill.quadraticCurveTo(...K, ...to); wall.moveTo(...from); wall.quadraticCurveTo(...K, ...to);
-    i = (i + L) % 4; n += L;
-  }
-  fill.closePath();
-  return {fill, wall};
-}
-
-function drawTile(id) {
-  const def = TYPES[id], E = def.e, R = rng(hash(id));
-  const [c, g] = cv(S, S, 1);
-  const gr = g.createLinearGradient(0, 0, S, S); gr.addColorStop(0, '#80be56'); gr.addColorStop(1, '#62a242');
-  g.fillStyle = gr; g.fillRect(0, 0, S, S);
-  for (let i = 0; i < 14; i++) { const x = R()*S, y = R()*S, r = 18 + R()*30, rg = g.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, R() < .5 ? 'rgba(40,90,25,.2)' : 'rgba(200,230,120,.16)'); rg.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = rg; g.fillRect(x - r, y - r, 2*r, 2*r); }
-  for (let i = 0; i < 700; i++) { g.fillStyle = R() < .5 ? 'rgba(230,255,170,.10)' : 'rgba(25,70,20,.14)'; g.fillRect(R()*S, R()*S, 1.6, 2.6); }
-  g.strokeStyle = 'rgba(40,95,30,.55)'; g.lineWidth = 1.2;
-  for (let i = 0; i < 38; i++) { const x = R()*S, y = R()*S; g.beginPath(); g.moveTo(x - 2.5, y - 3); g.lineTo(x, y); g.lineTo(x + 2.5, y - 3.5); g.stroke(); }
-  for (let i = 0; i < 12; i++) { g.fillStyle = ['#fff6d8','#ffd75e','#f3a6c8'][i % 3]; g.beginPath(); g.arc(R()*S, R()*S, 1.7, 0, 7); g.fill(); }
-  const mid = [[S/2,0],[S,S/2],[S/2,S],[0,S/2]], C = [S/2, S/2];
-  const idx = k => [0,1,2,3].filter(d => E[d] === k);
-  const strip = (a, b, layers) => {
-    for (const [w, col, dash] of layers) {
-      g.beginPath(); g.moveTo(...mid[a]);
-      if (b == null) g.lineTo(...C); else g.quadraticCurveTo(C[0], C[1], ...mid[b]);
-      g.lineWidth = w; g.strokeStyle = col; g.lineCap = 'butt'; g.setLineDash(dash || []); g.stroke();
-    }
-    g.setLineDash([]);
-  };
-  // Rivers meander: two cubic curves through a point near the middle, leaving each edge at a
-  // right angle so neighbouring pieces join; reeds and stones line the banks.
-  const lerp = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
-  const cub = (p0, p1, p2, p3, t) => { const a = lerp(p0, p1, t), b = lerp(p1, p2, t), c2 = lerp(p2, p3, t), d = lerp(a, b, t), e = lerp(b, c2, t); return [lerp(d, e, t), [e[0] - d[0], e[1] - d[1]]]; };
-  const riverPath = (a, b) => {
-    const A = mid[a], ia = [-V[a][0], -V[a][1]];
-    if (b == null) { const M = [C[0] + (R() - .5) * 16, C[1] + (R() - .5) * 16]; return [[A, [A[0] + ia[0] * S * .22 + ia[1] * S * .12, A[1] + ia[1] * S * .22 - ia[0] * S * .12], [M[0] - ia[0] * 10, M[1] - ia[1] * 10], M]]; }
-    const B = mid[b], ib = [-V[b][0], -V[b][1]];
-    const M = id === 'wBr' ? [C[0], C[1]] : [C[0] + (R() - .5) * S * .24, C[1] + (R() - .5) * S * .24];
-    let tx = B[0] - A[0] + (ib[0] - ia[0]) * 0, ty = B[1] - A[1]; const L = Math.hypot(tx, ty) || 1; tx = tx / L * S * .2; ty = ty / L * S * .2;
-    return [[A, [A[0] + ia[0] * S * .26, A[1] + ia[1] * S * .26], [M[0] - tx, M[1] - ty], M], [M, [M[0] + tx, M[1] + ty], [B[0] + ib[0] * S * .26, B[1] + ib[1] * S * .26], B]];
-  };
-  const strokeSegs = (segs, w, col, dash) => { g.beginPath(); g.moveTo(...segs[0][0]); segs.forEach(q => g.bezierCurveTo(...q[1], ...q[2], ...q[3])); g.lineWidth = w; g.strokeStyle = col; g.lineCap = 'butt'; g.lineJoin = 'round'; g.setLineDash(dash || []); g.stroke(); g.setLineDash([]); };
-  const along = (segs, fn) => segs.forEach(q => { for (let t = .06; t < .96; t += .08) { const [pt, d] = cub(...q, t), L = Math.hypot(...d) || 1; fn(pt, [-d[1] / L, d[0] / L]); } });
-  const water = segs => {
-    strokeSegs(segs, 40, '#b9b07a'); strokeSegs(segs, 34, '#cdbf86'); strokeSegs(segs, 28, '#2f7cc2'); strokeSegs(segs, 18, '#4a9fe3'); strokeSegs(segs, 7, 'rgba(140,205,250,.75)');
-    strokeSegs(segs, 2, 'rgba(225,245,255,.8)', [6, 13]);
-    along(segs, ([x, y], [nx, ny]) => {
-      for (const sd of [-1, 1]) {
-        const r1 = R();
-        if (r1 < .35) { const bx = x + nx * sd * 21, by = y + ny * sd * 21; g.strokeStyle = r1 < .2 ? '#3f7d2c' : '#56932f'; g.lineWidth = 1.4; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(bx + k * 1.5, by + 3); g.lineTo(bx + k * 2.6, by - 4 - R() * 3); g.stroke(); } }
-        else if (r1 < .45) { g.fillStyle = '#9c968a'; g.beginPath(); g.ellipse(x + nx * sd * 15, y + ny * sd * 15, 2.6, 1.8, R(), 0, 7); g.fill(); }
-      }
-      if (R() < .25) { g.strokeStyle = 'rgba(230,248,255,.55)'; g.lineWidth = 1; g.beginPath(); g.arc(x + (R() - .5) * 10, y + (R() - .5) * 10, 3 + R() * 2, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
-    });
-  };
-  // Roads keep their shape (the owner colouring follows it) but get verges, two wheel ruts and pebbles.
-  const ROAD = [[26,'rgba(60,90,30,.35)'],[22,'#80653e'],[18,'#d9bf88'],[12,'#c7a874'],[8,'#e2cb98'],[2,'rgba(150,120,70,.45)',[2,7]]];
-  const roadPts = (a, b, fn) => { const A = mid[a], B = b == null ? C : mid[b]; for (let t = .08; t < .95; t += .07) { const u = 1 - t, x = b == null ? A[0] + (B[0] - A[0]) * t : u * u * A[0] + 2 * u * t * C[0] + t * t * B[0], y = b == null ? A[1] + (B[1] - A[1]) * t : u * u * A[1] + 2 * u * t * C[1] + t * t * B[1]; fn(x, y); } };
-  const pebbles = (a, b) => roadPts(a, b, (x, y) => { if (R() < .55) { g.fillStyle = R() < .5 ? 'rgba(120,96,60,.55)' : 'rgba(250,236,200,.7)'; g.beginPath(); g.arc(x + (R() - .5) * 14, y + (R() - .5) * 14, .9 + R() * .9, 0, 7); g.fill(); } if (R() < .3) { g.strokeStyle = '#4f8e33'; g.lineWidth = 1.2; const sx = x + (R() < .5 ? -12 : 12) * (Math.abs(mid[a][0] - C[0]) < 1 ? 1 : 0), sy = y + (R() < .5 ? -12 : 12) * (Math.abs(mid[a][1] - C[1]) < 1 ? 1 : 0); g.beginPath(); g.moveTo(sx - 2, sy + 2); g.lineTo(sx, sy - 3); g.lineTo(sx + 2, sy + 2); g.stroke(); } });
-  const w = idx('w');
-  if (w.length === 2) water(riverPath(w[0], w[1])); else w.forEach(d => water(riverPath(d, null)));
-  if (w.length === 1) {
-    // A spring: water wells up from a mossy rock outcrop on the closed side, fills a clear round pool with rings and
-    // sparkles, and spills into the river on the open side. Reeds and flowers dot the bank.
-    const d0 = w[0], ux = V[d0][0], uy = V[d0][1], px = -uy, py = ux;
-    const at = (f, o) => [C[0] + ux * f + px * o, C[1] + uy * f + py * o];
-    // damp bank around the pool
-    g.fillStyle = 'rgba(70,110,40,.35)'; g.beginPath(); g.ellipse(...at(-4, 0), 40, 34, 0, 0, 7); g.fill();
-    // pool: sandy rim, deep water, bright centre
-    [[30,'#d8cf9c'],[27,'#b9ae78'],[24,'#2468ad'],[19,'#3f95dc'],[12,'#6fbdf0']].forEach(([r, col]) => { g.beginPath(); g.ellipse(...at(-8, 0), r, r * .9, 0, 0, 7); g.fillStyle = col; g.fill(); });
-    g.strokeStyle = 'rgba(235,250,255,.8)'; g.lineWidth = 1.4; [5, 10, 15].forEach((r, k) => { g.globalAlpha = 1 - k * .25; g.beginPath(); g.ellipse(...at(-8, 0), r, r * .88, 0, 0, 7); g.stroke(); }); g.globalAlpha = 1;
-    // bubbles and sparkles
-    g.fillStyle = 'rgba(255,255,255,.85)'; [[-12,-4,2.4],[-3,2,1.8],[-9,5,1.4],[-14,2,1.2],[-5,-7,1.2]].forEach(([f, o, r]) => { g.beginPath(); g.arc(...at(f, o), r, 0, 7); g.fill(); });
-    // rock outcrop behind the pool: stacked boulders with moss on top
-    const rocks = [[-44,-20,15,11,'#7d776b'],[-48,-3,17,13,'#8d8779'],[-44,15,15,11,'#7d776b'],[-38,-9,12,10,'#a39d90'],[-38,8,12,10,'#a39d90'],[-30,-26,9,7,'#8d8779'],[-30,24,9,7,'#8d8779']];
-    rocks.forEach(([f, o, rx, ry, col]) => { const [x, y] = at(f, o); g.fillStyle = 'rgba(0,0,0,.28)'; g.beginPath(); g.ellipse(x + 2, y + 3, rx, ry * .85, 0, 0, 7); g.fill(); g.fillStyle = col; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(255,255,255,.22)'; g.beginPath(); g.ellipse(x - 3, y - 3, rx * .55, ry * .45, 0, 0, 7); g.fill(); g.fillStyle = 'rgba(90,150,60,.75)'; g.beginPath(); g.ellipse(x + rx * .25, y - ry * .5, rx * .55, ry * .3, 0, 0, 7); g.fill(); });
-    // water trickling from the rocks into the pool
-    g.strokeStyle = '#8fd0f6'; g.lineWidth = 3; g.lineCap = 'round'; g.beginPath(); g.moveTo(...at(-34, 0)); g.quadraticCurveTo(...at(-26, 2), ...at(-20, 0)); g.stroke(); g.lineCap = 'butt';
-    // reeds and flowers on the bank
-    [[-14,34],[-26,38],[-6,-36],[-22,-38],[16,38],[22,-40]].forEach(([f, o], k) => { const [x, y] = at(f, o); g.strokeStyle = '#4f8a2c'; g.lineWidth = 1.8; for (let j = -1; j <= 1; j++) { g.beginPath(); g.moveTo(x + j * 2, y + 4); g.lineTo(x + j * 4, y - 9 - R() * 3); g.stroke(); } if (k % 2) { g.fillStyle = ['#f4d35e', '#fff', '#f08fb0'][k % 3]; g.beginPath(); g.arc(x + 4, y - 4, 2.2, 0, 7); g.fill(); } });
-  }
-  if (def.lake) {
-    // A lake over the whole card: water to the very edges, open on every river side; only the corners (and the closed
-    // side of the three-way lake) stay as land with a sandy shore, reeds and stones. Flow streaks run out to every
-    // river, lily pads and lotuses float on the water.
-    const base = document.createElement('canvas'); base.width = S; base.height = S; base.getContext('2d').drawImage(c, 0, 0);
-    const dead = [0, 1, 2, 3].filter(d => E[d] !== 'w'), RR = 50, rot = dead.length ? dead[0] * Math.PI / 2 : 0;
-    const deep = g.createRadialGradient(C[0], C[1], 8, C[0], C[1], 125); deep.addColorStop(0, '#74c6f4'); deep.addColorStop(.5, '#3f95dc'); deep.addColorStop(1, '#2468ad');
-    g.fillStyle = deep; g.fillRect(0, 0, S, S);
-    // current: curved streaks from the middle out to every river
-    for (const d of w) {
-      const A = mid[d], ux = V[d][0], uy = V[d][1];
-      for (let k = -3; k <= 3; k++) {
-        const off = k * 9, sx = C[0] - uy * off * .45 + ux * 6, sy = C[1] + ux * off * .45 + uy * 6;
-        g.beginPath(); g.moveTo(sx, sy); g.quadraticCurveTo((sx + A[0]) / 2 - uy * off * .4, (sy + A[1]) / 2 + ux * off * .4, A[0] - uy * off * .55, A[1] + ux * off * .55);
-        g.lineWidth = 1.5; g.strokeStyle = k % 2 ? 'rgba(230,248,255,.4)' : 'rgba(230,248,255,.68)'; g.setLineDash([10, 12]); g.lineDashOffset = k * 5; g.stroke();
-      }
-    }
-    g.setLineDash([]);
-    g.strokeStyle = 'rgba(225,245,255,.34)'; g.lineWidth = 1;
-    for (let k = 0; k < 10; k++) { const x = 20 + R() * (S - 40), y = 20 + R() * (S - 40); g.beginPath(); g.ellipse(x, y, 8 + R() * 9, 3 + R() * 3, (R() - .5) * .5, Math.PI * 1.05, Math.PI * 1.95); g.stroke(); }
-    g.fillStyle = 'rgba(255,255,255,.55)'; for (let k = 0; k < 14; k++) { g.beginPath(); g.arc(14 + R() * (S - 28), 14 + R() * (S - 28), .8 + R() * .9, 0, 7); g.fill(); }
-    // is a point on open water? (undo the card's rotation first, then test the corner coves and the closed-side strip)
-    const onWater = (x, y) => {
-      const dx = x - C[0], dy = y - C[1], cx = dx * Math.cos(rot) + dy * Math.sin(rot) + C[0], cy = -dx * Math.sin(rot) + dy * Math.cos(rot) + C[1];
-      const cor = dead.length ? [[S, S], [0, S]] : [[0, 0], [S, 0], [S, S], [0, S]];
-      return cor.every(([px, py]) => Math.hypot(cx - px, cy - py) > RR + 12) && (!dead.length || cy > RR * 1.15 + 14);
-    };
-    const clearOfRivers = (x, y) => w.every(d => { const ax = mid[d][0] - C[0], ay = mid[d][1] - C[1], L = Math.hypot(ax, ay), t = Math.max(0, Math.min(1, ((x - C[0]) * ax + (y - C[1]) * ay) / (L * L))); return Math.hypot(x - C[0] - ax * t, y - C[1] - ay * t) > 15; });
-    let pads = 0;
-    for (let tries = 0; tries < 160 && pads < 9; tries++) {
-      const x = 22 + R() * (S - 44), y = 22 + R() * (S - 44);
-      if (!onWater(x, y) || !clearOfRivers(x, y)) continue;
-      const rr = 7 + R() * 5, a0 = R() * 6.28;
-      g.fillStyle = 'rgba(0,40,80,.28)'; g.beginPath(); g.ellipse(x + 1.5, y + 2, rr, rr * .8, 0, 0, 7); g.fill();
-      g.save(); g.translate(x, y); g.scale(1, .82);
-      g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, rr, a0 + .3, a0 + 6.28 - .3); g.closePath();
-      const lg = g.createRadialGradient(-rr * .3, -rr * .3, 1, 0, 0, rr); lg.addColorStop(0, '#7cc65a'); lg.addColorStop(1, '#2f8a3e');
-      g.fillStyle = lg; g.fill(); g.strokeStyle = '#256b30'; g.lineWidth = 1; g.stroke();
-      g.strokeStyle = 'rgba(210,245,170,.5)'; g.lineWidth = .7; for (let v = 0; v < 4; v++) { const q = a0 + 1 + v * 1.2; g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(q) * rr * .85, Math.sin(q) * rr * .85); g.stroke(); }
-      g.restore();
-      if (pads % 3 === 1) {
-        const pink = pads % 2 === 1;
-        for (let k = 0; k < 8; k++) { const q = k / 8 * 6.28; g.fillStyle = k % 2 ? (pink ? '#f7b4d2' : '#ffffff') : (pink ? '#ec7fb0' : '#e9f2ff'); g.beginPath(); g.ellipse(x + Math.cos(q) * 3.4, y - 1 + Math.sin(q) * 2.8, 3.6, 1.8, q, 0, 7); g.fill(); }
-        g.fillStyle = '#ffd75e'; g.beginPath(); g.arc(x, y - 1, 1.8, 0, 7); g.fill();
-      }
-      pads++;
-    }
-    // the land goes back: corner coves (and the closed side), then a sandy shore along their edge
-    g.save(); g.translate(C[0], C[1]); g.rotate(rot); g.translate(-C[0], -C[1]);
-    const land = new Path2D();
-    (dead.length ? [[S, S], [0, S]] : [[0, 0], [S, 0], [S, S], [0, S]]).forEach(([x, y]) => { land.moveTo(x + RR, y); land.arc(x, y, RR, 0, 7); });
-    if (dead.length) {
-      land.moveTo(-6, -6); land.lineTo(S + 6, -6); land.lineTo(S + 6, RR * .95);
-      land.bezierCurveTo(S * .82, RR * 1.2, S * .64, RR * .78, S * .5, RR * 1.0); land.bezierCurveTo(S * .36, RR * 1.22, S * .18, RR * .8, -6, RR * .95); land.closePath();
-    }
-    g.save(); g.clip(land); g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(base, 0, 0); g.restore();
-    g.lineJoin = 'round';
-    for (const [lw, col] of [[16, 'rgba(50,80,30,.35)'], [11, '#b9b07a'], [7, '#cdbf86'], [2, 'rgba(255,255,255,.4)']]) { g.lineWidth = lw; g.strokeStyle = col; g.stroke(land); }
-    // reeds, cattails and stones along the shore
-    const shore = [];
-    (dead.length ? [[S, S, Math.PI, 1.5 * Math.PI], [0, S, 1.5 * Math.PI, 2 * Math.PI]] : [[0, 0, 0, Math.PI / 2], [S, 0, Math.PI / 2, Math.PI], [S, S, Math.PI, 1.5 * Math.PI], [0, S, 1.5 * Math.PI, 2 * Math.PI]]).forEach(([cx, cy, a0, a1]) => { for (let k = 0; k < 9; k++) { const an = a0 + (a1 - a0) * (.08 + .84 * R()); shore.push([cx + Math.cos(an) * (RR + 7), cy + Math.sin(an) * (RR + 7)]); } });
-    if (dead.length) for (let k = 0; k < 11; k++) { const x = 14 + R() * (S - 28); shore.push([x, RR * (.98 + Math.sin(x / S * 6.28) * .1) + 8]); }
-    for (const [bx, by] of shore) {
-      if (bx < 4 || by < 4 || bx > S - 4 || by > S - 4) continue;
-      const lean = (R() - .5) * 5, tall = 12 + R() * 9;
-      g.strokeStyle = R() < .5 ? '#3f7d2c' : '#56932f'; g.lineWidth = 1.5; g.lineCap = 'round';
-      for (let j = -1; j <= 1; j++) { g.beginPath(); g.moveTo(bx + j * 2.4, by + 3); g.quadraticCurveTo(bx + j * 2.8 + lean * .4, by - tall * .5, bx + j * 3 + lean, by - tall + Math.abs(j) * 3); g.stroke(); }
-      if (R() < .45) { g.strokeStyle = '#4c8a30'; g.beginPath(); g.moveTo(bx + 1, by + 3); g.lineTo(bx + 1 + lean * .6, by - tall - 3); g.stroke(); g.fillStyle = '#7a4f2c'; g.beginPath(); g.ellipse(bx + 1 + lean * .6, by - tall - 6, 1.9, 4.4, 0, 0, 7); g.fill(); }
-    }
-    g.lineCap = 'butt';
-    for (let k = 0; k < 14; k++) { const [bx, by] = shore[(R() * shore.length) | 0]; g.fillStyle = k % 3 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(bx + (R() - .5) * 10, by + 6 + R() * 4, 3.5 + R() * 2, 2.4, R(), 0, 7); g.fill(); }
-    g.restore();
-  }
-  const r = idx('r');
-  if (r.length === 2) { strip(r[0], r[1], ROAD); pebbles(r[0], r[1]); } else r.forEach(d => { strip(d, null, ROAD); pebbles(d, null); });
-  if (def.end === 'cliff') { /* the chasm is painted below */ }
-  else if (def.end) { g.beginPath(); g.ellipse(C[0], C[1], 22, 18, 0, 0, 7); g.fillStyle = '#c7a874'; g.fill(); g.beginPath(); g.ellipse(C[0], C[1], 17, 13, 0, 0, 7); g.fillStyle = '#d9bf88'; g.fill(); }
-  else if (r.length >= 3 || (r.length === 1 && !def.fort && !def.bridge)) {
-    g.beginPath(); g.arc(C[0], C[1], 15, 0, 7); g.fillStyle = '#7a603b'; g.fill();
-    g.beginPath(); g.arc(C[0], C[1], 12, 0, 7); g.fillStyle = '#d9bf88'; g.fill();
-    g.beginPath(); g.arc(C[0], C[1], 5, 0, 7); g.fillStyle = '#5a6e7c'; g.fill(); g.strokeStyle = '#8b8478'; g.lineWidth = 2.5; g.stroke();
-  }
-  if (def.rocks) for (let k = 0; k < 10; k++) { g.fillStyle = 'rgba(110,100,85,.35)'; g.beginPath(); g.ellipse(30 + R() * 132, 30 + R() * 132, 3 + R() * 4, 2 + R() * 2, R() * 3, 0, 7); g.fill(); }
-  if (id === 'wBr') {
-    // small humpbacked wooden bridge: shadow on the water, planks, side beams, posts and rails
-    g.fillStyle = 'rgba(0,30,60,.35)'; g.beginPath(); g.ellipse(C[0] + 3, C[1] + 5, 32, 17, 0, 0, 7); g.fill();
-    const pl = g.createLinearGradient(0, C[1] - 15, 0, C[1] + 15); pl.addColorStop(0, '#c08a4d'); pl.addColorStop(.5, '#a8743f'); pl.addColorStop(1, '#8a5a2e');
-    g.fillStyle = pl; g.fillRect(C[0] - 32, C[1] - 14, 64, 28);
-    g.fillStyle = 'rgba(60,35,15,.55)'; for (let x = C[0] - 30; x < C[0] + 32; x += 5.5) g.fillRect(x, C[1] - 14, 1.2, 28);
-    g.fillStyle = 'rgba(255,230,190,.25)'; g.fillRect(C[0] - 32, C[1] - 14, 64, 4);
-    for (const y of [C[1] - 17, C[1] + 13]) { g.fillStyle = '#5d3c1d'; g.fillRect(C[0] - 34, y, 68, 4); g.fillStyle = '#7e532a'; g.fillRect(C[0] - 34, y, 68, 1.5); for (let x = C[0] - 33; x <= C[0] + 30; x += 15.5) { g.fillStyle = '#4a2f17'; g.fillRect(x, y - 3, 4, 7); } }
-  }
-  if (id === 'brHalf') {
-    // one half of a big stone bridge over a wide water: the other half is the same piece turned round
-    const lake = new Path2D(); lake.moveTo(S, S * .14); lake.bezierCurveTo(S * .6, S * .12, S * .38, S * .3, S * .4, S * .5); lake.bezierCurveTo(S * .38, S * .7, S * .6, S * .88, S, S * .86); lake.closePath();
-    g.save(); g.fillStyle = '#cdbf86'; g.lineWidth = 12; g.strokeStyle = '#cdbf86'; g.stroke(lake); g.fill(lake); g.restore();
-    const wg = g.createLinearGradient(S * .4, 0, S, 0); wg.addColorStop(0, '#4a9fe3'); wg.addColorStop(1, '#2a6fb4'); g.fillStyle = wg; g.fill(lake);
-    g.save(); g.clip(lake); g.strokeStyle = 'rgba(225,245,255,.5)'; g.lineWidth = 1.2; for (let k = 0; k < 9; k++) { const x = S * .5 + R() * S * .48, y = S * .2 + R() * S * .6; g.beginPath(); g.arc(x, y, 4 + R() * 3, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); } g.restore();
-    g.strokeStyle = '#3f7d2c'; g.lineWidth = 1.4; for (let k = 0; k < 8; k++) { const t = R(), x = S * .42 + Math.sin(t * 3.14) * -4, y = S * (.25 + t * .5); g.beginPath(); g.moveTo(x - 8, y + 3); g.lineTo(x - 9 - R() * 2, y - 5); g.stroke(); }
-    // arches: dark half-moons under both parapets, then the deck, paving and parapets with copings
-    g.fillStyle = 'rgba(0,25,55,.45)'; for (const x of [S * .62, S * .9]) for (const sy of [-1, 1]) { g.beginPath(); g.ellipse(x, C[1] + sy * 22, 13, 9, 0, 0, 7); g.fill(); }
-    const dk = g.createLinearGradient(0, C[1] - 18, 0, C[1] + 18); dk.addColorStop(0, '#d6ccb6'); dk.addColorStop(.5, '#c2b69c'); dk.addColorStop(1, '#a89b80');
-    g.fillStyle = dk; g.fillRect(S * .36, C[1] - 18, S * .64, 36);
-    g.strokeStyle = 'rgba(80,70,55,.35)'; g.lineWidth = .8; for (let x = S * .36 + 6; x < S; x += 9) { g.beginPath(); g.moveTo(x, C[1] - 12); g.lineTo(x, C[1] + 12); g.stroke(); }
-    g.beginPath(); g.moveTo(S * .36, C[1]); g.lineTo(S, C[1]); g.stroke();
-    for (const y of [C[1] - 21, C[1] + 15]) { g.fillStyle = '#8f8470'; g.fillRect(S * .34, y, S * .66, 6); g.fillStyle = '#e4dbc6'; g.fillRect(S * .34, y, S * .66, 2); for (let x = S * .34; x < S; x += 12) { g.fillStyle = 'rgba(60,50,40,.35)'; g.fillRect(x, y, 1, 6); } }
-    g.fillStyle = '#7d725f'; g.fillRect(S * .33, C[1] - 23, 6, 46);
-  }
-  if (def.end === 'cliff') {
-    // A torn card: the far half is simply not there. The kept half ends in a crumbling edge (soil, roots, loose stones)
-    // the far half is made transparent, the 3D rim is built in CSS.
-    const d0 = r[0], H = S / 2 + 3;
-    g.save(); g.translate(C[0], C[1]); g.rotate(Math.atan2(-V[d0][1], -V[d0][0]));
-    const void_ = new Path2D(); void_.rect(0, -H, H, 2 * H);
-    g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.fill(void_); g.globalCompositeOperation = 'source-over';
-    // crumbling rim along the tear, drawn on the kept side
-    for (const [w2, col] of [[10, 'rgba(60,40,22,.55)'], [6, '#7a5a38'], [3, '#a98255']]) { g.strokeStyle = col; g.lineWidth = w2; g.beginPath(); g.moveTo(-w2 / 2 + 1, -H); g.lineTo(-w2 / 2 + 1, H); g.stroke(); }
-    for (let y = -H + 4; y < H; y += 7 + R() * 5) { g.fillStyle = R() < .5 ? '#8a6a44' : '#5e4630'; g.beginPath(); g.moveTo(-1, y - 3); g.lineTo(-6 - R() * 7, y + R() * 3); g.lineTo(-1, y + 4); g.closePath(); g.fill(); }
-    for (let y = -H + 10; y < H; y += 14 + R() * 12) { g.strokeStyle = '#4f8e33'; g.lineWidth = 1.2; for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(-9 - R() * 4, y + k * 2); g.lineTo(-13 - R() * 4, y + k * 2 + 3 + R() * 3); g.stroke(); } }
-    for (let k = 0; k < 6; k++) { g.fillStyle = k % 2 ? '#a39d90' : '#8a8476'; g.beginPath(); g.ellipse(-12 - R() * 14, (R() - .5) * 150, 2.4 + R() * 2.4, 1.8 + R() * 1.2, R() * 3, 0, 7); g.fill(); }
-    g.restore();
-  }
-  const cp = cityPaths(E);
-  if (cp) {
-    // Town: cobbled lanes, then rows of gabled roofs (lit and shaded halves, a ridge, the odd chimney).
-    g.save(); g.clip(cp.fill); g.fillStyle = '#cdb48c'; g.fillRect(0, 0, S, S);
-    for (let i = 0; i < 520; i++) { g.fillStyle = R() < .5 ? 'rgba(120,100,70,.35)' : 'rgba(250,235,205,.45)'; g.beginPath(); g.ellipse(R() * S, R() * S, 2.2, 1.6, R() * 3, 0, 7); g.fill(); }
-    const ROOFS = [['#c8503a','#8f3020'],['#d4733f','#9c4a24'],['#a9432f','#73281b'],['#5f7488','#3a4a5a'],['#c79a45','#8a6420']];
-    for (let y = -6, row = 0; y < S; y += 16, row++) for (let x = row % 2 ? -4 : 6; x < S; x += 19) {
-      if (R() < .08) { g.fillStyle = '#4f8e3a'; g.beginPath(); g.arc(x + 8, y + 6, 6, 0, 7); g.fill(); g.fillStyle = '#6fb050'; g.beginPath(); g.arc(x + 6.5, y + 4.5, 3.5, 0, 7); g.fill(); continue; }
-      const jx = x + R() * 4, jy = y + R() * 3, ww = 13 + R() * 4, hh = 10 + R() * 2, [lt, dk] = ROOFS[(R() * ROOFS.length) | 0];
-      g.fillStyle = 'rgba(0,0,0,.28)'; g.fillRect(jx + 2, jy + 2.5, ww, hh);
-      g.fillStyle = lt; g.fillRect(jx, jy, ww, hh / 2); g.fillStyle = dk; g.fillRect(jx, jy + hh / 2, ww, hh / 2);
-      g.fillStyle = 'rgba(255,240,220,.45)'; g.fillRect(jx, jy + hh / 2 - .6, ww, 1.2);
-      g.strokeStyle = 'rgba(0,0,0,.18)'; g.lineWidth = .6; for (let k = 3; k < ww; k += 3) { g.beginPath(); g.moveTo(jx + k, jy); g.lineTo(jx + k, jy + hh); g.stroke(); }
-      if (R() < .35) { g.fillStyle = '#6d4a36'; g.fillRect(jx + ww * .7, jy + 1, 2.4, 3.2); }
-    }
-    g.restore();
-    if (cp.wall) {
-      g.lineJoin = 'round'; g.lineCap = 'round';
-      for (const [lw, col, dash] of [[13,'rgba(0,0,0,.25)'],[10,'#6d665a'],[6,'#d7cdb7'],[6,'#9a917f',[3,5]]]) { g.setLineDash(dash || []); g.lineWidth = lw; g.strokeStyle = col; g.stroke(cp.wall); }
-      g.setLineDash([]);
-    }
-  }
-  if (def.fort) {
-    const rr = (x, y, w2, h2, rad) => { g.beginPath(); g.roundRect ? g.roundRect(x, y, w2, h2, rad) : g.rect(x, y, w2, h2); };
-    g.fillStyle = 'rgba(0,0,0,.25)'; rr(C[0] - 39, C[1] - 35, 84, 84, 12); g.fill();
-    g.fillStyle = '#9f937c'; rr(C[0] - 42, C[1] - 42, 84, 84, 12); g.fill();
-    g.fillStyle = '#bdb299'; rr(C[0] - 36, C[1] - 36, 72, 72, 9); g.fill();
-    g.fillStyle = 'rgba(120,108,88,.5)'; for (let i = 0; i < 40; i++) g.fillRect(C[0] - 34 + R()*62, C[1] - 34 + R()*62, 6, 4);
-  }
-  if (def.end === 'cliff') return c.toDataURL('image/png'); // the chasm is a real hole, so this card needs transparency and no frame
-  g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = 3; g.strokeRect(1.5, 1.5, S - 3, S - 3);
-  g.strokeStyle = 'rgba(255,255,255,.12)'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(2, S - 2); g.lineTo(2, 2); g.lineTo(S - 2, 2); g.stroke();
-  return c.toDataURL('image/jpeg', .88);
-}
-
-const SPR = {};
-function sprite(name, w, h, draw) { const [c, g] = cv(w, h, 4); draw(g, w, h); SPR[name] = {url: c.toDataURL(), w, h}; }
-function drawSprites() {
-  // Small helpers: a filled polygon with an optional outline, a vertical/diagonal gradient, a soft contact shadow.
-  const poly = (g, pts, fill, line) => { g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.closePath(); g.fillStyle = fill; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = .45; g.stroke(); } };
-  const lin = (g, x0, y0, x1, y1, stops) => { const gr = g.createLinearGradient(x0, y0, x1, y1); stops.forEach(([o, c]) => gr.addColorStop(o, c)); return gr; };
-  const blob = (g, x, y, r, c0, c1) => { const gr = g.createRadialGradient(x - r * .35, y - r * .4, r * .1, x, y, r); gr.addColorStop(0, c0); gr.addColorStop(1, c1); g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); };
-  const shadow = (g, x, y, rx, ry, a = .28) => { const gr = g.createRadialGradient(x, y, 0, x, y, rx); gr.addColorStop(0, `rgba(10,20,5,${a})`); gr.addColorStop(1, 'rgba(10,20,5,0)'); g.save(); g.translate(x, y); g.scale(1, ry / rx); g.translate(-x, -y); g.fillStyle = gr; g.beginPath(); g.arc(x, y, rx, 0, 7); g.fill(); g.restore(); };
-  const OUT = 'rgba(45,28,16,.55)';
-
-  /* Houses in a three-quarter view: a front wall, a gabled side, a tiled roof, windows that glow. */
-  const house = ({wall, wallD, roof, roofD, frame, chimney, win = '#ffd877'}) => (g) => {
-    shadow(g, 12.5, 24.6, 12, 2.2);
-    poly(g, [[15, 13], [21, 11], [21, 22.2], [15, 24.2]], lin(g, 15, 0, 21, 0, [[0, wallD], [1, wall]]), OUT);   // side wall
-    poly(g, [[15, 13], [18, 5], [21, 11]], wallD, OUT);                                                        // gable
-    poly(g, [[3, 13], [15, 13], [15, 24.2], [3, 24.2]], lin(g, 0, 13, 0, 24, [[0, wall], [1, wallD]]), OUT);    // front wall
-    if (frame) { g.strokeStyle = frame; g.lineWidth = .9; g.beginPath(); [[3.4, 17.5, 14.6, 17.5], [5.5, 13, 5.5, 24], [12.5, 13, 12.5, 24], [5.5, 13, 9, 17.5], [12.5, 13, 9, 17.5]].forEach(([x0, y0, x1, y1]) => { g.moveTo(x0, y0); g.lineTo(x1, y1); }); g.stroke(); }
-    // door with an arch and a step
-    g.fillStyle = '#4a2f1b'; g.beginPath(); g.moveTo(7.6, 24.2); g.lineTo(7.6, 20); g.arc(9.2, 20, 1.6, Math.PI, 0); g.lineTo(10.8, 24.2); g.fill();
-    g.fillStyle = 'rgba(255,220,150,.35)'; g.fillRect(8, 20.5, .5, 3.2); g.fillStyle = '#d9c7a2'; g.fillRect(7, 24, 4.6, .9);
-    // windows: warm light, a frame and a sill
-    const win1 = (x, y, ww, hh) => { g.fillStyle = '#3a2a1c'; g.fillRect(x - .5, y - .5, ww + 1, hh + 1); g.fillStyle = win; g.fillRect(x, y, ww, hh); g.fillStyle = 'rgba(255,255,255,.55)'; g.fillRect(x, y, ww * .45, hh * .4); g.fillStyle = '#3a2a1c'; g.fillRect(x + ww / 2 - .2, y, .4, hh); g.fillRect(x, y + hh / 2 - .2, ww, .4); g.fillStyle = '#e8dcc0'; g.fillRect(x - .8, y + hh + .3, ww + 1.6, .7); };
-    win1(12, 19, 2.2, 2.6); win1(4.3, 19, 2.2, 2.6);
-    poly(g, [[17.2, 15], [19.2, 14.4], [19.2, 17], [17.2, 17.6]], win, 'rgba(58,42,28,.9)');                   // side window
-    // roof: tiles in rows, darker toward the ridge, a light ridge line and eaves
-    poly(g, [[1.6, 13.8], [16, 13.8], [19, 4.4], [4.6, 4.4]], lin(g, 0, 4, 0, 14, [[0, roofD], [1, roof]]), OUT);
-    g.save(); g.beginPath(); g.moveTo(1.6, 13.8); g.lineTo(16, 13.8); g.lineTo(19, 4.4); g.lineTo(4.6, 4.4); g.closePath(); g.clip();
-    g.strokeStyle = 'rgba(0,0,0,.22)'; g.lineWidth = .45;
-    for (let k = 1; k < 5; k++) { const y = 13.8 - k * 1.9, dx = (13.8 - y) * .32; g.beginPath(); g.moveTo(1.6 + dx, y); g.lineTo(16 + dx, y); g.stroke(); for (let x = 2.5 + dx + (k % 2) * 1.2; x < 16 + dx; x += 2.4) { g.beginPath(); g.moveTo(x, y); g.lineTo(x + .5, y + 1.9); g.stroke(); } }
-    g.restore();
-    g.strokeStyle = 'rgba(255,230,200,.45)'; g.lineWidth = .7; g.beginPath(); g.moveTo(4.8, 4.5); g.lineTo(18.8, 4.5); g.stroke();
-    g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = .8; g.beginPath(); g.moveTo(1.6, 14); g.lineTo(16, 14); g.stroke();
-    if (chimney) {
-      poly(g, [[11, 8.6], [13, 8.6], [13, 2.2], [11, 2.2]], lin(g, 11, 0, 13, 0, [[0, '#9b6a4f'], [1, '#6f4835']]), OUT);
-      g.fillStyle = '#5a3a2a'; g.fillRect(10.6, 1.6, 2.8, 1);
-      g.fillStyle = 'rgba(235,235,240,.55)'; [[12.4, .9, 1.1], [13.8, -.2, 1.4]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y + 1, r, 0, 7); g.fill(); });
-    }
-  };
-  sprite('house', 24, 26, house({wall: '#f1e4c6', wallD: '#c9b590', roof: '#cf4d32', roofD: '#8f2f1f', chimney: true}));
-  sprite('house2', 24, 26, house({wall: '#efe0bf', wallD: '#c2ab83', roof: '#b4462d', roofD: '#7a2a1c', frame: '#6b4426'}));
-  sprite('house3', 24, 26, house({wall: '#d9d3c7', wallD: '#a59d8f', roof: '#5f7488', roofD: '#3a4a5a', chimney: true}));
-  sprite('house4', 24, 26, house({wall: '#ecd9b0', wallD: '#bfa477', roof: '#d6a94a', roofD: '#9a7326', frame: '#7a5232'}));
-
-  /* Trees and field things, lit from the upper left. */
-  sprite('pine', 24, 42, (g, w, h) => {
-    shadow(g, w / 2, h - 1.6, 9, 2);
-    g.fillStyle = lin(g, w / 2 - 2, 0, w / 2 + 2, 0, [[0, '#7a5434'], [1, '#4a3020']]); g.fillRect(w / 2 - 1.8, h - 11, 3.6, 10);
-    for (let i = 3; i >= 0; i--) {
-      const top = 1 + i * 7.6, bot = top + 16.5, hw = 4.8 + i * 2.7;
-      // the tip, then the ragged lower edge from the right corner to the left one
-      const pts = [[w / 2, top]]; for (let k = 4; k >= -4; k--) pts.push([w / 2 + hw * k / 4, bot - (k % 2 ? 1.6 : 0)]);
-      poly(g, pts, lin(g, w / 2 - hw, 0, w / 2 + hw, 0, [[0, ['#3f8a45', '#3a8040', '#35763b', '#2f6b35'][i]], [.55, ['#2b6a33', '#28622f', '#245a2b', '#215228'][i]], [1, '#173f1d']]), 'rgba(15,40,18,.5)');
-      g.fillStyle = 'rgba(190,240,140,.22)'; g.beginPath(); g.moveTo(w / 2, top + 1); g.lineTo(w / 2 - hw * .8, bot - 1); g.lineTo(w / 2 - hw * .3, bot - 1.5); g.closePath(); g.fill();
-    }
-  });
-  sprite('oak', 28, 36, (g, w, h) => {
-    shadow(g, w / 2, h - 1.6, 11, 2.3);
-    poly(g, [[w / 2 - 2.2, h - 1.5], [w / 2 - 1.3, h - 13], [w / 2 - 4, h - 17], [w / 2 - 2.6, h - 17.6], [w / 2, h - 14.5], [w / 2 + 2.5, h - 18], [w / 2 + 3.6, h - 17.2], [w / 2 + 1.4, h - 13], [w / 2 + 2.4, h - 1.5]], lin(g, w / 2 - 2, 0, w / 2 + 2, 0, [[0, '#7a5434'], [1, '#4a3020']]), 'rgba(40,25,12,.6)');
-    [[w / 2, h - 21, 10.5, '#4f9e4c', '#22592a'], [w / 2 - 6.5, h - 19.5, 6.8, '#58a853', '#285f2c'], [w / 2 + 6.5, h - 20, 7, '#4c9a48', '#225628'], [w / 2 - 4, h - 26.5, 7.2, '#64b35c', '#2c6630'], [w / 2 + 4, h - 27, 7, '#5cab55', '#29602d'], [w / 2, h - 30, 5.6, '#7cc66c', '#356f36']]
-      .forEach(([x, y, r, c0, c1]) => blob(g, x, y, r, c0, c1));
-    g.fillStyle = 'rgba(220,255,180,.35)'; [[w / 2 - 5, h - 29, 1.4], [w / 2 + 2, h - 32, 1.1], [w / 2 - 8, h - 22, 1]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); });
-    g.fillStyle = '#d8423a'; [[w / 2 + 6, h - 18], [w / 2 - 3, h - 23], [w / 2 + 2, h - 26]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, .9, 0, 7); g.fill(); });
-  });
-  sprite('birch', 20, 36, (g, w, h) => {
-    shadow(g, w / 2, h - 1.5, 8, 1.8);
-    g.fillStyle = '#efece4'; g.fillRect(w / 2 - 1.3, h - 22, 2.6, 21); g.fillStyle = '#b9b4a6'; g.fillRect(w / 2 + .5, h - 22, .8, 21);
-    g.fillStyle = '#2a2a2a'; [[h - 6, 1.6], [h - 11, 1.1], [h - 15, 1.8], [h - 19, 1]].forEach(([y, l]) => g.fillRect(w / 2 - 1.3, y, l, .7));
-    [[w / 2, h - 24, 6.4, '#a6d66a', '#4e8a33'], [w / 2 - 4, h - 20, 4.6, '#9bcf62', '#4a8530'], [w / 2 + 4, h - 21, 4.6, '#9bcf62', '#46802e'], [w / 2, h - 29.5, 4.8, '#b8e27a', '#5a9a3a']].forEach(([x, y, r, c0, c1]) => blob(g, x, y, r, c0, c1));
-  });
-  sprite('bush', 16, 11, (g, w, h) => {
-    shadow(g, w / 2, h - 1.2, 7.5, 1.5);
-    [[4.5, 6.8, 3.8], [11.5, 7, 3.6], [8, 5, 4.4]].forEach(([x, y, r]) => blob(g, x, y, r, '#6fb85e', '#2b6a2e'));
-    g.fillStyle = '#e8584e'; [[5, 5.5], [9.6, 4], [12, 6.6], [7.4, 7.5]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, .6, 0, 7); g.fill(); });
-  });
-  sprite('rock', 15, 10, (g, w, h) => {
-    shadow(g, w / 2, h - 1, 7, 1.4, .35);
-    poly(g, [[1.5, 9], [3, 4.5], [6.5, 2], [10.5, 2.8], [13.5, 6], [13, 9]], lin(g, 2, 2, 12, 9, [[0, '#c3c0b8'], [.6, '#8f8b82'], [1, '#6a665e']]), 'rgba(40,38,34,.55)');
-    poly(g, [[6.5, 2], [10.5, 2.8], [9, 5.5], [5.5, 5]], 'rgba(255,255,255,.25)');
-    g.fillStyle = 'rgba(90,140,60,.7)'; g.beginPath(); g.ellipse(4.6, 8.2, 2.4, .9, 0, 0, 7); g.fill();
-  });
-  sprite('hay', 15, 14, (g, w, h) => {
-    shadow(g, w / 2, h - 1.2, 7, 1.6);
-    g.fillStyle = lin(g, 2, 2, 13, 13, [[0, '#f3d47a'], [.6, '#d7a945'], [1, '#a67a26']]);
-    g.beginPath(); g.moveTo(1.5, h - 1.5); g.quadraticCurveTo(1.5, 1.5, w / 2, 1.5); g.quadraticCurveTo(w - 1.5, 1.5, w - 1.5, h - 1.5); g.closePath(); g.fill();
-    g.strokeStyle = 'rgba(120,80,20,.45)'; g.lineWidth = .4; for (let i = 0; i < 9; i++) { const x = 3 + i * 1.2; g.beginPath(); g.moveTo(x, h - 2); g.lineTo(x + (i - 4) * .4, 4); g.stroke(); }
-    g.strokeStyle = '#8a5a22'; g.lineWidth = .8; g.beginPath(); g.moveTo(2.2, h - 6); g.quadraticCurveTo(w / 2, h - 4.4, w - 2.2, h - 6); g.stroke();
-  });
-
-  sprite('poplar', 14, 40, (g, w, h) => {
-    shadow(g, w / 2, h - 1.4, 6, 1.5);
-    g.fillStyle = '#5a3d24'; g.fillRect(w / 2 - 1, h - 7, 2, 6);
-    g.fillStyle = lin(g, 1, 0, w - 1, 0, [[0, '#6fb04f'], [.5, '#3f8a3a'], [1, '#1f5226']]);
-    g.beginPath(); g.moveTo(w / 2, 1); g.bezierCurveTo(w + 1, 10, w - .5, h - 9, w / 2, h - 5); g.bezierCurveTo(.5, h - 9, -1, 10, w / 2, 1); g.fill();
-    g.strokeStyle = 'rgba(20,60,25,.35)'; g.lineWidth = .5; for (let y = 8; y < h - 8; y += 4) { g.beginPath(); g.moveTo(w / 2 - 3, y + 2); g.quadraticCurveTo(w / 2, y, w / 2 + 3, y + 2); g.stroke(); }
-  });
-  const rock = (g, cx, cy, rw, rh, c0, c1) => {
-    poly(g, [[cx - rw, cy], [cx - rw * .8, cy - rh * .6], [cx - rw * .2, cy - rh], [cx + rw * .5, cy - rh * .85], [cx + rw, cy - rh * .3], [cx + rw * .9, cy]], lin(g, cx - rw, cy - rh, cx + rw, cy, [[0, c0], [.55, c1], [1, '#5b574f']]), 'rgba(40,38,34,.6)');
-    poly(g, [[cx - rw * .2, cy - rh], [cx + rw * .5, cy - rh * .85], [cx + rw * .15, cy - rh * .45], [cx - rw * .45, cy - rh * .55]], 'rgba(255,255,255,.28)');
-  };
-  sprite('boulders', 32, 22, (g, w, h) => {
-    shadow(g, w / 2, h - 2, 15, 2.6, .35);
-    rock(g, 9, h - 2.5, 8, 11, '#c9c5bb', '#958f84'); rock(g, 23, h - 2.2, 8.5, 13, '#bdb8ad', '#888277'); rock(g, 16, h - 1.6, 7, 8, '#d3cfc6', '#a29c90');
-    g.fillStyle = 'rgba(90,140,60,.75)'; [[5, h - 2.6], [28, h - 2.4], [16, h - 1.8]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y, 2.6, 1, 0, 0, 7); g.fill(); });
-  });
-  sprite('mine', 40, 32, (g, w, h) => {
-    shadow(g, w / 2, h - 2, 19, 3, .35);
-    // rocky hill
-    poly(g, [[1, h - 2], [5, h - 13], [12, h - 24], [21, h - 30], [30, h - 24], [37, h - 12], [39, h - 2]], lin(g, 2, h - 30, 38, h - 2, [[0, '#b7b0a2'], [.5, '#8c8578'], [1, '#5f5a50']]), 'rgba(40,36,30,.6)');
-    g.fillStyle = 'rgba(255,255,255,.18)'; g.beginPath(); g.moveTo(12, h - 24); g.lineTo(21, h - 30); g.lineTo(18, h - 20); g.closePath(); g.fill();
-    g.fillStyle = 'rgba(90,140,60,.8)'; [[6, h - 12, 3], [33, h - 13, 2.6], [24, h - 27, 2.2]].forEach(([x, y, r]) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); });
-    // dark entrance with a timber frame
-    g.fillStyle = '#17120f'; g.beginPath(); g.moveTo(13, h - 2); g.lineTo(13, h - 13); g.quadraticCurveTo(20, h - 19, 27, h - 13); g.lineTo(27, h - 2); g.fill();
-    g.fillStyle = '#7a5130'; g.fillRect(12, h - 15, 2.4, 13); g.fillRect(25.6, h - 15, 2.4, 13); g.fillStyle = '#8c5f38'; g.fillRect(11, h - 16.5, 18, 2.6);
-    g.fillStyle = '#5a3a20'; g.fillRect(11, h - 14, 18, .8);
-    // rails and a lantern
-    g.strokeStyle = '#6b6b70'; g.lineWidth = .7; g.beginPath(); g.moveTo(16.5, h - 2); g.lineTo(18, h - 9); g.moveTo(23.5, h - 2); g.lineTo(22, h - 9); g.stroke();
-    g.strokeStyle = '#6e4a2a'; g.lineWidth = .8; for (let y = h - 3; y > h - 9; y -= 2) { g.beginPath(); g.moveTo(16 + (h - y) * .1, y); g.lineTo(24 - (h - y) * .1, y); g.stroke(); }
-    g.fillStyle = '#ffcf5a'; g.beginPath(); g.arc(30, h - 12, 1.3, 0, 7); g.fill(); g.fillStyle = 'rgba(255,210,90,.35)'; g.beginPath(); g.arc(30, h - 12, 3, 0, 7); g.fill();
-  });
-  // Where a road runs out into an empty cell: a scatter of stones and gravel on the track, so it reads as "the road goes on".
-  sprite('gravel', 40, 14, (g, w, h) => {
-    const R = rng(77);
-    g.fillStyle = 'rgba(120,96,60,.35)'; g.beginPath(); g.ellipse(w / 2, h - 4, 17, 4.6, 0, 0, 7); g.fill();
-    for (let k = 0; k < 16; k++) { g.fillStyle = k % 3 ? 'rgba(235,222,190,.9)' : 'rgba(110,90,58,.7)'; g.beginPath(); g.ellipse(6 + R() * (w - 12), h - 3 - R() * 5, .9 + R() * 1.1, .6 + R() * .7, R() * 3, 0, 7); g.fill(); }
-    for (const [x, y, rx, ry, c0, c1] of [[10, h - 3, 4.6, 3.2, '#bdb8ad', '#8d887c'], [27, h - 3.5, 5.4, 3.8, '#c9c5bb', '#97917f'], [19, h - 2.2, 3.2, 2.2, '#d3cfc6', '#a29c90'], [33, h - 2.4, 3, 2, '#b4afa4', '#868072']]) {
-      const lg = g.createLinearGradient(x - rx, y - ry, x + rx, y + ry); lg.addColorStop(0, c0); lg.addColorStop(1, c1);
-      g.fillStyle = 'rgba(30,25,15,.3)'; g.beginPath(); g.ellipse(x + 1, y + 1, rx, ry * .8, 0, 0, 7); g.fill();
-      g.fillStyle = lg; g.beginPath(); g.ellipse(x, y - ry * .3, rx, ry, 0, 0, 7); g.fill();
-      g.fillStyle = 'rgba(255,255,255,.35)'; g.beginPath(); g.ellipse(x - rx * .25, y - ry * .7, rx * .45, ry * .3, 0, 0, 7); g.fill();
-    }
-    g.strokeStyle = '#4f8e33'; g.lineWidth = .9; for (const x of [3, 37, 22]) { for (let k = -1; k <= 1; k++) { g.beginPath(); g.moveTo(x + k, h - 1.5); g.lineTo(x + k * 1.6, h - 5.5); g.stroke(); } }
-  });
-  /* Stone keep: coursed masonry, a shaded right side, battlements with depth, slits, a gate, a flag. */
-  sprite('tower', 38, 60, (g) => {
-    shadow(g, 19, 58.2, 16, 2.6, .32);
-    poly(g, [[6, 58.5], [7.5, 54], [30.5, 54], [32, 58.5]], '#8d8676', OUT);                                    // plinth
-    poly(g, [[8, 54.5], [8, 17], [30, 17], [30, 54.5]], lin(g, 8, 0, 30, 0, [[0, '#d5ccb8'], [.55, '#b9b09c'], [.62, '#9a917f'], [1, '#7f7767']]), OUT);
-    g.save(); g.beginPath(); g.rect(8, 17, 22, 37.5); g.clip();
-    g.strokeStyle = 'rgba(60,50,40,.35)'; g.lineWidth = .5;
-    for (let y = 20, k = 0; y < 55; y += 3.2, k++) { g.beginPath(); g.moveTo(8, y); g.lineTo(30, y); g.stroke(); for (let x = 8 + (k % 2) * 2.6; x < 30; x += 5.2) { g.beginPath(); g.moveTo(x, y); g.lineTo(x, y + 3.2); g.stroke(); } }
-    g.fillStyle = 'rgba(80,120,50,.35)'; for (let i = 0; i < 6; i++) { g.beginPath(); g.ellipse(9 + i * 1.6, 54 - (i % 3) * 2, 1.6, 2.6, 0, 0, 7); g.fill(); }  // moss
-    g.restore();
-    // battlements: merlons with a lit top face
-    poly(g, [[6.5, 17.5], [6.5, 14.5], [31.5, 14.5], [31.5, 17.5]], '#a49b88', OUT);
-    for (let x = 6.5; x < 31; x += 5) { poly(g, [[x, 14.6], [x, 9.5], [x + 3.4, 9.5], [x + 3.4, 14.6]], lin(g, x, 0, x + 3.4, 0, [[0, '#d8cfbc'], [1, '#9c937f']]), OUT); g.fillStyle = '#eee6d4'; g.fillRect(x, 9.5, 3.4, .9); }
-    // arrow slits and a lit window
-    [[13, 23], [24, 23], [13, 34]].forEach(([x, y]) => { g.fillStyle = '#231b16'; g.fillRect(x, y, 1.6, 5); g.fillRect(x - .9, y + 1.8, 3.4, 1.2); });
-    g.fillStyle = '#231b16'; g.beginPath(); g.moveTo(21.5, 38); g.lineTo(21.5, 34.5); g.arc(23.2, 34.5, 1.7, Math.PI, 0); g.lineTo(24.9, 38); g.fill();
-    g.fillStyle = '#ffd877'; g.beginPath(); g.moveTo(22, 37.6); g.lineTo(22, 34.6); g.arc(23.2, 34.6, 1.2, Math.PI, 0); g.lineTo(24.4, 37.6); g.fill();
-    // gate: stone arch, planks, iron bands
-    g.fillStyle = '#8a8270'; g.beginPath(); g.moveTo(12.5, 54.5); g.lineTo(12.5, 46); g.arc(18.5, 46, 6, Math.PI, 0); g.lineTo(24.5, 54.5); g.fill();
-    g.fillStyle = lin(g, 13.5, 0, 23.5, 0, [[0, '#6a4426'], [1, '#43291a']]); g.beginPath(); g.moveTo(13.6, 54.5); g.lineTo(13.6, 46.4); g.arc(18.5, 46.4, 4.9, Math.PI, 0); g.lineTo(23.4, 54.5); g.fill();
-    g.strokeStyle = 'rgba(0,0,0,.35)'; g.lineWidth = .4; for (let x = 15.2; x < 23; x += 1.6) { g.beginPath(); g.moveTo(x, 54.5); g.lineTo(x, 43); g.stroke(); }
-    g.fillStyle = '#2b2b2e'; g.fillRect(13.6, 47.5, 9.8, .8); g.fillRect(13.6, 51.5, 9.8, .8); g.fillStyle = '#c9a24a'; g.beginPath(); g.arc(20.8, 50.2, .55, 0, 7); g.fill();
-    // flag on a pole
-    g.strokeStyle = '#3a2c20'; g.lineWidth = 1; g.beginPath(); g.moveTo(19, 10); g.lineTo(19, .6); g.stroke();
-    g.fillStyle = '#e04a3a'; g.beginPath(); g.moveTo(19.4, 1); g.quadraticCurveTo(24, -.2, 30, 2.6); g.quadraticCurveTo(25, 4.6, 19.4, 6.4); g.closePath(); g.fill();
-    g.fillStyle = 'rgba(0,0,0,.2)'; g.beginPath(); g.moveTo(24, 1.4); g.quadraticCurveTo(27, 2.4, 30, 2.6); g.quadraticCurveTo(27, 3.8, 24, 5); g.closePath(); g.fill();
-    g.fillStyle = '#f6d36a'; g.beginPath(); g.arc(23, 3.7, .9, 0, 7); g.fill();
-  });
-  const meeple = (fill, stroke) => (g, w, h) => {
-    const p = new Path2D(MEEPLE_D); g.save(); g.translate(1, 1); g.scale((w - 2) / 100, (h - 2) / 110);
-    g.fillStyle = fill; g.fill(p); g.save(); g.clip(p);
-    g.fillStyle = 'rgba(255,255,255,.3)'; g.beginPath(); g.ellipse(36, 32, 20, 40, -.3, 0, 7); g.fill();
-    g.fillStyle = 'rgba(0,0,0,.18)'; g.fillRect(0, 84, 100, 30); g.restore();
-    g.lineWidth = 6; g.strokeStyle = stroke; g.stroke(p); g.restore();
-  };
-  PL0.forEach((p, i) => sprite('m' + i, 20, 22, meeple(p.col, 'rgba(0,0,0,.4)')));
-  sprite('mg', 20, 22, meeple('rgba(255,255,255,.7)', '#f2b84b'));
-}
-const TILE_URL = {};
-function injectArt() {
-  drawSprites();
-  let css = '';
-  for (const id in TYPES) { TILE_URL[id] = drawTile(id); css += `.t-${id}{background-image:url(${TILE_URL[id]})}`; }
-  for (const k in SPR) css += `.s-${k}{background-image:url(${SPR[k].url})}`;
-  const st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
-}
-
+// Tile and sprite art live in src/render/art.js.
+const {cv, SPR, sprite, TILE_URL, injectArt} = PG.render.createArt({S, V, PL0, MEEPLE_D});
 /* ---------------- rules ---------------- */
 let tiles = new Map(), deck = [], meeples = [], players = [], turn = 0, phase = 'idle', current = null, sel = null;
 let ghost = null, ghostDeg = 0, trayDeg = 0, slotEls = [], token = 0, gameVisible = true, pendingStart = false;
-const key = (x, y) => x + ',' + y;
+// Board rules live in src/engine/board.js; these wrappers pass it the current game state.
+const B = PG.engine.board, key = B.key, edgeAt = B.edgeAt, groupsOf = B.groupsOf, gid = B.gid;
 const at = (x, y) => tiles.get(key(x, y));
-const edgeAt = (t, d) => TYPES[t.type].e[(d - t.r + 4) % 4];
-function fits(type, r, x, y) {
-  if (at(x, y)) return false;
-  let n = 0;
-  for (let d = 0; d < 4; d++) { const nb = at(x + DX[d], y + DY[d]); if (!nb) continue; n++; if (normEdge(edgeAt(nb, (d + 2) % 4)) !== normEdge(TYPES[type].e[(d - r + 4) % 4])) return false; }
-  return n > 0;
-}
-function emptyCells() { const m = new Map(); for (const t of tiles.values()) for (let d = 0; d < 4; d++) { const x = t.x + DX[d], y = t.y + DY[d]; if (!at(x, y)) m.set(key(x, y), {x, y}); } return [...m.values()]; }
-const legalRots = (type, x, y) => [0,1,2,3].filter(r => fits(type, r, x, y));
-function allMoves(type) { const out = []; for (const c of emptyCells()) for (const r of legalRots(type, c.x, c.y)) out.push({x: c.x, y: c.y, r}); return out; }
-function groupsOf(t) {
-  const by = {c: [], r: []};
-  for (let d = 0; d < 4; d++) { const k = edgeAt(t, d); if (by[k === 'b' ? 'r' : k]) by[k === 'b' ? 'r' : k].push(d); }
-  const gs = [];
-  if (by.c.length) gs.push({kind: 'c', edges: by.c});
-  if (by.r.length === 2) gs.push({kind: 'r', edges: by.r}); else by.r.forEach(d => gs.push({kind: 'r', edges: [d]}));
-  if (TYPES[t.type].fort) gs.push({kind: 'f', edges: []});
-  return gs;
-}
-const gid = (t, g) => key(t.x, t.y) + '|' + g.kind + g.edges.join('');
-function fortComp(t) {
-  const ts = [];
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); if (n) ts.push(n); }
-  const id = key(t.x, t.y) + '|f';
-  return {kind: 'f', tiles: ts, complete: ts.length === 9, ids: new Set([id]), meeples: meeples.filter(m => m.gid === id)};
-}
-function component(t, g) {
-  if (g.kind === 'f') return fortComp(t);
-  const ids = new Set(), ts = new Set(), st = [[t, g]];
-  let open = false;
-  while (st.length) {
-    const [a, ag] = st.pop(), id = gid(a, ag);
-    if (ids.has(id)) continue;
-    ids.add(id); ts.add(a);
-    for (const d of ag.edges) {
-      const nb = at(a.x + DX[d], a.y + DY[d]);
-      if (!nb) { open = true; continue; }
-      const ng = groupsOf(nb).find(q => q.kind === ag.kind && q.edges.includes((d + 2) % 4));
-      if (ng) st.push([nb, ng]);
-    }
-  }
-  return {kind: g.kind, tiles: [...ts], complete: !open, ids, meeples: meeples.filter(m => ids.has(m.gid))};
-}
+const fits = (type, r, x, y) => B.fits(tiles, type, r, x, y);
+const emptyCells = () => B.emptyCells(tiles);
+const legalRots = (type, x, y) => B.legalRots(tiles, type, x, y);
+const allMoves = type => B.allMoves(tiles, type);
+const hasPlacement = type => B.hasPlacement(tiles, type);
+const fortComp = t => B.fortComp(tiles, meeples, t);
+const component = (t, g) => B.component(tiles, meeples, t, g);
 function groupPos(t, g) {
   if (g.kind === 'f') return [0.24, 0.18];
   if (g.kind === 'c') {
@@ -1499,8 +982,8 @@ function groupPos(t, g) {
   if (g.edges.length === 2) { const b = V[g.edges[1]]; return [(a[0]*.4225 + b[0]*.1225) * .5, (a[1]*.4225 + b[1]*.1225) * .5]; }
   return [a[0] * .3, a[1] * .3];
 }
-const claimable = t => groupsOf(t).filter(g => { const c = component(t, g); return c.meeples.length === 0 && !c.complete; });
-const claimableAll = () => { const r = []; for (const t of tiles.values()) for (const g of claimable(t)) r.push({t, g}); return r; };
+const claimable = t => B.claimable(tiles, meeples, t);
+const claimableAll = () => B.claimableAll(tiles, meeples);
 const label = g => g.kind === 'r' && g.edges.length === 1 ? 'Дорога ' + ARROW[g.edges[0]] : KIND[g.kind];
 
 /* ---------------- dom: world ---------------- */
@@ -1954,7 +1437,7 @@ async function dropAt(t) {
   ghost.remove(); ghost = null; lastPlaced = t;
   t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
-  const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600);
+  if (!fast()) { const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600); }
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
@@ -2055,41 +1538,18 @@ async function afterPlace(t, p, forced) {
 }
 // Objects this move completed with no figures on them and built only by this player: a free figure
 // may still be put on them, and then they score for that player at once.
-function doneMine(t, p) {
-  const out = [], seen = new Set();
-  const consider = (tt, g) => {
-    if (seen.has(gid(tt, g))) return;
-    const c = component(tt, g); c.ids.forEach(i => seen.add(i));
-    if (c.complete && !c.meeples.length && c.tiles.every(x => x.by === p)) out.push({t: tt, g, c});
-  };
-  groupsOf(t).forEach(g => g.kind !== 'f' && consider(t, g));
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); const g = n && TYPES[n.type].fort && groupsOf(n).find(x => x.kind === 'f'); if (g) consider(n, g); }
-  return out;
-}
+// Scoring rules live in src/engine/scoring.js.
+const SC = PG.engine.scoring;
+const doneMine = (t, p) => SC.doneMine(tiles, meeples, t, p);
+const roadPoints = c => SC.roadPoints(tiles, c);
 async function scoreAfter(t, p, skip) {
-  const evs = [], seen = new Set();
-  const consider = (tt, g) => { if (seen.has(gid(tt, g))) return; const c = component(tt, g); c.ids.forEach(i => seen.add(i)); if (c.complete) evs.push(c); };
-  groupsOf(t).forEach(g => g.kind !== 'f' && consider(t, g));
-  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const n = at(t.x + dx, t.y + dy); if (n && TYPES[n.type].fort) consider(n, {kind: 'f', edges: []}); }
-  for (const c of evs) if (!skip || ![...c.ids].some(i => skip.has(i))) await resolveFeature(c, false, p);
-}
-// A road with a whole big bridge on it (two halves joined bridge to bridge): every other piece of
-// the road counts double, each bridge half 1. Otherwise 1 per piece.
-function roadPoints(c) {
-  const halves = c.tiles.filter(t => TYPES[t.type].bridge);
-  const whole = halves.some(t => { const d = [0, 1, 2, 3].find(k => edgeAt(t, k) === 'b'), n = at(t.x + DX[d], t.y + DY[d]); return n && edgeAt(n, (d + 2) % 4) === 'b'; });
-  return whole ? (c.tiles.length - halves.length) * 2 + halves.length : c.tiles.length;
+  for (const c of SC.completedAround(tiles, meeples, t)) if (!skip || ![...c.ids].some(i => skip.has(i))) await resolveFeature(c, false, p);
 }
 async function resolveFeature(c, final, placer) {
-  const pts = c.kind === 'c' ? c.tiles.length * (final ? 1 : 2) : c.kind === 'f' ? (final ? c.tiles.length : 9) : roadPoints(c);
+  const {win, each, helped} = SC.settle(tiles, c, final, players.length, gameRules.tie, placer);
   c.tiles.forEach(x => x.el.classList.add('glow'));
   setTimeout(() => c.tiles.forEach(x => x.el.classList.remove('glow')), 1100);
-  const cnt = players.map(() => 0); c.meeples.forEach(m => cnt[m.p]++);
-  const mx = Math.max(...cnt);
-  if (!mx) { toast(`${KIND[c.kind]} ${{c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind]} · фишек нет, очков нет`); await wait(600); return; }
-  const win = cnt.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
-  // Several leaders with the same number of figures: everyone gets the points, or they split them.
-  const each = win.length > 1 && gameRules.tie === 'split' ? Math.floor(pts / win.length) : pts;
+  if (!win.length) { toast(`${KIND[c.kind]} ${{c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind]} · фишек нет, очков нет`); await wait(600); return; }
   win.forEach(i => { const m = c.meeples.find(x => x.p === i); floatText(m.t, groupPos(m.t, m.g), '+' + each, players[i].col); });
   win.forEach(i => { players[i].score += each; players[i].stats[c.kind] += each; });
   if (!final) markDone(c, win.map(i => players[i].col));
@@ -2097,7 +1557,6 @@ async function resolveFeature(c, final, placer) {
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
   // Whoever finishes an object for somebody else gets 1 point of respect.
-  const helped = !final && placer != null && !win.includes(placer);
   if (helped) {
     players[placer].score += 1;
     const ht = c.tiles.find(x => x.by === placer) || c.tiles[0];
@@ -2124,7 +1583,8 @@ function focusLast() {
 function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer();
-  while (deck.length) { const ty = deck.pop(); if (allMoves(ty).length) { current = {type: ty, r: 0}; break; } toast('Карту некуда положить — она уходит в сброс'); }
+  // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
+  while (deck.length) { const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; } }
   renderDeck();
   if (!current) return endGame();
   renderTray(); drawFx(); renderPlayers(); turnTok++;
@@ -2201,37 +1661,9 @@ function handOver() {
   over.hidden = false;
   $('#go').onclick = () => { over.hidden = true; beginHumanTurn(); };
 }
-// Bots like spots with many neighbours, with some randomness.
-function botPick(type) {
-  let best = null, bs = -1e9;
-  for (const m of allMoves(type)) { let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++; const s = n * 1.5 + Math.random() * 2.5; if (s > bs) { bs = s; best = m; } }
-  return best;
-}
-// When a player's clock runs out the card is put down for them: next to their own unfinished objects first
-// (finishing one is best), never to the benefit of an opponent who leads an object, otherwise just somewhere compact.
-function helperPick(type, p) {
-  let best = null, bs = -1e9;
-  for (const m of allMoves(type)) {
-    const t = {x: m.x, y: m.y, type, r: m.r, seed: 1};
-    tiles.set(key(t.x, t.y), t);
-    let s = Math.random() * .6;
-    for (const g of groupsOf(t)) {
-      if (g.kind === 'f') continue;
-      const c = component(t, g);
-      if (!c.meeples.length) continue;
-      const cnt = players.map(() => 0); c.meeples.forEach(x => cnt[x.p]++);
-      const mx = Math.max(...cnt), shared = cnt.filter(n => n === mx).length > 1;
-      const worth = c.complete ? (c.kind === 'c' ? c.tiles.length * 2 : roadPoints(c)) : c.tiles.length * .8;
-      if (cnt[p] === mx) s += 6 + worth * (shared ? .5 : 1.5) + (c.complete ? 8 : 0);
-      else s -= 5 + worth * 1.2 + (c.complete ? 8 : 0);
-    }
-    let n = 0; for (let d = 0; d < 4; d++) if (at(m.x + DX[d], m.y + DY[d])) n++;
-    tiles.delete(key(t.x, t.y));
-    s += n * .15;
-    if (s > bs) { bs = s; best = m; }
-  }
-  return best || botPick(type);
-}
+// Bot choices live in src/engine/bots.js.
+const botPick = type => PG.engine.bots.botPick(tiles, type, Math.random);
+const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
   setStatus(`Ходит <b>${players[p].name}</b>…`);
@@ -2250,13 +1682,16 @@ async function aiTurn() {
 async function endGame(reason) {
   if (net) try { localStorage.removeItem('lastGame'); } catch (_) {}
   setTimeout(() => tutEvent('end'), 1800);
-  if (phase === 'end') return;
+  if (phase === 'end' || ending) return;
+  ending = true;
+  markGameFinished(gameKey()); if (!net) clearSave(); historySave(reason, false);
   if (reason) { token++; turnTok++; stopTimer(); if (ghost) { ghost.remove(); ghost = null; } if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; } }
   const my = token;
   phase = 'end'; clearSlots(); renderPlayers(); okBtn.disabled = rotBtn.disabled = true; renderTray();
   if (!reason) {
     setStatus('Стопка закончилась — досчитываем недостроенное');
     await wait(500);
+    if (my !== token) return;
     const seen = new Set();
     for (const m of [...meeples]) {
       if (my !== token) return;
@@ -2265,6 +1700,7 @@ async function endGame(reason) {
       await resolveFeature(c, true);
     }
   }
+  if (my !== token) return;
   if (!net) clearSave();
   const gold = payout(reason);
   if (!tut) try { const me = players.findIndex(isMe), ord = ranked(); track('game_end', {mode: net ? (net.quick ? 'online' : 'friends') : humanCount() > 1 ? 'local' : 'bots', players: players.length, place: me >= 0 ? ord.findIndex(x => x.i === me) + 1 : 0, score: me >= 0 ? players[me].score : 0, rules: gameRules.mode || 'classic', reason: reason || 'deck', length: gameLog ? gameLog.moves.length : 0}); } catch (_) {}
@@ -2282,6 +1718,7 @@ async function endGame(reason) {
   const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
   over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}<button class="cta wide" data-go="results">Подробные итоги</button><button class="ghostbtn" id="again2">Новая партия</button></div>`;
   over.hidden = false;
+  historySave(reason, true);
   $('#again2').onclick = () => net ? show('lobby') : newGame();
   setStatus('Партия окончена');
 }
@@ -2310,16 +1747,6 @@ function buildBoard() {
   for (let i = deck.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [deck[i], deck[j]] = [deck[j], deck[i]]; }
   return R;
 }
-function deckList(rules) {
-  const d = [], k = rules.mode === 'epic' ? 2 : 1;
-  for (const id in TYPES) {
-    const t = TYPES[id];
-    if (!rules.rivers && t.e.includes('w')) continue;
-    if (rules.mode === 'fast' && t.rare) continue;
-    for (let i = 0; i < t.n * (t.rare ? 1 : k); i++) d.push(id);
-  }
-  return d;
-}
 function makeDeck(rules) {
   const d = deckList(rules);
   for (let i = d.length - 1; i > 0; i--) { const j = (Math.random() * (i + 1)) | 0; [d[i], d[j]] = [d[j], d[i]]; }
@@ -2344,11 +1771,13 @@ function newGame() {
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
 function startGame(cfg, replay = []) {
+  if (!cfg.online) cfg = {...cfg, localId: cfg.localId || (window.crypto && crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2))};
+  ending = false;
   token++; turnTok++; stopTimer(); closeGameMenu(); clearInterval(watchId);
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
   $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
-  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = false; lastPlaced = null; markOwn();
+  queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = replay.length > 0; lastPlaced = null; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
   // The menu shows a small built-up kingdom; the game itself starts from an empty table.
@@ -2369,9 +1798,11 @@ function startGame(cfg, replay = []) {
   // First card from the top of the stack goes in the middle of the table.
   const first = {x: 0, y: 0, type: deck.pop(), r: 0, seed: cfg.seed};
   tiles = new Map([[key(0, 0), first]]);
-  first.el = tileEl(first, true, .05); world.append(first.el); refreshRoadEnds();
+  first.el = tileEl(first, true, fast() ? null : .05); world.append(first.el); refreshRoadEnds();
   $('#over').hidden = true;
-  Object.assign(cam, {px: 0, py: 0, z: 1.05, tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
+  // The first card's neighbours sit about 136 px per unit of zoom from the centre; keep them clear of the zoom buttons
+  // on the right edge (48 px) on narrow phones, never above the usual 1.05.
+  Object.assign(cam, {px: 0, py: 0, z: Math.max(.7, Math.min(1.05, (document.documentElement.clientWidth / 2 - 54) / 136)), tilt: wallet.view === 'top' ? 22 : 55}); applyCam();
   $('#view').textContent = wallet.view === 'top' ? '2D' : '3D';
   renderPlayers(); renderResults(false);
   if (replay.length || cfg.noIntro) { toast(`Первая карта из стопки: ${TYPES[first.type].name}`); return startTurn(); }
@@ -2455,26 +1886,20 @@ function renderResults(final, gold) {
 
 /* ---------------- gold, figures, shop ----------------
    Gold lives on this phone only (no accounts yet) and is never sold for money. */
-const FIGS = {
-  classic: {name: 'Классика', price: 0},
-  peasant: {name: 'Крестьянин', price: 150},
-  monk: {name: 'Монах', price: 300},
-  knight: {name: 'Рыцарь', price: 600},
-  archer: {name: 'Лучник', price: 900},
-  king: {name: 'Король', price: 1500},
-  queen: {name: 'Королева', price: 2500},
-};
+// The shop catalogue lives in src/state/catalog.js.
+const {FIGS, LOCS, CHEST_SVG} = PG.state.catalog;
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
 const today = () => new Date().toISOString().slice(0, 10);
-const wallet = (() => {
-  let w = null; try { w = JSON.parse(localStorage.getItem('wallet')); } catch (_) {}
-  const v = Object.assign({gold: 100, owned: ['classic'], fig: 'classic', daily: '', dailyBox: '', paid: [], sound: true, color: '#ef5350'}, w);
-  v.boosts = Object.assign({double: 0, meeple: 0}, v.boosts);
-  return v;
-})();
+// The wallet's storage lives in src/state/wallet.js.
+// A checksum mismatch is reported, never punished (see walletSig): the gold stays.
+const wallet = PG.state.loadWallet(localStorage, validCol, PALETTE[0].col, info => track('wallet_sig_mismatch', info));
 // Analytics (Firebase Analytics in the Android app; elsewhere a no-op). Params: flat strings / numbers.
 function track(name, params) { try { if (window.AndroidApp && AndroidApp.logEvent) AndroidApp.logEvent(name, JSON.stringify(params || {})); } catch (_) {} }
-function saveWallet() { try { localStorage.setItem('wallet', JSON.stringify(wallet)); } catch (_) {} document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold); if (typeof cloudSaveSoon === 'function') cloudSaveSoon(); }
+function saveWallet() {
+  PG.state.storeWallet(localStorage, wallet);
+  document.querySelectorAll('.goldN').forEach(e => e.textContent = wallet.gold);
+  if (typeof cloudSaveSoon === 'function') cloudSaveSoon();
+}
 // Daily gift in the shop: a chest once a day with gold, a one-game boost or, rarely, a figure.
 const giftReady = () => wallet.dailyBox !== today();
 function dailyBonus() {
@@ -2500,7 +1925,6 @@ function openGift() {
 /* Daily streak: the first visit of each day pays gold that grows day by day for a week
    (10 → 100), then the week starts again. Missing a day starts the streak over. Days are
    the phone's local calendar days. */
-const STREAK_GOLD = [10, 15, 20, 25, 35, 50, 100];
 const localDay = (shift = 0) => { const d = new Date(Date.now() + shift * 864e5); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 function streakState() {
   const st = wallet.streak || {n: 0, last: ''};
@@ -2525,7 +1949,6 @@ function streakCheck() {
     box.remove(); toastAny(day === 6 ? `Неделя подряд! +${gold} золота 🎉` : `+${gold} золота. Завтра — ${STREAK_GOLD[(day + 1) % 7]}`);
   };
 }
-const CHEST_SVG = '<svg viewBox="0 0 64 56" width="72" height="63" aria-hidden="true"><rect x="6" y="22" width="52" height="30" rx="4" fill="#9a5b2c"/><rect x="6" y="22" width="52" height="7" fill="#7b4521"/><path d="M6 22 Q32 0 58 22 Z" fill="#b36a32"/><rect x="28" y="14" width="8" height="38" fill="#f2b84b"/><rect x="26" y="26" width="12" height="10" rx="2" fill="#ffd36b" stroke="#8a5a12" stroke-width="1.5"/><rect x="6" y="38" width="52" height="3" fill="#f2b84b"/></svg>';
 // Gold by place: 1st +15, 2nd +10, 3rd +5, 4th 0, 5th −5 (ties share the higher place).
 // Paid for games against bots and online games; several people on one phone get none,
 // since one person could play every seat. A "double gold" gift doubles the next win.
@@ -2601,14 +2024,53 @@ function paintFigures() {
 const meepleImg = i => SPR['m' + i] ? `<img src="${SPR['m' + i].url}" alt="">` : meepleSvg(players[i].col);
 const figPreview = (() => { const cache = {}; return fig => cache[fig] || (cache[fig] = (() => { const [c, g] = cv(40, 52, 3); drawFigure(g, 40, 52, '#ef5350', fig); return c.toDataURL(); })()); })();
 
-const LOCS = [
-  {name: 'Деревня', desc: 'Дороги, города, реки и крепости', open: true, art: '<rect width="160" height="90" fill="#7cb85a"/><path d="M0 60Q40 40 80 58T160 52V90H0z" fill="#5f9e40"/><path d="M0 70L160 64" stroke="#e2c690" stroke-width="7"/><path d="M110 0Q100 40 120 90" stroke="#3b88cf" stroke-width="9" fill="none"/><g fill="#c1452f"><path d="M28 40l10-10 10 10z"/><path d="M50 44l9-9 9 9z"/></g><g fill="#eadcbc"><rect x="30" y="40" width="16" height="10"/><rect x="52" y="44" width="14" height="9"/></g><path d="M130 30h12v24h-12z" fill="#b7ae9b"/><path d="M136 18l8 4-8 4z" fill="#e04a3a"/>'},
-  {name: 'Мегаполис', desc: 'Проспекты, кварталы, метро и небоскрёбы', art: '<rect width="160" height="90" fill="#1d2550"/><circle cx="130" cy="18" r="8" fill="#f4e7b0"/><g fill="#2f3a72"><rect x="8" y="40" width="22" height="50"/><rect x="34" y="22" width="18" height="68"/><rect x="56" y="48" width="24" height="42"/><rect x="84" y="12" width="20" height="78"/><rect x="108" y="34" width="22" height="56"/><rect x="134" y="52" width="20" height="38"/></g><g fill="#ffd36b"><rect x="38" y="30" width="4" height="4"/><rect x="45" y="40" width="4" height="4"/><rect x="88" y="22" width="4" height="4"/><rect x="96" y="36" width="4" height="4"/><rect x="88" y="50" width="4" height="4"/><rect x="12" y="50" width="4" height="4"/><rect x="114" y="44" width="4" height="4"/><rect x="62" y="58" width="4" height="4"/></g>'},
-  {name: 'Сибирь', desc: 'Зимники, остроги и замёрзшие реки', art: '<rect width="160" height="90" fill="#a9c7e8"/><path d="M0 60L40 22L70 52L100 18L160 64V90H0z" fill="#e8f1fb"/><path d="M40 22L52 34L44 34L36 30zM100 18L114 32L104 30z" fill="#fff"/><g fill="#2d5a46"><path d="M20 78l8-22 8 22z"/><path d="M120 80l9-26 9 26z"/><path d="M140 84l7-18 7 18z"/></g><path d="M0 82h160v8H0z" fill="#fff"/><g fill="#fff"><circle cx="70" cy="10" r="1.6"/><circle cx="20" cy="16" r="1.4"/><circle cx="140" cy="10" r="1.6"/><circle cx="90" cy="40" r="1.2"/></g>'},
-  {name: 'Джунгли', desc: 'Тропы, руины, реки и пирамиды', art: '<rect width="160" height="90" fill="#1f5a3a"/><path d="M60 90L80 40L100 90z" fill="#8f8a6a"/><path d="M66 74h28M70 64h20M74 54h12" stroke="#6d684e" stroke-width="3"/><g fill="#2e8a4e"><ellipse cx="18" cy="30" rx="30" ry="12" transform="rotate(-25 18 30)"/><ellipse cx="146" cy="24" rx="32" ry="12" transform="rotate(25 146 24)"/><ellipse cx="20" cy="80" rx="30" ry="10" transform="rotate(20 20 80)"/><ellipse cx="140" cy="78" rx="30" ry="10" transform="rotate(-20 140 78)"/></g><path d="M0 0Q30 40 10 90" stroke="#3a9e5a" stroke-width="3" fill="none"/>'},
-];
+async function redeemPromo(code) {
+  code = (code || '').trim().toUpperCase();
+  if (!code) return toastAny('Введите промокод');
+  wallet.promos = wallet.promos || [];
+  if (wallet.promos.includes(code)) return toastAny('Промокод уже был использован');
+
+  const BUILTIN_PROMOS = {
+    'TESTER2026': 500,
+    'OPUS55': 300,
+    'PUZZLESTART': 200
+  };
+
+  let reward = BUILTIN_PROMOS[code] || 0, offline = false;
+  if (!reward && typeof FB !== 'undefined' && FB && FB.dbUrl) {
+    offline = true;
+    try {
+      const r = await fetch(`${FB.dbUrl}/promo_codes/${encodeURIComponent(code)}.json?auth=${await fbToken()}`); // rules: signed-in read
+      if (r.ok) {
+        offline = false;
+        const data = await r.json();
+        if (data && data.active && data.gold) reward = +data.gold;
+      }
+    } catch (_) {}
+  }
+
+  if (reward > 0) {
+    wallet.gold = (wallet.gold || 0) + reward;
+    wallet.promos.push(code);
+    saveWallet();
+    toastAny(`🎉 Промокод активирован! +${reward} золота`);
+    renderShop();
+    const inp = $('#promoInput'); if (inp) inp.value = '';
+  } else {
+    toastAny(offline ? 'Не удалось проверить промокод — нужен интернет' : 'Неверный или неактивный промокод');
+  }
+}
 function renderShop() {
   saveWallet();
+  const promoBtn = $('#promoApplyBtn');
+  if (promoBtn) promoBtn.onclick = () => {
+    const inp = $('#promoInput');
+    redeemPromo(inp ? inp.value : '');
+  };
+  const promoInp = $('#promoInput');
+  if (promoInp) promoInp.onkeydown = (e) => {
+    if (e.key === 'Enter') redeemPromo(promoInp.value);
+  };
   const b = wallet.boosts, inv = [b.double ? `Двойное золото ×${b.double}` : '', b.meeple ? `+1 фигурка ×${b.meeple}` : ''].filter(Boolean).join(' · ');
   $('#gift').innerHTML = `<div class="chest${giftReady() ? ' ready' : ''}">${CHEST_SVG}</div><div class="gi"><b>Ежедневный подарок</b><small>${giftReady() ? 'Золото, бонус на партию или фигурка' : 'Следующий подарок — завтра'}${inv ? '<br>У вас: ' + inv : ''}</small></div>${giftReady() ? '<button class="cta" id="openGift">Открыть</button>' : ''}`;
   if (giftReady()) $('#openGift').onclick = openGift;
@@ -2647,9 +2109,35 @@ function confirmBuy(k) {
 }
 
 /* ---------------- saved game (offline) ---------------- */
-function saveGame() { try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {} }
+const FINISHED_GAMES_KEY = 'finishedGames', GAME_HISTORY_KEY = 'gameHistory';
+function gameKey(cfg = gameLog && gameLog.cfg) { return !cfg ? '' : cfg.online ? 'o:' + cfg.online : cfg.localId ? 'l:' + cfg.localId : ''; }
+function jsonRead(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; } catch (_) { return fallback; } }
+function finishedGames() { const a = jsonRead(FINISHED_GAMES_KEY, []); return Array.isArray(a) ? a.filter(x => typeof x === 'string' || (x && typeof x.k === 'string')) : []; }
+function gameFinished(key) { return !!key && finishedGames().some(x => (typeof x === 'string' ? x : x.k) === key); }
+function markGameFinished(key) {
+  if (!key) return;
+  try { const a = finishedGames().filter(x => (typeof x === 'string' ? x : x.k) !== key); a.unshift({k:key,at:Date.now()}); localStorage.setItem(FINISHED_GAMES_KEY, JSON.stringify(a.slice(0, 200))); } catch (_) {}
+}
+function historySave(reason, final) {
+  const id = gameKey(); if (!id) return;
+  const row = {id,at:Date.now(),reason:reason || 'deck',final:!!final,players:players.map(p => ({name:p.name,score:p.score,col:p.col,me:isMe(p)}))};
+  try { const data = jsonRead(GAME_HISTORY_KEY, []), old = Array.isArray(data) ? data.filter(x => x && typeof x.id === 'string') : []; localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify([row, ...old.filter(x => x.id !== id)].slice(0, 50))); } catch (_) {}
+}
+function saveGame() {
+  if (!gameLog || net || tut || phase === 'end' || gameFinished(gameKey())) return;
+  try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {}
+}
 function clearSave() { try { localStorage.removeItem('savedGame'); } catch (_) {} renderResume(); }
-function loadSave() { try { return JSON.parse(localStorage.getItem('savedGame')); } catch (_) { return null; } }
+function loadSave() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('savedGame'));
+    if (!saved) return null;
+    if (!saved.cfg || !Array.isArray(saved.cfg.seats) || saved.cfg.seats.length < 2 || !Array.isArray(saved.cfg.deck) || !Array.isArray(saved.moves) || gameFinished(gameKey(saved.cfg))) {
+      localStorage.removeItem('savedGame'); return null;
+    }
+    return saved;
+  } catch (_) { return null; }
+}
 // An online game this phone took part in during the last 3 hours, if it may still be going.
 function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
 function renderResume() {
@@ -2689,119 +2177,20 @@ function afkKick() {
 document.addEventListener('visibilitychange', () => {
   clearTimeout(afkTimer);
   if (document.hidden) { hiddenAt = Date.now(); afkTimer = setTimeout(afkKick, AFK_MS); return; }
-  if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
+  // Only a finished game left on screen goes home: the lobby, results or friends screens stay where the player was.
+  if (phase === 'end' && !mm && gameVisible) { closeGameMenu(); show('menu'); }
+  else if (hiddenAt && Date.now() - hiddenAt >= AFK_MS) afkKick();
   hiddenAt = 0;
 });
 
 /* ---------------- sound ---------------- */
-let actx = null;
-/* Sound effects and music are synthesised with Web Audio: no audio files, nothing to load.
-   Effects go through sfxOut, music through musicOut; each has its own switch in Settings. */
-let sfxOut = null, musicOut = null;
-function audio() {
-  if (!actx) {
-    actx = new (window.AudioContext || window.webkitAudioContext)();
-    const comp = actx.createDynamicsCompressor(); comp.connect(actx.destination);
-    sfxOut = actx.createGain(); sfxOut.gain.value = .9; sfxOut.connect(comp);
-    musicOut = actx.createGain(); musicOut.gain.value = 0; musicOut.connect(comp);
-  }
-  if (actx.state === 'suspended' && !document.hidden) actx.resume();
-  return actx;
-}
-function env(g, t, peak, a, d) { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + a + d); }
-function tone(t, f, d, type, peak, out = sfxOut, f2) {
-  const o = actx.createOscillator(), g = actx.createGain();
-  o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
-  env(g, t, peak, .008, d); o.connect(g).connect(out); o.start(t); o.stop(t + d + .05);
-}
-let noiseBuf = null;
-function noise(t, d, freq, peak, out = sfxOut) {
-  if (!noiseBuf) { noiseBuf = actx.createBuffer(1, actx.sampleRate * .5, actx.sampleRate); const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1; }
-  const n = actx.createBufferSource(), f = actx.createBiquadFilter(), g = actx.createGain();
-  n.buffer = noiseBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 1.2;
-  env(g, t, peak, .004, d); n.connect(f).connect(g).connect(out); n.start(t); n.stop(t + d + .05);
-}
-// A plucked string (lute-like): a bright attack that mellows quickly.
-function pluck(t, f, d, peak, out = sfxOut) {
-  const o = actx.createOscillator(), o2 = actx.createOscillator(), lp = actx.createBiquadFilter(), g = actx.createGain();
-  o.type = 'triangle'; o2.type = 'sawtooth'; o.frequency.value = f; o2.frequency.value = f * 1.002;
-  lp.type = 'lowpass'; lp.frequency.setValueAtTime(f * 6, t); lp.frequency.exponentialRampToValueAtTime(f * 1.2, t + d);
-  const g2 = actx.createGain(); g2.gain.value = .25;
-  o.connect(lp); o2.connect(g2).connect(lp); lp.connect(g).connect(out);
-  env(g, t, peak, .005, d); o.start(t); o2.start(t); o.stop(t + d + .05); o2.stop(t + d + .05);
-}
-const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);
-const SFX = {
-  place: t => { tone(t, 180, .16, 'sine', .5, sfxOut, 70); noise(t, .07, 700, .35); },  // wooden knock on the table
-  rotate: t => noise(t, .035, 2600, .12),
-  meeple: t => { tone(t, 440, .09, 'sine', .25, sfxOut, 880); tone(t + .06, 990, .12, 'sine', .15); },
-  score: t => [76, 79, 83].forEach((n, i) => pluck(t + i * .08, NOTE(n), .45, .16)),
-  big: t => { [72, 76, 79, 84].forEach((n, i) => pluck(t + i * .1, NOTE(n), .6, .18)); pluck(t + .42, NOTE(88), 1, .14); },
-  turn: t => { tone(t, NOTE(81), .45, 'sine', .12); tone(t + .1, NOTE(86), .55, 'sine', .09); },
-  coin: t => { tone(t, 1319, .06, 'square', .04); tone(t + .06, 1760, .16, 'square', .04); },
-  tap: t => noise(t, .02, 3200, .06),
-  win: t => { [[72, 0], [76, .14], [79, .28], [84, .42], [79, .62], [84, .76]].forEach(([n, d]) => pluck(t + d, NOTE(n), .7, .18)); tone(t + .76, NOTE(60), 1.4, 'triangle', .1); },
-  lose: t => [[76, 0], [74, .22], [72, .44], [71, .7]].forEach(([n, d]) => pluck(t + d, NOTE(n), .8, .13)),
-};
-function beep(kind) {
-  if (!wallet.sound || !SFX[kind] || fast()) return;
-  try { audio(); SFX[kind](actx.currentTime + .01); } catch (_) {}
-}
-
-/* Background music: a calm medieval tune made up on the fly — a soft drone, a bass on the
-   first beat and a lute picking notes of the D dorian scale over a four-chord loop. */
-const CHORDS = [[50, 57, 62, 65], [48, 55, 60, 64], [46, 53, 58, 62], [48, 55, 60, 67]];
-const SCALE = [62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79];
-let music = {on: false, timer: 0, next: 0, step: 0, note: 4};
+// Synthesised effects and music live in src/audio/sound.js.
 function musicLevel() { return !wallet.music ? 0 : document.hidden ? 0 : gameVisible ? .045 : .075; }
-function musicUpdate() {
-  if (!actx || !musicOut) return;
-  const v = musicLevel();
-  musicOut.gain.cancelScheduledValues(actx.currentTime);
-  musicOut.gain.setTargetAtTime(v, actx.currentTime, .6);
-  if (v && !music.on) musicStart(); else if (!v && music.on) setTimeout(() => { if (!musicLevel()) musicStop(); }, 2500);
-}
-function musicStart() {
-  if (music.on) return;
-  music.on = true; music.next = actx.currentTime + .1;
-  const beat = 60 / 76 / 2; // eighth notes at 76 bpm
-  music.timer = setInterval(() => {
-    while (music.next < actx.currentTime + .6) {
-      const t = music.next, bar = Math.floor(music.step / 8) % CHORDS.length, pos = music.step % 8, ch = CHORDS[bar];
-      if (pos === 0) {
-        tone(t, NOTE(ch[0] - 12), beat * 7, 'triangle', .5, musicOut);
-        ch.slice(1).forEach(n => { const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = NOTE(n); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(.09, t + beat * 2); g.gain.linearRampToValueAtTime(.0001, t + beat * 8); o.connect(g).connect(musicOut); o.start(t); o.stop(t + beat * 8 + .1); });
-      }
-      if (pos === 4) pluck(t, NOTE(ch[1]), beat * 3, .2, musicOut);
-      if (Math.random() < (pos % 2 ? .35 : .7)) {
-        music.note = Math.max(0, Math.min(SCALE.length - 1, music.note + [-2, -1, -1, 0, 1, 1, 2][(Math.random() * 7) | 0]));
-        pluck(t, NOTE(SCALE[music.note]), beat * 2.2, .26, musicOut);
-      }
-      music.next += beat; music.step++;
-    }
-  }, 150);
-}
-function musicStop() { clearInterval(music.timer); music.on = false; }
-// Browsers start audio only after a touch; the first one also starts the music.
-document.addEventListener('pointerdown', () => { try { audio(); musicUpdate(); } catch (_) {} }, {once: true, capture: true});
-document.addEventListener('visibilitychange', () => {
-  if (!actx) return;
-  if (document.hidden) { musicUpdate(); actx.suspend(); } else { actx.resume(); musicUpdate(); }
-});
+const sound = PG.audio.createSound({sfxOn: () => !!wallet.sound && !fast(), musicLevel});
+const {audio, beep, musicUpdate} = sound;
 // A quiet click on menu buttons.
 document.addEventListener('click', e => { if (e.target.closest('button') && !e.target.closest('#scr-game .board')) beep('tap'); });
 /* ---------------- settings ---------------- */
-const PREFS = [
-  {k: 'sound', ic: '🔊', label: 'Звуки', hint: 'Стук карт, фишки, фанфары', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'music', ic: '🎵', label: 'Музыка', hint: 'Спокойная музыка в меню и партии', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'view', ic: '🧊', label: 'Вид поля', hint: 'Объёмное поле или вид сверху', opts: [['3d', '3D'], ['top', 'Сверху']]},
-  {k: 'speed', ic: '⚡', label: 'Скорость ботов', hint: 'Как быстро ходят соперники-боты', opts: [['normal', 'Обычная'], ['fast', 'Быстрая']]},
-  {k: 'alert', ic: '💡', label: 'Подсветка хода', hint: 'Экран мигает на вашем ходу и краснеет, если время на исходе, а вы бездействуете; в последние 5 секунд лёгкая вибрация', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'zones', ic: '🎨', label: 'Цвет владельца', hint: 'Закрашивать дороги и города цветом игрока', opts: [[true, 'Вкл'], [false, 'Выкл']]},
-  {k: 'gfx', ic: '✨', label: 'Графика', hint: 'Экономная — для слабых телефонов', opts: [['high', 'Красивая'], ['low', 'Экономная']]},
-  {k: 'notify', ic: '🔔', label: 'Уведомления', hint: 'Новые версии и новости игры', opts: [[true, 'Вкл'], [false, 'Выкл']], app: true},
-];
-const PREF_GROUPS = [['Звук', ['sound', 'music']], ['Игра', ['view', 'speed', 'alert', 'zones']], ['Экран', ['gfx']], ['Уведомления', ['notify']]];
 // Phones with little memory start on the light graphics (no tile sides, shadows and trees).
 const weakDevice = (navigator.deviceMemory || 4) <= 2 || (navigator.hardwareConcurrency || 4) <= 2;
 Object.assign(wallet, Object.assign({music: true, notify: true, view: '3d', speed: 'normal', gfx: weakDevice ? 'low' : 'high', zones: true, alert: true}, wallet));
@@ -3224,6 +2613,7 @@ function onNet(d) {
   }
   if (m.t === 'lobby') { net.lobby = m; if (!net.host) Object.assign(setup.rules, m.rules); return renderLobby(); }
   if (m.t === 'start') {
+    if (net.gameId === d.id) return;
     // Quick match: a room that started without us is no use — look for another one.
     if (net.quick && !m.seats.some(x => x.owner === myId)) return matchSkip(net.code);
     net.gameId = d.id;
@@ -3319,11 +2709,11 @@ async function pumpRemote() {
   const i = queue.findIndex(q => q.n === applied);
   if (i < 0) return;
   const mv = queue.splice(i, 1)[0], my = token;
+  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
+  phase = 'busy'; applied++; // reserve before yielding: a duplicate delivery is already obsolete
   if (mv.old) catchKeep(); else catchEnd();
   if (catchUp) await new Promise(r => setTimeout(r)); // let the screen breathe while a long history goes in
   if (my !== token) return;
-  if (!current || mv.p !== turn || !fits(current.type, mv.r, mv.x, mv.y)) { toastAny('Партия разошлась между телефонами — чаще всего у игроков разные версии игры. Обновите приложение и начните новую'); return; }
-  phase = 'busy'; applied++;
   if (mv.auto) { if (++players[mv.p].missed === 1 && !fast()) toast(`${players[mv.p].name} пропустил ход — за него играет бот`); } else players[mv.p].missed = 0;
   if (!fast()) await ensureVisible(mv.x, mv.y);
   if (my !== token) return;
@@ -3587,39 +2977,12 @@ const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && 
 const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false, topSeen: false}, wallet.prog);
 PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
 wallet.prog = PROG;
-const xpNeed = l => 50 + 50 * l;
-const QUESTS = [
-  {id: 'c3', ic: '🏰', t: 'Достройте 3 города', k: 'c', n: 3, g: 15},
-  {id: 'r3', ic: '🛤️', t: 'Достройте 3 дороги', k: 'r', n: 3, g: 10},
-  {id: 'f1', ic: '⛪', t: 'Окружите крепость', k: 'f', n: 1, g: 15},
-  {id: 'w1', ic: '🏆', t: 'Победите в партии', k: 'win', n: 1, g: 20},
-  {id: 'g2', ic: '🎲', t: 'Сыграйте 2 партии', k: 'games', n: 2, g: 10},
-  {id: 's30', ic: '⭐', t: 'Наберите 30 очков за одну партию', k: 's30', n: 1, g: 15},
-  {id: 'o1', ic: '🌍', t: 'Сыграйте онлайн', k: 'online', n: 1, g: 20},
-  {id: 'p50', ic: '💎', t: 'Заработайте 50 очков за день', k: 'pts', n: 50, g: 15},
-];
-const ACH = [
-  {id: 'w1', ic: '🥇', t: 'Первая победа', d: 'Победите в партии', ok: s => s.wins >= 1, g: 20},
-  {id: 'w10', ic: '🏅', t: 'Опытный правитель', d: '10 побед', ok: s => s.wins >= 10, g: 50},
-  {id: 'w50', ic: '👑', t: 'Король Пазлграда', d: '50 побед', ok: s => s.wins >= 50, g: 150},
-  {id: 'g25', ic: '🎲', t: 'Завсегдатай', d: 'Сыграйте 25 партий', ok: s => s.games >= 25, g: 40},
-  {id: 'c10', ic: '🏰', t: 'Градостроитель', d: 'Достройте 10 городов', ok: s => s.c >= 10, g: 30},
-  {id: 'c50', ic: '🏙️', t: 'Архитектор', d: 'Достройте 50 городов', ok: s => s.c >= 50, g: 80},
-  {id: 'r20', ic: '🛤️', t: 'Дорожный мастер', d: 'Достройте 20 дорог', ok: s => s.r >= 20, g: 30},
-  {id: 'f5', ic: '⛪', t: 'Хранитель крепостей', d: 'Окружите 5 крепостей', ok: s => s.f >= 5, g: 30},
-  {id: 'b50', ic: '⭐', t: 'Полсотни', d: '50 очков за одну партию', ok: s => s.best >= 50, g: 40},
-  {id: 'b80', ic: '🌟', t: 'Рекордсмен', d: '80 очков за одну партию', ok: s => s.best >= 80, g: 80},
-  {id: 'o1', ic: '🌍', t: 'Покоритель сети', d: 'Победите в онлайн-партии', ok: s => s.owins >= 1, g: 40},
-  {id: 'l5', ic: '🎖️', t: 'Пятый уровень', d: 'Достигните 5 уровня', ok: () => PROG.lvl >= 5, g: 50},
-  {id: 'l10', ic: '💠', t: 'Десятый уровень', d: 'Достигните 10 уровня', ok: () => PROG.lvl >= 10, g: 100},
-];
+// Level, quest and achievement rules live in src/state/progress.js.
+const {xpNeed, QUESTS, ACH} = PG.state.progress;
 // Three quests a day, the same for the whole day.
 function questsToday() {
   if (PROG.day === today()) return;
-  let h = 0; for (const ch of today()) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  const pool = QUESTS.slice(), pick = [];
-  while (pick.length < 3) { h = (h * 1103515245 + 12345) >>> 0; pick.push(pool.splice(h % pool.length, 1)[0].id); }
-  PROG.day = today(); PROG.q = pick.map(id => ({id, n: 0, got: false}));
+  PROG.day = today(); PROG.q = PG.state.progress.dailyQuests(PROG.day).map(id => ({id, n: 0, got: false}));
 }
 function progress(d) {
   questsToday();
@@ -3635,21 +2998,20 @@ function gameDone(place, score) {
   PROG.st.best = Math.max(PROG.st.best, score);
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= 30 ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
   const xp = score + 5 + (win ? 25 : 0);
-  PROG.xp += xp; let up = 0;
-  while (PROG.xp >= xpNeed(PROG.lvl)) { PROG.xp -= xpNeed(PROG.lvl); PROG.lvl++; up++; wallet.gold += 20; }
+  const up = PG.state.progress.addXp(PROG, xp); wallet.gold += 20 * up;
   const cups = net && net.quick ? (place < 0 ? 10 : [30, 15, 5, 0, 0][place]) : 0;
   if (net && net.quick) { PROG.cups += cups; syncRating(); } // cups: rated games only
   saveWallet(); progressDot();
   setTimeout(() => toastAny(up ? `Новый уровень ${PROG.lvl}! +${20 * up} золота` : `+${xp} опыта`), 1200);
-  const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st));
+  const fresh = ACH.filter(a => !PROG.ach[a.id] && a.ok(PROG.st, PROG.lvl));
   if (fresh.length) setTimeout(() => toastAny(`Достижение: ${fresh[0].t}`), 3600);
   return {rated: !!(net && net.quick), cups, xp, up, lvl: PROG.lvl, place};
 }
-const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
+const rewardReady = () => { questsToday(); return PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n) || ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got') || !!PROG.inTop10; };
 function ptabsDot() {
   questsToday();
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
-  const aDot = ACH.some(a => a.ok(PROG.st) && PROG.ach[a.id] !== 'got');
+  const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
@@ -3677,8 +3039,8 @@ function renderProgress() {
     }).join('') + '<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p>';
   } else if (ptab === 'ach') {
     const rank = (ok, got) => got ? 2 : ok ? 0 : 1;
-    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st), PROG.ach[b.id] === 'got')).map(a => {
-      const ok = a.ok(PROG.st), got = PROG.ach[a.id] === 'got';
+    el.innerHTML = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
+      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
       return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="cta" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
     }).join('');
   } else renderTop();
@@ -3687,7 +3049,7 @@ $('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) re
 $('#ptab').addEventListener('click', e => {
   const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
-  else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
+  else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st, PROG.lvl)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
   else return;
   beep('coin'); saveWallet(); progressDot(); renderProgress();
 });
@@ -3802,14 +3164,12 @@ $('#tutBtn').onclick = startTutorial;
 function askProfile() {
   if (wallet.name || document.getElementById('profBox')) return;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'profBox'; box.style.position = 'fixed';
-  const sw = () => PALETTE.map(c => `<button class="sw${c.col === wallet.color ? ' on' : ''}" style="--c:${c.col}" data-pc="${c.col}" aria-label="${c.name}"></button>`).join('');
-  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
-    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><div class="swatches" id="profCols">${sw()}</div>
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм — его увидят соперники и рейтинг. Цвет выберете перед партией</p>
+    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off">
     <button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
-  box.querySelector('#profCols').onclick = e => { const b = e.target.closest('[data-pc]'); if (!b) return; wallet.color = setup.seats[0].col = b.dataset.pc; av.style.setProperty('--c', wallet.color); box.querySelector('#profCols').innerHTML = sw(); };
   ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); };
   box.querySelector('#profLogin').onclick = () => { box.remove(); accountDialog('login'); };
   setTimeout(() => inp.focus(), 200);
@@ -4068,8 +3428,8 @@ function renderFriends() {
   $('#fGate').hidden = !gate; $('#fMine').hidden = gate; $('#fJoinRow').hidden = gate;
   if (!FB) { $('#fGate').innerHTML = '<p>Друзья доступны в приложении с интернетом</p>'; box.innerHTML = ''; return; }
   if (gate) {
-    const step = !wallet.name ? ['Придумайте никнейм', 'fgName'] : ['Сохраните профиль', 'fgLink'];
-    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и вход по почте с паролем. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button><button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>`;
+    const step = !wallet.name ? ['Придумайте никнейм', 'fgName'] : ['Войти или создать профиль', 'fgLogin'];
+    $('#fGate').innerHTML = `<div style="font-size:40px">🤝</div><h3>Друзья — для сохранённых профилей</h3><p>Нужны никнейм и сохранённый профиль — почта с паролем или вход через Google. Так друзья точно найдут именно вас, даже после переустановки игры</p><button class="cta wide" id="${step[1]}">${step[0]}</button>${wallet.name ? '' : '<button class="ghostbtn" id="fgLogin">У меня есть профиль — войти</button>'}`;
     box.innerHTML = ''; return;
   }
   const has = wallet.fcode && wallet.fcodeUid === myUid();
@@ -4167,6 +3527,7 @@ function devPanel() {
       <input class="field" id="devTok" type="password" placeholder="github_pat_…" autocomplete="off">
       <button class="cta wide" id="devSave">Сохранить</button><p class="shint" id="devState"></p>`}
       <button class="ghostbtn" id="devStats">📊 Статистика игры</button>
+      <a class="ghostbtn devlink" href="${SITE_URL}admin/" target="_blank" rel="noopener">🛠 Админ-панель и отзывы на сайте</a>
       <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
     if (tok) devStatus(box.querySelector('#devState'));
   };
@@ -4284,11 +3645,41 @@ $('#fGate').addEventListener('click', e => {
 $('#fcode').onclick = () => wallet.fcode && copyText(wallet.fcode, `Код ${wallet.fcode} скопирован`);
 $('#fRetry').onclick = () => { fcodeErr = ''; openFriends(); };
 $('#fCopy').onclick = () => wallet.fcode && copyText(`Играй со мной в Puzzlegrad! Нажми, чтобы принять приглашение в друзья: ${SITE_URL}?friend=${wallet.fcode}\nМой код друга:\n${wallet.fcode}`, 'Ссылка-приглашение скопирована — отправьте её другу');
+function confirmTextParts(text) {
+  const value = text == null ? '' : String(text);
+  const match = /^([^<>]*)<br\s*\/?><small(?:\s+style="[^"]*")?>([^<>]*)<\/small>$/i.exec(value);
+  return match ? {title: match[1], description: match[2]} : {title: value, description: ''};
+}
 function confirmBox(text, yes, ok) {
-  const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>${text}</h3><button class="cta wide" data-a="y">${yes}</button><button class="ghostbtn" data-a="n">Отмена</button></div>`;
-  document.body.append(box);
-  box.onclick = e => { const b = e.target.closest('[data-a]'); if (!b && e.target !== box) return; box.remove(); if (b && b.dataset.a === 'y') ok(); };
+  const old = document.getElementById('confirmBox'); if (old && old.dismiss) old.dismiss(false);
+  const box = document.createElement('div'); box.id = 'confirmBox'; box.className = 'over'; box.style.position = 'fixed';
+  box.setAttribute('role', 'alertdialog'); box.setAttribute('aria-modal', 'true'); box.setAttribute('aria-labelledby', 'confirmText');
+  box.innerHTML = '<div class="ocard"><h3 id="confirmText"></h3><button class="cta wide" data-a="y"></button><button class="ghostbtn" data-a="n">Отмена</button></div>';
+  const parts = confirmTextParts(text);
+  box.querySelector('h3').textContent = parts.title;
+  if (parts.description) {
+    const description = document.createElement('p');
+    description.id = 'confirmDescription';
+    description.textContent = parts.description;
+    description.style.cssText = 'font-size:14px;font-weight:500;line-height:1.45;color:var(--muted);margin:8px 0 16px';
+    box.querySelector('h3').after(description);
+    box.setAttribute('aria-describedby', 'confirmDescription');
+  }
+  box.querySelector('[data-a=y]').textContent = String(yes || 'Да');
+  const previous = document.activeElement;
+  document.body.append(box); let done = false;
+  const close = run => { if (done) return; done = true; document.removeEventListener('keydown', keys); box.remove(); if (previous && previous.isConnected) previous.focus(); if (run && typeof ok === 'function') ok(); };
+  const keys = e => {
+    if (e.key === 'Escape') { e.preventDefault(); close(false); }
+    else if (e.key === 'Tab') {
+      const buttons = [...box.querySelectorAll('button')], i = buttons.indexOf(document.activeElement);
+      e.preventDefault(); buttons[(i + (e.shiftKey ? buttons.length - 1 : 1)) % buttons.length].focus();
+    }
+  };
+  box.dismiss = close;
+  document.addEventListener('keydown', keys);
+  box.addEventListener('click', e => { const b = e.target.closest('[data-a]'); if (b) close(b.dataset.a === 'y'); });
+  box.querySelector('[data-a=n]').focus();
 }
 function openFeedback() {
   if (!FB) { toastAny('Нужно подключение к интернету'); return; }
@@ -4350,6 +3741,7 @@ const AUTH_ERR = {
   USER_DISABLED: ['Этот профиль отключён. Напишите в поддержку', 'mail'],
   TOO_MANY_ATTEMPTS_TRY_LATER: ['Слишком много попыток подряд. Подождите несколько минут или смените пароль через «Забыли пароль?»', ''],
   CREDENTIAL_TOO_OLD_LOGIN_AGAIN: ['Для этого нужно войти заново', ''],
+  SHORT_OR_WRONG: ['Пароль не подходит. Для нового профиля пароль нужен от 6 символов', 'pass'],
 };
 // Server-side setup problems (sign-in method off, e-mail change blocked…) are not the player's
 // fault: they get a calm message, and the exact answer goes to the crash reports for the owner.
@@ -4382,6 +3774,156 @@ async function idt(method, body) {
 function keepAuth(j, email) {
   fbAuth = {idToken: j.idToken, refreshToken: j.refreshToken, uid: j.localId, exp: Date.now() + (+j.expiresIn || 3600) * 1000, email};
   try { localStorage.setItem('fbAuth', JSON.stringify(fbAuth)); } catch (_) {}
+}
+/* ---------------- Google sign-in ----------------
+   A WebView cannot run Google's own sign-in, so on the phone the token comes from the native
+   Credential Manager sheet (AndroidApp.googleSignIn → window.onGoogleToken). In the web build
+   Google Identity Services draws its own button. Either way Firebase turns the Google ID token
+   into a session: mode 'link' attaches Google to this profile, 'login' opens an existing one. */
+const googleAvailable = () => !!(window.AndroidApp && AndroidApp.googleSignIn && (!AndroidApp.googleReady || AndroidApp.googleReady()));
+const googleWebOk = () => !!(window.WEBAPP && FB && FB.googleClientId);
+// The e-mail sits in the Google token payload; it only labels the saved profile.
+// The token payload is UTF-8 (a Russian name in it): atob gives bytes, TextDecoder turns them into text.
+function jwtPayload(t) {
+  try {
+    const b = atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(b, c => c.charCodeAt(0))));
+  } catch (_) { return {}; }
+}
+function jwtEmail(t) { return jwtPayload(t).email || ''; }
+// signInWithIdp turns some refusals into HTTP 200 without a session (needConfirmation, errorMessage): those are
+// errors too, never a sign-in — saving them as one left the player "signed in" with no session at all.
+async function googleIdp(idToken, session) {
+  const body = {postBody: 'id_token=' + encodeURIComponent(idToken) + '&providerId=google.com', requestUri: 'http://localhost', returnIdpCredential: true, returnSecureToken: true};
+  if (session) body.idToken = session;
+  const j = await idt('signInWithIdp', body);
+  if (!j.idToken) throw {error: {message: j.needConfirmation ? 'NEED_CONFIRMATION' : String(j.errorMessage || 'NO_SESSION')}};
+  return j;
+}
+const gErr = (e, re) => !!(e && e.error && re.test(String(e.error.message || '')));
+let googleBusy = false;
+let lastGoogleToken = '';
+let lastGoogleTokenTime = 0;
+// A Google token for an e-mail that already has a password profile: it is attached after the password sign-in.
+let pendingGoogle = null;
+// One button for both cases. A Google account the game has not seen becomes a registration of THIS profile (gold,
+// figures and progress stay; then a nickname finishes it). A Google account that already has a profile signs in to it.
+async function finishGoogle(idToken, link, onFail) {
+  if (googleBusy) { if (typeof onFail === 'function') onFail('busy'); return; }
+  if (idToken && idToken === lastGoogleToken && Date.now() - lastGoogleTokenTime < 10000) {
+    if (typeof onFail === 'function') onFail('duplicate');
+    return;
+  }
+  googleBusy = true;
+  try {
+    const email = jwtEmail(idToken), wasRegistered = registered();
+    let j = null, joined = false;
+    if (link || !wasRegistered) {
+      try { await fbToken(); j = await googleIdp(idToken, fbAuth.idToken); joined = true; }
+      catch (e) {
+        // Already the key of another profile: sign in to that one (a saved profile asking to link is told so instead).
+        if (!gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED/) || (link && wasRegistered)) throw e;
+      }
+    }
+    if (!j) j = await googleIdp(idToken, null);
+    lastGoogleToken = idToken; lastGoogleTokenTime = Date.now();
+    keepAuth(j, email || j.email || '');
+    document.querySelectorAll('body > .over').forEach(e => e.remove()); // dialogs only: #over inside the game screen is the game's own results board
+    const loaded = !joined && await cloudLoad();
+    if (loaded) {
+      track('login', {method: 'google'});
+      wallet.tut = wallet.tutAsked = true; saveWallet();
+      toastAny(`С возвращением, ${profileName()}!`);
+      const toFriends = !$('#scr-friends').hidden;
+      renderAccount(); renderSetup(); renderShop && renderShop(); progressDot();
+      show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
+      if (!wallet.name) finishSignup();
+    } else {
+      track('sign_up', {method: 'google'});
+      await cloudSave(); renderAccount(); presenceMark(true); socialReset();
+      finishSignup();
+    }
+  } catch (e) {
+    if (gErr(e, /NEED_CONFIRMATION|EMAIL_EXISTS/)) {
+      // This e-mail already has a profile with a password: sign in with it once, Google gets attached to it.
+      pendingGoogle = {token: idToken, at: Date.now()};
+      document.querySelectorAll('body > .over').forEach(x => x.remove());
+      toastAny('Эта почта уже зарегистрирована с паролем. Войдите по почте один раз — и Google подключится к профилю');
+      accountDialog('login', jwtEmail(idToken));
+    } else {
+      const [t] = authErr(e, link); toastAny(t);
+      if (link && gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED/)) setTimeout(() => accountDialog('login'), 400);
+    }
+    if (onFail) onFail(e);
+  } finally { googleBusy = false; }
+}
+// After a password sign-in: attach the Google account that was waiting for it (the token lives an hour).
+async function attachPendingGoogle() {
+  const g = pendingGoogle; pendingGoogle = null;
+  if (!g || Date.now() - g.at > 50 * 60 * 1000) return;
+  try { const j = await googleIdp(g.token, fbAuth.idToken); keepAuth(j, fbAuth.email); toastAny('Google подключён — теперь можно входить в один тап'); }
+  catch (e) { authErr(e, true); }
+}
+// The last step of a registration: a nickname rivals and the rating will see. One made up before is kept.
+function finishSignup() {
+  if (wallet.name) { toastAny(`Профиль сохранён, ${profileName()}!`); return; }
+  if (document.getElementById('signupBox')) return;
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'signupBox'; box.style.position = 'fixed';
+  box.innerHTML = `<div class="ocard prof"><div class="pav" id="suAv" style="--c:${wallet.color}">?</div><h3>Завершите регистрацию</h3><p>Придумайте никнейм — его увидят соперники и рейтинг</p>
+    <input class="field" id="suName" maxlength="12" placeholder="Никнейм" autocomplete="off"><button class="cta wide" id="suOk" disabled>Готово</button></div>`;
+  document.body.append(box);
+  const inp = box.querySelector('#suName'), ok = box.querySelector('#suOk'), av = box.querySelector('#suAv');
+  inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
+  inp.onkeydown = e => { if (e.key === 'Enter' && !ok.disabled) ok.click(); };
+  ok.onclick = async () => {
+    if (!setProfileName(inp.value)) return;
+    box.remove(); toastAny(`Профиль создан. Привет, ${profileName()}!`);
+    renderAccount(); renderSetup(); presenceMark(true);
+    try { await cloudSave(); syncRating(); } catch (_) {}
+  };
+  setTimeout(() => inp.focus(), 200);
+}
+// One entry point: the native sheet on the phone, Google's own button in the browser.
+function startGoogle(link, onFail, btn) {
+  if (googleAvailable()) {
+    startGoogle.reqId = (startGoogle.reqId || 0) + 1;
+    const reqId = startGoogle.reqId;
+    window.onGoogleToken = t => {
+      track('google_token', {stale: reqId !== startGoogle.reqId ? 1 : 0}); // shows in Analytics whether the phone got a token at all
+      if (reqId !== startGoogle.reqId) return;
+      window.onGoogleToken = null;
+      window.onGoogleError = null;
+      finishGoogle(t, link, onFail);
+    };
+    window.onGoogleError = c => {
+      track('google_error', {code: String(c)});
+      if (reqId !== startGoogle.reqId) return;
+      window.onGoogleToken = null;
+      window.onGoogleError = null;
+      try {
+        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'misconfigured' ? 'Вход через Google пока не подключён для этой версии игры. Войдите по почте — профиль тот же' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
+      } finally { if (typeof onFail === 'function') onFail(c); }
+    };
+    try { AndroidApp.googleSignIn(); } catch (_) { window.onGoogleError('failed'); }
+    return;
+  }
+  if (googleWebOk() && btn) return googleWebButton(btn, link, onFail);
+  toastAny('Вход через Google доступен в приложении');
+  if (onFail) onFail('unavailable');
+}
+// Web build: load Google Identity Services and swap our button for its official one.
+// Web build: Google's own button (Google Identity Services) goes in place of ours as soon as the dialog opens,
+// so one tap signs in. Our button stays as a placeholder while the script loads, or if it cannot load.
+let gisLoad = null;
+function googleWebButton(btn, link, onFail) {
+  gisLoad = gisLoad || new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.onload = res; s.onerror = () => { gisLoad = null; rej(); }; document.head.append(s); });
+  gisLoad.then(() => {
+    if (!btn.isConnected) return;
+    google.accounts.id.initialize({client_id: FB.googleClientId, callback: r => finishGoogle(r.credential, link, onFail), ux_mode: 'popup', itp_support: true});
+    const slot = document.createElement('div'); slot.className = 'gisbtn';
+    btn.replaceWith(slot);
+    google.accounts.id.renderButton(slot, {type: 'standard', theme: 'filled_black', size: 'large', text: 'continue_with', shape: 'pill', logo_alignment: 'center', locale: 'ru', width: Math.min(400, Math.max(240, slot.clientWidth || 300))});
+  }).catch(() => { btn.onclick = () => toastAny('Не удалось загрузить вход Google — проверьте интернет или войдите по почте'); });
 }
 /* ---------------- profile sync: the same profile on several devices ----------------
    The app, the web version and other phones signed in to one profile share /profiles/{uid}.
@@ -4498,14 +4040,23 @@ function accountDialog(mode, prefill) {
   if (!FB) return toastAny('Профили доступны в приложении');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const link = mode === 'link';
-  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">${link ? '🛡️' : '🔑'}</div><h3>${link ? 'Сохраните профиль' : 'Вход в профиль'}</h3><p>${link ? 'Почта и пароль вернут золото, фигурки и прогресс после переустановки или на новом телефоне' : 'Почта и пароль, которыми вы сохранили профиль'}</p>
+  // One form for both: a known e-mail signs in, a new one becomes a profile (gold and progress stay).
+  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход или регистрация</h3><p>Профиль хранит золото, фигурки и прогресс — на любом телефоне и после переустановки. Нет профиля — он создастся</p>
+    <div class="gslot" id="accGSlot"><button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button></div>
+    <p class="phint acc-or" id="accOr">или по почте</p>
     <input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${(prefill || '').replace(/"/g, '')}">
-    <div class="pwrap"><input class="field" id="accPass" type="password" placeholder="${link ? 'Придумайте пароль (от 6 символов)' : 'Пароль'}" autocomplete="${link ? 'new-password' : 'current-password'}" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>
-    <p class="phint" id="accHint">${link ? 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне' : ''}</p>
-    <p class="accErr" id="accErr" role="alert"></p><button class="cta wide" id="accGo">${link ? 'Сохранить профиль' : 'Войти'}</button>${link ? '' : '<button class="linkbtn" id="accReset">Забыли пароль?</button>'}<button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
+    <div class="pwrap"><input class="field" id="accPass" type="password" placeholder="Пароль" autocomplete="current-password" autocapitalize="off" spellcheck="false"><button type="button" class="peye" id="accEye" aria-label="Показать пароль" aria-pressed="false"></button></div>
+    <p class="phint" id="accHint">Новый профиль: пароль от 6 символов</p>
+    <p class="accErr" id="accErr" role="alert"></p><button class="cta wide" id="accGo">Продолжить</button><button class="linkbtn" id="accReset">Забыли пароль?</button><button class="ghostbtn" id="accNo">${link ? 'Позже' : 'Отмена'}</button></div>`;
   document.body.append(box);
   const mailEl = box.querySelector('#accMail'), passEl = box.querySelector('#accPass'), eye = box.querySelector('#accEye'), hint = box.querySelector('#accHint');
   const mail = () => mailEl.value.trim(), pass = () => passEl.value;
+  const gbtn = box.querySelector('#accGoogle');
+  if (gbtn) {
+    if (!googleAvailable() && !googleWebOk()) { gbtn.hidden = true; const or = box.querySelector('#accOr'); if (or) or.hidden = true; }
+    else if (!googleAvailable()) googleWebButton(gbtn, link, null);
+    else gbtn.onclick = () => { gbtn.disabled = true; startGoogle(link, () => { gbtn.disabled = false; }, gbtn); };
+  }
   // Error text plus a red frame on the field it is about ('both' marks both).
   const err = (t, field) => {
     box.querySelector('#accErr').textContent = t || '';
@@ -4531,11 +4082,16 @@ function accountDialog(mode, prefill) {
   mailEl.oninput = () => { mailEl.classList.remove('bad'); typoWarned = ''; if (box.querySelector('#accErr').textContent) err(''); };
   passEl.oninput = () => {
     passEl.classList.remove('bad'); if (box.querySelector('#accErr').textContent) err('');
-    if (link) { const n = pass().length; hint.textContent = n && n < 6 ? `Ещё ${6 - n} ${6 - n === 1 ? 'символ' : 'символа'} — нужно хотя бы 6` : n ? '✓ Подходит. Запомните пароль' : 'Запомните пароль — по нему вы войдёте в профиль на любом телефоне'; hint.classList.toggle('ok', n >= 6); }
   };
   passEl.onkeydown = e => { if (e.getModifierState && e.getModifierState('CapsLock')) hint.textContent = '⚠ Включён Caps Lock'; };
   if (prefill) setTimeout(() => passEl.focus(), 200);
-  box.querySelector('#accNo').onclick = () => { box.remove(); if (!link && !wallet.name) askProfile(); };
+  box.querySelector('#accNo').onclick = () => {
+    startGoogle.reqId = (startGoogle.reqId || 0) + 1;
+    window.onGoogleToken = null;
+    window.onGoogleError = null;
+    box.remove();
+    if (!link && !wallet.name) askProfile();
+  };
   const rs = box.querySelector('#accReset');
   if (rs) rs.onclick = async () => {
     const bad = checkAuthInput(mail(), 'x', false); if (bad && bad[1] === 'mail' && !bad[2]) return err(bad[0] === 'Введите почту' ? 'Введите почту, на неё придёт письмо для смены пароля' : bad[0], 'mail');
@@ -4544,7 +4100,7 @@ function accountDialog(mode, prefill) {
   };
   box.querySelector('#accGo').onclick = async () => {
     const go = box.querySelector('#accGo');
-    const bad = checkAuthInput(mail(), pass(), link);
+    const bad = checkAuthInput(mail(), pass(), false);
     if (bad && !(bad[2] === 'typo' && typoWarned === mail())) {
       err(bad[0], bad[1]);
       if (bad[2] === 'typo') {
@@ -4559,19 +4115,33 @@ function accountDialog(mode, prefill) {
     }
     go.disabled = true; err('');
     try {
-      if (link) {
-        await fbToken();
-        const j = await idt('update', {idToken: fbAuth.idToken, email: mail(), password: pass(), returnSecureToken: true});
-        keepAuth(j, mail()); await cloudSave(); box.remove(); toastAny('Профиль сохранён'); track('sign_up', {method: 'email'}); renderAccount(); presenceMark(true); socialReset();
+      // Sign in first. An unknown e-mail (Firebase may also answer INVALID_LOGIN_CREDENTIALS for it) becomes a new
+      // profile: a guest's own session gets the e-mail, so the gold and progress on this phone stay.
+      let j = null, created = false;
+      try { j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true}); }
+      catch (e) {
+        if (!(e && e.error && /^(EMAIL_NOT_FOUND|INVALID_LOGIN_CREDENTIALS)/.test(e.error.message))) throw e;
+        if (pass().length < 6) throw {error: {message: 'SHORT_OR_WRONG'}};
+        try {
+          if (fbAuth && fbAuth.email) j = await idt('signUp', {email: mail(), password: pass(), returnSecureToken: true}); // signed in elsewhere: a new account
+          else { await fbToken(); j = await idt('update', {idToken: fbAuth.idToken, email: mail(), password: pass(), returnSecureToken: true}); }
+          created = true;
+        } catch (e2) { throw e2 && e2.error && /^EMAIL_EXISTS/.test(e2.error.message) ? {error: {message: 'INVALID_PASSWORD'}} : e2; }
+      }
+      keepAuth(j, mail());
+      if (created) {
+        track('sign_up', {method: 'email'});
+        await cloudSave(); box.remove(); renderAccount(); presenceMark(true); socialReset();
+        finishSignup();
       } else {
-        const j = await idt('signInWithPassword', {email: mail(), password: pass(), returnSecureToken: true});
-        keepAuth(j, mail()); track('login', {method: 'email'});
+        track('login', {method: 'email'});
         const ok = await cloudLoad(); box.remove();
+        attachPendingGoogle();
         wallet.tut = wallet.tutAsked = true; saveWallet();
         toastAny(ok ? `С возвращением, ${profileName()}!` : 'Вход выполнен');
         const toFriends = !$('#scr-friends').hidden;
         renderAccount(); renderSetup(); renderShop && renderShop(); progressDot(); show(toFriends ? 'friends' : 'menu'); presenceMark(true); syncRating(); socialReset();
-        if (!wallet.name) askProfile();
+        if (!wallet.name) finishSignup();
       }
     } catch (j) { showErr(j); go.disabled = false; }
   };
@@ -4592,9 +4162,8 @@ function renderAccount() {
   const linked = fbAuth && fbAuth.email, lvl = typeof PROG !== 'undefined' && PROG.lvl ? `<small class="plvl">Уровень ${PROG.lvl}</small>` : '';
   const mail = linked ? String(fbAuth.email).replace(/[<>&"]/g, '') : '';
   el.innerHTML = `<div class="prow"><span class="av big" style="--c:${wallet.color}">${profileName()[0]}</span><span class="pwho"><b>${profileName()}</b><small class="pmail">${linked ? mail : 'Профиль не сохранён'}</small>${lvl}</span><button class="chip" id="rnBtn">Сменить <i class="coin" style="display:inline-block;width:11px;height:11px"></i> ${RENAME_PRICE}</button></div>` +
-    (FB ? `<div class="pact">${linked ? '<button class="chip" id="acLogout">Выйти из аккаунта</button>' : '<button class="chip pri" id="acLink">Сохранить профиль</button><button class="chip" id="acLogin">Войти</button>'}</div>` : '');
+    (FB ? `<div class="pact">${linked ? '<button class="chip" id="acLogout">Выйти из аккаунта</button>' : '<button class="chip pri" id="acLogin">Войти или создать профиль</button>'}</div>` : '');
   $('#rnBtn').onclick = renameDialog;
-  if ($('#acLink')) $('#acLink').onclick = () => accountDialog('link');
   if ($('#acLogin')) $('#acLogin').onclick = () => accountDialog('login');
   if ($('#acLogout')) $('#acLogout').onclick = () => confirmBox('Выйти из аккаунта?<br><small style="font-weight:500;color:var(--muted)">Прогресс сохранится в аккаунте. На этом устройстве начнётся новая игра, а войти можно будет в любой аккаунт</small>', 'Выйти', signOut);
 }
@@ -4637,10 +4206,54 @@ $('#again').onclick = () => { newGame(); show('game'); };
 /* ---------------- app shell (Android app and the web build) ---------------- */
 // The web build (scripts/wrap-web.sh web) runs on iPhone, in Android browsers and on computers.
 // Without either, this file is the browser mock-up with screen tabs.
-const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb;
+const isAndroid = !!window.AndroidApp, isWeb = !isAndroid && !!window.WEBAPP, isApp = isAndroid || isWeb, isStaging = !!window.IS_STAGING;
+function showStagingWatermark() {
+  if (!window.IS_STAGING || document.getElementById('stagingWatermark')) return;
+  const mark = document.createElement('div');
+  mark.id = 'stagingWatermark';
+  mark.style.cssText = 'position:fixed;top:8px;left:8px;background:rgba(214,158,46,0.2);border:1px solid #d69e2e;color:#ecc94b;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;z-index:9999;pointer-events:none;backdrop-filter:blur(4px);letter-spacing:0.5px';
+  mark.textContent = '🧪 STAGING ' + (window.WEB_VERSION || 'TEST');
+  document.body.appendChild(mark);
+}
+function initStagingGate() {
+  if (!window.IS_STAGING) return;
+  let unlocked = false;
+  try { unlocked = sessionStorage.getItem('pg_staging_pin_ok') === '1'; } catch (_) {}
+  if (unlocked) {
+    showStagingWatermark();
+    return;
+  }
+  const overlay = document.createElement('div');
+  overlay.id = 'stagingGate';
+  overlay.innerHTML = '<div style="position:fixed;inset:0;background:#0b0d13;z-index:999999;display:flex;align-items:center;justify-content:center;font-family:sans-serif;color:#fff;padding:16px"><div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:40px;margin-bottom:12px">🛡️</div><h2 style="font-size:20px;font-weight:700;margin-bottom:8px">Puzzlegrad Staging</h2><p style="font-size:13px;color:#8b94a7;margin-bottom:20px;line-height:1.4">Закрытая тестовая среда. Для доступа введите персональный PIN-код тестера.</p><input type="password" id="stagingGatePin" maxlength="8" placeholder="PIN-код" style="width:100%;box-sizing:border-box;padding:12px;font-size:20px;text-align:center;letter-spacing:6px;border-radius:10px;border:1px solid #2a3142;background:#0a0c10;color:#fff;margin-bottom:16px;outline:none"><button id="stagingGateBtn" style="width:100%;box-sizing:border-box;padding:12px;background:#4f8ef7;border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;cursor:pointer">Войти в тест</button><div id="stagingGateErr" style="color:#ef5350;font-size:13px;margin-top:12px;display:none">Неверный PIN-код</div></div></div>';
+  document.body.appendChild(overlay);
+
+  const checkPin = () => {
+    const input = document.getElementById('stagingGatePin');
+    const val = (input ? input.value : '').trim();
+    if (val && val === stagingPin) {
+      try { sessionStorage.setItem('pg_staging_pin_ok', '1'); } catch (_) {}
+      overlay.remove();
+      showStagingWatermark();
+    } else {
+      const err = document.getElementById('stagingGateErr');
+      if (err) err.style.display = 'block';
+      if (input) { input.value = ''; input.focus(); }
+    }
+  };
+
+  // The PIN is set by the owner in the admin panel (config/testerPin); 2026 until one is set.
+  let stagingPin = '2026';
+  if (typeof FB !== 'undefined' && FB && FB.dbUrl) fetch(`${FB.dbUrl}/config/testerPin.json`).then(r => r.ok ? r.json() : null).then(p => { if (p) stagingPin = String(p); }).catch(() => {});
+  const btn = document.getElementById('stagingGateBtn');
+  if (btn) btn.onclick = checkPin;
+  const pinInput = document.getElementById('stagingGatePin');
+  if (pinInput) pinInput.onkeydown = (e) => { if (e.key === 'Enter') checkPin(); };
+}
 if (isApp) {
   document.documentElement.classList.add('app');
   if (isWeb) document.documentElement.classList.add('web');
+  if (isStaging) initStagingGate();
   showWhatsNew(isAndroid ? AndroidApp.versionName() : window.WEB_VERSION);
   // The same physical size on every phone: the app reports the screen size in inches (see uiScale in
   // MainActivity) and the whole page is zoomed by that factor. Web browsers keep 100%.
@@ -4853,16 +4466,68 @@ window.onBack = () => {
 };
 
 // Errors must never leave a dead screen: report them and keep playing.
-let errShown = false;
+let errShown = false, lastErrorReported = 0;
 function reportError(msg) {
   try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError(String(msg).slice(0, 500)); } catch (_) {}
   if (!errShown) { errShown = true; toast('Что-то пошло не так, игра продолжает работу'); }
+  try {
+    if (typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbToken === 'function' && Date.now() - lastErrorReported > 30000) {
+      lastErrorReported = Date.now();
+      fbToken().then(t => {
+        fetch(`${FB.dbUrl}/errors.json?auth=${t}`, {
+          method: 'POST',
+          body: JSON.stringify({
+            m: String(msg).slice(0, 500),
+            ua: (navigator.userAgent || '').slice(0, 200),
+            ver: window.WEB_VERSION || (window.AndroidApp ? AndroidApp.versionName() : 'dev'),
+            ts: {'.sv': 'timestamp'}
+          })
+        }).catch(() => {});
+      }).catch(() => {});
+    }
+  } catch (_) {}
+}
+async function checkMaintenance() {
+  if (typeof FB === 'undefined' || !FB || !FB.dbUrl) return;
+  try {
+    const r = await fetch(`${FB.dbUrl}/config/maintenance.json`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+    if (cfg && cfg.active) showMaintenanceScreen(cfg.message || 'Ведутся плановые технические работы. Игра скоро будет доступна.');
+    else { const box = document.getElementById('maintBox'); if (box) box.remove(); } // switched off: the game is back
+  } catch (_) {}
+}
+// Checked at start, on every return to the app, and every minute while the maintenance screen is up.
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkMaintenance(); });
+setInterval(() => { if (document.getElementById('maintBox')) checkMaintenance(); }, 60000);
+function showMaintenanceScreen(msg) {
+  if (document.getElementById('maintBox')) return;
+  const d = document.createElement('div');
+  d.id = 'maintBox';
+  d.style.cssText = 'position:fixed;inset:0;background:#0b0d13;z-index:9999999;display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center';
+  // The message comes from the database: put it in as text, never as markup.
+  d.innerHTML = '<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5"></p></div>';
+  d.querySelector('#maintMsg').textContent = String(msg).slice(0, 500);
+  document.body.appendChild(d);
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
 window.addEventListener('unhandledrejection', e => reportError('promise: ' + (e.reason && e.reason.message || e.reason)));
+/* Anti-cheat & Security: block F12, developer shortcuts and inspect context menu */
+// Text fields keep their long-press menu: players paste friend codes, e-mails and passwords.
+document.addEventListener('contextmenu', e => { if (!(e.target && e.target.closest && e.target.closest('input,textarea,[contenteditable]'))) e.preventDefault(); });
+window.addEventListener('keydown', e => {
+  const k = e.key || e.keyCode;
+  if (k === 'F12' || k === 123) { e.preventDefault(); e.stopPropagation(); return false; }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || k === 73 || k === 74 || k === 67)) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+  if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U' || k === 85)) {
+    e.preventDefault(); e.stopPropagation(); return false;
+  }
+});
 
 injectArt();
-dailyBonus(); renderResume(); renderPrefs();
+dailyBonus(); renderResume(); renderPrefs(); checkMaintenance();
 if (isApp) bootReady.then(() => setTimeout(() => { offerTutorial(); if (isWeb) { openLink(); setTimeout(firstInstallHint, 400); } }, 300));
 // The app opens on the menu (a saved game must survive); the browser mock-up opens straight into a game.
 if (!isApp) newGame(); else { buildBoard(); buildMini(); }

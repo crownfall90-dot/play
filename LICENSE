@@ -1,0 +1,28 @@
+Puzzlegrad — Proprietary License
+Copyright (c) 2026 Crownfall. All rights reserved.
+
+This repository and everything in it — source code, game rules implementation, graphics, card art, sounds,
+music, texts, names and logos ("the Software") — is the exclusive property of the copyright holder.
+
+The Software is made visible for transparency and so that players can download official builds. No licence is
+granted to you except to download and run the official builds published by the copyright holder for personal,
+non-commercial play.
+
+Without prior written permission of the copyright holder you may NOT:
+  * copy, modify, merge, translate or create derivative works of the Software or any part of it;
+  * publish, distribute, sublicense, sell, rent or host the Software or any part of it, including in other games,
+    app stores, websites or repositories (forks for redistribution are not allowed);
+  * use the names "Puzzlegrad" or "Мозаика Королевства", the logos or the art to identify any other product;
+  * access, scrape, copy or use the game's servers and data (accounts, profiles, ratings, rooms) other than through
+    the official builds; reverse engineer or bypass the game's protections, or build modified or unofficial clients.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+---
+
+Puzzlegrad — проприетарная лицензия. © 2026 Crownfall. Все права защищены.
+Репозиторий открыт для прозрачности и для скачивания официальных сборок. Разрешено только скачивать и запускать
+официальные сборки для личной некоммерческой игры. Без письменного разрешения запрещено копировать, изменять,
+распространять, размещать игру или её части (код, графику, звуки, тексты), использовать название и логотипы,
+обращаться к серверам и данным игры не через официальные сборки, делать изменённые или неофициальные клиенты.

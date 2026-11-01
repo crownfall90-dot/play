@@ -1,0 +1,24 @@
+name: Ошибка в игре
+description: Что-то работает не так
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Что случилось
+      description: Что вы делали, что ожидали и что произошло вместо этого. Скриншот очень поможет.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия игры
+      description: «Настройки → Версия», например 1.0.236
+  - type: dropdown
+    id: where
+    attributes:
+      label: Где играете
+      options: [Android-приложение, Браузер на телефоне, Браузер на компьютере, iPhone]
+  - type: markdown
+    attributes:
+      value: "Не пишите сюда почту, пароли и другие личные данные. Уязвимости — по правилам SECURITY.md."

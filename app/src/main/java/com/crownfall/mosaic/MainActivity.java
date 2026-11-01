@@ -30,7 +30,8 @@ import androidx.credentials.GetCredentialRequest;
 import androidx.credentials.GetCredentialResponse;
 import androidx.credentials.exceptions.GetCredentialException;
 import androidx.credentials.exceptions.NoCredentialException;
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption;
+import androidx.credentials.exceptions.GetCredentialCancellationException;
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
 public class MainActivity extends Activity {
@@ -320,7 +321,30 @@ public class MainActivity extends Activity {
         }
     }
 
+    static String googleErrorCode(GetCredentialException e) {
+        if (e instanceof GetCredentialCancellationException) return "canceled";
+        if (e instanceof NoCredentialException) return "no_credentials";
+        // Google refuses the token when this app's signing certificate (SHA-1) is not registered for the package in
+        // the Firebase/Google Cloud project: the account picker opens, then this error comes back (code 28444).
+        String m = String.valueOf(e.getMessage());
+        if (m.contains("28444") || m.contains("Developer console")) return "misconfigured";
+        return "failed";
+    }
+
     private class Bridge {
+        /** The system page of this app (with its "Uninstall" button): used for the one-time reinstall after a key change. */
+        @JavascriptInterface
+        public void openAppSettings() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                            Uri.parse("package:" + getPackageName())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (Exception e) {
+                    report(e);
+                }
+            });
+        }
+
         @JavascriptInterface
         public String versionName() { return BuildConfig.VERSION_NAME; }
 
@@ -329,6 +353,17 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String store() { return BuildConfig.FLAVOR; }
+
+        /** Invite links: the system "share" sheet, so the player picks the messenger. */
+        @JavascriptInterface
+        public void share(String text) {
+            runOnUiThread(() -> {
+                android.content.Intent send = new android.content.Intent(android.content.Intent.ACTION_SEND);
+                send.setType("text/plain");
+                send.putExtra(android.content.Intent.EXTRA_TEXT, text);
+                try { startActivity(android.content.Intent.createChooser(send, "Пригласить в Puzzlegrad")); } catch (Exception ignored) { }
+            });
+        }
 
         /** This phone, for the owner's statistics: model and screen diagonal. */
         @JavascriptInterface
@@ -378,10 +413,7 @@ public class MainActivity extends Activity {
                     return;
                 }
                 try {
-                    GetGoogleIdOption opt = new GetGoogleIdOption.Builder()
-                            .setServerClientId(BuildConfig.GOOGLE_CLIENT_ID)
-                            .setFilterByAuthorizedAccounts(false)
-                            .setAutoSelectEnabled(false)
+                    GetSignInWithGoogleOption opt = new GetSignInWithGoogleOption.Builder(BuildConfig.GOOGLE_CLIENT_ID)
                             .build();
                     GetCredentialRequest req = new GetCredentialRequest.Builder().addCredentialOption(opt).build();
                     CredentialManager cm = CredentialManager.create(MainActivity.this);
@@ -401,10 +433,9 @@ public class MainActivity extends Activity {
                             }
                         }
                         @Override public void onError(GetCredentialException e) {
-                            // No account chosen / none on the phone is a normal cancel, not an error report.
-                            boolean cancel = e instanceof NoCredentialException || String.valueOf(e.getType()).contains("CANCEL");
-                            if (!cancel) report(e);
-                            js("window.onGoogleError && window.onGoogleError('" + (cancel ? "canceled" : "failed") + "')");
+                            String code = googleErrorCode(e);
+                            if ("failed".equals(code) || "misconfigured".equals(code)) report(e);
+                            js("window.onGoogleError && window.onGoogleError(" + org.json.JSONObject.quote(code) + ")");
                         }
                     };
                     cm.getCredentialAsync(MainActivity.this, req, null, exec, cb);

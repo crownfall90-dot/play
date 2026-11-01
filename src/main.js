@@ -1,0 +1,45 @@
+// Everything game.html takes from the modules. Grows step by step as code moves out of game.html.
+import {rng, hash} from './engine/rng.js';
+import {TYPES, normEdge, rareName, deckList, isRareTile} from './engine/tiles.js';
+import * as board from './engine/board.js';
+import * as scoring from './engine/scoring.js';
+import * as bots from './engine/bots.js';
+import {createSound} from './audio/sound.js';
+import {walletSig, loadWallet, storeWallet} from './state/wallet.js';
+import * as progress from './state/progress.js';
+import * as catalog from './state/catalog.js';
+import * as config from './state/config.js';
+import {createArt} from './render/art.js';
+import {createFirebase} from './net/firebase.js';
+import * as friends from './net/friends.js';
+import * as presence from './net/presence.js';
+import * as rooms from './net/rooms.js';
+import * as matchmaking from './net/matchmaking.js';
+import * as web from './app/web.js';
+import * as update from './app/update.js';
+import * as google from './account/google.js';
+import * as sync from './account/sync.js';
+import * as auth from './account/auth.js';
+import * as shop from './ui/shop.js';
+import * as progressUi from './ui/progress.js';
+import * as owner from './ui/owner.js';
+import * as feedback from './ui/feedback.js';
+import * as hud from './ui/hud.js';
+import * as results from './ui/results.js';
+import * as stateGame from './game/state.js';
+import * as camera from './game/camera.js';
+import * as world from './game/world.js';
+import * as turns from './game/turns.js';
+import * as timers from './game/timers.js';
+import * as tutorial from './game/tutorial.js';
+
+export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTile, board, scoring, bots};
+
+export const audio = {createSound};
+export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config};
+export const render = {createArt};
+export const net = {createFirebase, friends, presence, rooms, matchmaking};
+export const app = {web, update};
+export const account = {google, sync, auth};
+export const ui = {shop, progress: progressUi, owner, feedback, hud, results};
+export const game = {...stateGame, camera, world, turns, timers, tutorial};

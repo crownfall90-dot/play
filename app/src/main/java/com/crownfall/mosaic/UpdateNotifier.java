@@ -47,11 +47,10 @@ public class UpdateNotifier extends JobService {
      * about a version it has not installed yet gets no further update notifications (pushes go to a topic, so the
      * phone itself decides): they start again once the game is updated to at least that version.
      */
-    static void announce(Context c, int code, String version, String notes) {
+    static synchronized void announce(Context c, int code, String version, String notes) {
         int notified = prefs(c).getInt("notified", 0);
         if (!prefs(c).getBoolean("notify", true) || notified >= code || notified > BuildConfig.VERSION_CODE) return;
-        show(c, version, notes);
-        prefs(c).edit().putInt("notified", code).apply();
+        if (show(c, version, notes)) prefs(c).edit().putInt("notified", code).apply();
     }
 
     @Override
@@ -69,15 +68,22 @@ public class UpdateNotifier extends JobService {
         return true;
     }
 
-    static void show(Context c, String version, String notes) {
+    static boolean show(Context c, String version, String notes) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return false;
+        if (Build.VERSION.SDK_INT >= 24 && !nm.areNotificationsEnabled()) return false;
+        if (Build.VERSION.SDK_INT >= 33 && c.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS)
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
         if (Build.VERSION.SDK_INT >= 26) {
             nm.createNotificationChannel(new NotificationChannel(CHANNEL, "Обновления игры", NotificationManager.IMPORTANCE_DEFAULT));
+            NotificationChannel channel = nm.getNotificationChannel(CHANNEL);
+            if (channel != null && channel.getImportance() == NotificationManager.IMPORTANCE_NONE) return false;
         }
         PendingIntent open = PendingIntent.getActivity(c, 0, new Intent(c, MainActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP), PendingIntent.FLAG_IMMUTABLE);
         String text = notes == null || notes.isEmpty() ? "Откройте игру, чтобы обновиться" : notes;
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, CHANNEL) : new Notification.Builder(c);
+        try {
         nm.notify(1, b.setSmallIcon(R.drawable.ic_stat_update)
                 .setContentTitle("Вышло обновление Puzzlegrad" + (version == null || version.isEmpty() ? "" : " " + version))
                 .setContentText(text)
@@ -85,6 +91,8 @@ public class UpdateNotifier extends JobService {
                 .setContentIntent(open)
                 .setAutoCancel(true)
                 .build());
+        return true; // Submitted to Android, not proof of delivery or visibility.
+        } catch (SecurityException denied) { return false; }
     }
 
     /** An announcement from the game's owner: its own channel, a new notification each time. */

@@ -7,3 +7,13 @@ local.properties
 *.apk
 *.aab
 __pycache__/
+node_modules/
+# secrets and signing material never go into the repository (the new key is only stored encrypted: app/signing/*.enc)
+*.keystore
+*.jks
+*.p12
+*.pem
+*.key
+.env
+.env.*
+service-account*.json

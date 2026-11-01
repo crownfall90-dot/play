@@ -1,0 +1,71 @@
+// Unit tests for extracted net modules: src/net/presence.js and src/net/friends.js (E-1.5)
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+
+test('net/presence: formatPresenceRecord, filterActivePresence, getPresenceStatus', async () => {
+  const {formatPresenceRecord, filterActivePresence, getPresenceStatus, STATE_TEXT} = await import('../src/net/presence.js');
+
+  assert.equal(getPresenceStatus('search'), 'ищет соперников');
+  assert.equal(getPresenceStatus('online'), 'играет онлайн');
+  assert.equal(getPresenceStatus('unknown'), 'не в сети');
+
+  // Payload formatting
+  const record = formatPresenceRecord({
+    name: 'ОченьДлинныйНикнейм',
+    state: 'menu',
+    registered: true,
+    dev: {p: 'android', v: '1.0.245'},
+    retention: {fs: '2026-11-01', d1: 1}
+  });
+
+  assert.equal(record.n, 'ОченьДлинный'); // sliced to 12 chars
+  assert.equal(record.s, 'menu');
+  assert.equal(record.r, 1);
+  assert.equal(record.p, 'android');
+  assert.equal(record.fs, '2026-11-01');
+  assert.deepEqual(record.t, {'.sv': 'timestamp'});
+
+  // Active presence filtering
+  const raw = {
+    u1: {n: 'Игрок 1', s: 'menu', t: 1000},
+    u2: {n: 'Игрок 2', s: 'off', t: 1100}, // offline
+    u3: {n: 'Игрок 3', s: 'online', t: 1200},
+    u4: {s: 'menu', t: 1300} // no name
+  };
+
+  const active = filterActivePresence(raw, 'u1');
+  assert.equal(active.length, 2);
+  assert.equal(active[0].uid, 'u1', 'places myUid first');
+  assert.equal(active[1].uid, 'u3');
+});
+
+test('net/friends: cleanFriendCode, formatInvitePayload, formatFriendRequestPayload, renderFriendRow', async () => {
+  const {cleanFriendCode, formatInvitePayload, formatFriendRequestPayload, renderFriendRow} = await import('../src/net/friends.js');
+
+  // Code cleaning
+  assert.equal(cleanFriendCode('ab-12_cd'), 'AB12CD');
+  assert.equal(cleanFriendCode('toolongcode123'), 'TOOLON');
+
+  // Invite payload
+  const invite = formatInvitePayload('uid-me', 'Игрок', 'ROOM42', 1700000000);
+  assert.equal(invite.k, 'r');
+  assert.equal(invite.u, 'uid-me');
+  assert.equal(invite.n, 'Игрок');
+  assert.equal(invite.code, 'ROOM42');
+  assert.equal(invite.t, 1700000000);
+
+  // Friend request payload
+  const req = formatFriendRequestPayload('uid-me', 'Игрок', 'XYZ123', 1700000000);
+  assert.equal(req.k, 'f');
+  assert.equal(req.v, 'XYZ123');
+
+  // Friend row markup
+  const rowHtml = renderFriendRow({n: 'Маша', on: true, c: '#4c8dff'}, '<button>Позвать</button>', 'в меню');
+  assert.ok(rowHtml.includes('Маша'));
+  assert.ok(rowHtml.includes('class="lead frow on"'));
+  assert.ok(rowHtml.includes('--c:#4c8dff'));
+  assert.ok(rowHtml.includes('М'));
+  assert.ok(rowHtml.includes('<button>Позвать</button>'));
+  assert.ok(rowHtml.includes('в меню'));
+});

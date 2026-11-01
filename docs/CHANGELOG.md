@@ -1055,3 +1055,719 @@
 **В коде:**
 - Надёжная ручная проверка обновлений (GitHub-версия)
 
+## 1.0.207 — 2026-10-25
+
+**Игрокам:**
+- Вход через Google: сохраните профиль и заходите на новом телефоне в один тап кнопкой «Продолжить с Google». Почта с паролем тоже работает
+
+**В коде:**
+- Fix Credential Manager call signature (context first)
+- Sign in with Google (native Credential Manager in the app, GIS button on the web)
+- Журнал версий: 1.0.205
+
+## 1.0.208 — 2026-10-25
+
+**Игрокам:**
+- Вход через Google включён: сохраните профиль или заходите на новом телефоне в один тап кнопкой «Продолжить с Google» (в настройках профиля). Почта с паролем тоже работает
+- Цветов игрока теперь 7 — убрали бирюзовый
+- При создании профиля вводится только никнейм, почта и пароль: цвет выбирается перед партией
+
+**В коде:**
+- Seven player colours; profile creation asks only for a nickname (colour is picked before a game)
+- Enable Google sign-in: embed the web OAuth client id, document the SHA-1 setup
+
+## 1.0.209 — 2026-10-29
+
+**Игрокам:**
+- Вход через Google включён: сохраните профиль или заходите на новом телефоне в один тап кнопкой «Продолжить с Google» (в настройках профиля). Почта с паролем тоже работает
+- Цветов игрока теперь 7 — убрали бирюзовый
+- При создании профиля вводится только никнейм, почта и пароль: цвет выбирается перед партией
+- Завершённая партия больше не сохраняется как активная; добавлена защита повторного завершения и запоздалого досчёта.
+- Уменьшены визуальные эффекты при восстановлении ходов.
+- Карты без допустимого места пропускаются без лишнего уведомления.
+- Исправлены повторные события и окна подтверждения.
+
+**В коде:**
+- fix: prepare lifecycle corrections for main APK
+- ci: prepare production lifecycle candidate without publishing
+
+## 1.0.210 — 2026-10-29
+
+**Игрокам:**
+- Исправлена отметка об уведомлении: если Android запрещает уведомления приложения или канал обновлений отключён, версия не считается уведомлённой.
+- Добавлена защита от одновременной обработки уведомлений об обновлении.
+
+**В коде:**
+- release: authorize verified GitHub APK 1.0.210
+- fix: retain update notification eligibility when Android blocks display
+- ci: prepare guarded notification fix and offline checks
+- fix: harden lifecycle replay and confirmation flow
+- fix: guard terminal lifecycle and duplicate events in staging
+- docs: preserve project context and development requirements
+- Implement isolated staging updater with APK identity and signing checks
+- Implement isolated staging updater with APK identity and signing checks
+- Build second persistently signed staging update for upgrade test
+- Compute staging signer digest from PEM certificate instead of text labels
+- Diagnose staging certificate comparison and report CI status in issue
+- Finalize explicit persistent staging debug signing configuration
+- Use persistent secret-backed signing for staging APKs
+- Add isolated offline staging APK workflow
+
+## 1.0.211 — 2026-10-29
+
+**Игрокам:**
+- Технический выпуск: исправлены ошибки компиляции экспериментального аккаунтного модуля Android.
+- Добавлены регрессионные проверки существующих точек входа Google и сохранения выбранного цвета.
+- Новый интерфейс аккаунта и синхронизация цвета между устройствами в этот выпуск не входят.
+
+**В коде:**
+- release: verified technical update 1.0.211
+- docs: record actual account regression and offline build results
+- fix: correct credential callbacks and verify existing account integration
+- docs: record account source excerpts and offline check results
+- ci: inspect account integration anchors and compile current branch
+- feat: connect account identity and color picker to game UI
+- feat: add Google account identity and persistent player color
+- feat: add FCM subscription diagnostics and verified context
+
+## 1.0.212 — 2026-10-29
+
+**Игрокам:**
+- Подключена локальная диагностика подписки и отписки для уведомлений об обновлениях и новостей.
+- Запоздалые ответы не перезаписывают диагностический результат более новой операции; токены и тексты сообщений не сохраняются.
+- Новый экран диагностики, изменения Google-входа и синхронизация цвета в этот выпуск не входят.
+
+**В коде:**
+- release: verified FCM diagnostics update 1.0.212
+- docs: record actual account regression and offline build results
+- feat: connect push diagnostics with behavioral regression coverage
+
+## 1.0.213 — 2026-10-29
+
+**Игрокам:**
+- Исправлено отображение окна подтверждения выхода: HTML-теги больше не показываются вместо оформления; пояснение отделено от заголовка.
+- Сохранены безопасный вывод текста и защита от повторного выполнения подтверждения.
+
+**В коде:**
+- build: signed APK 1.0.213 candidate for confirmation layout fix
+- fix: render legacy confirmation explanation as safe separate text
+- ci: apply and verify safe confirmation text layout fix
+
+## 1.0.214 — 2026-10-30
+
+**Игрокам:**
+- Вход через Google на Android стал надёжнее: кнопка больше не зависает, при отмене или ошибке игра понятно объясняет, что случилось
+- В магазине появилось поле для промокодов
+- Если на сервере идут технические работы, игра сообщит об этом
+- В полях ввода снова работает долгое нажатие: можно вставить код друга, почту или пароль
+
+**В коде:**
+- Выпуск: Google-вход, промокоды, техработы, безопасность и тесты детерминизма
+- docs: record actual account regression and offline build results
+- test(golden): determinism contract for TASK-008; founder panel opens real workflows
+- docs: record actual account regression and offline build results
+- fix(security): admin-only Firebase rules, safe maintenance text, version codes from tags, encrypted backups
+- build(gradle): add google maven central mirror to pluginManagement
+- docs: record actual account regression and offline build results
+- feat(founder): add maintenance killswitch, promo codes engine, live error reporting, and RTDB rules
+- docs: record actual account regression and offline build results
+- feat(staging): add closed staging web with tester PIN, watermark, and direct APK download
+- docs: record actual account regression and offline build results
+- fix(security): apply anti-cheat wallet checksum and devtools protection
+- feat(infra): add founder command center, promote workflow, nightly backups and update docs
+- docs: record actual account regression and offline build results
+- feat(auth): add duplicate token protection, request-id tracking and dialog guards
+- docs(coordination): record architectural decision to migrate from monolith to Vite/npm modules
+- docs(coordination): update task board with verified CI results for TASK-001
+- docs: record actual account regression and offline build results
+- fix(google-auth): use explicit native Google sign-in and surface recoverable errors
+- docs(coordination): add CLAUDE.md and HANDOFF.md for multi-agent workflow
+- ci: apply and verify explicit Android Google sign-in fix
+- release: publish verified APK 1.0.213 without rebuilding
+
+## 1.0.215 — 2026-10-30
+
+**Игрокам:**
+- Вход через Google исправлен: если почта уже зарегистрирована с паролем, игра попросит один раз войти по почте и подключит Google к профилю
+- Новый Google-аккаунт сразу становится вашим профилем: золото и прогресс сохраняются, остаётся придумать никнейм
+
+**В коде:**
+- Вход через Google: без пустой сессии, регистрация нового аккаунта с никнеймом
+- fix(auth): Google sign-in never keeps an empty session; new Google accounts register with a nickname
+- Журнал версий: 1.0.214
+- docs(changelog): 1.0.214, clear release notes
+
+## 1.0.216 — 2026-10-30
+
+**Игрокам:**
+- После окончания партии возврат в игру из другого приложения больше не выкидывает из лобби, итогов или друзей в главное меню
+- Игроки с бирюзовым цветом, который убрали из палитры, получают цвет из новой палитры
+
+**В коде:**
+- Игровая логика в src/engine (TASK-008-2): поле, подсчёт очков, боты
+- docs: record actual account regression and offline build results
+- refactor(engine): bot choices to src/engine/bots.js; TASK-008-2 complete
+- refactor(engine): scoring to src/engine/scoring.js; parse test and fail-fast golden harness
+- refactor(engine): board rules to src/engine/board.js (TASK-008-2)
+- Vite-сборка модулей (008-0), вынос rng и типов карт (008-2), исправления после аудита, журнал 1.0.215
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- refactor(engine): move card types and stack composition to src/engine/tiles.js (TASK-008-2)
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- feat(build): Vite bundles src/ modules into the page (TASK-008-0); first module engine/rng
+- docs: record actual account regression and offline build results
+
+## 1.0.217 — 2026-10-30
+
+**Игрокам:**
+- Золото больше не может сброситься до 100 после возврата на предыдущую версию игры
+
+**В коде:**
+- Кошелёк: несовпадение подписи не сбрасывает золото
+- docs: record actual account regression and offline build results
+- fix(wallet): a checksum mismatch is reported, never resets the gold
+- Звук и кошелёк в модулях (TASK-008-3)
+- docs: record actual account regression and offline build results
+- refactor(state): wallet storage to src/state/wallet.js (TASK-008-3)
+- refactor(audio): synthesised effects and music to src/audio/sound.js (TASK-008-3)
+- Журнал версий: 1.0.216
+- docs(changelog): 1.0.216, clear release notes
+
+## 1.0.218 — 2026-10-30
+
+**Игрокам:**
+- Если вход через Google временно недоступен, игра понятно сообщает об этом и предлагает войти по почте
+- Ежедневные задания стали разнообразнее: раньше задание «Достройте 3 города» выпадало каждый день
+- Вход через Google в приложении работает
+- Одна кнопка «Войти или создать профиль» вместо двух: новая почта или новый Google-аккаунт сразу становятся профилем, золото и прогресс сохраняются
+- Если никнейм уже придуман, при регистрации он остаётся; иначе поле никнейма пустое
+- Исправлены непонятные символы вместо имени при входе через Google
+- В веб-версии кнопка Google срабатывает с одного нажатия
+
+**В коде:**
+- Одна кнопка входа и регистрации, Google в вебе в один тап, никнейм сохраняется
+- docs: record actual account regression and offline build results
+- feat(auth): one button to sign in or register; Google on the web in one tap; nickname kept
+- google-services.json с Android-клиентом OAuth
+- build(firebase): google-services.json with the Android OAuth client for the release signing key
+- docs: record actual account regression and offline build results
+- Прогресс в модуле и исправление заданий дня; тест моста с Android (TASK-008-3)
+- Merge remote dev
+- test(bridge): contract between the Android bridge and the game
+- docs: record actual account regression and offline build results
+- refactor(state): progress rules to src/state/progress.js; fix daily quests always including «3 cities»
+- Google-вход: понятная ошибка, когда подпись приложения не зарегистрирована
+- docs: record actual account regression and offline build results
+- fix(auth): name the Google sign-in setup error instead of a generic failure
+- Журнал версий: 1.0.217
+- docs(changelog): 1.0.217, clear release notes
+
+## 1.0.219 — 2026-10-30
+
+**Игрокам:**
+- Исправлено: после входа через Google не запускалась новая партия (в том числе с ботами)
+
+**В коде:**
+- Ссылки на админ-панель сайта из панели владельца
+- docs(release-notes): owner panel changes stay out of the player-facing notes
+- feat(owner): owner panel links to the site admin pages; admin pages published with the web build
+- Стили и рисование плиток в отдельных модулях (TASK-008-4)
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- refactor(render): tile and sprite art to src/render/art.js (TASK-008-4)
+- refactor(ui): styles to src/ui/styles.css (TASK-008-4)
+- Исправлено: после входа через Google не запускалась новая партия
+- docs: record actual account regression and offline build results
+- fix(auth): Google sign-in removed the game's results board, so no new game could start
+- Журнал версий: 1.0.218
+- docs(changelog): 1.0.218, clear release notes
+
+## 1.0.220 — 2026-10-30
+
+**Игрокам:**
+- Промокоды из новых акций теперь активируются (раньше игра не могла их проверить)
+- Если на сервере идут технические работы, экран об этом сам исчезает, когда они заканчиваются
+
+**В коде:**
+- Каталог магазина в модуле (TASK-008-4)
+- docs: record actual account regression and offline build results
+- refactor(state): shop catalogue (figures, locations, chest) to src/state/catalog.js
+- Админ-панель: техработы, промокоды, PIN и отзывы по-настоящему
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- feat(owner): feedback inside the founder panel (one page, one sign-in)
+- docs: record actual account regression and offline build results
+- fix(owner): maintenance, promo codes, tester PIN and live stats actually work
+- Журнал версий: 1.0.219
+- docs(changelog): 1.0.219, clear release notes
+
+## 1.0.221 — 2026-10-31
+
+**Игрокам:**
+- Внутренние улучшения: игра теперь собирается из отдельных частей, это подготовка к новым возможностям. Для игры ничего не меняется
+
+**В коде:**
+- Заметки к выпуску 1.0.221
+- docs(release-notes): 1.0.221 notes
+- docs(handoff): owner decisions: no paid Firebase tier; OAuth origin added
+- Админ-панель: до входа виден только вход
+- docs: record actual account regression and offline build results
+- fix(owner): founder panel is only the sign-in card until an admin has signed in
+- Админ-панель помещается на телефоне
+- docs: record actual account regression and offline build results
+- fix(owner): founder panel fits a phone (cards shrink, buttons wrap, one column, hidden stays hidden)
+- Настройки партии, палитра и режимы в модуле (TASK-008-4)
+- docs: record actual account regression and offline build results
+- refactor(state): seats, palette, modes, rules, settings rows and streak gold to src/state/config.js (TASK-008-4)
+- Бэкап базы: токен сервис-аккаунта в заголовке Authorization
+- fix(backup): service-account token goes in the Authorization header (?auth= answered 401)
+- Журнал версий: 1.0.220
+- docs(changelog): 1.0.220, clear release notes
+
+## 1.0.222 — 2026-10-31
+
+**Игрокам:**
+- В приложении долгое нажатие на надписи больше не выделяет текст; поля ввода, коды друга и комнаты по-прежнему можно выделять и копировать
+- В главном меню подпись «С друзьями» не разрывается на узких экранах
+- На узких экранах первая клетка поля больше не прячется за кнопками масштаба
+- Новые реки и озёра: река течёт живой лентой с неровными песчаными берегами, бликами и глубиной посередине; озёра круглые, с бирюзовым мелководьем, пеной у берега и плавными устьями, а река входит в озеро без уступов на стыке карт
+- Исток реки выходит к краю карты ровно по центру и стыкуется с соседней рекой без излома
+- Переключение графики «Красивая/Экономная» сразу перерисовывает деревья на уже выложенных картах — новую партию начинать не нужно
+
+**В коде:**
+- Живые реки, круглые озёра, смена графики без новой партии (фаза 4.2, 4.3)
+- docs: record actual account regression and offline build results
+- feat(render): живые реки и круглые озёра
+- feat(render): реки ровно входят в озёра, смена графики без новой партии
+- Визуальные правки: выделение текста, меню, стартовый масштаб (фаза 4)
+- docs: record actual account regression and offline build results
+- Merge remote dev
+- fix(ui): starting zoom by screen width keeps the first slots clear of the zoom buttons (roadmap 4.1)
+- docs: record actual account regression and offline build results
+- feat(ui): no text selection by long press in the app (inputs, links, codes stay selectable); menu label does not break
+- Журнал версий: 1.0.221
+- docs(changelog): 1.0.221, clear release notes
+
+## 1.0.223 — 2026-10-31
+
+**Игрокам:**
+- Подсказки в партии: на вашем ходу игра подсвечивает лучшее место для карты и пишет, сколько очков даст объект и сколько краёв осталось закрыть («Продолжит ваш город: достроите — минимум +8 очков, осталось закрыть 1 край»). При выборе фишки рядом с каждым вариантом видно, сколько он принесёт. Лампочка справа от поля сразу ставит карту на лучшее место и поворачивает её
+- В настройках «Подсказки»: «Всегда», «По кнопке» (только лампочка) или «Выкл» — для опытных игроков. Работают в играх с ботами и на одном телефоне
+- Кнопка вида поля переключает только 3D и 2D — режим «Низко» убран
+- iPhone (веб-версия): исправлен вход через Google — теперь он открывает страницу Google и возвращает в игру уже с профилем
+- iPhone (веб-версия): интерфейс стал компактнее — того же размера, что в приложении на Android
+- Обновлён экран партии: компактные плашки игроков, поле плавно уходит под верхнюю и нижнюю панели без резких краёв, больше места для игры
+- Камера мягко подводит к нужной клетке, а не прыгает в центр, и клетки не прячутся под кнопками справа
+- Внизу появилась панель навигации: Главная, Задания, Друзья, Магазин и Настройки — в одно касание из любого раздела
+
+**В коде:**
+- Подсказки-тренер, экран партии без стыков, нижняя навигация, вход Google и размер на iPhone
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- refactor(net): сессия и REST Firebase в src/net/firebase.js (008-5); устойчивый тест смены графики
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(ui): нижняя панель навигации по основным разделам
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(ui): экран партии без стыков, компактные плашки игроков; честный минимум очков в подсказках
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(game): подсказки с очками и что достроить; настройка «Всегда / По кнопке / Выкл»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- fix(web): вход через Google на iPhone переходом на страницу Google, компактный интерфейс на iPhone
+- docs: record actual account regression and offline build results
+- feat(game): подсказка лучшего хода, вид поля только 3D и 2D
+- Журнал версий: 1.0.222
+- docs(changelog): версия 1.0.222, заметки к выпуску очищены
+
+## 1.0.224 — 2026-10-31
+
+**Игрокам:**
+- На главной слева сверху — плашка профиля: никнейм, уровень с полоской опыта и золото. Нажатие открывает профиль, а оттуда — «Настройки» и «Как играть». Нижняя панель: Главная · Профиль · Друзья · Магазин
+
+**В коде:**
+- Плашка профиля на главной, настройки и «Как играть» в профиле
+- docs: record actual account regression and offline build results
+- feat(ui): плашка профиля на главной, настройки и правила в профиле
+- Журнал версий: 1.0.223
+- docs(changelog): версия 1.0.223, заметки к выпуску очищены
+
+## 1.0.225 — 2026-10-31
+
+**Игрокам:**
+- «Как играть» и «Настройки» — на главной справа сверху; магазин — в нижней панели, там же красная точка, когда ждёт ежедневный подарок
+- Онлайн: перед поиском соперников и входом в комнату игра проверяет связь с сервером и честно говорит, если её нет, вместо долгого ожидания
+- Если в онлайн-партии пропал интернет, над полем видно «Нет связи — переподключаемся…», а через 30 секунд — «Повторить / В меню». Партия не теряется: ходы подтянутся сами
+- В профиле новая вкладка «История»: последние партии с результатом и соперниками, игроков из онлайн-партий можно добавить в друзья
+- При создании никнейма сразу выбирается цвет игрока
+- В магазине появились рамки для аватара: золото, лес, море, королевская и пламя
+- Быстрая игра: вы попадаете в комнату, где осталось меньше всего свободных мест — сначала туда, где не хватает одного игрока, потом двух, — с любым режимом и числом игроков
+- В окне «Играть онлайн» кнопка «Пригласить друзей онлайн»: поиск начинается сразу, рядом список друзей в сети
+- Комната с друзьями: создатель может включить «Игра на кубки» (не больше 5 таких партий в день)
+- Новый опыт за партию: за участие, за место и за очки, в онлайне в полтора раза больше; если выложено меньше 6 карт, опыта нет
+- Карточка игрока: нажмите на соперника в комнате, в партии или в истории — видно кубки, когда был в сети, и кнопка «Добавить в друзья»
+- Приглашения открывают меню «Поделиться» — выберите мессенджер; в браузере на Android к ссылке добавляется приложение
+- В партии слева крупно фигурка того, чей ход; сообщения соперников — белыми записками под таймером, а не поверх него
+- В магазине появился раздел «Премиум» с пометкой «Скоро»
+
+**В коде:**
+- Связь в онлайне, быстрая игра, приглашения, кубки в комнате, опыт, история, карточка игрока, рамки
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat: быстрая игра в самую полную комнату, приглашение друзей из онлайна, кубки в комнате, новый опыт, карточка игрока, «Поделиться», фигурка хода, премиум «скоро»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat: история партий, цвет при регистрации, рамки аватара, статистика владельца
+- docs: record actual account regression and offline build results
+- feat(net): проверка сервера перед онлайном, состояние связи за столом, переоткрытие потока
+- docs: record actual account regression and offline build results
+- feat(ui): магазин только в нижней панели, точка подарка на её вкладке
+- docs: record actual account regression and offline build results
+- feat(ui): «Как играть» и «Настройки» на главной справа компактной группой
+- Журнал версий: 1.0.224
+- docs(changelog): версия 1.0.224, заметки к выпуску очищены
+
+## 1.0.226 — 2026-10-31
+
+**Игрокам:**
+- Обучение снова проходится до конца: после первого хода можно поставить фишку на достроенный город, а нужная рамка всегда сама оказывается на экране
+- Сообщения об успехе и ошибках (промокод, покупки, друзья и др.) теперь показываются плашкой по центру экрана — с зелёной галочкой или красным знаком, их больше не закрывает нижняя панель
+- Профиль собран в одну карточку: аватар с рамкой, никнейм, почта, уровень, кубки и золото, а кнопка с карандашом открывает редактирование — цвет игрока и никнейм
+- Таймер хода в партии снова виден целиком
+- Комната с друзьями: все видят, идёт игра на кубки или без них, а создатель переключает это одним нажатием
+- Удобное приглашение: кнопка «Пригласить друзей» в комнате и при поиске онлайн-игры — друзья в сети одним списком с кнопкой «Позвать» и отправка ссылки в мессенджер
+
+**В коде:**
+- Обучение, сообщения по центру, профиль одной карточкой, таймер, кубки и приглашения в комнате
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(rooms): кубки видны всем в комнате, окно приглашения друзей в комнате и в онлайн-поиске
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(ui): профиль одной карточкой с редактированием; таймер хода не перекрывается полем
+- docs: record actual account regression and offline build results
+- fix(tutorial): фишка на город первого хода, камера к нужной рамке; сообщения плашкой по центру
+- Журнал версий: 1.0.225
+- docs(changelog): версия 1.0.225, заметки к выпуску очищены
+
+## 1.0.227 — 2026-10-31
+
+**Игрокам:**
+- Игра с друзьями онлайн: красивое окно «Позвать друзей в онлайн-игру» — только друзья, которые сейчас в сети, с отметками «Ждём ответа» и «С вами»; ссылку для онлайн-игры отправлять не нужно
+- «Играть онлайн»: сверху большая кнопка «Быстрая игра» — сразу к первой игре, где ждут игроков; ниже своя игра: число игроков, цвет и режим, кнопки «Пригласить друзей» и «Начать игру»
+
+**В коде:**
+- Быстрая игра, своя игра с приглашением друзей, окно «Позвать друзей в онлайн-игру»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(online): «Быстрая игра» сверху, своя игра ниже с «Пригласить друзей» и «Начать игру»
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat(online): «Создать игру» со своими настройками и «Найти быструю игру» к первой открытой
+- docs: record actual account regression and offline build results
+- feat(online): окно «Позвать друзей в онлайн-игру» — только друзья в сети, без ссылки
+- Журнал версий: 1.0.226
+- docs(changelog): версия 1.0.226, заметки к выпуску очищены
+
+## 1.0.228 — 2026-10-31
+
+**Игрокам:**
+- Онлайн-игра остаётся онлайн-игрой у приглашённых друзей и после возвращения в партию: в шапке «Онлайн» вместо «Комната …», а результат идёт в рейтинг и кубки
+- В окне «Играть онлайн» убрана кнопка «Пригласить друзей»: позвать друзей можно, когда идёт поиск игроков
+- Обучение на маленьких телефонах: подсказка больше не закрывает кнопку «+», и шаг можно пройти
+- В любой партии рядом со счётчиком стопки кнопка «?»: окно «Очки и правила» — сколько очков даёт город, дорога, крепость и мост, что для этого нужно сделать, как работают фишки, и краткие правила игры
+- Телефон меньше греется в партии: вода (водопады, блики озёр, пена) перестала непрерывно перерисовывать поле — она замирает через несколько секунд, пока вы ничего не делаете, оживает при касании или смене хода и стоит на месте, пока вы двигаете поле; таймер хода больше не обновляет экран по четыре раза в секунду
+
+**В коде:**
+- Онлайн-признак, обучение, игроки и логи в панели, «Очки и правила», меньше нагрева
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- perf: вода не перерисовывает поле без дела — телефон меньше греется
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- feat: журнал и список игроков в панели владельца; окно «Очки и правила» в партии
+- docs: record actual account regression and offline build results
+- fix(online,tutorial): онлайн-признак у приглашённых и после возвращения; обучение на маленьких экранах; устойчивые тесты
+- Журнал версий: 1.0.227
+- docs(changelog): версия 1.0.227, заметки к выпуску очищены
+
+## 1.0.229 — 2026-10-31
+
+**Игрокам:**
+- Новое оформление: нижняя панель стала парящей — активный раздел выделен золотой пластиной; у всех разделов тёплое свечение сверху, заголовки с золотой меткой, карточки с мягким объёмом, глянцевые главные кнопки
+- Конец партии: под итогами больше нет кнопок хода и пустой карты, а финал обучения — одна чистая карточка с кнопкой «Играть» вместо двух наложенных окон; лишнее «+0 опыта» убрано
+- Подсказка об установке игры больше не всплывает поверх обучения или партии
+- Скрытая панель владельца внутри игры открывается только аккаунту владельца: обычный игрок, нажавший семь раз на строку версии, больше ничего не увидит
+
+**В коде:**
+- Новое оформление, чистый финал партии и обучения, панель владельца только для админов
+- docs: record actual account regression and offline build results
+- Merge branch 'dev/stage2-account-network-20261029' of https://github.com/crownfall90-dot/play into dev/stage2-account-network-20261029
+- fix(security): панель владельца в игре открывается только админам
+- docs: record actual account regression and offline build results
+- feat(ui): парящая нижняя панель, единое оформление разделов, чистый финал партии и обучения
+- Журнал версий: 1.0.228
+- docs(changelog): версия 1.0.228, заметки к выпуску очищены
+
+## 1.0.230 — 2026-10-31
+
+**Игрокам:**
+- Заголовок раздела («Настройки», «Магазин», «Игра онлайн» и др.) занимает всю ширину, совпадает по цвету с фоном экрана и остаётся наверху при прокрутке; на экране поиска игроков он больше не выделяется тёмной плашкой
+
+**В коде:**
+- Шапка раздела во всю ширину, в цвет фона и закреплена сверху
+- fix(ui): шапка раздела во всю ширину, в цвет фона и закреплена сверху
+- Журнал версий: 1.0.229
+- docs(changelog): версия 1.0.229, заметки к выпуску очищены
+
+## 1.0.231 — 2026-10-31
+
+**Игрокам:**
+- Профиль на нескольких устройствах обновляется быстрее: изменения с другого телефона появляются за секунды, а при сворачивании игры прогресс сохраняется сразу
+- В приглашении по ссылке на Android понятнее кнопка скачивания приложения
+
+**В коде:**
+- feat(sync): живая синхронизация профиля между устройствами (#199)
+- docs: record actual account regression and offline build results
+- feat(sync): живая синхронизация профиля между устройствами, сохранение при сворачивании
+- Журнал версий: 1.0.230
+- docs(changelog): версия 1.0.230, заметки к выпуску очищены
+
+## 1.0.232 — 2026-10-31
+
+**Игрокам:**
+- В любой партии видно, куда соперник собирается поставить карту и как он её поворачивает, ещё до подтверждения хода: по сети, в комнатах, с друзьями и с ботами; карта подсвечена цветом игрока
+- Нижняя панель разделов собрана из пазлов, которые стыкуются друг с другом
+- Шапка раздела в приложении снова всегда наверху экрана и не двигается при прокрутке
+
+**В коде:**
+- feat: карта соперника до хода, панель-пазлы, шапка наверху (#201)
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- feat(net): карта соперника видна в любой партии, в цвете игрока; боты комнаты тоже
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- feat(ui): нижняя панель из пазлов; фикс шапки раздела в приложении
+- docs: record actual account regression and offline build results
+- feat(net): показ карты соперника до подтверждения хода (peek)
+- docs(release): журнал изменений 1.0.231 (#200)
+- docs(release): журнал изменений 1.0.231
+
+## 1.0.233 — 2026-10-31
+
+**Игрокам:**
+- Нижняя панель стала настоящим пазлом: у каждого раздела выступ, входящий в паз соседа, активный раздел золотой
+- Профиль собран заново: карточка с уровнем, кубками и золотом, компактная статистика, три вкладки — «Награды» (задания и достижения вместе), «Рейтинг» и «История» с итогом по партиям
+- Нижняя панель стала цветной: у каждого раздела свой цвет пазла, у открытого — золотой с бликом
+- «Как играть» сделан заново: четыре вкладки — Основы, Очки, Фишки, Ещё — с карточками, шагами хода и примерами карт
+- Главная и настройка партии в одном стиле: режимы «Играть онлайн», «С друзьями», «С ботами» и «Локально» собраны из цветных кусочков пазла, а в настройке партии у каждого режима своя цветная карточка
+- Все разделы приложения в едином стиле: у настроек, магазина, друзей и комнаты — цветная карточка-пазл с иконкой и описанием
+
+**В коде:**
+- feat(ui): единый стиль «Пазл-мозаика», новый профиль и «Как играть» (#203)
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- feat(ui): карточки-пазлы в настройках, магазине, друзьях и комнате — единый стиль
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- feat(ui): единый стиль «Пазл-мозаика» — режимы главной и карточки настройки партии из кусочков пазла
+- docs: record actual account regression and offline build results
+- feat(ui): раздел «Как играть» заново — вкладки Основы/Очки/Фишки/Ещё
+- feat(ui): цветная нижняя панель-пазл с бликом и золотым активным кусочком
+- merge: синхронизация ветки
+- feat(profile): профиль заново — карточка, статистика, вкладки Награды/Рейтинг/История
+- docs: record actual account regression and offline build results
+- feat(ui): нижняя панель — настоящие пазлы с выступами и пазами
+- docs(release): журнал изменений 1.0.232 (#202)
+- docs(release): журнал изменений 1.0.232
+
+## 1.0.234 — 2026-10-31
+
+**Игрокам:**
+- В игре на одном телефоне убрано окно «Передайте телефон»: ход сразу переходит к следующему игроку, кто ходит — видно в строке состояния и на плашках игроков
+
+**В коде:**
+- feat(ui): убрано окно «Передайте телефон» на одном телефоне (#205)
+- docs: record actual account regression and offline build results
+- feat(ui): убрано окно «Передайте телефон» в игре на одном телефоне
+- docs(release): журнал изменений 1.0.233 (#204)
+- docs(release): журнал изменений 1.0.233
+- docs(release): журнал изменений 1.0.233
+
+## 1.0.235 — 2026-10-31
+
+**Игрокам:**
+- В партии кнопка «Очки и правила» стала заметной плашкой слева над полем, а стопка карт — стопкой кусочков пазла с полоской «сколько осталось»; плашки игроков сцеплены выступами
+- Подсказки в настройках по умолчанию теперь «По кнопке»: совет показывается, когда нажмёшь лампочку (у тех, кто уже выбрал свой вариант, ничего не меняется)
+
+**В коде:**
+- feat(ui): партия в стиле пазла и подсказки по умолчанию «По кнопке» (#207)
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- fix(ui): кнопка «Очки и правила» на поле не перехватывается жестами поля
+- docs: record actual account regression and offline build results
+- feat(settings): подсказки по умолчанию «По кнопке»
+- feat(ui): в партии — плашка «Очки и правила», стопка из пазлов, сцепленные плашки игроков
+- docs(release): журнал изменений 1.0.234 (#206)
+- docs(release): журнал изменений 1.0.234
+
+## 1.0.236 — 2026-10-31
+
+**Игрокам:**
+- Партии стали короче: «Быстрая» — 30 карт, около 8 минут; «Классика» — 50 карт, около 15 минут; «Большая» — 100 карт, около 30 минут. Число фишек подогнано под размер партии (4, 6 и 8), на карточках режимов указано примерное время
+- Спорный объект: если на достроенном объекте поровну фишек, очки получает каждый из лидеров — всегда, без отдельной настройки
+- Обновлено окно «Написать разработчику»: карточка-пазл и цветные кусочки для выбора «Баг / Идея / Другое»; все окна получили золотой выступ сверху в стиле игры
+- Боты теперь трёх уровней (в настройках «Сложность ботов»): лёгкие ходят просто, обычные считают очки объектов и берегут фишки, сложные играют острее
+
+**В коде:**
+- feat: партии 30/50/100 карт, уровни ботов, поддержка в стиле игры, документация для агентов (#209)
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- feat(bots,docs): уровни ботов; продуктовая документация для агентов (видение, режимы, удержание, очередь задач)
+- docs: record actual account regression and offline build results
+- merge: синхронизация ветки
+- feat(ui): окно поддержки и все диалоги в стиле пазла
+- docs: record actual account regression and offline build results
+- feat(rules): спорный объект — очки каждому лидеру, без настройки
+- feat(rules): партии короче — Быстрая 30 карт (~8 мин), Классика 50 (~15 мин), Большая 100 (~30 мин)
+- docs(release): журнал изменений 1.0.235 (#208)
+- docs(release): журнал изменений 1.0.235
+
+## 1.0.237 — 2026-10-31
+
+**Игрокам:**
+- Борьба за объект: подсказка говорит, когда карта склеивает ваш объект с чужим (у кого сколько фишек), а в «Как играть» объяснено, как бороться за занятый объект склейкой
+- Онлайн-партии защищены от чужих ходов: ход за игрока принимается только от него самого (или от другого игрока комнаты, если за него ходит бот по таймеру)
+- Подготовка к защищённой версии приложения: если игра попросит переустановить её, следуйте шагам на экране — прогресс сохранится в профиле
+
+**В коде:**
+- Безопасность: защита комнат, смена ключа подписи (фаза 0), порядок в репозитории (#211)
+- docs(signing): оба SHA-1 добавлены в Firebase
+- ci(android): проверка компиляции — варианты github и play
+- chore(repo): официальный README, лицензия «все права защищены», SECURITY, CODEOWNERS, шаблоны Issues, .gitignore для секретов; удалены устаревшие workflows
+- ci(signing): новый ключ подписи (зашифрован)
+- merge: синхронизация ветки
+- feat(security): смена ключа подписи — новый ключ в CI (зашифрован), переключение сборок, окно переустановки в игре, проверка компиляции Android
+- docs: record actual account regression and offline build results
+- feat(security): автор сообщений в онлайн-комнате (netAuth), правила базы, allowBackup=false, повтор пуша в account-verify
+- docs(monolith): план разбора web/game.html на модули (E-1.1…E-1.13)
+- merge: синхронизация ветки
+- docs(audit): аудит надёжности и безопасности 31.10.2026, задачи S-1…S-6
+- docs: record actual account regression and offline build results
+- feat(hints): подсказка при склейке объектов с чужими фишками; правило склейки в «Как играть»
+- docs(release): журнал изменений 1.0.236 (#210)
+- docs(handoff): состояние после 1.0.236
+- docs(release): журнал изменений 1.0.236
+
+## 1.0.238 — 2026-10-31
+
+**Игрокам:**
+- Борьба за объект: подсказка говорит, когда карта склеивает ваш объект с чужим (у кого сколько фишек), а в «Как играть» объяснено, как бороться за занятый объект склейкой
+- Онлайн-партии защищены от чужих ходов: ход за игрока принимается только от него самого (или от другого игрока комнаты, если за него ходит бот по таймеру)
+- Подготовка к защищённой версии приложения: если игра попросит переустановить её, следуйте шагам на экране — прогресс сохранится в профиле
+
+**В коде:**
+- (нет новых слияний)
+
+## 1.0.239 — 2026-10-31
+
+**Игрокам:**
+- Новый загрузочный экран: четыре цветных кусочка пазла слетаются и защёлкиваются, появляется название и тонкая полоска загрузки
+
+**В коде:**
+- Merge pull request #213 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs: record actual account regression and offline build results
+- feat(ui): новый загрузочный экран — кусочки пазла слетаются и защёлкиваются
+- docs(release): журнал изменений 1.0.237–1.0.238 (#212)
+- docs(release): журнал изменений 1.0.237–1.0.238
+
+## 1.0.240 — 2026-10-31
+
+**Игрокам:**
+- Загрузочный экран как сама игра: карты с городом, дорогой, рекой, домиками и деревьями слетаются в одну картинку, на дорогу прыгает фишка, по картам пробегает блик
+- Новая иконка приложения: один большой пазл с игровой картой внутри — город, дорога с фишкой, река, деревья и золотая кромка
+
+**В коде:**
+- Merge pull request #215 from crownfall90-dot/dev/stage2-account-network-20261029
+- feat(release): канал @diarydevelopment по умолчанию для объявлений в Telegram
+- feat(release): объявление об обновлении в Telegram-канале после выпуска
+- docs(product): общий промт агента — всё оставшееся (ключ B, баланс, безопасность, дизайн, монолит, задачи владельца)
+- feat(brand): иконка — один большой пазл с игровой картой
+- docs(product): стартовый промт для агента (AGENT-PROMPT.md)
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- feat(brand): новая иконка приложения — пазл из четырёх игровых карт
+- docs: record actual account regression and offline build results
+- fix(ui): на загрузочном экране нет домов и деревьев на реке
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- feat(ui): загрузочный экран — город, фишка на дороге, блик и свечение
+- docs: record actual account regression and offline build results
+- feat(ui): загрузочный экран с игровыми картами — трава, дорога, река, дома
+- docs(product): план успеха игры и задачи H-1…H-5 для других агентов
+- Merge pull request #214 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.239
+
+## 1.0.241 — 2026-11-01
+
+**Игрокам:**
+- Первые партии против лёгких ботов, потом против выбранных; после партии — крупная кнопка «Ещё партию» и полоска опыта до следующего уровня; после первой победы предложение сохранить прогресс
+- Исправлено: на дорогу или город, достроенные вашими картами вместе со стартовой картой, теперь можно сразу поставить фишку за очки
+
+**В коде:**
+- Merge pull request #217 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(coordination): очередь заданий для агентов-исполнителей и протокол ревью
+- docs: record actual account regression and offline build results
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- fix(engine): стартовая карта не мешает поставить фишку на достроенную свою дорогу
+- docs: record actual account regression and offline build results
+- feat(retention): первые 5 минут — мягкий старт, «Ещё партию», сохранение прогресса, события воронки, вечерний пуш
+- Merge pull request #216 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.240; ручной запуск объявления в Telegram
+
+## 1.0.242 — 2026-11-01
+
+**Игрокам:**
+- Реванш после онлайн-партии: сыграйте снова тем же составом с новой колодой
+- В комнате с друзьями появилась кнопка готовности: создатель начинает игру, когда все готовы
+- Быстрый сбор на следующую партию: жмите «Ещё партию», и игра начнётся за 10 секунд с теми, кто согласился
+- В игре с друзьями на кубки под комнатой отображается пометка «рейтинговая игра»
+- Быстрый онлайн не заставляет долго ждать: если соперник не найден за 10 секунд, игра стартует с ботом-соседом (с честной пометкой)
+- Задания дня на главном экране: сразу видно прогресс и награду, которая вас ждёт
+- «Заморозка серии»: пропуск одного дня в неделю больше не сбрасывает серию ежедневных наград
+- Недельные цели и Большой сундук: выполняйте цели в течение недели и открывайте сундук с золотом
+- Рейтинг среди друзей: смотрите кубки друзей во вкладке «Рейтинг»
+
+**В коде:**
+- Merge pull request #218 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs: record actual account regression and offline build results
+- feat(retention): причины возвращаться — плашка заданий R-5, заморозка серии R-12, недельные цели R-7, рейтинг друзей R-8 и сезоны R-6
+- docs: record actual account regression and offline build results
+- feat(net): боты-«соседи» в онлайн-поиске H-5, пометка «оценка» D1/D7 и защита кубков
+- docs(review): вердикт по коммитам G-1, N-5 и следующий промт (H-5)
+- docs: record actual account regression and offline build results
+- feat(progress): отчёт по силе ботов G-1 и калибровка заданий для 30 карт
+- feat(net): готовность в комнате, таймер 10с следующей партии, пометка рейтинга и Telegram в CI
+- docs(review): вердикт по коммиту a793018 и следующий промт
+- docs(release): заметки — только невыпущенное
+- Merge remote-tracking branch 'origin/dev/stage2-account-network-20261029' into dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.241; роль Claude — ревьюер
+- docs: record actual account regression and offline build results
+- feat(gameplay): сила ботов G-1, реванш онлайна N-5, удержание H-2 в панели основателя
+
+## 1.0.243 — 2026-11-01
+
+**Игрокам:**
+- Конкурс на новое название игры: предложите своё название и получите сразу +100 золота, а автор выбранного варианта получит эксклюзивное оформление профиля
+- Новая удобная форма обратной связи: оценка игры от 1 до 5 звёзд, выбор категории (баг, лаги, идея, другое)
+- Улучшенная диагностика и телеметрия: автоматический сбор данных об устройстве, лагах и просадках кадров для быстрой починки ошибок
+
+**В коде:**
+- Merge pull request #220 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): заметки к релизу сбора оценок и конкурса названий
+- docs: record actual account regression and offline build results
+- feat(feedback): сбор оценок, телеметрия устройств и лагов, конкурс на новое название игры (+100 золота)
+- Merge pull request #219 from crownfall90-dot/dev/stage2-account-network-20261029
+- docs(release): журнал изменений 1.0.242
+

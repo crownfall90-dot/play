@@ -35,13 +35,20 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Prepare signing key
+        env:
+          SIGNING_PASSPHRASE: ${{ secrets.SIGNING_PASSPHRASE || secrets.BACKUP_PASSPHRASE }}
+        run: if [ -f scripts/ci/signing-key.sh ]; then bash scripts/ci/signing-key.sh; fi
       - name: Build APK
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD || secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ env.KEY_PASSWORD || secrets.KEY_PASSWORD }}
         run: |
           ./scripts/wrap-web.sh
-          CODE=$((100 + GITHUB_RUN_NUMBER))
+          # Next version = highest vNNN tag + 1. Several workflows publish releases, so a per-workflow run
+          # counter would repeat or go backwards (Android refuses to install a lower versionCode).
+          LAST=$(git ls-remote --tags origin 'v*' | sed -n 's#.*refs/tags/v\([0-9][0-9]*\)$#\1#p' | sort -n | tail -1)
+          CODE=$(( ${LAST:-100} + 1 ))
           echo "CODE=$CODE" >> "$GITHUB_ENV"
           chmod +x gradlew
           ./gradlew assembleGithubRelease bundlePlayRelease -PversionCode=$CODE --no-daemon
@@ -58,7 +65,7 @@ jobs:
           curl -fsSL "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/latest.json" -o prev.json 2>/dev/null || echo '{}' > prev.json
           python3 -c 'import json; p=json.load(open("prev.json")).get("notes","").strip(); n=open("release-notes.md", encoding="utf-8").read().strip(); print("::warning::release-notes.md is the same as in the previous release - update it") if p and p == n else None'
           # latest.json: what the app reads to find updates (a plain file download has no rate limit).
-          python3 -c 'import json,os,sys; c=int(os.environ["CODE"]); r=os.environ["GITHUB_REPOSITORY"]; json.dump({"code": c, "version": "1.0.%d" % c, "notes": open("release-notes.md", encoding="utf-8").read().strip(), "url": "https://github.com/%s/releases/download/v%d/Puzzlegrad-1.0.%d.apk" % (r, c, c)}, open("latest.json", "w", encoding="utf-8"), ensure_ascii=False)'
+          python3 -c 'import json,os,sys; c=int(os.environ["CODE"]); r=os.environ["GITHUB_REPOSITORY"]; json.dump({"code": c, "version": "1.0.%d" % c, "notes": open("release-notes.md", encoding="utf-8").read().strip(), "url": "https://github.com/%s/releases/download/v%d/Puzzlegrad-1.0.%d.apk" % (r, c, c), "cert": os.environ.get("SIGNING_CERT_SHA256", "")}, open("latest.json", "w", encoding="utf-8"), ensure_ascii=False)'
           # Puzzlegrad.apk: the same file under a fixed name, so releases/latest/download/Puzzlegrad.apk
           # (the link in invites and the web version) always downloads the newest app.
           cp "Puzzlegrad-1.0.$CODE.apk" Puzzlegrad.apk
@@ -72,3 +79,14 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
         if: env.HAS_FCM == 'true'
         run: python3 scripts/fcm-send.py updates-github "$CODE" "1.0.$CODE" release-notes.md
+
+      - name: Announce in Telegram
+        # Optional: runs only when the secrets exist; a Telegram failure never fails the release.
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '@diarydevelopment' }}
+        run: |
+          python3 scripts/telegram-notify.py "1.0.$CODE" release-notes.md \
+            "https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/" \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${CODE}/Puzzlegrad-1.0.${CODE}.apk"
