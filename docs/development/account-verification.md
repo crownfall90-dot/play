@@ -1,158 +1,158 @@
 # Account verification
-Source: 6a27dff96c1bc2307fba758adccd7fa146050e92
+Source: ea14e3aa6144ea119910d06269e6be7e1837ca87
 Tests exit code: 0
 Offline assembleStagingDebug exit code: 0
 No APK publication, FCM send, production Firebase access, main change or signing-key rotation.
 ## tests
 ```text
-/save: gameKey correctly formats online and local IDs
+te/save: gameKey correctly formats online and local IDs
   ---
-  duration_ms: 2.081567
+  duration_ms: 1.787233
   ...
 # Subtest: state/save: markGameFinished and isGameFinished track completed matches
 ok 178 - state/save: markGameFinished and isGameFinished track completed matches
   ---
-  duration_ms: 0.656674
+  duration_ms: 0.543701
   ...
 # Subtest: state/save: saveActiveGame, loadActiveGame, and clearActiveGame handle local state
 ok 179 - state/save: saveActiveGame, loadActiveGame, and clearActiveGame handle local state
   ---
-  duration_ms: 1.490847
+  duration_ms: 1.179483
   ...
 # Subtest: state/save: getLastOnline validates timestamp freshness
 ok 180 - state/save: getLastOnline validates timestamp freshness
   ---
-  duration_ms: 0.419932
+  duration_ms: 0.396868
   ...
 # Subtest: state/save: saveHistoryEntry caps at 50 matches
 ok 181 - state/save: saveHistoryEntry caps at 50 matches
   ---
-  duration_ms: 3.758457
+  duration_ms: 4.341381
   ...
 # Subtest: status module: clean, filter, buy, wear, earned
 ok 182 - status module: clean, filter, buy, wear, earned
   ---
-  duration_ms: 15.544441
+  duration_ms: 20.996524
   ...
 # Subtest: screens: shop statuses and "my items" open without errors, buying puts the status on
 ok 183 - screens: shop statuses and "my items" open without errors, buying puts the status on # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 1.073649
+  duration_ms: 1.072183
   ...
 # Subtest: profile DOM: sign-out / auth action is inside profile card; rating scope buttons exist
 ok 184 - profile DOM: sign-out / auth action is inside profile card; rating scope buttons exist # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 0.228556
+  duration_ms: 0.206304
   ...
 # Subtest: section title bar sticks to the top in the app too
 ok 185 - section title bar sticks to the top in the app too # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.444774
+  duration_ms: 7.21297
   ...
 # Subtest: telegram: message lists changes, escapes HTML, links
 ok 186 - telegram: message lists changes, escapes HTML, links
   ---
-  duration_ms: 98.129589
+  duration_ms: 89.159575
   ...
 # Subtest: telegram: without secrets it skips quietly and never leaks
 ok 187 - telegram: without secrets it skips quietly and never leaks
   ---
-  duration_ms: 85.270473
+  duration_ms: 84.473795
   ...
 # Subtest: tutorial: all steps, from the first card to the win
 ok 188 - tutorial: all steps, from the first card to the win # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.806226
+  duration_ms: 3.099422
   ...
 # Subtest: ui/hud: cityD generates SVG path data for corners and edges
 ok 189 - ui/hud: cityD generates SVG path data for corners and edges
   ---
-  duration_ms: 2.489076
+  duration_ms: 2.305937
   ...
 # Subtest: ui/hud: ownSvg generates data-URI for claimed features
 ok 190 - ui/hud: ownSvg generates data-URI for claimed features
   ---
-  duration_ms: 0.539565
+  duration_ms: 0.553669
   ...
 # Subtest: ui/hud: renderPlayersListHtml renders player elements with turn badges and scores
 ok 191 - ui/hud: renderPlayersListHtml renders player elements with turn badges and scores
   ---
-  duration_ms: 0.718849
+  duration_ms: 0.72643
   ...
 # Subtest: ui/results: winTitle produces appropriate win title
 ok 192 - ui/results: winTitle produces appropriate win title
   ---
-  duration_ms: 0.32257
+  duration_ms: 0.273558
   ...
 # Subtest: ui/results: renderPodiumHtml and renderBreakdownTableHtml format podium and scores
 ok 193 - ui/results: renderPodiumHtml and renderBreakdownTableHtml format podium and scores
   ---
-  duration_ms: 0.620666
+  duration_ms: 1.173913
   ...
 # Subtest: ui/menu: formatGameMenuHtml formats offline pause menu
 ok 194 - ui/menu: formatGameMenuHtml formats offline pause menu
   ---
-  duration_ms: 2.093458
+  duration_ms: 2.007081
   ...
 # Subtest: ui/menu: formatGameMenuHtml formats online game menu with resign & draw
 ok 195 - ui/menu: formatGameMenuHtml formats online game menu with resign & draw
   ---
-  duration_ms: 0.284009
+  duration_ms: 0.247961
   ...
 # Subtest: ui/menu: formatGameMenuHtml formats menu when all humans left and only bots remain
 ok 196 - ui/menu: formatGameMenuHtml formats menu when all humans left and only bots remain
   ---
-  duration_ms: 0.283298
+  duration_ms: 0.245266
   ...
 # Subtest: ui/menu: areAllOpponentsAway checks opponent drop status
 ok 197 - ui/menu: areAllOpponentsAway checks opponent drop status
   ---
-  duration_ms: 0.379647
+  duration_ms: 0.312541
   ...
 # Subtest: ui/feedback: formatFeedbackPayload formats categories, stars, and device diagnostics
 ok 198 - ui/feedback: formatFeedbackPayload formats categories, stars, and device diagnostics
   ---
-  duration_ms: 1.674278
+  duration_ms: 2.379584
   ...
 # Subtest: ui/feedback: renderFeedbackCardHtml renders categories, star rating and hero
 ok 199 - ui/feedback: renderFeedbackCardHtml renders categories, star rating and hero
   ---
-  duration_ms: 0.292795
+  duration_ms: 0.473881
   ...
 # Subtest: ui/owner: devGet and devSet handle native preferences bridge and storage
 ok 200 - ui/owner: devGet and devSet handle native preferences bridge and storage
   ---
-  duration_ms: 0.350613
+  duration_ms: 0.432344
   ...
 # Subtest: ui/owner: formatDevStatus formats workflow run status and dates
 ok 201 - ui/owner: formatDevStatus formats workflow run status and dates
   ---
-  duration_ms: 20.120213
+  duration_ms: 26.98089
   ...
 # Subtest: ui/setup: renderModeCardsHtml renders cards with labels and icons
 ok 202 - ui/setup: renderModeCardsHtml renders cards with labels and icons
   ---
-  duration_ms: 2.161266
+  duration_ms: 2.063626
   ...
 # Subtest: ui/setup: renderRuleRowsHtml filters rules and marks active options
 ok 203 - ui/setup: renderRuleRowsHtml filters rules and marks active options
   ---
-  duration_ms: 0.513917
+  duration_ms: 0.535054
   ...
 # Subtest: ui/shop: renderGiftCard, renderFiguresGrid, renderFramesGrid, renderLocationsGrid
 ok 204 - ui/shop: renderGiftCard, renderFiguresGrid, renderFramesGrid, renderLocationsGrid
   ---
-  duration_ms: 16.418909
+  duration_ms: 19.716006
   ...
 # Subtest: ui/progress: ringSvg, renderMasteryGrid, renderBuildingStats, renderCollectionCard
 ok 205 - ui/progress: ringSvg, renderMasteryGrid, renderBuildingStats, renderCollectionCard
   ---
-  duration_ms: 9.870475
+  duration_ms: 5.617934
   ...
 # Subtest: water edges: every water side has the river mouth, every pair lines up in all turns
 ok 206 - water edges: every water side has the river mouth, every pair lines up in all turns # SKIP playwright is not installed (npm ci)
   ---
-  duration_ms: 2.557123
+  duration_ms: 2.875877
   ...
 1..206
 # tests 206
@@ -162,12 +162,12 @@ ok 206 - water edges: every water side has the river mouth, every pair lines up 
 # cancelled 0
 # skipped 23
 # todo 0
-# duration_ms 3754.196561
+# duration_ms 4218.255137
 
 ```
 ## build
 ```text
 
-BUILD SUCCESSFUL in 1m 28s
+BUILD SUCCESSFUL in 1m 20s
 33 actionable tasks: 33 executed
 ```
