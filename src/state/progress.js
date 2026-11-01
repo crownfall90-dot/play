@@ -69,6 +69,36 @@ export function dailyQuests(day) {
 }
 
 /** Adds experience to prog ({xp, lvl}); returns how many levels were gained. */
+// Mastery stats (R-11)
+export function normalizeStats(st = {}) {
+  const byMode = st.byMode || {};
+  return {
+    games: st.games || 0,
+    wins: st.wins || 0,
+    c: st.c || 0,
+    r: st.r || 0,
+    f: st.f || 0,
+    best: st.best || 0,
+    maxCity: st.maxCity || 0,
+    ogames: st.ogames || 0,
+    owins: st.owins || 0,
+    byMode: {
+      bots: Object.assign({games: 0, wins: 0, best: 0}, byMode.bots),
+      friends: Object.assign({games: 0, wins: 0, best: 0}, byMode.friends),
+      online: Object.assign({games: 0, wins: 0, best: 0}, byMode.online),
+    }
+  };
+}
+
+export function recordGameMode(st, mode, win, score) {
+  const m = mode === 'online' || mode === 'friends' ? mode : 'bots';
+  if (!st.byMode) st.byMode = {};
+  if (!st.byMode[m]) st.byMode[m] = {games: 0, wins: 0, best: 0};
+  st.byMode[m].games++;
+  if (win) st.byMode[m].wins++;
+  st.byMode[m].best = Math.max(st.byMode[m].best || 0, score || 0);
+}
+
 export function addXp(prog, xp) {
   prog.xp += xp; let up = 0;
   while (prog.xp >= xpNeed(prog.lvl)) { prog.xp -= xpNeed(prog.lvl); prog.lvl++; up++; }

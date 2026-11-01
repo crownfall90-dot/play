@@ -29,3 +29,63 @@ export const LOCS = [
 ];
 
 export const CHEST_SVG = '<svg viewBox="0 0 64 56" width="72" height="63" aria-hidden="true"><rect x="6" y="22" width="52" height="30" rx="4" fill="#9a5b2c"/><rect x="6" y="22" width="52" height="7" fill="#7b4521"/><path d="M6 22 Q32 0 58 22 Z" fill="#b36a32"/><rect x="28" y="14" width="8" height="38" fill="#f2b84b"/><rect x="26" y="26" width="12" height="10" rx="2" fill="#ffd36b" stroke="#8a5a12" stroke-width="1.5"/><rect x="6" y="38" width="52" height="3" fill="#f2b84b"/></svg>';
+
+/** Collections (R-9): themed sets of figurines and frames with completion rewards. */
+export const COLLECTIONS = [
+  {
+    id: 'court',
+    name: 'Королевский двор',
+    desc: 'Рыцарь, король, королева и рамка «Королевская»',
+    ic: '👑',
+    figs: ['knight', 'king', 'queen'],
+    frames: ['royal'],
+    reward: 300
+  },
+  {
+    id: 'folk',
+    name: 'Жители королевства',
+    desc: 'Крестьянин, монах, лучник и рамка «Лес»',
+    ic: '🏹',
+    figs: ['peasant', 'monk', 'archer'],
+    frames: ['forest'],
+    reward: 200
+  },
+  {
+    id: 'elements',
+    name: 'Силы стихий',
+    desc: 'Четыре стихии: рамки «Золото», «Лес», «Море» и «Пламя»',
+    ic: '✨',
+    figs: [],
+    frames: ['gold', 'forest', 'sea', 'fire'],
+    reward: 250
+  }
+];
+
+/** Check completion of a collection against wallet {owned: [...], frames: [...], colClaimed: [...]}. */
+export function collectionProgress(col, wallet) {
+  const ownedFigs = wallet && Array.isArray(wallet.owned) ? wallet.owned : ['classic'];
+  const ownedFrames = wallet && Array.isArray(wallet.frames) ? wallet.frames : [];
+  const claimed = wallet && Array.isArray(wallet.colClaimed) ? wallet.colClaimed : [];
+
+  const figTotal = col.figs.length;
+  const frameTotal = col.frames.length;
+  const total = figTotal + frameTotal;
+
+  const figsDone = col.figs.filter(k => ownedFigs.includes(k));
+  const framesDone = col.frames.filter(k => ownedFrames.includes(k) || k === 'none');
+  const done = figsDone.length + framesDone.length;
+
+  return {
+    id: col.id,
+    name: col.name,
+    desc: col.desc,
+    ic: col.ic,
+    reward: col.reward,
+    total,
+    done,
+    isComplete: done >= total,
+    isClaimed: claimed.includes(col.id),
+    figsDone: new Set(figsDone),
+    framesDone: new Set(framesDone),
+  };
+}

@@ -117,7 +117,7 @@
           <div class="profile" id="profile"></div>
           <div class="sgroup prof" id="acct"></div>
           <div class="pstats" id="stats"></div>
-          <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
+          <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="cols" aria-pressed="false">Коллекции</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
           <div class="col" id="ptab"></div>
         </div>
       </section>
@@ -931,6 +931,7 @@ async function dropAt(t) {
   t.el = tileEl(t, true, fast() ? null : .02); world.append(t.el); tiles.set(key(t.x, t.y), t); wallsAround(t); refreshRoadEnds(); markOwn();
   if (!fast()) beep('place');
   if (!fast()) { const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600); }
+  if (!fast()) { t.el.classList.add('puzzle-lock'); setTimeout(() => { if (t.el) t.el.classList.remove('puzzle-lock'); }, 350); }
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
@@ -1036,6 +1037,18 @@ const roadPoints = c => SC.roadPoints(tiles, c);
 async function scoreAfter(t, p, skip) {
   for (const c of SC.completedAround(tiles, meeples, t)) if (!skip || ![...c.ids].some(i => skip.has(i))) await resolveFeature(c, false, p);
 }
+function featureConfetti(tile, color) {
+  if (RM || fast() || (wallet && wallet.gfx === 'low') || !tile || !tile.el) return;
+  const cf = document.createElement('div'); cf.className = 'feat-confetti';
+  for (let i = 0; i < 12; i++) {
+    const s = document.createElement('span');
+    s.style.setProperty('--c', color || '#f2b84b');
+    s.style.setProperty('--dx', (Math.cos(i * Math.PI / 6) * 36).toFixed(1) + 'px');
+    s.style.setProperty('--dy', (Math.sin(i * Math.PI / 6) * 36).toFixed(1) + 'px');
+    cf.append(s);
+  }
+  tile.el.append(cf); setTimeout(() => cf.remove(), 800);
+}
 async function resolveFeature(c, final, placer) {
   const {win, each, helped} = SC.settle(tiles, c, final, players.length, gameRules.tie, placer);
   c.tiles.forEach(x => x.el.classList.add('glow'));
@@ -1044,7 +1057,10 @@ async function resolveFeature(c, final, placer) {
   win.forEach(i => { const m = c.meeples.find(x => x.p === i); floatText(m.t, groupPos(m.t, m.g), '+' + each, players[i].col); });
   win.forEach(i => { players[i].score += each; players[i].stats[c.kind] += each; });
   if (!final) markDone(c, win.map(i => players[i].col));
-  if (!final && !fast()) win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each}); });
+  if (!final && !fast()) {
+    win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each, cityTiles: c.kind === 'c' ? c.tiles.length : 0}); });
+    if (win.length && c.tiles && c.tiles[0]) featureConfetti(c.tiles[0], players[win[0]].col);
+  }
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
   // Whoever finishes an object for somebody else gets 1 point of respect.
@@ -1214,7 +1230,8 @@ async function endGame(reason) {
   const myPlace = meIdx >= 0 ? order.findIndex(x => x.i === meIdx) : -1, won = reason !== 'draw' && myPlace === 0;
   const medal = reason === 'draw' ? '🤝' : myPlace < 0 ? '🏁' : ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][myPlace];
   const rows = order.slice(0, 5).map((p, k) => `<li class="${p.i === meIdx ? 'me' : ''}" style="--c:${p.col};--d:${k * 90}ms"><span class="n">${k + 1}</span><i></i><b>${p.name}</b><span class="v">${p.score}</span></li>`).join('');
-  const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${['#f2b84b', '#ef5350', '#4c8dff', '#3fc27a', '#b06cf0'][k % 5]}"></span>`).join('')}</div>` : '';
+  const myCol = (players[meIdx] && players[meIdx].col) || wallet.color || '#f2b84b';
+  const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${[myCol, '#f2b84b', '#ffffff', myCol, '#ffd75e'][k % 5]}"></span>`).join('')}</div>` : '';
   // After the first win a guest is offered to keep the progress (a profile with sign-in), once.
   const saveCard = won && FB && !fbAuth && PROG.st.wins === 1 && !wallet.saveAsked ? `<button class="ghostbtn savecard" id="saveProg"><b>☁️ Сохранить прогресс</b><small>Войдите, чтобы золото и уровень не пропали при смене телефона</small></button>` : '';
   over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}${xpLine()}${saveCard}<button class="cta wide" id="again2">${net ? 'Реванш' : 'Ещё партию'}</button><button class="ghostbtn" data-go="results">Подробные итоги</button></div>`;
@@ -1408,7 +1425,7 @@ function renderResults(final, gold) {
 /* ---------------- gold, figures, shop ----------------
    Gold lives on this phone only (no accounts yet) and is never sold for money. */
 // The shop catalogue lives in src/state/catalog.js.
-const {FIGS, LOCS, CHEST_SVG, FRAMES} = PG.state.catalog;
+const {FIGS, LOCS, CHEST_SVG, FRAMES, COLLECTIONS, collectionProgress} = PG.state.catalog;
 // The player's own avatar frame: style for an avatar element (empty when none).
 const myRing = () => (FRAMES[wallet.frame] || FRAMES.none).ring;
 const randomFig = () => { const k = Object.keys(FIGS); return k[(Math.random() * k.length) | 0]; };
@@ -2877,11 +2894,10 @@ function showSay(p, i) {
 /* ---------------- progress: level, daily quests, achievements, rating ----------------
    Counted games are the ones that pay gold: you alone against bots, or online. */
 const meCounted = () => { const me = players.findIndex(isMe); return me >= 0 && (!!net || (localHumans() === 1 && !players.every(p => p.human))); };
+const {xpNeed, QUESTS, ACH, WEEKLY_QUESTS, WEEKLY_CHEST_GOLD, weekId, normalizeStats, recordGameMode} = PG.state.progress;
 const PROG = Object.assign({xp: 0, lvl: 1, st: {}, day: '', q: [], ach: {}, cups: 0, up: 0, cupsSeen: 0, inTop10: false, topSeen: false}, wallet.prog);
-PROG.st = Object.assign({games: 0, wins: 0, c: 0, r: 0, f: 0, best: 0, ogames: 0, owins: 0}, PROG.st);
+PROG.st = normalizeStats(PROG.st);
 wallet.prog = PROG;
-// Level, quest and achievement rules live in src/state/progress.js.
-const {xpNeed, QUESTS, ACH, WEEKLY_QUESTS, WEEKLY_CHEST_GOLD, weekId} = PG.state.progress;
 function questsWeekly() {
   const curWeek = (PG.state.progress && PG.state.progress.weekId) ? PG.state.progress.weekId() : 'w1';
   if (PROG.week === curWeek && PROG.wq && PROG.wq.length) return;
@@ -2897,8 +2913,9 @@ function questsToday() {
 function progress(d) {
   questsToday();
   questsWeekly();
+  if (d.cityTiles) PROG.st.maxCity = Math.max(PROG.st.maxCity || 0, d.cityTiles);
   for (const [k, v] of Object.entries(d)) {
-    if (k in PROG.st && k !== 'best') PROG.st[k] += v;
+    if (k in PROG.st && k !== 'best' && k !== 'maxCity' && k !== 'byMode') PROG.st[k] += v;
     PROG.q.forEach(q => { const Q = QUESTS.find(x => x.id === q.id); if (Q && Q.k === k && !q.got) q.n = Math.min(Q.n, q.n + v); });
     if (PROG.wq) {
       PROG.wq.forEach(q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); if (WQ && WQ.k === k && !q.got) q.n = Math.min(WQ.n, q.n + v); });
@@ -2910,6 +2927,8 @@ function progress(d) {
 function gameDone(place, score) {
   const win = place === 0;
   PROG.st.best = Math.max(PROG.st.best, score);
+  const mode = net ? (net.quick ? 'online' : 'friends') : 'bots';
+  recordGameMode(PROG.st, mode, win, score);
   // Funnel markers: the owner's panel and Analytics show where newcomers stop.
   { const n = PROG.st.games + 1; if (n <= 3) track(['first_game_done', 'second_game_done', 'third_game_done'][n - 1], {win: win ? 1 : 0, score}); }
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= ((deckMax <= 30) ? 20 : 30) ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
@@ -2938,7 +2957,8 @@ const rewardReady = () => {
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
   const wqDot = PROG.wq && (PROG.wq.some(q => !q.got && q.n >= (WEEKLY_QUESTS.find(x => x.id === q.id) || {}).n) || (!PROG.wchest && PROG.wq.every(q => q.got)));
   const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
-  return qDot || wqDot || aDot || !!PROG.inTop10;
+  const cDot = typeof COLLECTIONS !== 'undefined' && Array.isArray(COLLECTIONS) && typeof collectionProgress === 'function' ? COLLECTIONS.some(c => { const p = collectionProgress(c, wallet); return p.isComplete && !p.isClaimed; }) : false;
+  return qDot || wqDot || aDot || cDot || !!PROG.inTop10;
 };
 function ptabsDot() {
   questsToday();
@@ -2946,10 +2966,11 @@ function ptabsDot() {
   const qDot = PROG.q.some(q => !q.got && q.n >= QUESTS.find(x => x.id === q.id).n);
   const wqDot = PROG.wq && (PROG.wq.some(q => !q.got && q.n >= (WEEKLY_QUESTS.find(x => x.id === q.id) || {}).n) || (!PROG.wchest && PROG.wq.every(q => q.got)));
   const aDot = ACH.some(a => a.ok(PROG.st, PROG.lvl) && PROG.ach[a.id] !== 'got');
+  const cDot = typeof COLLECTIONS !== 'undefined' && Array.isArray(COLLECTIONS) && typeof collectionProgress === 'function' ? COLLECTIONS.some(c => { const p = collectionProgress(c, wallet); return p.isComplete && !p.isClaimed; }) : false;
   const tDot = !!PROG.inTop10;
   document.querySelectorAll('#ptabs button').forEach(b => {
     const pt = b.dataset.pt;
-    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || wqDot || aDot) : pt === 'top' ? tDot : false);
+    b.classList.toggle('hasdot', pt === 'rewards' ? (qDot || wqDot || aDot) : pt === 'cols' ? cDot : pt === 'top' ? tDot : false);
   });
 }
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
@@ -2992,9 +3013,13 @@ function renderProgress() {
   const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
   $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span></div>`;
   $('#profEdit').onclick = editProfile;
-  const st = PROG.st;
+  const st = PROG.st = normalizeStats(PROG.st);
   const rate = st.games ? Math.round(100 * st.wins / st.games) : 0;
-  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
+  const bm = st.byMode || {};
+  const bRate = bm.bots && bm.bots.games ? Math.round(100 * bm.bots.wins / bm.bots.games) : 0;
+  const fRate = bm.friends && bm.friends.games ? Math.round(100 * bm.friends.wins / bm.friends.games) : 0;
+  const oRate = bm.online && bm.online.games ? Math.round(100 * bm.online.wins / bm.online.games) : 0;
+  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="smastery"><div class="h3 sec">Мастерство по режимам</div><div class="mgrid"><div class="mcard"><span class="mic">🤖</span><div><b>Боты</b><small>${bRate}% (${bm.bots.wins}/${bm.bots.games}) · рек. ${bm.bots.best}</small></div></div><div class="mcard"><span class="mic">👥</span><div><b>Друзья</b><small>${fRate}% (${bm.friends.wins}/${bm.friends.games}) · рек. ${bm.friends.best}</small></div></div><div class="mcard"><span class="mic">🌐</span><div><b>Онлайн</b><small>${oRate}% (${bm.online.wins}/${bm.online.games}) · рек. ${bm.online.best}</small></div></div></div></div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов${st.maxCity ? ` <small>(рекорд: ${st.maxCity} карт)</small>` : ''}</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   ptabsDot();
   const el = $('#ptab');
@@ -3026,8 +3051,28 @@ function renderProgress() {
 
     const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
     el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<p class="qnote">Новые задания — каждый день. Считаются партии против ботов и онлайн</p><div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<p class="qnote">Цели недели сбрасываются каждый понедельник</p><div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
-  } else if (ptab === 'hist') renderHistory(el);
+  } else if (ptab === 'cols') renderCollections(el);
+  else if (ptab === 'hist') renderHistory(el);
   else renderTop();
+}
+function renderCollections(el) {
+  if (!COLLECTIONS || !COLLECTIONS.length) { el.innerHTML = '<p class="shint">Коллекции появятся скоро</p>'; return; }
+  const colRows = COLLECTIONS.map(c => {
+    const p = collectionProgress(c, wallet);
+    const figItems = c.figs.map(k => {
+      const f = FIGS[k] || {name: k};
+      const has = p.figsDone.has(k);
+      return `<span class="col-item${has ? ' has' : ''}"><img src="${figPreview(k)}" alt=""><span>${f.name}</span><i class="cchk">${has ? '✓' : '—'}</i></span>`;
+    }).join('');
+    const frameItems = c.frames.map(k => {
+      const f = FRAMES[k] || {name: k};
+      const has = p.framesDone.has(k);
+      const name = (profileName()[0] || '?').toUpperCase();
+      return `<span class="col-item${has ? ' has' : ''}"><span class="av mini${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${name}</span><span>${f.name}</span><i class="cchk">${has ? '✓' : '—'}</i></span>`;
+    }).join('');
+    return `<div class="col-card${p.isClaimed ? ' got' : p.isComplete ? ' done' : ''}"><div class="col-head"><span class="col-ic">${c.ic}</span><div class="col-info"><b>${c.name}</b><small>${c.desc}</small></div><span class="col-rew"><i class="coin"></i> +${c.reward}</span></div><div class="col-grid">${figItems}${frameItems}</div><div class="col-foot"><div class="xpbar"><i style="width:${Math.min(100, 100 * p.done / p.total)}%"></i></div><small>${p.done} / ${p.total}</small>${p.isClaimed ? '<span class="pill">Собрано</span>' : p.isComplete ? `<button class="chip pri" data-claimcol="${c.id}">Забрать +${c.reward}</button>` : '<span class="pill lock">В процессе</span>'}</div></div>`;
+  }).join('');
+  el.innerHTML = `<div class="h3 sec">Тематические наборы</div><p class="qnote">Соберите полный набор фигурок и рамок из магазина, чтобы получить награду</p>${colRows}`;
 }
 // The last games (kept on this phone, newest first): when, how it went and who played. Saved profiles met online
 // can be added as friends from here.
@@ -3084,11 +3129,20 @@ $('#rtabs').onclick = e => {
 };
 $('#ptabs').onclick = e => { const b = e.target.closest('[data-pt]'); if (!b) return; ptab = b.dataset.pt; if (ptab === 'top' && PROG.inTop10) { PROG.inTop10 = false; PROG.topSeen = true; saveWallet(); progressDot(); } renderProgress(); };
 $('#ptab').addEventListener('click', e => {
-  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]'), wq = e.target.closest('[data-claimwq]'), wch = e.target.closest('[data-claimwchest]');
+  const q = e.target.closest('[data-claimq]'), a = e.target.closest('[data-claima]'), wq = e.target.closest('[data-claimwq]'), wch = e.target.closest('[data-claimwchest]'), cl = e.target.closest('[data-claimcol]');
   if (q) { const it = PROG.q.find(x => x.id === q.dataset.claimq), Q = QUESTS.find(x => x.id === it.id); if (it.got || it.n < Q.n) return; it.got = true; wallet.gold += Q.g; }
   else if (a) { const A = ACH.find(x => x.id === a.dataset.claima); if (PROG.ach[A.id] === 'got' || !A.ok(PROG.st, PROG.lvl)) return; PROG.ach[A.id] = 'got'; wallet.gold += A.g; }
   else if (wq) { const it = (PROG.wq || []).find(x => x.id === wq.dataset.claimwq), WQ = (WEEKLY_QUESTS || []).find(x => x.id === it.id); if (!it || !WQ || it.got || it.n < WQ.n) return; it.got = true; wallet.gold += WQ.g; }
   else if (wch) { if (PROG.wchest || !PROG.wq || !PROG.wq.length || !PROG.wq.every(x => x.got)) return; PROG.wchest = true; wallet.gold += WEEKLY_CHEST_GOLD || 100; toastAny('Большой сундук недели открыт! +100 золота 🎉'); }
+  else if (cl) {
+    const col = (COLLECTIONS || []).find(x => x.id === cl.dataset.claimcol);
+    if (!col) return;
+    const p = collectionProgress(col, wallet);
+    if (!p.isComplete || p.isClaimed) return;
+    wallet.gold += col.reward;
+    wallet.colClaimed = [...(wallet.colClaimed || []), col.id];
+    toastAny(`Коллекция «${col.name}» собрана! +${col.reward} золота 🎉`);
+  }
   else return;
   beep('coin'); saveWallet(); progressDot(); renderProgress(); renderMenuProfile();
 });
@@ -4804,10 +4858,9 @@ if (isApp) {
 }
 /* ---------------- web build: install, back gesture, links ---------------- */
 // Where the web version lives; invites carry this link. Change it here after moving to your own domain.
-const SITE_URL = 'https://crownfall90-dot.github.io/play/';
-const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const isMobile = isIOS || /Android/i.test(navigator.userAgent);
+const {SITE_URL, APK_URL, isStandalone, detectPlatform, linkCode, parseLink} = PG.app.web;
+const standalone = () => isStandalone(navigator, matchMedia);
+const {isIOS, isMobile} = detectPlatform(navigator);
 let installEvt = null;
 if (isWeb) {
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -4849,22 +4902,12 @@ $('#installBtn').onclick = installDialog;
 renderInstall();
 // Invite links: ?room=CODE opens that room, ?friend=CODE shows the "invites you to be friends"
 // card. The same links work in the Android app (it is opened by the link) and in the browser.
-const linkCode = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 function routeLink({room, friend}) {
   if (room && room.length === 5) { track('open_link', {kind: 'room'}); connect(room, false); show('lobby'); }
   else if (friend && friend.length === 6) { track('open_link', {kind: 'friend'}); friendInvite(friend); }
 }
-function parseLink(href) {
-  try {
-    const u = new URL(href);
-    if (u.protocol === 'puzzlegrad:') { const code = linkCode(u.pathname.replace(/^\/+/, '')); return u.hostname === 'room' ? {room: code} : u.hostname === 'friend' ? {friend: code} : null; }
-    return {room: linkCode(u.searchParams.get('room')), friend: linkCode(u.searchParams.get('friend'))};
-  } catch (_) { return null; }
-}
 // The Android shell calls this when the game is opened (or already open) with a link.
 window.onDeepLink = href => { const l = parseLink(href); if (l) bootReady.then(() => setTimeout(() => routeLink(l), 400)); };
-// Every release carries a copy named Puzzlegrad.apk, so this link always downloads the newest version.
-const APK_URL = 'https://github.com/crownfall90-dot/play/releases/latest/download/Puzzlegrad.apk';
 function openLink() {
   const l = parseLink(location.href); if (!l || !(l.room || l.friend)) return;
   try { history.replaceState(history.state, '', location.pathname); } catch (_) {}
@@ -4985,8 +5028,8 @@ window.onUpdateAvailable = (info, manual) => {
 // bots stop, a card shows who has updated, and play goes on when all seat owners are on the new
 // version (they say so when they come back into the room), when someone taps "continue" or after 10 minutes.
 // Phones from before this feature do not know the message and keep playing.
-const UPD_WAIT = 10 * 60 * 1000;
-function appCode() { return isAndroid ? (parseInt(String(AndroidApp.versionName()).split('.').pop(), 10) || 0) : 1e9; } // the web build updates by reloading
+const {UPD_WAIT, appCode: calcAppCode} = PG.app.update;
+const appCode = () => calcAppCode(isAndroid);
 function updHold() { return !!(net && net.upd && !net.upd.done); }
 let lastUpd = null, updTick = 0;
 const updOwners = () => [...new Set(players.filter(p => p.owner && p.human && !p.resigned).map(p => p.owner))];
