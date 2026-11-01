@@ -32,10 +32,11 @@ export function formatFriendRequestPayload(myUid, myName, friendCode = null, tim
 
 /** Generates HTML markup for a single friend row in friends list. */
 export function renderFriendRow(f, actionBtn = '', subText = '') {
+  const st = f.st ? `<em class="fst">${f.st}</em>` : '';
   const col = f.c || (f.on ? '#3fc27a' : '#5b6684');
   const initial = (f.n || '?')[0].toUpperCase();
   return `<li class="lead frow${f.on ? ' on' : ''}">` +
     `<span class="av" style="--c:${col}">${initial}</span>` +
-    `<span class="fwho"><b>${f.n}</b><small>${subText}</small></span>` +
+    `<span class="fwho"><b>${f.n}</b>${st}<small>${subText}</small></span>` +
     `${actionBtn}</li>`;
 }

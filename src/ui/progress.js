@@ -12,17 +12,12 @@ export function ringSvg(frac) {
 
 /** Generates HTML markup for the game modes mastery statistics grid. */
 export function renderMasteryGrid(byMode = {}) {
-  const bRate = byMode.bots && byMode.bots.games ? Math.round(100 * byMode.bots.wins / byMode.bots.games) : 0;
-  const dRate = byMode.duel && byMode.duel.games ? Math.round(100 * byMode.duel.wins / byMode.duel.games) : 0;
-  const fRate = byMode.friends && byMode.friends.games ? Math.round(100 * byMode.friends.wins / byMode.friends.games) : 0;
-  const oRate = byMode.online && byMode.online.games ? Math.round(100 * byMode.online.wins / byMode.online.games) : 0;
-
-  return `<div class="mgrid">` +
-    `<div class="mcard"><span class="mic">🤖</span><div><b>Боты</b><small>${bRate}% (${(byMode.bots && byMode.bots.wins) || 0}/${(byMode.bots && byMode.bots.games) || 0}) · рек. ${(byMode.bots && byMode.bots.best) || 0}</small></div></div>` +
-    `<div class="mcard"><span class="mic">⚔️</span><div><b>Дуэль</b><small>${dRate}% (${(byMode.duel && byMode.duel.wins) || 0}/${(byMode.duel && byMode.duel.games) || 0}) · рек. ${(byMode.duel && byMode.duel.best) || 0}</small></div></div>` +
-    `<div class="mcard"><span class="mic">👥</span><div><b>Друзья</b><small>${fRate}% (${(byMode.friends && byMode.friends.wins) || 0}/${(byMode.friends && byMode.friends.games) || 0}) · рек. ${(byMode.friends && byMode.friends.best) || 0}</small></div></div>` +
-    `<div class="mcard"><span class="mic">🌐</span><div><b>Онлайн</b><small>${oRate}% (${(byMode.online && byMode.online.wins) || 0}/${(byMode.online && byMode.online.games) || 0}) · рек. ${(byMode.online && byMode.online.best) || 0}</small></div></div>` +
-    `</div>`;
+  const tile = (key, ic, name) => {
+    const m = byMode[key] || {}, g = m.games || 0, w = m.wins || 0, rate = g ? Math.round(100 * w / g) : 0;
+    const body = g ? `<small>${rate}% (${w}/${g}) · рек. ${m.best || 0}</small>` : '<small class="mnone">Сыграйте первую партию</small>';
+    return `<div class="mcard${g ? '' : ' empty'}"><span class="mic">${ic}</span><div><b>${name}</b>${body}</div></div>`;
+  };
+  return `<div class="mgrid">${tile('bots', '🤖', 'Боты')}${tile('duel', '⚔️', 'Дуэль')}${tile('friends', '👥', 'Друзья')}${tile('online', '🌐', 'Онлайн')}</div>`;
 }
 
 /** Generates HTML markup for completed features summary (cities, roads, forts). */

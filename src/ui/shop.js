@@ -29,11 +29,11 @@ export function renderFiguresGrid({figs, wallet, figPreview}) {
 export function renderFramesGrid({frames, wallet, initial}) {
   const fname = (initial || '?').toUpperCase();
   return Object.entries(frames).map(([k, f]) => {
-    const own = !f.price || (wallet.frames || []).includes(k);
+    const own = (!f.price && !f.earn) || (wallet.frames || []).includes(k);
     const sel = (wallet.frame || 'none') === k;
-    return `<button class="frb${sel ? ' sel' : ''}${!own && (wallet.gold || 0) < f.price ? ' poor' : ''}" data-fr="${k}">` +
+    return `<button class="frb${sel ? ' sel' : ''}${!own && (f.earn || (wallet.gold || 0) < f.price) ? ' poor' : ''}" data-fr="${k}">` +
       `<span class="av${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${fname}</span>` +
-      `<span>${f.name}</span><small>${sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`}</small></button>`;
+      `<span>${f.name}</span><small>${sel ? 'Выбрана' : own ? 'Выбрать' : f.earn ? '🔒 ' + f.earn : `<i class="coin"></i>${f.price}`}</small></button>`;
   }).join('');
 }
 

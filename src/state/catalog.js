@@ -17,8 +17,24 @@ export const FRAMES = {
   gold: {name: 'Золото', price: 200, ring: 'linear-gradient(135deg,#fff1b8,#f2b84b 45%,#a8701a)'},
   forest: {name: 'Лес', price: 350, ring: 'linear-gradient(135deg,#b7f08a,#3fae4f 50%,#1f5e2c)'},
   sea: {name: 'Море', price: 350, ring: 'linear-gradient(135deg,#bfefff,#3fa9e8 50%,#1b4f9c)'},
+  ice: {name: 'Лёд', price: 450, ring: 'conic-gradient(from 45deg,#ffffff,#b8e6ff,#7cc4f0,#e8f8ff,#9fd8ff,#ffffff)'},
+  sakura: {name: 'Сакура', price: 500, ring: 'linear-gradient(135deg,#ffe3ee,#ff9ec0 50%,#d65a8c)'},
+  emerald: {name: 'Изумруд', price: 600, ring: 'conic-gradient(#d6ffe9,#34d399,#0f7a52,#34d399,#d6ffe9)'},
   royal: {name: 'Королевская', price: 700, ring: 'conic-gradient(#f7c948,#b06cf0,#f7c948,#b06cf0,#f7c948)'},
+  sunset: {name: 'Закат', price: 800, ring: 'linear-gradient(160deg,#ffd36e,#ff8a5b 45%,#c0398f 75%,#4c3a9b)'},
+  neon: {name: 'Неон', price: 900, ring: 'conic-gradient(#00f5ff,#ff2bd6,#7a5cff,#00f5ff)'},
   fire: {name: 'Пламя', price: 1000, ring: 'conic-gradient(from 20deg,#ffe08a,#ff8c42,#ef5350,#ff8c42,#ffe08a)'},
+  lava: {name: 'Лава', price: 1300, ring: 'conic-gradient(from 90deg,#2b0a05,#ff4d1a,#ffb347,#ff4d1a,#2b0a05,#a81d0a,#2b0a05)'},
+  rainbow: {name: 'Радуга', price: 1600, ring: 'conic-gradient(#ff5d5d,#ffb84d,#fff35c,#5ee07a,#4dc3ff,#8a6bff,#ff5dc8,#ff5d5d)'},
+  carbon: {name: 'Карбон', price: 1800, ring: 'conic-gradient(#0d0f14,#4b5568,#0d0f14,#4b5568,#0d0f14)'},
+  // Earned only (not sold): `earn` is the condition shown to the player.
+  puzzle: {name: 'Пазл', price: 0, earn: 'Достигните 10 уровня', ring: 'conic-gradient(#4c8dff 0 25%,#3fc27a 0 50%,#b06cf0 0 75%,#f2994a 0)'},
+  galaxy: {name: 'Галактика', price: 0, earn: 'Получите все достижения', ring: 'conic-gradient(from 200deg,#0b0f33,#5b3fd1,#c06cff,#2a1b7a,#0b0f33,#7ad7ff,#0b0f33)'},
+};
+/** Frames given for an achievement: {frame key: check(prog, achCount)}. */
+export const EARNED_FRAMES = {
+  puzzle: prog => prog && prog.lvl >= 10,
+  galaxy: (prog, achCount) => achCount > 0 && Object.values((prog && prog.ach) || {}).filter(v => v === 'got').length >= achCount,
 };
 
 export const LOCS = [
