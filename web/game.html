@@ -361,9 +361,13 @@ if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.ru
 if (![4, 5, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
-const isLocal = i => net ? players[i].owner === myId : players[i].human;
+const isLocal = i => (typeof PG !== 'undefined' && PG.game && PG.game.isLocalPlayer)
+  ? PG.game.isLocalPlayer(players[i], myId, !!net)
+  : (net ? players[i].owner === myId : players[i].human);
 const runsBot = i => !players[i].human && (!net || net.host);
-const localHumans = () => players.filter((p, i) => isLocal(i)).length;
+const localHumans = () => (typeof PG !== 'undefined' && PG.game && PG.game.humanPlayers && !net)
+  ? PG.game.humanPlayers(players).length
+  : players.filter((p, i) => isLocal(i)).length;
 const isMe = p => net ? p.owner === myId : p.human && humanCount() === 1;
 let gameRules = setup.rules, turnTok = 0;
 const humanCount = () => players.filter(p => p.human).length;
