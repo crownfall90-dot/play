@@ -437,33 +437,40 @@ function addSprite(parent, kind, x, y, cls, delay, scale = 1) {
 const lowGfx = () => document.documentElement.classList.contains('lowgfx');
 const HOUSES = ['house', 'house2', 'house3', 'house4'];
 function addDecor(el, t, delay) {
-  const E = [0,1,2,3].map(d => edgeAt(t, d)), R = rng(t.seed), items = [];
-  const city = [0,1,2,3].filter(d => E[d] === 'c');
-  if (city.length === 1) {
-    const [x, y] = V[city[0]], px = -y, py = x;
-    items.push([HOUSES[(R() * 4) | 0], x*.36 + px*.17, y*.36 + py*.17], [HOUSES[(R() * 4) | 0], x*.38 - px*.13, y*.38 - py*.13]);
-  } else if (city.length > 1) {
-    let sx = 0, sy = 0; city.forEach(d => { sx += V[d][0]; sy += V[d][1]; });
-    const cx = sx * .2, cy = sy * .2, pts = [[-.16,-.06],[.14,-.14],[.02,.1],[-.2,.16]];
-    const n = city.length >= 3 ? 4 : 3;
-    for (let i = 0; i < n; i++) items.push([i === 0 && city.length >= 3 ? 'tower' : HOUSES[(R() * 4) | 0], cx + pts[i][0], cy + pts[i][1]]);
+  let items, cityCount;
+  if (typeof PG !== 'undefined' && PG.game && PG.game.world && PG.game.world.generateDecorItems) {
+    const res = PG.game.world.generateDecorItems(t, edgeAt, rng, lowGfx(), TYPES);
+    items = res.items;
+    cityCount = res.cityCount;
+  } else {
+    const E = [0,1,2,3].map(d => edgeAt(t, d)), R = rng(t.seed);
+    items = [];
+    const city = [0,1,2,3].filter(d => E[d] === 'c');
+    cityCount = city.length;
+    if (city.length === 1) {
+      const [x, y] = V[city[0]], px = -y, py = x;
+      items.push([HOUSES[(R() * 4) | 0], x*.36 + px*.17, y*.36 + py*.17], [HOUSES[(R() * 4) | 0], x*.38 - px*.13, y*.38 - py*.13]);
+    } else if (city.length > 1) {
+      let sx = 0, sy = 0; city.forEach(d => { sx += V[d][0]; sy += V[d][1]; });
+      const cx = sx * .2, cy = sy * .2, pts = [[-.16,-.06],[.14,-.14],[.02,.1],[-.2,.16]];
+      const n = city.length >= 3 ? 4 : 3;
+      for (let i = 0; i < n; i++) items.push([i === 0 && city.length >= 3 ? 'tower' : HOUSES[(R() * 4) | 0], cx + pts[i][0], cy + pts[i][1]]);
+    }
+    if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
+    const end = TYPES[t.type].end;
+    if (end && end !== 'cliff') { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
+    if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
+    for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
+      if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
+      if (TYPES[t.type].end === 'cliff') { const dr = E.indexOf('r'); if (sx * -V[dr][0] + sy * -V[dr][1] > 0) continue; }
+      if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.30 + R()*.05) + (R() - .5) * .05, sy * (.30 + R()*.05)]); }
+    }
+    items.forEach(it => { if (it[2] < -.2 && !['rock', 'boulders', 'hay', 'bush'].includes(it[0])) { it[2] = -.2 + (it[2] + .2) * .35; it[3] = 1; } });
+    items.sort((p, q) => p[2] - q[2]);
   }
-  if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
-  // A road that stops in the middle ends at boulders or a mine just past the centre (a cliff is painted on the card itself).
-  const end = TYPES[t.type].end;
-  if (end && end !== 'cliff') { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
-  if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
-  for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
-    if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
-    if (TYPES[t.type].end === 'cliff') { const dr = E.indexOf('r'); if (sx * -V[dr][0] + sy * -V[dr][1] > 0) continue; }
-    if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.30 + R()*.05) + (R() - .5) * .05, sy * (.30 + R()*.05)]); }
-  }
-  // Upright pieces on the far edge would stick out over the empty cell behind the tile: pull them towards the middle.
-  items.forEach(it => { if (it[2] < -.2 && !['rock', 'boulders', 'hay', 'bush'].includes(it[0])) { it[2] = -.2 + (it[2] + .2) * .35; it[3] = 1; } });
-  items.sort((p, q) => p[2] - q[2]);
   // Decor sits right after the card face, under the cliff pit, gravel and figures added later.
   const box = document.createDocumentFragment();
-  items.forEach((it, i) => addSprite(box, it[0], it[1], it[2], 'dc', delay == null ? null : delay + i * .05, (it[0] === 'tower' && city.length ? .8 : 1) * (it[3] && /^house|^tower/.test(it[0]) ? .85 : 1)));
+  items.forEach((it, i) => addSprite(box, it[0], it[1], it[2], 'dc', delay == null ? null : delay + i * .05, (it[0] === 'tower' && cityCount ? .8 : 1) * (it[3] && /^house|^tower/.test(it[0]) ? .85 : 1)));
   el.querySelector('.face').after(box);
 }
 // Switching graphics redraws the decor of the cards already on the table; the game itself stays as it is.
