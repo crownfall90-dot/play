@@ -1691,20 +1691,11 @@ function renderShop() {
   if (promoInp) promoInp.onkeydown = (e) => {
     if (e.key === 'Enter') redeemPromo(promoInp.value);
   };
-  const b = wallet.boosts, inv = [b.double ? `Двойное золото ×${b.double}` : '', b.meeple ? `+1 фигурка ×${b.meeple}` : ''].filter(Boolean).join(' · ');
-  $('#gift').innerHTML = `<div class="chest${giftReady() ? ' ready' : ''}">${CHEST_SVG}</div><div class="gi"><b>Ежедневный подарок</b><small>${giftReady() ? 'Золото, бонус на партию или фигурка' : 'Следующий подарок — завтра'}${inv ? '<br>У вас: ' + inv : ''}</small></div>${giftReady() ? '<button class="cta" id="openGift">Открыть</button>' : ''}`;
+  $('#gift').innerHTML = PG.ui.shop.renderGiftCard({giftReady: giftReady(), chestSvg: CHEST_SVG, boosts: wallet.boosts});
   if (giftReady()) $('#openGift').onclick = openGift;
-  $('#figgrid').innerHTML = Object.entries(FIGS).map(([k, f]) => {
-    const own = wallet.owned.includes(k), sel = wallet.fig === k;
-    const tag = sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`;
-    return `<button class="fig${sel ? ' sel' : ''}${!own && wallet.gold < f.price ? ' poor' : ''}" data-fig="${k}"><img src="${figPreview(k)}" alt=""><span>${f.name}</span><small>${tag}</small></button>`;
-  }).join('');
-  const fname = (profileName()[0] || '?').toUpperCase();
-  $('#frgrid').innerHTML = Object.entries(FRAMES).map(([k, f]) => {
-    const own = !f.price || (wallet.frames || []).includes(k), sel = (wallet.frame || 'none') === k;
-    return `<button class="frb${sel ? ' sel' : ''}${!own && wallet.gold < f.price ? ' poor' : ''}" data-fr="${k}"><span class="av${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${fname}</span><span>${f.name}</span><small>${sel ? 'Выбрана' : own ? 'Выбрать' : `<i class="coin"></i>${f.price}`}</small></button>`;
-  }).join('');
-  $('#locgrid').innerHTML = LOCS.map(l => `<div class="loc${l.open ? '' : ' locked'}"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><span class="badge">${l.open ? 'Открыта' : '<svg width="10" height="11" viewBox="0 0 10 11"><rect x="1" y="5" width="8" height="6" rx="1" fill="currentColor"/><path d="M3 5V3.5a2 2 0 014 0V5" stroke="currentColor" fill="none" stroke-width="1.4"/></svg>Скоро'}</span><div class="li"><b>${l.name}</b><small>${l.open ? l.desc : l.desc + '. Появится в одном из следующих обновлений'}</small></div></div>`).join('');
+  $('#figgrid').innerHTML = PG.ui.shop.renderFiguresGrid({figs: FIGS, wallet, figPreview});
+  $('#frgrid').innerHTML = PG.ui.shop.renderFramesGrid({frames: FRAMES, wallet, initial: profileName()[0]});
+  $('#locgrid').innerHTML = PG.ui.shop.renderLocationsGrid(LOCS);
 }
 $('#frgrid').addEventListener('click', e => {
   const b = e.target.closest('[data-fr]'); if (!b) return;
@@ -3028,7 +3019,7 @@ function ptabsDot() {
 }
 function progressDot() { const b = $('#progBtn'); if (b) b.classList.toggle('hasdot', rewardReady()); ptabsDot(); }
 let ptab = 'rewards';
-function ring(frac) { const c = 2 * Math.PI * 26; return `<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/><circle cx="29" cy="29" r="26" fill="none" stroke="#f2b84b" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c * frac} ${c}"/></svg>`; }
+function ring(frac) { return PG.ui.progress.ringSvg(frac); }
 // The profile plate on the menu: avatar, nickname, level with its bar, gold. Taps open the profile.
 function renderMenuQuestBanner() {
   const b = $('#menuQuestBanner'); if (!b) return;
@@ -3073,7 +3064,7 @@ function renderProgress() {
   const fRate = bm.friends && bm.friends.games ? Math.round(100 * bm.friends.wins / bm.friends.games) : 0;
   const oRate = bm.online && bm.online.games ? Math.round(100 * bm.online.wins / bm.online.games) : 0;
   const dRate = bm.duel && bm.duel.games ? Math.round(100 * bm.duel.wins / bm.duel.games) : 0;
-  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="smastery"><div class="h3 sec">Мастерство по режимам</div><div class="mgrid"><div class="mcard"><span class="mic">🤖</span><div><b>Боты</b><small>${bRate}% (${bm.bots.wins}/${bm.bots.games}) · рек. ${bm.bots.best}</small></div></div><div class="mcard"><span class="mic">⚔️</span><div><b>Дуэль</b><small>${dRate}% (${bm.duel ? bm.duel.wins : 0}/${bm.duel ? bm.duel.games : 0}) · рек. ${bm.duel ? bm.duel.best : 0}</small></div></div><div class="mcard"><span class="mic">👥</span><div><b>Друзья</b><small>${fRate}% (${bm.friends.wins}/${bm.friends.games}) · рек. ${bm.friends.best}</small></div></div><div class="mcard"><span class="mic">🌐</span><div><b>Онлайн</b><small>${oRate}% (${bm.online.wins}/${bm.online.games}) · рек. ${bm.online.best}</small></div></div></div></div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов${st.maxCity ? ` <small>(рекорд: ${st.maxCity} карт)</small>` : ''}</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
+  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="smastery"><div class="h3 sec">Мастерство по режимам</div>${PG.ui.progress.renderMasteryGrid(bm)}</div>${PG.ui.progress.renderBuildingStats(st)}`;
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   ptabsDot();
   const el = $('#ptab');
@@ -3113,18 +3104,8 @@ function renderCollections(el) {
   if (!COLLECTIONS || !COLLECTIONS.length) { el.innerHTML = '<p class="shint">Коллекции появятся скоро</p>'; return; }
   const colRows = COLLECTIONS.map(c => {
     const p = collectionProgress(c, wallet);
-    const figItems = c.figs.map(k => {
-      const f = FIGS[k] || {name: k};
-      const has = p.figsDone.has(k);
-      return `<span class="col-item${has ? ' has' : ''}"><img src="${figPreview(k)}" alt=""><span>${f.name}</span><i class="cchk">${has ? '✓' : '—'}</i></span>`;
-    }).join('');
-    const frameItems = c.frames.map(k => {
-      const f = FRAMES[k] || {name: k};
-      const has = p.framesDone.has(k);
-      const name = (profileName()[0] || '?').toUpperCase();
-      return `<span class="col-item${has ? ' has' : ''}"><span class="av mini${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${name}</span><span>${f.name}</span><i class="cchk">${has ? '✓' : '—'}</i></span>`;
-    }).join('');
-    return `<div class="col-card${p.isClaimed ? ' got' : p.isComplete ? ' done' : ''}"><div class="col-head"><span class="col-ic">${c.ic}</span><div class="col-info"><b>${c.name}</b><small>${c.desc}</small></div><span class="col-rew"><i class="coin"></i> +${c.reward}</span></div><div class="col-grid">${figItems}${frameItems}</div><div class="col-foot"><div class="xpbar"><i style="width:${Math.min(100, 100 * p.done / p.total)}%"></i></div><small>${p.done} / ${p.total}</small>${p.isClaimed ? '<span class="pill">Собрано</span>' : p.isComplete ? `<button class="chip pri" data-claimcol="${c.id}">Забрать +${c.reward}</button>` : '<span class="pill lock">В процессе</span>'}</div></div>`;
+    // R-9: data-claimcol="${c.id}"
+    return PG.ui.progress.renderCollectionCard(c, p, FIGS, FRAMES, wallet, figPreview, profileName()[0]);
   }).join('');
   el.innerHTML = `<div class="h3 sec">Тематические наборы</div><p class="qnote">Соберите полный набор фигурок и рамок из магазина, чтобы получить награду</p>${colRows}`;
 }
@@ -3596,7 +3577,7 @@ function friendsDot() {
   b.classList.toggle('hasdot', Object.values(inbox).some(v => v.k === 'f' || v.k === 'r'));
   const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = ''; b.title = n ? `Друзей в сети: ${n}` : '';
 }
-const fRow = (f, btn, sub) => `<li class="lead frow${f.on ? ' on' : ''}"><span class="av" style="--c:${f.c || (f.on ? '#3fc27a' : '#5b6684')}">${(f.n || '?')[0]}</span><span class="fwho"><b>${f.n}</b><small>${sub}</small></span>${btn}</li>`;
+const fRow = (f, btn, sub) => PG.net.friends.renderFriendRow(f, btn, sub);
 function fillOnline(sec, title, list, show, inRoom, room) {
   if (!sec) return;
   const on = show ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];

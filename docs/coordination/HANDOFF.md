@@ -515,13 +515,18 @@ tests/
 - Составлен подробный аналитический отчёт `docs/security/SECURITY-AUDIT-2026-11-01.md`.
 - Создан тестовый сьют `tests/security-audit.test.cjs` (правила базы, санитизация DOM, защита промокодов).
 
-#### C. Пункт 2: Декомпозиция монолита (MONOLITH-PLAN.md: E-1.2 и E-1.3):
+#### C. Пункт 2: Декомпозиция монолита (MONOLITH-PLAN.md: E-1.2, E-1.3, E-1.4, E-1.5):
 - Вынесены модули:
   - `src/account/google.js`: чистый парсер токенов UTF-8 `jwtPayload`, `jwtEmail`, `googleIdpBody`, классификатор ошибок.
   - `src/account/sync.js`: сериализация `encodeProfilePayload`, десериализация `decodeProfilePayload`, объединение профилей `mergeWallets`.
   - `src/account/auth.js`: санитизация и валидация никнеймов `sanitizeNickname`, `isValidNickname`, `getDisplayName`.
 - Подключены в `src/main.js` под пространством `PG.account`.
-- Создан сьют тестов `tests/account-modules.test.cjs`.
+  - `src/ui/shop.js` (E-1.4): рендеринг карточек подарков `renderGiftCard`, сетки фигурок `renderFiguresGrid`, рамок `renderFramesGrid`, локаций `renderLocationsGrid`.
+  - `src/ui/progress.js` (E-1.4): построение SVG-индикатора прогресса `ringSvg`, сетки мастерства `renderMasteryGrid`, статистики объектов `renderBuildingStats`, карточки коллекции `renderCollectionCard`.
+  - `src/net/presence.js` (E-1.5): форматирование записи присутствия `formatPresenceRecord`, фильтрация онлайна `filterActivePresence`, получение статуса `getPresenceStatus`.
+  - `src/net/friends.js` (E-1.5): санитизация кода дружбы `cleanFriendCode`, форматирование инвайтов `formatInvitePayload`, запросов `formatFriendRequestPayload`, верстка строки списка друзей `renderFriendRow`.
+- Модули подключены в `src/main.js` под пространствами `PG.account`, `PG.ui.shop`, `PG.ui.progress`, `PG.net.friends`, `PG.net.presence`.
+- Созданы сьюты тестов `tests/account-modules.test.cjs`, `tests/ui-shop-progress.test.cjs`, `tests/net-presence-friends.test.cjs`.
 
 #### D. Пункт 4: Подготовка к Google Play (H-3, D-4):
 - Подготовлены локализованные тексты для карточки магазина:
@@ -535,13 +540,13 @@ tests/
 ---
 
 ### 2. Результаты тестов и сборки
-- **`node --test tests/*.test.cjs`**: **150 тестов (132 pass, 0 fail, 18 skipped — playwright)**.
-- **`npm run build`**: Vite v6.3.5, 18 модулей трансформировано, бандл `build/bundle/pg.js` — **67.85 kB** (gzip: 26.48 kB).
+- **`node --test tests/*.test.cjs`**: **154 теста (136 pass, 0 fail, 18 skipped — playwright)**.
+- **`npm run build`**: Vite v6.3.5, 22 модуля трансформировано, бандл `build/bundle/pg.js` — **74.87 kB** (gzip: 29.18 kB).
 - Детерминизм и целостность golden-партий полностью сохранены.
 
 ---
 
 ### 3. Что делаем сейчас дальше
-1. Получить вердикт от Claude по вышеописанным задачам в разделе ниже («От Claude → Antigravity»).
-2. Завершить связывание следующих шагов декомпозиции монолита (E-1.4 Прогресс и магазин, E-1.5 Друзья и присутствие) согласно `docs/product/MONOLITH-PLAN.md`.
+1. Декомпозиция монолита: следующий шаг E-1.6 «Панель владельца и поддержка» (`src/ui/owner.js`, `src/ui/feedback.js`) и E-1.7 «Состояние партии G» (`src/game/state.js`) по `docs/product/MONOLITH-PLAN.md`.
+2. Ожидаем ревью от Claude по проведённому аудиту безопасности, геймплею G-3/G-5/G-6, метаданным Google Play и модулям E-1.2-E-1.5.
 3. Подготовка релизной ветки и согласование выпуска «B» (ротация ключа подписи по `docs/SIGNING-KEY-ROTATION.md`).

@@ -11,17 +11,22 @@ import * as catalog from './state/catalog.js';
 import * as config from './state/config.js';
 import {createArt} from './render/art.js';
 import {createFirebase} from './net/firebase.js';
+import * as friends from './net/friends.js';
+import * as presence from './net/presence.js';
 import * as web from './app/web.js';
 import * as update from './app/update.js';
 import * as google from './account/google.js';
 import * as sync from './account/sync.js';
 import * as auth from './account/auth.js';
+import * as shop from './ui/shop.js';
+import * as progressUi from './ui/progress.js';
 
 export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTile, board, scoring, bots};
 
 export const audio = {createSound};
 export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config};
 export const render = {createArt};
-export const net = {createFirebase};
+export const net = {createFirebase, friends, presence};
 export const app = {web, update};
 export const account = {google, sync, auth};
+export const ui = {shop, progress: progressUi};
