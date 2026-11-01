@@ -74,3 +74,18 @@ export function renderFriendsListHtml({
   }
   return h;
 }
+
+/** Formats friend invitation dialog modal markup. */
+export function renderFriendInviteDialogHtml(name) {
+  const safeName = String(name || 'Игрок').replace(/[<>&"']/g, '');
+  return `<div class="ocard"><div style="font-size:44px">🤝</div><h3>${safeName} приглашает вас в друзья</h3><p>Вы увидите, когда друг в сети, и сможете звать друг друга в комнату одной кнопкой</p><button class="cta wide" data-a="ok">Принять</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
+}
+
+/** Generates random 6-character friend code. */
+export function generateRandomFriendCode(alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', length = 6, randomFn = Math.random) {
+  let out = '';
+  for (let i = 0; i < length; i++) {
+    out += alphabet[(randomFn() * alphabet.length) | 0];
+  }
+  return out;
+}

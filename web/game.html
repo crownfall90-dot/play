@@ -3755,7 +3755,9 @@ async function friendInvite(code) {
   if (friends.some(f => f.uid === uid && f.mutual)) { friendsBack = 'menu'; show('friends'); return toastAny(`${name || 'Игрок'} уже у вас в друзьях`); }
   document.querySelectorAll('.over.finv').forEach(x => x.remove());
   const box = document.createElement('div'); box.className = 'over finv'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🤝</div><h3>${name || 'Игрок'} приглашает вас в друзья</h3><p>Вы увидите, когда друг в сети, и сможете звать друг друга в комнату одной кнопкой</p><button class="cta wide" data-a="ok">Принять</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.net && PG.net.friends && PG.net.friends.renderFriendInviteDialogHtml)
+    ? PG.net.friends.renderFriendInviteDialogHtml(name)
+    : `<div class="ocard"><div style="font-size:44px">🤝</div><h3>${name || 'Игрок'} приглашает вас в друзья</h3><p>Вы увидите, когда друг в сети, и сможете звать друг друга в комнату одной кнопкой</p><button class="cta wide" data-a="ok">Принять</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
   document.body.append(box);
   box.onclick = async e => {
     const b = e.target.closest('[data-a]'); if (!b) return; box.remove();

@@ -118,4 +118,14 @@ test('net/friends: cleanFriendCode, formatInvitePayload, formatFriendRequestPayl
   assert.ok(listHtml.includes('Коля'));
   assert.ok(listHtml.includes('Ждут ответа'));
   assert.ok(listHtml.includes('Миша'));
+
+  // renderFriendInviteDialogHtml and generateRandomFriendCode
+  const {renderFriendInviteDialogHtml, generateRandomFriendCode} = await import('../src/net/friends.js');
+  const invHtml = renderFriendInviteDialogHtml('Иван');
+  assert.ok(invHtml.includes('Иван приглашает вас в друзья'));
+  assert.ok(invHtml.includes('data-a="ok"'));
+
+  const fcode = generateRandomFriendCode();
+  assert.equal(fcode.length, 6);
+  assert.match(fcode, /^[A-Z0-9]{6}$/);
 });
