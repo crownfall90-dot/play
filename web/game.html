@@ -1842,7 +1842,7 @@ function loadSave() {
 // An online game this phone took part in during the last 3 hours, if it may still be going.
 function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
 function renderResume() {
-  const sv = loadSave(), b = $('#resume'), lg = !net && lastOnline();
+  const sv = loadSave(), b = $('#resume'), lg = lastOnline() && (!net || !gameVisible); // also when a dead room object is left behind after a drop
   const off = sv && sv.moves && sv.cfg;
   b.hidden = !off && !lg;
   b.querySelector('.rtx b').textContent = off ? 'Продолжить партию' : 'Вернуться в онлайн-партию';
@@ -1853,6 +1853,7 @@ $('#resume').onclick = () => {
   const sv = loadSave();
   if (sv && sv.moves && sv.cfg) { if (net) leaveRoom(); startGame(sv.cfg, sv.moves); return show('game'); }
   const lg = lastOnline(); if (!lg) return renderResume();
+  if (net) leaveRoom();
   connect(lg.code, false); show('lobby');
 };
 
@@ -1998,6 +1999,9 @@ function onResign(p) {
 const drawOffers = {};
 function onDrawOffer(m) {
   drawOffers[m.id] = {from: m.p, yes: new Set([m.p])};
+  // Players who dropped out (a bot plays for them) cannot answer: if everybody else is away the offer is accepted at once,
+  // otherwise the one who stayed could only resign.
+  if (activeHumans().every(i => i === m.p || players[i].missed >= 1)) { delete drawOffers[m.id]; return endGame('draw'); }
   const me = mySeat();
   if (me < 0 || me === m.p) return;
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
@@ -2009,7 +2013,7 @@ function onDrawReply(m) {
   const d = drawOffers[m.id]; if (!d) return;
   if (!m.ok) { delete drawOffers[m.id]; if (mySeat() === d.from) toastAny(`${players[m.p].name} отказывается от ничьей`); return; }
   d.yes.add(m.p);
-  if (activeHumans().every(i => d.yes.has(i))) { delete drawOffers[m.id]; endGame('draw'); }
+  if (activeHumans().every(i => d.yes.has(i) || players[i].missed >= 1)) { delete drawOffers[m.id]; endGame('draw'); }
 }
 
 /* ---------------- setup ---------------- */

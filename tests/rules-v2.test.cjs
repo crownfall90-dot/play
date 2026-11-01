@@ -26,3 +26,10 @@ test('engine: rules v2 reinforcement and card tie-break', async () => {
   c.meeples.push({p: 1, gid: 'x'}); // now 2 figures for player 1 against 1
   assert.deepEqual(settle(tiles, c, true, 2, 'all', 0, true).win, [1], 'v2: more figures first');
 });
+
+test('source: draw is accepted at once when the others are away; resume offer survives a stale room', async () => {
+  const src = require('node:fs').readFileSync(__dirname + '/../web/game.html', 'utf8');
+  assert.match(src, /activeHumans\(\)\.every\(i => i === m\.p \|\| players\[i\]\.missed >= 1\)/);
+  assert.match(src, /activeHumans\(\)\.every\(i => d\.yes\.has\(i\) \|\| players\[i\]\.missed >= 1\)/);
+  assert.match(src, /lg = lastOnline\(\) && \(!net \|\| !gameVisible\)/);
+});
