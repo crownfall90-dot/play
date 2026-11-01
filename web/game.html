@@ -1036,11 +1036,21 @@ async function afterPlace(t, p, forced) {
   if (my !== token) return;
   if (forced === undefined) {
     const mt = choice ? choice.t : t;
-    const mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
-      m: choice ? groupsOf(mt).findIndex(g => gid(mt, g) === gid(mt, choice.g)) : -1};
-    if (choice && (mt.x !== t.x || mt.y !== t.y)) { mv.mtx = mt.x; mv.mty = mt.y; }
-    // A bot move counts as a skipped turn, unless the player came back while it was being made.
-    if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    let mv;
+    if (PG.game && PG.game.turns) {
+      const formatted = PG.game.turns.formatMovePayload({
+        n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
+        choice, groupsOfFn: groupsOf, gidFn: gid,
+        autoMove, autoAway, missedCount: players[p].missed, isNet: !!net
+      });
+      mv = formatted.move;
+      players[p].missed = formatted.missed;
+    } else {
+      mv = {n: applied++, p, x: t.x, y: t.y, r: t.r, seed: t.seed,
+        m: choice ? groupsOf(mt).findIndex(g => gid(mt, g) === gid(mt, choice.g)) : -1};
+      if (choice && (mt.x !== t.x || mt.y !== t.y)) { mv.mtx = mt.x; mv.mty = mt.y; }
+      if (autoMove && !(autoAway && players[p].missed === 0)) { if (net) mv.auto = 1; players[p].missed++; } else players[p].missed = 0;
+    }
     autoAway = false;
     autoMove = false;
     gameLog.moves.push(mv);
@@ -1054,7 +1064,7 @@ async function afterPlace(t, p, forced) {
   for (const m of mine) if (my === token) await resolveFeature(component(m.t, m.g), false, p);
   renderPlayers();
   if (my !== token) return;
-  turn = (turn + 1) % players.length;
+  turn = (PG.game && PG.game.turns) ? PG.game.turns.nextTurnIndex(turn, players.length) : (turn + 1) % players.length;
   await wait(250);
   if (my === token) startTurn();
 }
@@ -1134,7 +1144,10 @@ function startTurn() {
   if (!gameVisible) { pendingStart = true; return; }
   pendingStart = false; current = null; sel = null; stopTimer(); tipBtn.hidden = true;
   // Skip impossible cards silently. The finite deck is consumed once, so this cannot loop forever.
-  while (deck.length) { const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; } }
+  while (deck.length) {
+    if (PG.game && PG.game.turns) { current = PG.game.turns.drawNextValidCard(deck, hasPlacement); break; }
+    const ty = deck.pop(); if (hasPlacement(ty)) { current = {type: ty, r: 0}; break; }
+  }
   renderDeck();
   if (!current) return endGame();
   renderTray(); drawFx(); renderPlayers(); turnTok++;
@@ -1169,8 +1182,10 @@ function startTimer() {
   stopTimer(); lastAct = Date.now();
   // Online a turn always has a clock, so one silent player can't hold up the table;
   // someone who already missed two turns gets a few seconds before the bot moves for them.
-  const away = players[turn].missed >= 1;
-  const secs = away ? 2 : gameRules.timer || (net ? 60 : 0);
+  const away = (PG.game && PG.game.turns) ? PG.game.turns.isPlayerAway(players[turn].missed) : players[turn].missed >= 1;
+  const secs = (PG.game && PG.game.timers)
+    ? PG.game.timers.resolveTurnDuration({away, timerSecs: gameRules.timer, isNet: !!net})
+    : (away ? 2 : gameRules.timer || (net ? 60 : 0));
   if (!secs) return;
   const my = token, who = turn;
   let end = Date.now() + secs * 1000, last = Date.now();
@@ -1179,9 +1194,12 @@ function startTimer() {
     const now = Date.now();
     if (phase === 'handover' || (paused && !net) || updHold()) { end += now - last; last = now; return; }
     last = now;
-    const left = Math.max(0, Math.ceil((end - Date.now()) / 1000));
+    const left = (PG.game && PG.game.timers) ? PG.game.timers.calcTimeLeft(end, now) : Math.max(0, Math.ceil((end - Date.now()) / 1000));
     setClock(who, left, left <= 10);
-    if (wallet.alert && left > 0 && left <= 10 && isLocal(who) && ['place', 'meeple'].includes(phase) && now - lastAct > 2500) idleWarn(left); else idleWarn();
+    const shouldWarn = (PG.game && PG.game.timers)
+      ? PG.game.timers.shouldWarnIdle({alertEnabled: wallet.alert, left, isLocal: isLocal(who), phase, idleDurationMs: now - lastAct})
+      : (wallet.alert && left > 0 && left <= 10 && isLocal(who) && ['place', 'meeple'].includes(phase) && now - lastAct > 2500);
+    if (shouldWarn) idleWarn(left); else idleWarn();
     if (left > 0) return;
     stopTimer(); if (away) toast('За вас сходил бот');
     if (phase === 'meeple' && meepleResolve) return meepleResolve(null);
@@ -1200,7 +1218,11 @@ function beginHumanTurn() {
   beep('turn'); turnAlert();
   phase = 'place'; renderSlots(); okBtn.disabled = true; rotBtn.disabled = false; startTimer(); showTip();
   if (players[turn].missed >= 1) return setStatus('За вас ходит бот <button class="chip" id="imHere">Вернуться</button>');
-  if (!coachTurn()) setStatus(localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту');
+  if (!coachTurn()) {
+    setStatus((PG.game && PG.game.turns)
+      ? PG.game.turns.formatTurnStatusText({turnPlayerName: players[turn].name, isLocal: true, localHumansCount: localHumans()})
+      : (localHumans() > 1 ? `Ход: <b>${players[turn].name}</b>. Тапните по подсвеченному месту` : '<b>Ваш ход.</b> Тапните по подсвеченному месту'));
+  }
 }
 // Several people on one phone: the next player simply gets the turn (the status line and the player strip show whose it is);
 // there is no "pass the phone" screen over the board any more.
@@ -1208,8 +1230,8 @@ function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // Bot choices live in src/engine/bots.js.
 // Soft start for a newcomer: the first three games against bots are against "easy" ones (unless the player chose a level
 // themselves); from the fourth game the chosen level applies and one note says so.
-const softStart = () => wallet.botlvl === 'normal' && PROG.st.games < 3;
-const botLevel = () => softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal';
+const softStart = () => (PG.game && PG.game.turns) ? PG.game.turns.isSoftStart(wallet.botlvl, PROG.st.games) : (wallet.botlvl === 'normal' && PROG.st.games < 3);
+const botLevel = () => (PG.game && PG.game.turns) ? PG.game.turns.resolveBotLevel(wallet.botlvl, PROG.st.games, PG.engine.bots.BOT_LEVELS) : (softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal');
 const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
