@@ -6567,8 +6567,16 @@ function showMaintenanceScreen(msg) {
   d.id = 'maintBox';
   d.style.cssText = 'position:fixed;inset:0;background:#0b0d13;z-index:9999999;display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center';
   // The message comes from the database: put it in as text, never as markup.
-  d.innerHTML = '<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5"></p></div>';
+  d.innerHTML = '<div class="ocard" style="background:#141721;border:1.5px solid rgba(242,184,75,.35);border-top:1.5px solid rgba(255,230,150,.65);padding:32px 24px;border-radius:24px;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,0.85),0 0 32px rgba(242,184,75,.12);text-align:center"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5;margin:0 0 16px"></p><button id="maintRetry" class="cta wide">Попробовать снова</button></div>';
   d.querySelector('#maintMsg').textContent = String(msg).slice(0, 500);
+  const retryBtn = d.querySelector('#maintRetry');
+  if (retryBtn) {
+    retryBtn.onclick = () => {
+      retryBtn.disabled = true;
+      retryBtn.textContent = 'Перезапуск…';
+      location.reload();
+    };
+  }
   document.body.appendChild(d);
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));
