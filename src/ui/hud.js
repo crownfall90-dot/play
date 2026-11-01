@@ -66,11 +66,12 @@ export function renderPlayersListHtml(players, ctx) {
     const uidAttr = (p.uid && !isMe(p)) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : '';
     const ringStyle = (isMe(p) && myRing()) ? ` fr" style="--fr:${myRing()}` : '';
     const dispName = p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name;
-    const botPill = !p.human ? ' <span class="botpill">бот</span>' : '';
+    const botPill = !p.human && !p.ghost ? ' <span class="botpill">бот</span>' : '';
+    const stLine = p.st ? `<span class="pst">${p.st}</span>` : '';
     const totalMeeples = meeplesTotal || 6;
     const meeplesHtml = Array.from({length: totalMeeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('');
     const clk = clockHtml ? clockHtml(i) : '';
 
-    return `<div${uidAttr} class="pl${activeClass}${bumpClass}${outClass}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${ringStyle}">${p.init}</span><span class="pi"><span class="nm">${dispName}${botPill}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${meeplesHtml}</span></span></span>${clk}</div>`;
+    return `<div${uidAttr} class="pl${activeClass}${bumpClass}${outClass}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${ringStyle}">${p.init}</span><span class="pi"><span class="nm">${dispName}${botPill}</span>${stLine}<span class="pline"><b class="sc">${p.score}</b><span class="mp">${meeplesHtml}</span></span></span>${clk}</div>`;
   }).join('');
 }

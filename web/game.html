@@ -67,6 +67,10 @@
             <div class="pitem"><i>🧰</i><b>Сундук казначея</b><small>5 000 золота + рамка</small><span class="soon">Скоро</span></div>
             <div class="pitem wide"><i>👑</i><b>Королевский пропуск</b><small>30 дней: ×2 золота, фигурка и рамка, кубки без ограничений</small><span class="soon">Скоро</span></div>
           </div>
+          <div class="h3">Статусы</div>
+          <p class="shint">Короткая подпись под ником: её видят в профиле, у друзей, в онлайне и в рейтинге.</p>
+          <div class="stgrid" id="stgrid"></div>
+          <div class="stcustom"><input class="field" id="stInput" maxlength="15" placeholder="Свой статус (до 15)" autocomplete="off"><button class="cta" id="stBuy">3000 <i class="coin"></i></button></div>
           <div class="h3">Рамки аватара</div>
           <div class="frgrid" id="frgrid"></div>
           <div class="h3">Локации</div>
@@ -115,10 +119,19 @@
         <div class="lb">
           <div class="ltop"><button class="iconbtn" data-go="menu" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Профиль</b></div>
           <div class="profile" id="profile"></div>
-          <div class="sgroup prof" id="acct"></div>
+          <button class="tutcard itemsentry" id="itemsBtn"><span>🎒</span><span><b>Мои предметы</b><small id="itemsSub">Статусы, рамки, фигурки, локации</small></span><i class="tgo">›</i></button>
           <div class="pstats" id="stats"></div>
           <div class="seg ptabs" id="ptabs"><button data-pt="rewards" aria-pressed="true">Награды</button><button data-pt="cols" aria-pressed="false">Коллекции</button><button data-pt="top" aria-pressed="false">Рейтинг</button><button data-pt="hist" aria-pressed="false">История</button></div>
           <div class="col" id="ptab"></div>
+          <div class="sgroup prof acctbottom" id="acct"></div>
+        </div>
+      </section>
+
+      <section class="screen scroll" id="scr-items" hidden>
+        <div class="lb">
+          <div class="ltop"><button class="iconbtn" data-go="progress" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Мои предметы</b></div>
+          <div class="seg itabs" id="itabs"><button data-it="st" aria-pressed="true">Статусы</button><button data-it="fr" aria-pressed="false">Рамки</button><button data-it="fg" aria-pressed="false">Фигурки</button><button data-it="lc" aria-pressed="false">Локации</button></div>
+          <div class="col" id="itemsBody"></div>
         </div>
       </section>
 
@@ -1338,7 +1351,7 @@ function newGame() {
   const seats = setup.seats.slice(0, numSeats).map((s, i) => {
     const fig = s.human ? (firstHuman ? wallet.fig : 'classic') : randomFig();
     if (s.human) firstHuman = false;
-    return {name: i ? s.name : profileName(), human: s.human, fig, col: s.col};
+    return {name: i ? s.name : profileName(), st: i ? '' : myStatus(), human: s.human, fig, col: s.col};
   });
   // An "extra figure" gift gives you one more figure in a game against bots.
   let bonus = -1;
@@ -1368,7 +1381,7 @@ function startGame(cfg, replay = []) {
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; doneFeats = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, ghost: !!s.ghost, owner: s.owner, uid: s.uid || null, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, ghost: !!s.ghost, st: PG.state.status.shownStatus(s.st), owner: s.owner, uid: s.uid || null, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
   if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
   paintFigures();
   if (!net) saveGame();
@@ -1767,12 +1780,14 @@ function renderShop() {
   if (giftReady()) $('#openGift').onclick = openGift;
   $('#figgrid').innerHTML = PG.ui.shop.renderFiguresGrid({figs: FIGS, wallet, figPreview});
   $('#frgrid').innerHTML = PG.ui.shop.renderFramesGrid({frames: FRAMES, wallet, initial: profileName()[0]});
+  renderStatusShop();
   $('#locgrid').innerHTML = PG.ui.shop.renderLocationsGrid(LOCS);
 }
 $('#frgrid').addEventListener('click', e => {
   const b = e.target.closest('[data-fr]'); if (!b) return;
   const k = b.dataset.fr, f = FRAMES[k], owned = wallet.frames || [];
   const pick = () => { wallet.frame = k; saveWallet(); renderShop(); renderMenuProfile(); };
+  if (f.earn && !owned.includes(k)) return toastAny('Рамка за достижение. Получить: ' + f.earn);
   if (!f.price || owned.includes(k)) return pick();
   if (wallet.gold < f.price) return toastAny(`Не хватает ${f.price - wallet.gold} золота`);
   confirmBox(`Купить рамку «${f.name}» за ${f.price} золота?`, 'Купить', () => {
@@ -1793,7 +1808,7 @@ $('#figgrid').addEventListener('click', e => {
 });
 function pickFig(k) {
   wallet.fig = k; saveWallet(); renderShop();
-  if (net) netSend({t: 'hello', v2: 1, id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: k, col: wallet.color});
+  if (net) netSend({t: 'hello', v2: 1, st: myStatus(), id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: k, col: wallet.color});
 }
 // Buying spends gold, so it asks first: the figure, its price and what is left afterwards.
 function confirmBuy(k) {
@@ -2270,7 +2285,7 @@ async function presenceMark(on) {
     if (!fbAuth.uid) return;
     const url = `${FB.dbUrl}/presence/${fbAuth.uid}.json?auth=${tok}`;
     const vs = versionSeen(), di = devInfo(), dev = {p: installKind(), v: vs.v, u: vs.t, ...(di.m ? {m: di.m, i: di.i} : {})};
-    const ret = {fs: wallet.firstSeen || today(), d1: (wallet.rd && wallet.rd[1]) ? 1 : 0, d7: (wallet.rd && wallet.rd[7]) ? 1 : 0};
+    const ret = {st: myStatus(), fs: wallet.firstSeen || today(), d1: (wallet.rd && wallet.rd[1]) ? 1 : 0, d7: (wallet.rd && wallet.rd[7]) ? 1 : 0};
     if (on) await fetch(url, {method: 'PUT', body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: presenceState(), r: registered() ? 1 : 0, ...dev, ...ret})});
     else await fetch(url, {method: 'PUT', keepalive: true, body: JSON.stringify({t: {'.sv': 'timestamp'}, n: profileName(), s: 'off', ...dev, ...ret})});
   } catch (_) {}
@@ -2372,7 +2387,7 @@ function connect(code, asHost, quick) {
       if (net !== me) return;
       if (opened) return netUp(me); // back after a drop: the stream sends everything again, seen messages are skipped
       opened = true;
-      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', v2: 1, id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color}));
+      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', v2: 1, st: myStatus(), id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color}));
       if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { if (me.quick) return matchSkip(code); toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
     },
     error() {
@@ -2432,8 +2447,9 @@ function onNet(d) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
     const s = seats.find(x => x.owner === m.id);
     const uid = typeof m.uid === 'string' && m.reg ? m.uid.slice(0, 64) : null; // only saved profiles can be added as friends
-    if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig || s.col !== m.col || s.uid !== uid) { s.name = clean(m.name); s.fig = m.fig; s.col = m.col; s.uid = uid; publishLobby(seats); } }
-    else if (seats.length < roomMax()) { seats.push({owner: m.id, uid, name: clean(m.name), fig: m.fig, col: m.col, ready: false}); publishLobby(seats); }
+    const stv = PG.state.status.shownStatus(m.st);
+    if (s) { if (s.name !== clean(m.name) || s.fig !== m.fig || s.col !== m.col || s.uid !== uid || (s.st || '') !== stv) { s.name = clean(m.name); s.fig = m.fig; s.col = m.col; s.uid = uid; s.st = stv; publishLobby(seats); } }
+    else if (seats.length < roomMax()) { seats.push({owner: m.id, uid, name: clean(m.name), fig: m.fig, col: m.col, st: stv, ready: false}); publishLobby(seats); }
     return;
   }
   if (m.t === 'ready' && net.host && !net.gameId) {
@@ -2453,7 +2469,7 @@ function onNet(d) {
     // flag: then what this phone remembered about the game is used.
     const was = lastOnline();
     net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
-    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, ghost: !!x.ghost, owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
+    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, ghost: !!x.ghost, st: PG.state.status.shownStatus(x.st), owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
     else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
@@ -2612,7 +2628,7 @@ function renderLobby() {
   renderMyColor();
   const seats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : []);
   if (net && !net.host && !seats.some(x => x.owner === myId)) {
-    seats.push({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: false, pending: true});
+    seats.push({owner: myId, uid: myUid(), name: myName(), st: myStatus(), fig: wallet.fig, col: wallet.color, ready: false, pending: true});
   }
   if (invited.code === net.code) {
     seats.forEach(x => {
@@ -2683,7 +2699,7 @@ function renderMyColor() {
 $('#myColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = sw.dataset.sw; saveWallet(); renderMyColor();
-  if (net) netSend({t: 'hello', v2: 1, id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
+  if (net) netSend({t: 'hello', v2: 1, st: myStatus(), id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
 });
 $('#create').onclick = () => openSetup('friends');
 const newCode = () => (PG.net && PG.net.rooms) ? PG.net.rooms.newCode() : (() => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); })();
@@ -2706,7 +2722,7 @@ function startOnline(seats) {
   const rules = {...(net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : setup.rules)};
   // Rules v2 only when every guest announced it (an old client would count points differently).
   rules.rv = seats.every(x => !x.owner || x.owner === myId || (net.peerV2 && net.peerV2.get(x.owner))) ? 2 : 1;
-  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col, ghost: x.ghost ? 1 : 0})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
+  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col, ghost: x.ghost ? 1 : 0, st: PG.state.status.shownStatus(x.st)})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
 }
 function rematchClick() {
   if (!net) { newGame(); show('game'); return; }
@@ -2884,9 +2900,9 @@ function matchTick(me) {
   // H-5: if no human opponent found within ~10 seconds, auto-fill remaining seats with bots so player doesn't wait in empty room
   if (net.host && !me.startAt && sec >= FILL_SECS && seats.length < me.want) {
     const nextSeats = (PG.net && PG.net.matchmaking)
-      ? PG.net.matchmaking.autoFillSeats(net.lobby && net.lobby.seats ? net.lobby.seats : seats, me.want, {owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color}, [], randomFig)
+      ? PG.net.matchmaking.autoFillSeats(net.lobby && net.lobby.seats ? net.lobby.seats : seats, me.want, {owner: myId, uid: myUid(), name: myName(), st: myStatus(), fig: wallet.fig, col: wallet.color}, [], randomFig)
       : (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
-    if (!nextSeats.some(x => x.owner === myId)) nextSeats.unshift({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: true});
+    if (!nextSeats.some(x => x.owner === myId)) nextSeats.unshift({owner: myId, uid: myUid(), name: myName(), st: myStatus(), fig: wallet.fig, col: wallet.color, ready: true});
     while (nextSeats.length < me.want) nextSeats.push({owner: null, bot: true, ghost: 1, name: ghostName(nextSeats), fig: randomFig(), col: null, ready: true});
     // seats added by the module above carry no human-like name yet
     nextSeats.forEach(x => { if (x.bot && !x.owner && !x.ghost) { x.ghost = 1; x.name = ghostName(nextSeats.filter(y => y !== x)); } });
@@ -3009,6 +3025,28 @@ function questsToday() {
   if (PROG.day === today()) return;
   PROG.day = today(); PROG.q = PG.state.progress.dailyQuests(PROG.day).map(id => ({id, n: 0, got: false}));
 }
+// Earned statuses and frames: a day counts when every daily task is done; the month is checked in grantEarned.
+function markQuestDay() {
+  if (!PROG.q || !PROG.q.length || !PROG.day) return;
+  if (PROG.q.every(q => { const Q = QUESTS.find(x => x.id === q.id); return Q && q.n >= Q.n; })) {
+    PROG.qdays = PROG.qdays || {}; PROG.qdays[PROG.day] = 1;
+    const keep = Object.keys(PROG.qdays).sort().slice(-70); PROG.qdays = Object.fromEntries(keep.map(k => [k, 1]));
+  }
+}
+function earnedCheck() {
+  if (!wallet) return;
+  const S = PG.state.status, got = S.grantEarned(wallet, PROG, ACH.length, today());
+  const {EARNED_FRAMES} = PG.state.catalog, fr = [];
+  wallet.frames = Array.isArray(wallet.frames) ? wallet.frames : [];
+  for (const [k, ok] of Object.entries(EARNED_FRAMES)) if (ok(PROG, ACH.length) && !wallet.frames.includes(k)) { wallet.frames.push(k); fr.push(k); }
+  if (!got.length && !fr.length) return;
+  saveWallet();
+  const names = got.map(k => `«${S.statusText(k)}»`).concat(fr.map(k => `рамка «${FRAMES[k].name}»`));
+  setTimeout(() => toastAny('Новая награда: ' + names.join(', ')), 1500);
+}
+// The status shown to others: the worn one, checked again (a text from another phone is never trusted).
+const myStatus = () => PG.state.status.shownStatus(wallet.status || '');
+const stTag = t => { const v = PG.state.status.shownStatus(t); return v ? `<em class="fst">${v}</em>` : ''; };
 function progress(d) {
   questsToday();
   questsWeekly();
@@ -3020,6 +3058,7 @@ function progress(d) {
       PROG.wq.forEach(q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); if (WQ && WQ.k === k && !q.got) q.n = Math.min(WQ.n, q.n + v); });
     }
   }
+  markQuestDay(); earnedCheck();
   saveWallet(); progressDot(); renderMenuQuestBanner();
 }
 // place: 0 = first … ; -1 = draw.
@@ -3132,6 +3171,7 @@ function renderMenuQuestBanner() {
 }
 function renderMenuProfile() {
   const el = $('#mprof'); if (!el) return;
+  try { earnedCheck(); } catch (_) {}
   const need = xpNeed(PROG.lvl), name = profileName();
   el.innerHTML = `<span class="av${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${name[0] || '?'}</span><span class="mpi"><b>${name}</b><span class="mpl"><em>Ур. ${PROG.lvl}</em><i class="mxp"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></i></span></span><span class="mpg"><i class="coin"></i><b class="goldN">${wallet.gold}</b></span>`;
   renderMenuQuestBanner();
@@ -3142,7 +3182,7 @@ function renderProgress() {
   // One card: avatar, nickname and e-mail with the edit button, then level and experience; the account buttons
   // (#acct, below) join it.
   const mail = fbAuth && fbAuth.email ? String(fbAuth.email).replace(/[<>&"]/g, '') : 'Профиль не сохранён';
-  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b><small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span></div>`;
+  $('#profile').innerHTML = `<div class="pctop"><span class="av big${myRing() ? ' fr' : ''}" style="--c:${wallet.color};${myRing() ? `--fr:${myRing()}` : ''}">${(name[0] || '?').toUpperCase()}</span><span class="pwho"><b>${name}</b>${myStatus() ? `<em class="fst">${myStatus()}</em>` : ''}<small class="pmail">${mail}</small></span><button class="iconbtn" id="profEdit" aria-label="Редактировать профиль"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div><div class="pclvl"><div class="lvl">${ring(PROG.xp / need)}<b>${PROG.lvl}</b></div><div class="pi"><b class="pl1">Уровень ${PROG.lvl}</b><div class="xpbar"><i style="width:${(100 * PROG.xp / need).toFixed(1)}%"></i></div><small>${PROG.xp} / ${need} опыта до ${PROG.lvl + 1} уровня</small></div></div><div class="pchips"><span>🏆 <b>${PROG.cups}</b> кубков</span><span><i class="coin"></i> <b>${wallet.gold}</b> золота</span><span>🏅 <b>${ACH.filter(a => PROG.ach[a.id] === 'got').length}</b>/${ACH.length} наград</span></div>`;
   $('#profEdit').onclick = editProfile;
   const st = PROG.st = normalizeStats(PROG.st);
   const rate = st.games ? Math.round(100 * st.wins / st.games) : 0;
@@ -3182,7 +3222,9 @@ function renderProgress() {
     const wqGot = wqList.filter(q => q.got).length;
 
     const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
-    el.innerHTML = `<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
+    const nearQ = PROG.q.filter(q => !q.got).map(q => ({q, Q: QUESTS.find(x => x.id === q.id)})).filter(x => x.Q).sort((a, b) => (a.Q.n - a.q.n) / a.Q.n - (b.Q.n - b.q.n) / b.Q.n)[0];
+    const goalLine = rewardReady() ? '<div class="goalline ready">🎁 Есть награды: заберите их ниже</div>' : nearQ ? `<div class="goalline">🎯 Ближайшая цель: <b>${nearQ.Q.t}</b> · ${nearQ.q.n}/${nearQ.Q.n}</div>` : '<div class="goalline">✅ Все задания на сегодня выполнены</div>';
+    el.innerHTML = `${goalLine}<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
   } else if (ptab === 'cols') renderCollections(el);
   else if (ptab === 'hist') renderHistory(el);
   else renderTop();
@@ -3213,6 +3255,8 @@ async function openPlayer(uid, name, col) {
   const [lead, pres] = await Promise.all([fbGet('leaders/' + uid).catch(() => null), fbGet('presence/' + uid).catch(() => null)]);
   const ago = pres && pres.t ? Math.round((Date.now() - pres.t) / 60000) : null;
   const seen = ago == null ? '' : pres.s && pres.s !== 'off' && ago < 3 ? '🟢 в сети' : ago < 60 ? `был ${ago} мин назад` : ago < 1440 ? `был ${Math.round(ago / 60)} ч назад` : `был ${Math.round(ago / 1440)} дн назад`;
+  const sv = PG.state.status.shownStatus((pres && pres.st) || (lead && lead.st)), h3 = box.querySelector('h3');
+  if (sv && h3 && !h3.nextElementSibling.classList.contains('fst')) h3.insertAdjacentHTML('afterend', `<em class="fst">${sv}</em>`);
   const st = box.querySelector('#plStat'); if (st) st.textContent = [`🏆 ${lead && +lead.r || 0} кубков`, lead && lead.w ? `${+lead.w} побед онлайн` : '', seen].filter(Boolean).join(' · ');
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-pl]'); if (b && !e.target.closest('button.chip')) openPlayer(b.dataset.pl, b.dataset.n, b.dataset.c); });
@@ -3275,7 +3319,7 @@ async function syncRating(force) {
   if (!FB || (PROG.up >= PROG.cups && !force)) return;
   try {
     const tok = await fbToken(), target = Math.min(PROG.cups, PROG.up + 30);
-    const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
+    const r = await fetch(`${FB.dbUrl}/leaders/${fbAuth.uid}.json?auth=${tok}`, {method: 'PUT', body: JSON.stringify({n: profileName(), st: myStatus(), r: target, w: PROG.st.owins, t: {'.sv': 'timestamp'}})});
     if (r.ok) {
       PROG.up = target; saveWallet(); progressDot();
       if (PROG.up < PROG.cups) setTimeout(syncRating, 61000);
@@ -3312,8 +3356,8 @@ async function renderTop() {
     const mine = rows.findIndex(x => x.uid === me);
 
     const av = (x, i) => `<span class="av" style="--c:${PALETTE[i % PALETTE.length].col}">${(clean(x.n) || '?')[0].toUpperCase()}</span>`;
-    const podium = [1, 0, 2].map(i => rows[i] ? `<div class="pod p${i + 1}${rows[i].uid === me ? ' me' : ''}">${av(rows[i], i)}<b>${clean(rows[i].n) || 'Игрок'}</b><small>🏆 ${rows[i].r}</small><div class="ped"><i>${i + 1}</i></div></div>` : '<div class="pod empty"></div>').join('');
-    const list = rows.slice(3, 10).map((x, k) => `<div class="lead${x.uid === me ? ' me' : ''}"><i>${k + 4}</i>${av(x, k + 3)}<span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><b>🏆 ${x.r}</b></div>`).join('');
+    const podium = [1, 0, 2].map(i => rows[i] ? `<div class="pod p${i + 1}${rows[i].uid === me ? ' me' : ''}">${av(rows[i], i)}<b>${clean(rows[i].n) || 'Игрок'}</b>${stTag(rows[i].st)}<small>🏆 ${rows[i].r}</small><div class="ped"><i>${i + 1}</i></div></div>` : '<div class="pod empty"></div>').join('');
+    const list = rows.slice(3, 10).map((x, k) => `<div class="lead${x.uid === me ? ' me' : ''}"><i>${k + 4}</i>${av(x, k + 3)}<span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}${stTag(x.st)}</span><b>🏆 ${x.r}</b></div>`).join('');
     const myRow = mine >= 10 ? `<div class="lead me myrank"><i>${mine + 1}</i>${av(rows[mine], mine)}<span>Вы</span><b>🏆 ${rows[mine].r}</b></div>`
       : mine < 0 ? `<div class="lead me myrank"><i>—</i><span>Вы пока не в рейтинге</span><b>🏆 ${PROG.cups}</b></div>` : '';
 
@@ -3559,7 +3603,7 @@ async function loadFriends() {
   const list = (await fbGet('friends/' + me)) || {};
   friends = await Promise.all(Object.entries(list).slice(0, FRIEND_MAX).map(async ([uid, v]) => {
     const [back, p] = await Promise.all([fbGet(`friends/${uid}/${me}`).catch(() => null), fbGet('presence/' + uid).catch(() => null)]);
-    return {uid, n: clean(p && p.n) || clean(v.n) || 'Игрок', mutual: !!back, p, on: !!back && isOn(p)};
+    return {uid, n: clean(p && p.n) || clean(v.n) || 'Игрок', st: PG.state.status.shownStatus(p && p.st), mutual: !!back, p, on: !!back && isOn(p)};
   }));
   friends.sort((a, b) => b.on - a.on || b.mutual - a.mutual || ((b.p && b.p.t) || 0) - ((a.p && a.p.t) || 0));
 }
@@ -3673,6 +3717,88 @@ function friendsDot() {
   b.classList.toggle('hasdot', Object.values(inbox).some(v => v.k === 'f' || v.k === 'r'));
   const n = friendsOnline(), e = b.querySelector('.fnum'); e.hidden = !n; e.textContent = ''; b.title = n ? `Друзей в сети: ${n}` : '';
 }
+/* ---------------- statuses, my items ----------------
+   A status is a short line under the nickname (see src/state/status.js). Ready ones are sold in the shop, a hand-written
+   one costs 3000 gold; some are earned only. "My items" gathers everything the player owns: statuses, frames, figures. */
+const ST = () => PG.state.status;
+const stBadge = (t, cls = '') => `<span class="stchip${cls}">${t}</span>`;
+function renderStatusShop() {
+  const box = $('#stgrid'); if (!box) return;
+  const own = ST().ownedStatuses(wallet), worn = wallet.statusKey || '';
+  box.innerHTML = ST().SHOP_STATUSES.map(x => {
+    const k = 'sh:' + x.id, has = own.includes(k), poor = !has && wallet.gold < x.price;
+    return `<button class="stb${worn === k ? ' sel' : ''}${poor ? ' poor' : ''}" data-stb="${x.id}">${stBadge(x.text)}<small>${worn === k ? 'Надет' : has ? 'Надеть' : `<i class="coin"></i>${x.price}`}</small></button>`;
+  }).join('');
+}
+const STATUS_ERR = {short: 'Слишком короткий статус', long: 'Не больше 15 символов', bad: 'Такой текст нельзя: выберите другой', owned: 'Такой статус у вас уже есть', gold: 'Не хватает золота'};
+function afterStatusChange() { saveWallet(); renderStatusShop(); renderMenuProfile(); if (!$('#scr-items').hidden) renderItems(); presenceMark(true); syncRating(true); }
+$('#stgrid').addEventListener('click', e => {
+  const b = e.target.closest('[data-stb]'); if (!b) return;
+  const x = ST().SHOP_STATUSES.find(q => q.id === b.dataset.stb), k = 'sh:' + x.id;
+  if (ST().ownedStatuses(wallet).includes(k)) { ST().wearStatus(wallet, wallet.statusKey === k ? null : k); return afterStatusChange(); }
+  if (wallet.gold < x.price) return toastAny(`Не хватает ${x.price - wallet.gold} золота`);
+  confirmBox(`Купить статус «${x.text}» за ${x.price} золота?`, 'Купить', () => {
+    const r = ST().buyShopStatus(wallet, x.id);
+    if (!r.ok) return toastAny(STATUS_ERR[r.reason] || 'Не получилось');
+    ST().wearStatus(wallet, r.key); beep('coin');
+    track('spend_virtual_currency', {item_name: 'status_' + x.id, virtual_currency_name: 'gold', value: x.price});
+    afterStatusChange(); toastAny(`Статус «${x.text}» — ваш!`);
+  });
+});
+$('#stBuy').onclick = () => {
+  const inp = $('#stInput'), t = ST().cleanStatus(inp.value);
+  if (String(inp.value).trim().length > ST().STATUS_MAX) return toastAny(STATUS_ERR.long);
+  if (t.length < 2) return toastAny(STATUS_ERR.short);
+  if (ST().isBadStatus(t)) return toastAny(STATUS_ERR.bad);
+  if (wallet.gold < ST().CUSTOM_PRICE) return toastAny(`Не хватает ${ST().CUSTOM_PRICE - wallet.gold} золота`);
+  confirmBox(`Свой статус «${t}» за ${ST().CUSTOM_PRICE} золота?`, 'Купить', () => {
+    const r = ST().buyCustomStatus(wallet, t);
+    if (!r.ok) return toastAny(STATUS_ERR[r.reason] || 'Не получилось');
+    ST().wearStatus(wallet, r.key); beep('coin'); inp.value = '';
+    track('spend_virtual_currency', {item_name: 'status_custom', virtual_currency_name: 'gold', value: r.price});
+    afterStatusChange(); toastAny('Статус надет');
+  });
+};
+let itab = 'st';
+function renderItems() {
+  const box = $('#itemsBody'); if (!box) return;
+  document.querySelectorAll('#itabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.it === itab));
+  const S = ST(), own = S.ownedStatuses(wallet), worn = wallet.statusKey || '';
+  if (itab === 'st') {
+    const counted = S.SHOP_STATUSES.length + S.EXCLUSIVE_STATUSES.filter(x => !x.soon).length, have = own.filter(k => !k.startsWith('cu:')).length;
+    const mine = own.map(k => ({k, t: S.statusText(k), ex: k.startsWith('ex:'), cu: k.startsWith('cu:')}));
+    const lockedEx = S.EXCLUSIVE_STATUSES.filter(x => !own.includes('ex:' + x.id));
+    box.innerHTML = `<div class="icount">Собрано <b>${have}</b> из ${counted}${own.length > have ? ` · своих: ${own.length - have}` : ''}</div>`
+      + `<div class="itnow">Сейчас: ${worn && S.statusText(worn) ? stBadge(S.statusText(worn)) + '<button class="chip x" data-unwear>Снять</button>' : '<small>статус не надет</small>'}</div>`
+      + (mine.length ? `<div class="h3 sec">Мои статусы</div><div class="stgrid">${mine.map(m => `<button class="stb${worn === m.k ? ' sel' : ''}${m.ex ? ' ex' : ''}" data-iwear="${m.k}">${stBadge(m.t, m.ex ? ' ex' : '')}<small>${worn === m.k ? 'Надет' : m.ex ? 'Эксклюзив · надеть' : m.cu ? 'Свой · надеть' : 'Надеть'}</small></button>`).join('')}</div>` : '<p class="shint">Пока нет статусов. Купите в магазине или получите за достижения.</p>')
+      + (lockedEx.length ? `<div class="h3 sec">Эксклюзивные</div><div class="exlist">${lockedEx.map(x => `<div class="exrow${x.soon ? ' soon' : ''}"><span class="exic">${x.ic}</span><span><b>${x.text}</b><small>${x.how}</small></span><i>🔒</i></div>`).join('')}</div>` : '')
+      + '<button class="ghostbtn wide" data-ishop>Купить статусы в магазине</button>';
+  } else if (itab === 'fr') {
+    const ownFr = Object.keys(FRAMES).filter(k => k === 'none' || (wallet.frames || []).includes(k) || (!FRAMES[k].price && !FRAMES[k].earn));
+    const total = Object.keys(FRAMES).length - 1, have = ownFr.filter(k => k !== 'none').length;
+    const lock = Object.entries(FRAMES).filter(([k, f]) => !ownFr.includes(k));
+    box.innerHTML = `<div class="icount">Собрано <b>${have}</b> из ${total}</div><div class="frgrid">${ownFr.map(k => { const f = FRAMES[k], sel = (wallet.frame || 'none') === k; return `<button class="frb${sel ? ' sel' : ''}" data-ifr="${k}"><span class="av${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${(profileName()[0] || '?').toUpperCase()}</span><span>${f.name}</span><small>${sel ? 'Надета' : 'Надеть'}</small></button>`; }).join('')}</div>`
+      + (lock.length ? `<div class="h3 sec">Ещё не открыты</div><div class="frgrid">${lock.map(([k, f]) => `<div class="frb lockd"><span class="av fr" style="--c:#2a3254;--fr:${f.ring}">?</span><span>${f.name}</span><small>${f.earn ? '🔒 ' + f.earn : `<i class="coin"></i>${f.price}`}</small></div>`).join('')}</div>` : '')
+      + '<button class="ghostbtn wide" data-ishop>В магазин</button>';
+  } else if (itab === 'fg') {
+    const ownF = Object.keys(FIGS).filter(k => wallet.owned.includes(k)), lock = Object.keys(FIGS).filter(k => !wallet.owned.includes(k));
+    box.innerHTML = `<div class="icount">Собрано <b>${ownF.length}</b> из ${Object.keys(FIGS).length}</div><div class="figgrid">${ownF.map(k => `<button class="fig${wallet.fig === k ? ' sel' : ''}" data-ifig="${k}"><img src="${figPreview(k)}" alt=""><b>${FIGS[k].name}</b><small>${wallet.fig === k ? 'Выбрана' : 'Выбрать'}</small></button>`).join('')}</div>`
+      + (lock.length ? `<div class="h3 sec">Ещё не куплены</div><div class="figgrid">${lock.map(k => `<div class="fig poor lockd"><img src="${figPreview(k)}" alt="" style="filter:grayscale(1) brightness(.6)"><b>${FIGS[k].name}</b><small><i class="coin"></i>${FIGS[k].price}</small></div>`).join('')}</div>` : '')
+      + '<button class="ghostbtn wide" data-ishop>В магазин</button>';
+  } else {
+    box.innerHTML = `<div class="icount">Открыто <b>${LOCS.filter(l => l.open).length}</b> из ${LOCS.length}</div><div class="locgrid">${LOCS.map(l => `<div class="loc${l.open ? '' : ' locked'}"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><b>${l.name}</b><small>${l.open ? 'Открыта' : 'Скоро'}</small></div>`).join('')}</div>`;
+  }
+}
+$('#itabs').addEventListener('click', e => { const b = e.target.closest('[data-it]'); if (!b) return; itab = b.dataset.it; renderItems(); });
+$('#itemsBody').addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('[data-ishop]')) return show('shop');
+  if (t.closest('[data-unwear]')) { ST().wearStatus(wallet, null); return afterStatusChange(); }
+  const w = t.closest('[data-iwear]'); if (w) { ST().wearStatus(wallet, wallet.statusKey === w.dataset.iwear ? null : w.dataset.iwear); return afterStatusChange(); }
+  const f = t.closest('[data-ifr]'); if (f) { wallet.frame = f.dataset.ifr; saveWallet(); renderItems(); renderMenuProfile(); return; }
+  const g = t.closest('[data-ifig]'); if (g) { wallet.fig = g.dataset.ifig; saveWallet(); renderItems(); return; }
+});
+$('#itemsBtn').onclick = () => { show('items'); renderItems(); };
 const fRow = (f, btn, sub) => PG.net.friends.renderFriendRow(f, btn, sub);
 function fillOnline(sec, title, list, show, inRoom, room) {
   if (!sec) return;
@@ -4916,6 +5042,7 @@ function show(name) {
   musicUpdate();
   if (mm && name !== 'match') stopMatch(name === 'game');
   if (name === 'results') renderResults(phase === 'end');
+  if (name === 'items') renderItems();
   if (gameVisible) { applyCam(); if (pendingStart) startTurn(); else pumpRemote(); }
   if (name === 'lobby') { renderLobby(); if (FB && registered()) loadFriends().then(renderLobbyFriends).catch(() => {}); }
   if (name === 'shop') renderShop();

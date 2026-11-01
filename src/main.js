@@ -8,6 +8,7 @@ import {createSound} from './audio/sound.js';
 import {walletSig, loadWallet, storeWallet} from './state/wallet.js';
 import * as progress from './state/progress.js';
 import * as catalog from './state/catalog.js';
+import * as status from './state/status.js';
 import * as config from './state/config.js';
 import {createArt} from './render/art.js';
 import {createFirebase} from './net/firebase.js';
@@ -36,7 +37,7 @@ import * as tutorial from './game/tutorial.js';
 export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTile, board, scoring, bots};
 
 export const audio = {createSound};
-export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config};
+export const state = {walletSig, loadWallet, storeWallet, progress, catalog, config, status};
 export const render = {createArt};
 export const net = {createFirebase, friends, presence, rooms, matchmaking};
 export const app = {web, update};

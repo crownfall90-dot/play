@@ -234,8 +234,8 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stats div{padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center}
 .stats b{display:block;font:800 18px var(--f-display);font-variant-numeric:tabular-nums}.stats small{color:var(--muted);font-size:11px}
-#ptabs{grid-template-columns:repeat(3,1fr)}
-#ptabs button{font:800 14px var(--f-display);padding:0 2px;position:relative}
+#ptabs{grid-template-columns:repeat(4,minmax(0,1fr))}
+#ptabs button{font:800 12.5px var(--f-display);padding:0 2px;position:relative;white-space:nowrap}
 #ptabs button.hasdot::after{content:"";position:absolute;top:4px;right:6px;width:7px;height:7px;border-radius:50%;background:#ef5350;border:1.5px solid #141b33}
 .quest{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
 .quest .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:rgba(255,255,255,.06);flex:0 0 auto}
@@ -750,7 +750,7 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .pstats .sbig small{display:block;color:var(--muted);font-size:10.5px;line-height:1.2;margin-top:2px}
 .pstats .sbuild{display:flex;justify-content:space-between;gap:6px;padding-top:9px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
 .pstats .sbuild b{color:var(--ink)}
-.h3.sec{justify-content:space-between;margin-top:4px}.h3.sec em{margin-left:auto;font:700 12px var(--f-body);color:var(--muted);font-style:normal;background:rgba(255,255,255,.06);border-radius:999px;padding:3px 9px}
+.h3.sec{justify-content:flex-start;margin-top:4px}.h3.sec em{margin-left:auto;font:700 12px var(--f-body);color:var(--muted);font-style:normal;background:rgba(255,255,255,.06);border-radius:999px;padding:3px 9px}
 .hsum{display:flex;flex-wrap:wrap;gap:4px 10px;padding:10px 12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--line);font-size:12.5px;color:var(--muted)}.hsum b{color:var(--ink)}
 .pclvl .lvl{position:relative;flex:0 0 auto;width:58px;height:58px;display:grid;place-items:center}.pclvl .lvl svg{position:absolute;inset:0}.pclvl .lvl b{position:relative;font:800 20px var(--f-display)}
 .pclvl .pl1{display:block;font:800 14px var(--f-display);margin-bottom:5px}.pclvl .xpbar{margin-bottom:5px}
@@ -1039,3 +1039,29 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .col-foot .xpbar{flex:1}
 /* points and rules: a small round button among the board buttons, like the hint, not a pill hanging over the board */
 .fab.helpb{color:#f2b84b;border-color:rgba(242,184,75,.4)}
+/* player status: a short line under the name (profile, friends, plates, rating) */
+.fst{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 11.5px var(--f-body);font-style:normal;color:var(--brass);background:rgba(242,184,75,.12);border:1px solid rgba(242,184,75,.32);border-radius:999px;padding:1px 8px;margin:2px 0}
+.pi .pst{display:block;font:600 10px var(--f-body);color:var(--brass);opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px;line-height:1.2}
+.lead .fst,.pod .fst{margin-left:6px;font-size:10.5px}.pod .fst{display:block;margin:2px auto}
+.fwho .fst{display:block;width:fit-content}
+/* statuses and "my items" */
+.stgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.stb{display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:16px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--ink);font:600 12px var(--f-body);cursor:pointer;min-width:0}
+.stb.sel{border-color:var(--brass);background:rgba(242,184,75,.12)}.stb.poor{opacity:.55}.stb small{color:var(--muted);font-size:11px;display:flex;gap:3px;align-items:center}.stb.sel small{color:var(--brass)}
+.stchip{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 13px var(--f-display);color:#fff;background:linear-gradient(135deg,#4c8dff,#b06cf0);border-radius:999px;padding:3px 12px}
+.stchip.ex{background:linear-gradient(135deg,#f2b84b,#ef7a2f);color:#2a1b05}
+.stcustom{display:flex;gap:8px;margin-bottom:16px}.stcustom .field{flex:1;min-width:0}.stcustom .cta{flex:0 0 auto;display:flex;gap:5px;align-items:center;padding:0 14px}
+.itabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-bottom:12px}.itabs button{padding:9px 2px;font-size:12.5px}
+.icount{color:var(--muted);font-size:13px;margin:2px 2px 8px}.icount b{color:var(--brass);font-size:15px}
+.itnow{display:flex;align-items:center;gap:8px;margin:0 0 10px;color:var(--muted);font-size:13px}
+.exlist{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.exrow{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;border:1px dashed rgba(242,184,75,.4);background:rgba(242,184,75,.06)}
+.exrow .exic{font-size:24px}.exrow b{display:block}.exrow small{color:var(--muted);font-size:11.5px}.exrow i{margin-left:auto;font-style:normal}.exrow.soon{opacity:.55}
+.lockd{opacity:.55;cursor:default}.itemsentry{margin:6px 0 12px}
+#scr-items .figgrid,#scr-items .frgrid,#scr-items .locgrid{margin-bottom:8px}
+/* profile: one even hero, 2x2 mastery, quiet account block at the bottom */
+.pchips{flex-wrap:nowrap;gap:6px}.pchips span{min-width:0;padding:9px 4px;font-size:12px;gap:4px;white-space:nowrap}
+.mgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.mcard{padding:10px 12px}.mcard.empty{opacity:.75}.mcard .mnone{color:var(--muted)}
+.goalline{padding:10px 12px;border-radius:14px;background:rgba(76,141,255,.12);border:1px solid rgba(76,141,255,.35);font-size:13px;margin-bottom:6px}.goalline.ready{background:rgba(242,184,75,.14);border-color:rgba(242,184,75,.5)}
+.acctbottom{margin-top:14px;opacity:.92}
+.itemsentry{background:linear-gradient(135deg,rgba(242,184,75,.22),rgba(242,184,75,.06));border:1px solid rgba(242,184,75,.5);color:var(--ink)}
+.itemsentry small{color:var(--muted)!important}.itemsentry b{color:var(--ink)}
