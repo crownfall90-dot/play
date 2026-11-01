@@ -4079,7 +4079,9 @@ async function quickMatch(create) {
   stopMatch(true);
   leaveRoom();
   // want: the table size of the room this player opens if nobody is waiting; joining takes any room.
-  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0, create: create === true};
+  mm = (typeof PG !== 'undefined' && PG.net && PG.net.matchmaking && PG.net.matchmaking.createMatchState)
+    ? PG.net.matchmaking.createMatchState({want: setup.onN || 2, mode: setup.rules.mode, create: create === true})
+    : {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0, create: create === true};
   const me = mm;
   me.timers.push(setInterval(() => matchTick(me), 1000));
   (async () => {
