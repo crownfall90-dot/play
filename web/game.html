@@ -4073,6 +4073,11 @@ async function statsDialog() {
       fetch(`https://api.github.com/repos/${DEV_REPO}/releases?per_page=100`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     const relOk = Array.isArray(rel), rels = relOk ? rel : []; // GitHub may answer with a limit message instead of the list
+    if (typeof PG !== 'undefined' && PG.ui && PG.ui.owner && PG.ui.owner.computePresenceStats && PG.ui.owner.renderStatsGridHtml) {
+      const stats = PG.ui.owner.computePresenceStats({pres, rels, now: Date.now()});
+      out.innerHTML = PG.ui.owner.renderStatsGridHtml(stats);
+      return;
+    }
     // Only real game records: a name and a state. Leftovers from early builds and test runs
     // (just a time, no name) are skipped.
     const now = Date.now(), P = Object.values(pres || {}).filter(v => v && typeof v.n === 'string' && v.n && v.s), D = 864e5;
