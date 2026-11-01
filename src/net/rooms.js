@@ -104,9 +104,9 @@ export function formatCupsBadge(cups, isHost) {
   const className = 'cupsbadge' + (cups ? ' on' : '') + (isHost ? ' host' : '');
   const title = cups ? '🏆 Игра на кубки' : '🤝 Без кубков';
   const subtitle = isHost
-    ? (cups ? 'Кубки начисляются' : 'Кубки не меняются')
+    ? (cups ? 'Кубки начисляются · нажмите для смены' : 'Кубки не меняются · нажмите для смены')
     : (cups ? 'Рейтинговая игра' : 'Без рейтинга');
-  const innerHtml = `<b>${title}</b><small>${subtitle}</small>`;
+  const innerHtml = `<div class="cupsbadge-main"><b>${title}</b><small>${subtitle}</small></div><div class="cups-switch" aria-hidden="true"><span class="cups-switch-track"><span class="cups-switch-knob">${cups ? '🏆' : '🤝'}</span></span></div>`;
   return {className, innerHtml};
 }
 

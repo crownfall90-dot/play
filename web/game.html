@@ -239,7 +239,8 @@
           </div>
           <div class="col" id="lbRoom" hidden>
             <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div>
-              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
+              <small class="code-hint">Нажмите на код, чтобы скопировать</small>
+              <button class="chip pri lb-invite" id="lbInvite"><span>👥 Пригласить друзей</span><span class="fonline-badge" id="lbOnlineN" hidden>0</span></button></div>
             <button class="cupsbadge" id="lbCups"></button>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
@@ -2237,32 +2238,63 @@ async function shareText(txt, done) {
   if (navigator.share) { try { await navigator.share({title: 'Puzzlegrad', text: full}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   copyText(full, done);
 }
-$('#copyLink').onclick = () => track('share', {content_type: 'room'}) || shareText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
+function shareRoomLink() {
+  if (net && net.code) {
+    track('share', {content_type: 'room'});
+    shareText(`Заходи играть в Puzzlegrad: ${SITE_URL}?room=${net.code}\nИли в игре «С друзьями» и код комнаты:\n${net.code}`, 'Приглашение скопировано — отправьте его друзьям');
+  } else {
+    track('share', {content_type: 'quick'});
+    shareText(`Заходи играть в Puzzlegrad: ${SITE_URL}`, 'Ссылка скопирована');
+  }
+}
+if ($('#copyLink')) $('#copyLink').onclick = shareRoomLink;
 $('#codeShow').onclick = () => net && net.code && copyText(net.code, `Код ${net.code} скопирован`);
 $('#lbCups').onclick = () => { if (!net || !net.host || net.gameId) return; setup.rules.cups = !setup.rules.cups; saveSetup(); if (net.lobby) publishLobby(net.lobby.seats); renderLobby(); renderRules(); };
-// Inviting friends, one sheet for the room and for the online search: friends online now with "Call" (they get a card
-// with one-tap join), and the share sheet for anyone else.
-function inviteSheet(fresh) {
-  const old = document.getElementById('invBox'); if (old) old.remove();
-  // online search: only friends who are online right now, nothing to send; a friends' room also offers the link
+
+function updateLobbyOnlineBadge() {
+  const badge = $('#lbOnlineN');
+  if (!badge) return;
+  const ok = FB && registered();
+  const seats = net && net.lobby ? net.lobby.seats : [];
+  const inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
+  const on = ok ? friends.filter(f => f.on && !inRoom.has(f.uid)).length : 0;
+  if (on > 0) {
+    badge.textContent = on;
+    badge.hidden = false;
+  } else {
+    badge.hidden = true;
+  }
+}
+
+function renderInviteSheetRows(box) {
+  const wrap = box.querySelector('#ivListWrap');
+  if (!wrap) return;
   const online = !!(mm || (net && net.quick)), room = net && net.code;
-  const box = document.createElement('div'); box.className = 'over'; box.id = 'invBox'; box.style.position = 'fixed';
   const ok = FB && registered(), seats = net && net.lobby ? net.lobby.seats : [], inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
   const on = ok ? friends.filter(f => f.on && !inRoom.has(f.uid)) : [];
   const state = f => invited.code === room && invited.joined.has(f.uid) ? ['✓ С вами', ' joined'] : invited.code === room && invited.uids.has(f.uid) ? ['Ждём ответа', ' sent'] : ['Позвать', ''];
-  const rows = on.map(f => { const [t, c] = state(f); return `<li class="ivrow${c}"><span class="av" style="--c:${f.c || '#3fc27a'}">${(f.n || '?')[0]}</span><span class="ivwho"><b>${f.n}</b><small><i></i>${STATE_TEXT[f.p && f.p.s] || 'в сети'}</small></span><button class="chip go" data-linv="${f.uid}"${c ? ' disabled' : ''}>${t}</button></li>`; }).join('');
-  const empty = !ok ? 'Звать друзей могут сохранённые профили' : online ? 'Сейчас никого из друзей нет в сети. Как только кто-то зайдёт — он появится здесь' : 'Сейчас никого из друзей нет в сети — отправьте им ссылку';
-  box.innerHTML = `<div class="ocard invsheet"><div class="ivhead"><span>👥</span><h3>${online ? 'Позвать друзей в онлайн-игру' : 'Пригласить друзей'}</h3><small>${online ? 'Друг получит приглашение и сядет за ваш стол' : 'Друг получит приглашение в комнату'}</small></div>
-    ${rows ? `<ul class="ivlist">${rows}</ul>` : `<p class="ivempty">${empty}</p>`}
-    ${online ? '' : '<button class="cta wide" id="invShare">🔗 Отправить ссылку</button>'}<button class="ghostbtn" id="invNo">Готово</button></div>`;
+  const rows = on.map(f => { const [t, c] = state(f); return `<li class="ivrow${c}"><span class="av" style="--c:${f.c || '#3fc27a'}">${(clean(f.n) || '?')[0]}</span><span class="ivwho"><b>${clean(f.n)}</b><small><i></i>${STATE_TEXT[f.p && f.p.s] || 'в сети'}</small></span><button class="chip go" data-linv="${f.uid}"${c ? ' disabled' : ''}>${t}</button></li>`; }).join('');
+  const empty = !ok ? 'Звать друзей могут сохранённые профили' : online ? 'Сейчас никого из друзей нет в сети. Как только кто-то зайдёт — он появится здесь' : 'Сейчас никого из друзей нет в сети — поделитесь ссылкой на комнату';
+  wrap.innerHTML = rows ? `<ul class="ivlist">${rows}</ul>` : `<p class="ivempty">${empty}</p>`;
+}
+
+// Inviting friends: shows online friends with "Call" and the share button
+function inviteSheet(fresh) {
+  const old = document.getElementById('invBox'); if (old) old.remove();
+  const online = !!(mm || (net && net.quick));
+  const box = document.createElement('div'); box.className = 'over'; box.id = 'invBox'; box.style.position = 'fixed';
+  const ok = FB && registered();
+  box.innerHTML = `<div class="ocard invsheet"><div class="ivhead"><span>👥</span><h3>Пригласить друзей</h3><small>${online ? 'Друг получит приглашение и сядет за ваш стол' : 'Друг получит приглашение в комнату'}</small></div>
+    <div id="ivListWrap"></div>
+    <button class="cta wide" id="invShare">🔗 Поделиться ссылкой</button><button class="ghostbtn" id="invNo">Готово</button></div>`;
   document.body.append(box);
+  renderInviteSheetRows(box);
   box.onclick = e => {
     if (e.target === box || e.target.id === 'invNo') return box.remove();
     const b = e.target.closest('[data-linv]'); if (b) setTimeout(() => { b.textContent = 'Ждём ответа'; b.disabled = true; b.closest('.ivrow').classList.add('sent'); }, 30);
   };
-  const sh = box.querySelector('#invShare'); if (sh) sh.onclick = () => $('#copyLink').click();
-  // drawn at once from what is known, then once more with fresh online marks
-  if (ok && fresh !== true) loadFriends().then(() => { if (box.isConnected) { box.remove(); inviteSheet(true); } }).catch(() => {});
+  const sh = box.querySelector('#invShare'); if (sh) sh.onclick = () => shareRoomLink();
+  if (ok && fresh !== true) loadFriends().then(() => { if (box.isConnected) renderInviteSheetRows(box); updateLobbyOnlineBadge(); }).catch(() => {});
 }
 $('#lbInvite').onclick = () => inviteSheet();
 $('#mInvite').onclick = () => inviteSheet();
@@ -2690,6 +2722,7 @@ function renderLobby() {
   if (mm) matchRender();
   $('#lbJoin').hidden = !!net; $('#lbRoom').hidden = !net;
   if (!net) return;
+  updateLobbyOnlineBadge();
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
   // "for cups" is seen by everyone in the room; the creator switches it here with one tap
   const cups = !!(net.lobby && net.lobby.rules ? net.lobby.rules.cups : setup.rules.cups), cb = $('#lbCups');
@@ -2699,7 +2732,9 @@ function renderLobby() {
     cb.innerHTML = badge.innerHtml;
   } else {
     cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : '');
-    cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? (cups ? 'Кубки начисляются' : 'Кубки не меняются') : (cups ? 'Рейтинговая игра' : 'Без рейтинга')}</small>`;
+    const title = cups ? '🏆 Игра на кубки' : '🤝 Без кубков';
+    const subtitle = net.host ? (cups ? 'Кубки начисляются · нажмите для смены' : 'Кубки не меняются · нажмите для смены') : (cups ? 'Рейтинговая игра' : 'Без рейтинга');
+    cb.innerHTML = `<div class="cupsbadge-main"><b>${title}</b><small>${subtitle}</small></div><div class="cups-switch" aria-hidden="true"><span class="cups-switch-track"><span class="cups-switch-knob">${cups ? '🏆' : '🤝'}</span></span></div>`;
   }
   cb.disabled = !net.host || !!net.gameId;
   renderMyColor();
@@ -4041,6 +4076,7 @@ function renderLobbyFriends() {
   const inRoom = new Set(seats.map(x => x.uid).filter(Boolean));
   fillOnline($('#lobbyOnline'), $('#lobbyOnlineTitle'), $('#lobbyOnlineList'), ok && net && !net.quick && !(net.gameId && phase !== 'end') && seats.length < roomMax(), inRoom, net && net.code);
   fillOnline($('#mOnline'), $('#mOnlineTitle'), $('#mOnlineList'), ok && !!mm && !(net && net.gameId) && seats.length < mm.want, inRoom, net && net.quick ? net.code : null);
+  updateLobbyOnlineBadge();
 }
 function renderFriends() {
   const box = $('#flist'); if (!box || $('#scr-friends').hidden) return;
@@ -4411,6 +4447,7 @@ function openFeedback() {
     other: 'Ваш отзыв, впечатление или вопрос к разработчику…'
   };
   const STAR_LABELS = {
+    0: 'Нажмите на звезду, чтобы оценить',
     1: '1/5 — Много багов / не понравилось',
     2: '2/5 — Есть проблемы и баги',
     3: '3/5 — Нормально, но есть над чем работать',
@@ -4429,8 +4466,8 @@ function openFeedback() {
     ? PG.ui.feedback.renderFeedbackCardHtml({
         first,
         namePromo,
-        stars: 5,
-        starLabel: STAR_LABELS[5],
+        stars: 0,
+        starLabel: STAR_LABELS[0],
         cat: 'idea',
         placeholder: PLACEHOLDERS.idea,
         diagSummary: `${diag.os} · ${diag.screen} · Сеть: ${diag.net}`
@@ -4440,7 +4477,7 @@ function openFeedback() {
   document.body.append(box);
 
   let cat = 'idea';
-  let stars = 5;
+  let stars = 0;
 
   const starBtns = box.querySelectorAll('.fb-star');
   const starLbl = box.querySelector('#fbStarLabel');
