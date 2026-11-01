@@ -30,17 +30,51 @@ test('lobby: invited friends are listed until they join; "late" after 30 s', {sk
   } finally { await browser.close(); }
 });
 
-test('source: pending rows, counter and the start confirmation exist', () => {
-  const src = require('node:fs').readFileSync(__dirname + '/../web/game.html', 'utf8');
-  assert.match(src, /Приглашён · ждём ответа/);
-  assert.match(src, /приглашено: \$\{pend\.length\}/);
-  assert.match(src, /Начать без них/);
-  assert.match(src, /data-idrop/);
-});
+test('lobby DOM: pending rows, counter, drop button and declined status rendered in DOM', {skip: !pw && 'playwright is not installed (npm ci)', timeout: 120000}, async () => {
+  const browser = await pw.chromium.launch();
+  try {
+    const {page, errors} = await openGame(browser, instrumentedCopy(), null);
+    const res = await page.evaluate(() => {
+      const P = window.__pg;
+      P.show('lobby');
+      P.setNet({code: 'ABCD', host: true, hostId: P.myId});
+      P.setFriends([
+        {uid: 'u1', n: 'Анна', st: 'Стратег', c: '#3fc27a'},
+        {uid: 'u2', n: 'Боря'},
+        {uid: 'u3', n: 'Влад'}
+      ]);
+      const now = Date.now();
+      P.setInvited({
+        code: 'ABCD',
+        uids: new Set(['u1', 'u2', 'u3']),
+        joined: new Set(),
+        declined: new Set(['u3']),
+        at: {u1: now, u2: now - 31000, u3: now}
+      });
+      P.show('lobby');
+      const countText = document.querySelector('#lbCount') ? document.querySelector('#lbCount').textContent : '';
+      const invItems = [...document.querySelectorAll('#plist li.inv')];
+      const invTexts = invItems.map(li => ({
+        name: li.querySelector('.who b') ? li.querySelector('.who b').textContent : '',
+        status: li.querySelector('.who small') ? li.querySelector('.who small').textContent : '',
+        hasDrop: li.querySelector('[data-idrop]') !== null
+      }));
 
-test('source: a declined invitation reaches the inviter and shows "Отказался" (no new rules needed)', () => {
-  const src = require('node:fs').readFileSync(__dirname + '/../web/game.html', 'utf8');
-  assert.match(src, /k: 'no', code:/);
-  assert.match(src, /v\.k === 'no'/);
-  assert.match(src, /p\.declined \? 'Отказался'/);
+      // Test dropping an invite
+      const dropBtn = document.querySelector('[data-idrop="u1"]');
+      if (dropBtn) dropBtn.click();
+      const afterDropCount = document.querySelectorAll('#plist li.inv').length;
+
+      return {countText, invTexts, afterDropCount};
+    });
+
+    assert.ok(res.countText.includes('приглашено:'), 'header shows count of invited friends');
+    assert.equal(res.invTexts.length, 3, 'shows 3 invited friends');
+    assert.equal(res.invTexts[0].status, 'Приглашён · ждём ответа');
+    assert.equal(res.invTexts[1].status, 'Не отвечает');
+    assert.equal(res.invTexts[2].status, 'Отказался');
+    assert.equal(res.invTexts[0].hasDrop, true, 'has drop button');
+    assert.equal(res.afterDropCount, 2, 'dropping removes friend from invited list');
+    assert.deepEqual(errors, []);
+  } finally { await browser.close(); }
 });

@@ -38,6 +38,29 @@ test('net/presence: formatPresenceRecord, filterActivePresence, getPresenceStatu
   assert.equal(active.length, 2);
   assert.equal(active[0].uid, 'u1', 'places myUid first');
   assert.equal(active[1].uid, 'u3');
+
+  // isOn and agoText
+  const {isOn, agoText, renderOnlinePlayersDialogHtml} = await import('../src/net/presence.js');
+  const now = 100000;
+  assert.equal(isOn({s: 'online', t: now - 10000}, 150000, now), true);
+  assert.equal(isOn({s: 'off', t: now - 10000}, 150000, now), false);
+  assert.equal(isOn({s: 'online', t: now - 200000}, 150000, now), false);
+
+  assert.equal(agoText(0), 'не в сети');
+  assert.equal(agoText(now - 15000, now), 'был(а) в сети только что');
+  assert.equal(agoText(now - 300000, now), 'был(а) в сети 5 мин назад');
+
+  // renderOnlinePlayersDialogHtml
+  const dialogHtml = renderOnlinePlayersDialogHtml({
+    presenceList: [{uid: 'u1', n: 'Alice', s: 'online'}, {uid: 'u2', n: 'Bob', s: 'menu', r: 1}],
+    myUid: 'u1',
+    registered: true,
+    isFriendFn: () => false
+  });
+  assert.ok(dialogHtml.includes('Сейчас в игре: 2'));
+  assert.ok(dialogHtml.includes('Alice (вы)'));
+  assert.ok(dialogHtml.includes('Bob'));
+  assert.ok(dialogHtml.includes('data-addf="u2"'));
 });
 
 test('net/friends: cleanFriendCode, formatInvitePayload, formatFriendRequestPayload, renderFriendRow', async () => {
@@ -68,4 +91,41 @@ test('net/friends: cleanFriendCode, formatInvitePayload, formatFriendRequestPayl
   assert.ok(rowHtml.includes('М'));
   assert.ok(rowHtml.includes('<button>Позвать</button>'));
   assert.ok(rowHtml.includes('в меню'));
+
+  // Friends list sections markup
+  const {renderFriendsListHtml} = await import('../src/net/friends.js');
+  const listHtml = renderFriendsListHtml({
+    invs: [['u1_r', {k: 'r', n: 'Петя', code: 'ROOM7'}]],
+    reqs: [['u2_f', {k: 'f', n: 'Саша'}]],
+    on: [{uid: 'u3', n: 'Даша', on: true, p: {s: 'online'}}],
+    off: [{uid: 'u4', n: 'Коля', mutual: true, on: false, p: {t: Date.now() - 3600000}}],
+    wait: [{uid: 'u5', n: 'Миша', mutual: false}],
+    room: 'ROOM1',
+    invited: {code: 'ROOM1', uids: new Set(['u3']), joined: new Set()},
+    stateTextMap: {online: 'играет онлайн'},
+    agoTextFn: () => 'был 1 ч назад'
+  });
+  assert.ok(listHtml.includes('Зовут играть'));
+  assert.ok(listHtml.includes('Петя'));
+  assert.ok(listHtml.includes('data-fjoin="u1_r"'));
+  assert.ok(listHtml.includes('Заявки в друзья'));
+  assert.ok(listHtml.includes('Саша'));
+  assert.ok(listHtml.includes('data-facc="u2"'));
+  assert.ok(listHtml.includes('В сети · 1'));
+  assert.ok(listHtml.includes('Даша'));
+  assert.ok(listHtml.includes('Ещё раз'));
+  assert.ok(listHtml.includes('Не в сети · 1'));
+  assert.ok(listHtml.includes('Коля'));
+  assert.ok(listHtml.includes('Ждут ответа'));
+  assert.ok(listHtml.includes('Миша'));
+
+  // renderFriendInviteDialogHtml and generateRandomFriendCode
+  const {renderFriendInviteDialogHtml, generateRandomFriendCode} = await import('../src/net/friends.js');
+  const invHtml = renderFriendInviteDialogHtml('Иван');
+  assert.ok(invHtml.includes('Иван приглашает вас в друзья'));
+  assert.ok(invHtml.includes('data-a="ok"'));
+
+  const fcode = generateRandomFriendCode();
+  assert.equal(fcode.length, 6);
+  assert.match(fcode, /^[A-Z0-9]{6}$/);
 });

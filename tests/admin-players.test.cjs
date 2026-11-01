@@ -16,8 +16,8 @@ test('admin panel: all players, one player\'s info and log, clearing it', {skip:
     page.on('pageerror', e => errors.push(e.message)); page.on('dialog', d => d.accept());
     const now = Date.now();
     const data = {
-      presence: {u1: {t: now - 30e3, s: 'menu', n: 'Katy', p: 'github', v: '1.0.227', r: 1, m: 'Pixel 7', i: 6.3}, u2: {t: now - 5 * 3600e3, s: 'off', n: 'guest7', p: 'web', v: '1.0.226', r: 0}},
-      'leaders/u1': {n: 'Katy', r: 45, w: 3, t: now},
+      presence: {u1: {t: now - 30e3, s: 'menu', n: 'Katy', p: 'github', v: '1.0.227', r: 1, m: 'Pixel 7', i: 6.3, st: 'ПлохойСтатус'}, u2: {t: now - 5 * 3600e3, s: 'off', n: 'guest7', p: 'web', v: '1.0.226', r: 0}},
+      'leaders/u1': {n: 'Katy', r: 45, w: 3, t: now, st: 'ПлохойСтатус'},
       'profiles/u1': {w: JSON.stringify({gold: 640, owned: ['classic', 'monk'], prog: {lvl: 4, xp: 120, st: {games: 22, wins: 9, best: 71}}}), t: now - 60e3},
       'logs/u1': {b: {t: now - 1000, k: 'game_end', d: '{"mode":"online","place":1}'}, a: {t: now - 9000, k: 'open', d: '{"v":"1.0.227"}'}},
       errors: {e1: {m: 'TypeError: x is undefined', ts: now - 500, ver: '1.0.227', uid: 'u1'}},
@@ -48,8 +48,12 @@ test('admin panel: all players, one player\'s info and log, clearing it', {skip:
     await page.click('.pl-row[data-uid=u1]');
     await page.waitForSelector('#plLog');
     const card = await page.textContent('#plDetail');
-    for (const want of ['Katy', 'Pixel 7', '1.0.227', '640', '45', '22', '71', 'game_end', 'open', 'TypeError: x is undefined']) assert.ok(card.includes(want), 'the card shows ' + want);
+    for (const want of ['Katy', 'Pixel 7', '1.0.227', '640', '45', '22', '71', 'ПлохойСтатус', 'game_end', 'open', 'TypeError: x is undefined']) assert.ok(card.includes(want), 'the card shows ' + want);
     assert.ok(card.indexOf('game_end') < card.indexOf('open'), 'newest event first');
+    await page.click('#plResetStatus');
+    await page.waitForFunction(() => true); await page.waitForTimeout(300);
+    assert.ok(writes.includes('DELETE presence/u1/st'), 'status deleted from presence');
+    assert.ok(writes.includes('DELETE leaders/u1/st'), 'status deleted from leaders');
     await page.click('#plClear');
     await page.waitForFunction(() => true); await page.waitForTimeout(300);
     assert.ok(writes.includes('DELETE logs/u1'), 'clearing deletes only this player\'s log');

@@ -68,3 +68,38 @@ export function formatMatchStatus({seatsCount, wantCount, startAt, now = Date.no
 
   return {full, left, title};
 }
+
+export function renderMatchSeatsHtml({
+  seats = [],
+  want = 2,
+  myId = '',
+  myName = 'Вы',
+  myColor = '#ef5350',
+  palette = [],
+  cleanFn = (s => s),
+  meLabelFn = (isMe, name) => isMe ? `${name} (вы)` : name
+}) {
+  const validCol = c => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
+  const list = seats.map((x, i) => {
+    const fallbackCol = palette[i] && (palette[i].col || palette[i]) ? (palette[i].col || palette[i]) : '#5b6684';
+    const col = validCol(x.col) ? x.col : fallbackCol;
+    const initial = (cleanFn(x.name) || '?')[0];
+    const isMe = x.owner === myId;
+    const label = meLabelFn(isMe, x.name);
+    const botPill = (!x.owner && !x.ghost) ? ' <span class="botpill">бот</span>' : '';
+    return `<li><span class="av" style="--c:${col}">${initial}</span>${label}${botPill}</li>`;
+  });
+
+  if (!seats.length) {
+    const col = validCol(myColor) ? myColor : '#ef5350';
+    const initial = (myName || '?')[0];
+    const label = meLabelFn(true, myName);
+    list.push(`<li><span class="av" style="--c:${col}">${initial}</span>${label}</li>`);
+  }
+
+  while (list.length < want) {
+    list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
+  }
+
+  return list.join('');
+}

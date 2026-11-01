@@ -260,21 +260,38 @@ test('features: promo code redemption credits gold, prevents reuse, and signs wa
   assert.deepEqual(env.wallet.promos, ['TESTER2026', 'OPUS55']);
 });
 
-test('features: maintenance screen blocks game view when active', () => {
+test('features: maintenance screen blocks game view when active and provides retry button', () => {
   const elements = {};
+  let reloaded = false;
   const mockDoc = {
     getElementById: (id) => elements[id] || null,
-    createElement: () => { const msg = { textContent: '' }; return { id: '', style: {}, innerHTML: '', msg, querySelector: () => msg }; },
+    createElement: () => {
+      const msg = { textContent: '' };
+      const retry = { onclick: null };
+      return {
+        id: '',
+        style: {},
+        innerHTML: '',
+        msg,
+        querySelector: (sel) => (sel === '#maintMsg' ? msg : sel === '#maintRetry' ? retry : null)
+      };
+    },
     body: { appendChild: (el) => { elements[el.id] = el; } }
   };
   const env = {
-    document: mockDoc
+    document: mockDoc,
+    location: { reload: () => { reloaded = true; } }
   };
   vm.runInNewContext(fn('showMaintenanceScreen'), env);
   env.showMaintenanceScreen('Плановые работы <img src=x onerror=alert(1)>');
   assert.ok(elements.maintBox, 'maintenance screen must be rendered');
   assert.ok(elements.maintBox.msg.textContent.includes('Плановые работы'));
   assert.ok(!elements.maintBox.innerHTML.includes('<img'), 'the database message must never be inserted as markup');
+  assert.ok(elements.maintBox.innerHTML.includes('Попробовать снова'), 'retry button text is present');
+  const retryBtn = elements.maintBox.querySelector('#maintRetry');
+  assert.ok(typeof retryBtn.onclick === 'function', 'retry button has click handler');
+  retryBtn.onclick();
+  assert.equal(reloaded, true, 'retry button triggers location.reload()');
 });
 
 

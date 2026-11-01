@@ -29,3 +29,23 @@ export function showWhatsNew(ver, storage = typeof localStorage !== 'undefined' 
   document.body.append(box);
   return true;
 }
+
+export function renderUpdPlayerRowsHtml(players = [], readySet = new Set()) {
+  return players
+    .filter(p => p.owner && p.human && !p.resigned)
+    .map(p => {
+      const isReady = readySet && readySet.has && readySet.has(p.owner);
+      return `<li class="${isReady ? 'ok' : ''}"><i style="background:${p.col || '#5b6684'}"></i><b>${p.name}</b><span>${isReady ? '✓ обновился' : 'обновляется…'}</span></li>`;
+    })
+    .join('');
+}
+
+export function formatUpdPauseHtml({rowsHtml = '', mine = false}) {
+  return `<div class="ocard"><div style="font-size:38px">⏸</div><h3>Партия на паузе</h3><p>Вышло обновление. Время хода остановлено, пока все игроки не обновятся.</p><ul class="updlist">${rowsHtml}</ul>${mine ? '<button class="cta wide" id="updGo">Обновить</button>' : ''}<button class="ghostbtn" id="updSkip">Продолжить без ожидания</button><small id="updLeft"></small></div>`;
+}
+
+export function formatUpdCountdown(secondsLeft) {
+  const s = Math.max(0, Math.floor(secondsLeft || 0));
+  return `Само продолжится через ${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+

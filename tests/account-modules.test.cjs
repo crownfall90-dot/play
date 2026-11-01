@@ -73,4 +73,33 @@ test('account/auth: sanitizeNickname, isValidNickname, getDisplayName', async ()
   assert.equal(getDisplayName({name: 'Боб'}), 'Боб');
   assert.equal(getDisplayName({guest: 'Гость_42'}), 'Гость_42');
   assert.equal(getDisplayName({}), 'Игрок');
+
+  // classifyAuthError and checkAuthInput
+  const {classifyAuthError, checkAuthInput} = await import('../src/account/auth.js');
+  const errExists = classifyAuthError({error: {message: 'EMAIL_EXISTS detail'}}, true);
+  assert.ok(errExists[0].includes('уже привязана'));
+  assert.equal(errExists[1], 'mail');
+
+  const errNetwork = classifyAuthError(null, false);
+  assert.ok(errNetwork[0].includes('Нет связи'));
+
+  assert.deepEqual(checkAuthInput('', 'pass123', true), ['Введите почту', 'mail']);
+  assert.deepEqual(checkAuthInput('test @mail.ru', 'pass123', true), ['В почте не должно быть пробелов', 'mail']);
+  assert.deepEqual(checkAuthInput('test@gmial.com', 'pass123', true), ['Возможно, опечатка: test@gmail.com?', 'mail', 'typo', 'test@gmail.com']);
+  assert.deepEqual(checkAuthInput('test@mail.ru', '', true), ['Введите пароль', 'pass']);
+  assert.deepEqual(checkAuthInput('test@mail.ru', '123', true), ['Пароль слишком короткий: 3 из 6 символов', 'pass']);
+  assert.equal(checkAuthInput('test@mail.ru', 'validPass123', true), null);
+
+  // renderAccountDialogHtml and eye SVGs
+  const {renderAccountDialogHtml, EYE_OPEN, EYE_SHUT} = await import('../src/account/auth.js');
+  assert.ok(EYE_OPEN.includes('<svg'));
+  assert.ok(EYE_SHUT.includes('<svg'));
+
+  const loginHtml = renderAccountDialogHtml({link: false, prefill: 'test@example.com'});
+  assert.ok(loginHtml.includes('Вход в профиль'));
+  assert.ok(loginHtml.includes('value="test@example.com"'));
+  assert.ok(loginHtml.includes('Отмена'));
+
+  const linkHtml = renderAccountDialogHtml({link: true});
+  assert.ok(linkHtml.includes('Позже'));
 });

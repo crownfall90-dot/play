@@ -88,3 +88,56 @@ export function renderDevPanelCardHtml({tok, devTitle, devBody, devTestOn, siteU
     <a class="ghostbtn devlink" href="${siteUrl || '/'}admin/" target="_blank" rel="noopener">🛠 Админ-панель и отзывы на сайте</a>
     <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
 }
+
+export function computePresenceStats({pres = {}, rels = [], now = Date.now()}) {
+  const relOk = Array.isArray(rels);
+  const P = Object.values(pres || {}).filter(v => v && typeof v.n === 'string' && v.n && v.s);
+  const D = 864e5;
+  const ago = v => now - (v.t || 0);
+  const online = P.filter(v => v.s !== 'off' && ago(v) < 150000);
+  const n = f => P.filter(f).length;
+  const app = v => v.p === 'github' || v.p === 'play';
+  const playing = online.filter(v => v.s === 'online' || v.s === 'bots' || v.s === 'search').length;
+
+  let eligD1 = 0, retD1 = 0, eligD7 = 0, retD7 = 0, hasFb1 = false, hasFb7 = false;
+  P.forEach(v => {
+    const fs = v.fs; if (!fs || !/^\d{4}-\d{2}-\d{2}$/.test(fs)) return;
+    const fsMs = Date.parse(fs + 'T00:00:00Z'), age = Math.floor((now - fsMs) / D);
+    if (age >= 1) {
+      eligD1++;
+      if (v.d1 != null) { if (v.d1 === 1) retD1++; }
+      else if (v.t - fsMs >= D) { retD1++; hasFb1 = true; }
+    }
+    if (age >= 7) {
+      eligD7++;
+      if (v.d7 != null) { if (v.d7 === 1) retD7++; }
+      else if (v.t - fsMs >= 7 * D) { retD7++; hasFb7 = true; }
+    }
+  });
+
+  const d1Str = eligD1 ? Math.round(retD1 / eligD1 * 100) + '%' + (hasFb1 ? ' (оценка)' : '') : '—';
+  const d7Str = eligD7 ? Math.round(retD7 / eligD7 * 100) + '%' + (hasFb7 ? ' (оценка)' : '') : '—';
+
+  return {
+    totalPlayers: P.length,
+    registered: n(v => v.r),
+    onlineNow: online.length,
+    playingNow: playing,
+    activeDay: n(v => ago(v) < D),
+    activeWeek: n(v => ago(v) < 7 * D),
+    d1Str,
+    d7Str,
+    withApp: n(app),
+    updatedDay: n(v => app(v) && now - (v.u || 0) < D),
+    webVersion: n(v => v.p === 'web'),
+    releasesCount: relOk ? rels.length : '—'
+  };
+}
+
+export function renderStatsGridHtml(stats) {
+  const tile = (num, label) => `<div class="stt"><b>${num}</b><small>${label}</small></div>`;
+  return `<div class="stgrid">${tile(stats.totalPlayers, 'игроков заходили')}${tile(stats.registered, 'с сохранённым профилем')}${tile(stats.onlineNow, 'в сети сейчас')}${tile(stats.playingNow, 'играют сейчас')}
+    ${tile(stats.activeDay, 'за сутки')}${tile(stats.activeWeek, 'за неделю')}${tile(stats.d1Str, 'удержание D1')}${tile(stats.d7Str, 'удержание D7')}
+    ${tile(stats.withApp, 'с приложением')}${tile(stats.updatedDay, 'обновились за сутки')}${tile(stats.webVersion, 'в веб-версии')}${tile(stats.releasesCount, 'версий вышло')}</div>
+    <p class="shint" style="margin-top:10px">Показатели активности и удержания игроков</p>`;
+}

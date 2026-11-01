@@ -89,4 +89,24 @@ test('ui/owner: formatDevStatus formats workflow run status and dates', () => {
     status: 'in_progress'
   };
   assert.ok(owner.formatDevStatus(runProgress).includes('отправляется'), 'in progress run formatted correctly');
+
+  // Stats calculation and grid markup
+  const now = Date.parse('2026-11-01T12:00:00Z');
+  const pres = {
+    u1: {n: 'Игрок1', s: 'online', t: now - 10000, r: 1, p: 'play', fs: '2026-10-31', d1: 1},
+    u2: {n: 'Игрок2', s: 'menu', t: now - 3600000, r: 0, p: 'web'}
+  };
+  const stats = owner.computePresenceStats({pres, rels: [{id: 1}], now});
+  assert.equal(stats.totalPlayers, 2);
+  assert.equal(stats.registered, 1);
+  assert.equal(stats.onlineNow, 1);
+  assert.equal(stats.playingNow, 1);
+  assert.equal(stats.withApp, 1);
+  assert.equal(stats.releasesCount, 1);
+  assert.equal(stats.d1Str, '100%');
+
+  const gridHtml = owner.renderStatsGridHtml(stats);
+  assert.ok(gridHtml.includes('stgrid'));
+  assert.ok(gridHtml.includes('игроков заходили'));
+  assert.ok(gridHtml.includes('удержание D1'));
 });

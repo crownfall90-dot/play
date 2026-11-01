@@ -68,7 +68,6 @@
             <div class="pitem wide"><i>👑</i><b>Королевский пропуск</b><small>30 дней: ×2 золота, фигурка и рамка, кубки без ограничений</small><span class="soon">Скоро</span></div>
           </div>
           <div class="h3">Статусы</div>
-          <p class="shint">Короткая подпись под ником: её видят в профиле, у друзей, в онлайне и в рейтинге.</p>
           <div class="stgrid" id="stgrid"></div>
           <div class="stcustom"><input class="field" id="stInput" maxlength="15" placeholder="Свой статус (до 15)" autocomplete="off"><button class="cta" id="stBuy">3000 <i class="coin"></i></button></div>
           <div class="h3">Рамки аватара</div>
@@ -90,7 +89,7 @@
           <div id="prefs"></div>
           <div class="h3">Поддержка</div>
           <div class="sgroup">
-            <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Идеи, отзывы и сообщения об ошибках</small></span><span class="sgo">›</span></button>
+            <button class="srow btn" id="feedbackBtn"><span class="sic">💬</span><span class="stx"><b>Написать разработчику</b><small>Идеи и отзывы</small></span><span class="sgo">›</span></button>
             <button class="srow btn" id="nameProposalBtn"><span class="sic">💡</span><span class="stx"><b>Конкурс на новое название</b><small id="nameProposalSub">Придумайте имя игры · +100 золота</small></span><span class="sgo">›</span></button>
           </div>
           <div class="h3">О приложении</div>
@@ -100,7 +99,7 @@
             <a class="srow btn" href="https://crownfall90-dot.github.io/play/privacy.html" target="_blank" rel="noopener"><span class="sic">🔒</span><span class="stx"><b>Политика конфиденциальности</b></span><span class="sgo">›</span></a>
             <button class="srow btn" id="devBtn" hidden><span class="sic">📣</span><span class="stx"><b>Панель владельца</b></span><span class="sgo">›</span></button>
           </div>
-          <p class="shint scenter">Puzzlegrad. Без рекламы и покупок</p>
+          <p class="shint scenter">Puzzlegrad</p>
         </div>
       </section>
 
@@ -231,21 +230,19 @@
 
       <section class="screen scroll" id="scr-lobby" hidden>
         <div class="lb">
-          <div class="ltop"><button class="iconbtn" id="lobbyBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Онлайн с друзьями</b></div>
+          <div class="ltop"><button class="iconbtn" id="lobbyBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Комната</b></div>
           <div class="col" id="lbJoin">
             <input class="field" id="myName" hidden>
             <button class="cta wide" id="create">Создать комнату</button>
-            <div class="h3">Или войдите по коду</div>
+            <div class="h3">Войти по коду</div>
             <div class="joinrow"><input class="field codein" id="codeIn" maxlength="5" placeholder="K7Q2X" autocomplete="off" autocapitalize="characters"><button class="cta" id="join">Войти</button></div>
-            <p class="shint">Для совместной игры нужен интернет. При дисконнекте можно вернуться по коду.</p>
           </div>
           <div class="col" id="lbRoom" hidden>
-            <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите, чтобы скопировать</small>
-              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить друзей</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
+            <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div>
+              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
             <button class="cupsbadge" id="lbCups"></button>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
-            <p class="shint">Одинаковый цвет при старте распределяется автоматически.</p>
             <div class="h3" id="lbCount">Игроки</div>
             <ul class="plist" id="plist"></ul>
             <button class="chip" id="addBot">+ Добавить бота</button>
@@ -258,7 +255,7 @@
             <button class="cta wide" id="backToGame" hidden>Вернуться в партию</button>
             <button class="cta wide" id="lobbyStart">Начать игру</button>
             <button class="cta wide" id="lobbyReady" hidden>Готов</button>
-            <div class="lbwait" id="lbWait" hidden><div class="pz sm"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><p class="shint">Ожидание старта от создателя комнаты…</p></div>
+            <div class="lbwait" id="lbWait" hidden><div class="pz sm"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><p class="shint">Ожидание старта…</p></div>
           </div>
         </div>
       </section>
@@ -364,9 +361,13 @@ if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.ru
 if (![4, 5, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
-const isLocal = i => net ? players[i].owner === myId : players[i].human;
+const isLocal = i => (typeof PG !== 'undefined' && PG.game && PG.game.isLocalPlayer)
+  ? PG.game.isLocalPlayer(players[i], myId, !!net)
+  : (net ? players[i].owner === myId : players[i].human);
 const runsBot = i => !players[i].human && (!net || net.host);
-const localHumans = () => players.filter((p, i) => isLocal(i)).length;
+const localHumans = () => (typeof PG !== 'undefined' && PG.game && PG.game.humanPlayers && !net)
+  ? PG.game.humanPlayers(players).length
+  : players.filter((p, i) => isLocal(i)).length;
 const isMe = p => net ? p.owner === myId : p.human && humanCount() === 1;
 let gameRules = setup.rules, turnTok = 0;
 const humanCount = () => players.filter(p => p.human).length;
@@ -440,33 +441,40 @@ function addSprite(parent, kind, x, y, cls, delay, scale = 1) {
 const lowGfx = () => document.documentElement.classList.contains('lowgfx');
 const HOUSES = ['house', 'house2', 'house3', 'house4'];
 function addDecor(el, t, delay) {
-  const E = [0,1,2,3].map(d => edgeAt(t, d)), R = rng(t.seed), items = [];
-  const city = [0,1,2,3].filter(d => E[d] === 'c');
-  if (city.length === 1) {
-    const [x, y] = V[city[0]], px = -y, py = x;
-    items.push([HOUSES[(R() * 4) | 0], x*.36 + px*.17, y*.36 + py*.17], [HOUSES[(R() * 4) | 0], x*.38 - px*.13, y*.38 - py*.13]);
-  } else if (city.length > 1) {
-    let sx = 0, sy = 0; city.forEach(d => { sx += V[d][0]; sy += V[d][1]; });
-    const cx = sx * .2, cy = sy * .2, pts = [[-.16,-.06],[.14,-.14],[.02,.1],[-.2,.16]];
-    const n = city.length >= 3 ? 4 : 3;
-    for (let i = 0; i < n; i++) items.push([i === 0 && city.length >= 3 ? 'tower' : HOUSES[(R() * 4) | 0], cx + pts[i][0], cy + pts[i][1]]);
+  let items, cityCount;
+  if (typeof PG !== 'undefined' && PG.game && PG.game.world && PG.game.world.generateDecorItems) {
+    const res = PG.game.world.generateDecorItems(t, edgeAt, rng, lowGfx(), TYPES);
+    items = res.items;
+    cityCount = res.cityCount;
+  } else {
+    const E = [0,1,2,3].map(d => edgeAt(t, d)), R = rng(t.seed);
+    items = [];
+    const city = [0,1,2,3].filter(d => E[d] === 'c');
+    cityCount = city.length;
+    if (city.length === 1) {
+      const [x, y] = V[city[0]], px = -y, py = x;
+      items.push([HOUSES[(R() * 4) | 0], x*.36 + px*.17, y*.36 + py*.17], [HOUSES[(R() * 4) | 0], x*.38 - px*.13, y*.38 - py*.13]);
+    } else if (city.length > 1) {
+      let sx = 0, sy = 0; city.forEach(d => { sx += V[d][0]; sy += V[d][1]; });
+      const cx = sx * .2, cy = sy * .2, pts = [[-.16,-.06],[.14,-.14],[.02,.1],[-.2,.16]];
+      const n = city.length >= 3 ? 4 : 3;
+      for (let i = 0; i < n; i++) items.push([i === 0 && city.length >= 3 ? 'tower' : HOUSES[(R() * 4) | 0], cx + pts[i][0], cy + pts[i][1]]);
+    }
+    if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
+    const end = TYPES[t.type].end;
+    if (end && end !== 'cliff') { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
+    if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
+    for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
+      if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
+      if (TYPES[t.type].end === 'cliff') { const dr = E.indexOf('r'); if (sx * -V[dr][0] + sy * -V[dr][1] > 0) continue; }
+      if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.30 + R()*.05) + (R() - .5) * .05, sy * (.30 + R()*.05)]); }
+    }
+    items.forEach(it => { if (it[2] < -.2 && !['rock', 'boulders', 'hay', 'bush'].includes(it[0])) { it[2] = -.2 + (it[2] + .2) * .35; it[3] = 1; } });
+    items.sort((p, q) => p[2] - q[2]);
   }
-  if (TYPES[t.type].fort) items.push(['tower', 0, .2]);
-  // A road that stops in the middle ends at boulders or a mine just past the centre (a cliff is painted on the card itself).
-  const end = TYPES[t.type].end;
-  if (end && end !== 'cliff') { const d = E.indexOf('r'); items.push([end, -V[d][0] * .1, -V[d][1] * .1 + .06]); }
-  if (TYPES[t.type].rocks) items.push(['boulders', -.05, .05], ['rock', .22, -.12], ['rock', -.24, .26]);
-  for (const [a, b, sx, sy] of [[0,3,-1,-1],[0,1,1,-1],[1,2,1,1],[2,3,-1,1]]) {
-    if (E[a] === 'c' || E[b] === 'c' || E[a] === 'b' || E[b] === 'b' || lowGfx()) continue;
-    if (TYPES[t.type].end === 'cliff') { const dr = E.indexOf('r'); if (sx * -V[dr][0] + sy * -V[dr][1] > 0) continue; }
-    if (R() < .62) { const k = R(); items.push([k < .36 ? 'pine' : k < .62 ? 'oak' : k < .71 ? 'birch' : k < .78 ? 'poplar' : k < .88 ? 'bush' : k < .95 ? 'rock' : 'hay', sx * (.30 + R()*.05) + (R() - .5) * .05, sy * (.30 + R()*.05)]); }
-  }
-  // Upright pieces on the far edge would stick out over the empty cell behind the tile: pull them towards the middle.
-  items.forEach(it => { if (it[2] < -.2 && !['rock', 'boulders', 'hay', 'bush'].includes(it[0])) { it[2] = -.2 + (it[2] + .2) * .35; it[3] = 1; } });
-  items.sort((p, q) => p[2] - q[2]);
   // Decor sits right after the card face, under the cliff pit, gravel and figures added later.
   const box = document.createDocumentFragment();
-  items.forEach((it, i) => addSprite(box, it[0], it[1], it[2], 'dc', delay == null ? null : delay + i * .05, (it[0] === 'tower' && city.length ? .8 : 1) * (it[3] && /^house|^tower/.test(it[0]) ? .85 : 1)));
+  items.forEach((it, i) => addSprite(box, it[0], it[1], it[2], 'dc', delay == null ? null : delay + i * .05, (it[0] === 'tower' && cityCount ? .8 : 1) * (it[3] && /^house|^tower/.test(it[0]) ? .85 : 1)));
   el.querySelector('.face').after(box);
 }
 // Switching graphics redraws the decor of the cards already on the table; the game itself stays as it is.
@@ -497,6 +505,14 @@ function tileEl(t, decor, delay) {
 function walls(t, has = (x, y) => tiles.has(key(x, y))) {
   if (!t.el) return;
   const sd = t.el.querySelectorAll('.sd');
+  if (typeof PG !== 'undefined' && PG.game && PG.game.world) {
+    const list = PG.game.world.calcWallVisibility(t, has, edgeAt);
+    list.forEach(({d, hidden, fall}) => {
+      sd[d].hidden = hidden;
+      sd[d].classList.toggle('fall', fall);
+    });
+    return;
+  }
   for (let d = 0; d < 4; d++) {
     sd[d].hidden = has(t.x + DX[d], t.y + DY[d]);
     // A river that runs off the edge of the kingdom pours down the wall as a waterfall.
@@ -592,11 +608,14 @@ function centerCam(anim) {
 function ensureVisible(x, y) {
   const vw = board.clientWidth, vh = board.clientHeight;
   if (!vw) return;
-  // the zoom and hint buttons cover the right edge: keep a cell clear of them
-  const hx = (vw / 2 - 58) / cam.z / T - .6, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
-  // pan only as far as needed to bring the cell in, so the table does not jump about
-  const ox = x + cam.px / T, oy = y + cam.py / T;
-  if (Math.abs(ox) > hx || Math.abs(oy) > hy) return tweenCam({px: cam.px - (Math.abs(ox) > hx ? ox - Math.sign(ox) * hx : 0) * T, py: cam.py - (Math.abs(oy) > hy ? oy - Math.sign(oy) * hy : 0) * T}, 650);
+  const to = (typeof PG !== 'undefined' && PG.game && PG.game.camera)
+    ? PG.game.camera.ensureVisibleTarget(x, y, cam, vw, vh, T)
+    : (() => {
+        const hx = (vw / 2 - 58) / cam.z / T - .6, hy = vh / 2 / (cam.z * Math.cos(cam.tilt * Math.PI / 180)) / T * .7 - .6;
+        const ox = x + cam.px / T, oy = y + cam.py / T;
+        return (Math.abs(ox) > hx || Math.abs(oy) > hy) ? {px: cam.px - (Math.abs(ox) > hx ? ox - Math.sign(ox) * hx : 0) * T, py: cam.py - (Math.abs(oy) > hy ? oy - Math.sign(oy) * hy : 0) * T} : null;
+      })();
+  if (to) return tweenCam(to, 650);
 }
 // A finger move on screen, turned back into board directions (the board may be rotated and tilted).
 let panSum = 0;
@@ -1046,7 +1065,7 @@ async function afterPlace(t, p, forced) {
       // Bot: always use placed tile only, even in anyMode.
       // Bots never reinforce their own object (only free ones), so their play stays as it was.
       const botOpts = (anyMode ? claimable(t, p).map(g => ({t, g})) : opts).filter(o => o.done || !o.g || B.component(tiles, meeples, o.t, o.g).meeples.length === 0);
-      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
+      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel(), players[p] && players[p].persona);
     }
   }
   if (my !== token) return;
@@ -1248,7 +1267,7 @@ function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // themselves); from the fourth game the chosen level applies and one note says so.
 const softStart = () => (PG.game && PG.game.turns) ? PG.game.turns.isSoftStart(wallet.botlvl, PROG.st.games) : (wallet.botlvl === 'normal' && PROG.st.games < 3);
 const botLevel = () => (PG.game && PG.game.turns) ? PG.game.turns.resolveBotLevel(wallet.botlvl, PROG.st.games, PG.engine.bots.BOT_LEVELS) : (softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal');
-const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
+const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel(), players[p] && players[p].persona);
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
@@ -1826,25 +1845,33 @@ function confirmBuy(k) {
 
 /* ---------------- saved game (offline) ---------------- */
 const FINISHED_GAMES_KEY = 'finishedGames', GAME_HISTORY_KEY = 'gameHistory';
-function gameKey(cfg = gameLog && gameLog.cfg) { return !cfg ? '' : cfg.online ? 'o:' + cfg.online : cfg.localId ? 'l:' + cfg.localId : ''; }
-function jsonRead(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; } catch (_) { return fallback; } }
-function finishedGames() { const a = jsonRead(FINISHED_GAMES_KEY, []); return Array.isArray(a) ? a.filter(x => typeof x === 'string' || (x && typeof x.k === 'string')) : []; }
-function gameFinished(key) { return !!key && finishedGames().some(x => (typeof x === 'string' ? x : x.k) === key); }
+function gameKey(cfg = gameLog && gameLog.cfg) { return (typeof PG !== 'undefined' && PG.state && PG.state.save) ? PG.state.save.gameKey(cfg) : (!cfg ? '' : cfg.online ? 'o:' + cfg.online : cfg.localId ? 'l:' + cfg.localId : ''); }
+function jsonRead(key, fallback) { return (typeof PG !== 'undefined' && PG.state && PG.state.save) ? PG.state.save.jsonRead(localStorage, key, fallback) : (() => { try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v == null ? fallback : v; } catch (_) { return fallback; } })(); }
+function finishedGames() { return (typeof PG !== 'undefined' && PG.state && PG.state.save) ? PG.state.save.finishedGames(localStorage) : (() => { const a = jsonRead(FINISHED_GAMES_KEY, []); return Array.isArray(a) ? a.filter(x => typeof x === 'string' || (x && typeof x.k === 'string')) : []; })(); }
+function gameFinished(key) { return (typeof PG !== 'undefined' && PG.state && PG.state.save) ? PG.state.save.isGameFinished(localStorage, key) : (!!key && finishedGames().some(x => (typeof x === 'string' ? x : x.k) === key)); }
 function markGameFinished(key) {
+  if (typeof PG !== 'undefined' && PG.state && PG.state.save) return PG.state.save.markGameFinished(localStorage, key);
   if (!key) return;
   try { const a = finishedGames().filter(x => (typeof x === 'string' ? x : x.k) !== key); a.unshift({k:key,at:Date.now()}); localStorage.setItem(FINISHED_GAMES_KEY, JSON.stringify(a.slice(0, 200))); } catch (_) {}
 }
 function historySave(reason, final) {
   const id = gameKey(); if (!id) return;
   const row = {id,at:Date.now(),reason:reason || 'deck',final:!!final,players:players.map(p => ({name:p.name,score:p.score,col:p.col,me:isMe(p),uid:p.uid || null,bot:!p.human}))};
+  if (typeof PG !== 'undefined' && PG.state && PG.state.save) return PG.state.save.saveHistoryEntry(localStorage, row);
   try { const data = jsonRead(GAME_HISTORY_KEY, []), old = Array.isArray(data) ? data.filter(x => x && typeof x.id === 'string') : []; localStorage.setItem(GAME_HISTORY_KEY, JSON.stringify([row, ...old.filter(x => x.id !== id)].slice(0, 50))); } catch (_) {}
 }
 function saveGame() {
   if (!gameLog || net || tut || phase === 'end' || gameFinished(gameKey())) return;
+  if (typeof PG !== 'undefined' && PG.state && PG.state.save) return PG.state.save.saveActiveGame(localStorage, gameLog);
   try { localStorage.setItem('savedGame', JSON.stringify(gameLog)); } catch (_) {}
 }
-function clearSave() { try { localStorage.removeItem('savedGame'); } catch (_) {} renderResume(); }
+function clearSave() {
+  if (typeof PG !== 'undefined' && PG.state && PG.state.save) PG.state.save.clearActiveGame(localStorage);
+  else try { localStorage.removeItem('savedGame'); } catch (_) {}
+  renderResume();
+}
 function loadSave() {
+  if (typeof PG !== 'undefined' && PG.state && PG.state.save) return PG.state.save.loadActiveGame(localStorage);
   try {
     const saved = JSON.parse(localStorage.getItem('savedGame'));
     if (!saved) return null;
@@ -1855,7 +1882,10 @@ function loadSave() {
   } catch (_) { return null; }
 }
 // An online game this phone took part in during the last 3 hours, if it may still be going.
-function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
+function lastOnline() {
+  if (typeof PG !== 'undefined' && PG.state && PG.state.save) return PG.state.save.getLastOnline(localStorage);
+  try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; }
+}
 function renderResume() {
   const sv = loadSave(), b = $('#resume'), lg = lastOnline() && (!net || !gameVisible); // also when a dead room object is left behind after a drop
   const off = sv && sv.moves && sv.cfg;
@@ -1964,7 +1994,9 @@ function openGameMenu() {
   const online = !!net, seat = mySeat();
   const allBots = online && live && seat >= 0 && !players.some(p => p.human && p.owner !== myId && !p.resigned);
   const box = document.createElement('div'); box.className = 'over'; box.id = 'gmenu'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><h3>${online ? 'Онлайн-партия' : live ? 'Пауза' : 'Меню'}</h3>
+  box.innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.menu)
+    ? PG.ui.menu.formatGameMenuHtml({online, live, seat, allBots})
+    : `<div class="ocard"><h3>${online ? 'Онлайн-партия' : live ? 'Пауза' : 'Меню'}</h3>
     <p>${online ? 'Партия идёт, пока вы в меню' : live ? 'Боты ждут, время хода остановлено' : ''}</p>
     <button class="cta wide" data-a="resume">Продолжить</button>
     <button class="ghostbtn" data-a="settings">Настройки</button>
@@ -2037,8 +2069,12 @@ function onDrawReply(m) {
 // The nickname the player chose; until then a numbered guest name (nickname1, nickname2…) handed
 // out once per device by the shared counter /guestN, never the placeholder «Вы».
 function profileName() {
-  const old = clean(setup.seats[0].name);
-  return clean(wallet.name) || clean(wallet.guest) || (old && old !== 'Вы' && old !== 'Игрок' ? old : '') || 'nickname';
+  return (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.formatProfileName)
+    ? PG.ui.setup.formatProfileName(setup.seats, wallet, clean)
+    : (() => {
+      const old = clean(setup.seats[0].name);
+      return clean(wallet.name) || clean(wallet.guest) || (old && old !== 'Вы' && old !== 'Игрок' ? old : '') || 'nickname';
+    })();
 }
 // Every player gets a hidden player number once (/playerNo/{uid}), in the order they first went
 // online; a player without a nickname is shown as nickname<number>. Players from before numbers
@@ -2070,6 +2106,21 @@ function saveSetup() { try { localStorage.setItem('setup', JSON.stringify(setup)
 // Online with friends: the search starts at once and the friends who are online now are listed to invite into it.
 // «Найти быструю игру»: the first open game, whatever its mode and size (own settings only if nobody waits)
 $('#setupQuick').onclick = () => quickMatch();
+const SETUP_MODES = (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.SETUP_MODES)
+  ? PG.ui.setup.SETUP_MODES
+  : {
+    bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Одиночная игра против ботов.'},
+    local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Передавайте устройство перед каждым ходом.'},
+    online: {title: 'Игра онлайн', go: 'Начать игру', hint: '', seg: 'Игроков в матче'},
+    friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: '', seg: 'Вместимость комнаты'},
+  };
+let setupMode = 'bots';
+const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
+let colorEdit = -1;
+const swatches = (cur, taken) => (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSwatchesHtml)
+  ? PG.ui.setup.renderSwatchesHtml(cur, taken, PALETTE)
+  : `<span class="swatches">${PALETTE.map(c => `<button class="sw${c.col === cur ? ' on' : ''}" style="--c:${c.col}" data-sw="${c.col}" ${taken.includes(c.col) ? 'disabled' : ''} aria-label="${c.name}"></button>`).join('')}</span>`;
+
 function renderSetup() {
   $('#setupQuick').hidden = $('#setupOwn').hidden = setupMode !== 'online';
   const on = onlineMode(), m = SETUP_MODES[setupMode], n = on ? setup.onN || 2 : setup.n;
@@ -2077,19 +2128,24 @@ function renderSetup() {
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
   $('#segHint').hidden = !on; $('#segHint').textContent = m.seg || '';
   if (on) {
-    $('#setupName').innerHTML = `<span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b><small>изменить — в настройках</small>`;
-    $('#setupColor').innerHTML = swatches(wallet.color, []);
+    if (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSetupMeHtml) {
+      const me = PG.ui.setup.renderSetupMeHtml(profileName(), wallet.color, PALETTE);
+      $('#setupName').innerHTML = me.infoHtml;
+      $('#setupColor').innerHTML = me.swHtml;
+    } else {
+      $('#setupName').innerHTML = `<span class="av" style="--c:${wallet.color}">${profileName()[0]}</span><b>${profileName()}</b><small>изменить — в настройках</small>`;
+      $('#setupColor').innerHTML = swatches(wallet.color, []);
+    }
     $('#start').disabled = false; $('#start').textContent = m.go;
     return;
   }
-  $('#slist').innerHTML = setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span>${s.human ? '' : '<span class="botmark" title="Бот">🤖 бот</span>'}${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
+  $('#slist').innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSetupSeatsHtml)
+    ? PG.ui.setup.renderSetupSeatsHtml(setup.seats, setup.n, {profileName: profileName(), colorEdit, palette: PALETTE})
+    : setup.seats.slice(0, setup.n).map((s, i) => `<li class="seat"><button class="av colbtn" style="--c:${s.col}" data-col="${i}" aria-label="Цвет игрока ${i + 1}">${i + 1}</button><span class="who"><input id="pn${i}" value="${(i ? s.name : profileName()).replace(/"/g, '&quot;')}" maxlength="12" aria-label="Имя игрока ${i + 1}"${i ? '' : ' readonly'}></span>${s.human ? '' : '<span class="botmark" title="Бот">🤖 бот</span>'}${colorEdit === i ? swatches(s.col, setup.seats.slice(0, setup.n).filter((x, j) => j !== i).map(x => x.col)) : ''}</li>`).join('');
   $('#start').disabled = false; $('#start').textContent = m.go;
 }
 $('#seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (onlineMode()) setup.onN = +b.textContent; else setup.n = +b.textContent; saveSetup(); renderSetup(); };
 $('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
-// Seats pick colours in turn: a colour another seat already holds can't be taken.
-let colorEdit = -1;
-const swatches = (cur, taken) => `<span class="swatches">${PALETTE.map(c => `<button class="sw${c.col === cur ? ' on' : ''}" style="--c:${c.col}" data-sw="${c.col}" ${taken.includes(c.col) ? 'disabled' : ''} aria-label="${c.name}"></button>`).join('')}</span>`;
 $('#slist').addEventListener('click', e => {
   const cb = e.target.closest('[data-col]'); if (cb) { colorEdit = colorEdit === +cb.dataset.col ? -1 : +cb.dataset.col; return renderSetup(); }
   const sw = e.target.closest('[data-sw]'); if (sw && colorEdit >= 0) { setup.seats[colorEdit].col = sw.dataset.sw; if (colorEdit === 0) { wallet.color = sw.dataset.sw; saveWallet(); } colorEdit = -1; saveSetup(); return renderSetup(); }
@@ -2104,40 +2160,41 @@ $('#setupColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = setup.seats[0].col = sw.dataset.sw; saveWallet(); saveSetup(); renderSetup();
 });
-// "С ботами": you against bots; "Локально": everyone at the table passes one phone. The mode decides who is who.
-// Every way to play opens this screen first: how many players, who they are, the rules.
-// bots / local play on this phone; online looks for strangers; friends opens a room by code.
-const SETUP_MODES = {
-  bots: {title: 'Игра с ботами', go: 'Начать партию', hint: 'Одиночная игра против ботов.'},
-  local: {title: 'На одном телефоне', go: 'Начать партию', hint: 'Передавайте устройство перед каждым ходом.'},
-  online: {title: 'Игра онлайн', go: 'Начать игру', hint: 'Рейтинговая партия на кубки онлайн.', seg: 'Количество игроков в матче'},
-  friends: {title: 'Комната для друзей', go: 'Создать комнату', hint: 'Комната по коду для друзей. Свободные места займут боты.', seg: 'Вместимость комнаты'},
-};
-let setupMode = 'bots';
+
 function openSetup(mode) {
   const m = SETUP_MODES[mode];
   setupMode = mode;
-  if (mode === 'bots' || mode === 'local') setup.seats.forEach((x, i) => {
-    x.human = mode === 'local' || i === 0;
-    if (mode === 'local' && i && x.name === PL0[i].name) x.name = 'Игрок ' + (i + 1);
-    if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
-  });
-  $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint;
-  const hero = $('#setupHero'), hm = {bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', ''];
+  if (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.adjustSeatsForMode) {
+    PG.ui.setup.adjustSeatsForMode(setup.seats, mode, PL0);
+  } else if (mode === 'bots' || mode === 'local') {
+    setup.seats.forEach((x, i) => {
+      x.human = mode === 'local' || i === 0;
+      if (mode === 'local' && i && x.name === PL0[i].name) x.name = 'Игрок ' + (i + 1);
+      if (mode === 'bots' && i && x.name === 'Игрок ' + (i + 1)) x.name = PL0[i].name;
+    });
+  }
+  $('#setupTitle').textContent = m.title; $('#setupHint').textContent = m.hint; $('#setupHint').hidden = !m.hint;
+  const hero = $('#setupHero');
+  const hm = (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.getSetupHeroMeta)
+    ? PG.ui.setup.getSetupHeroMeta(mode)
+    : ({bots: ['#3fc27a', '🤖', 'Против компьютера', 'Тренировка: боты ходят сами'], local: ['#b06cf0', '📱', 'На одном телефоне', 'Передавайте телефон по очереди'], online: ['gold', '🌐', 'Рейтинг и кубки', 'Соперники со всего мира'], friends: ['#4c8dff', '👥', 'Игра с друзьями', 'Код комнаты — друзьям']}[mode] || ['#4c8dff', '🧩', '', '']);
   hero.dataset.jc = hm[0]; $('#shIcon').textContent = hm[1]; $('#shTitle').textContent = hm[2]; $('#shTag').textContent = hm[3]; hero.classList.toggle('gold', hm[0] === 'gold');
-  // setupInvite removed; friends shown inline in lobby
   colorEdit = -1; saveSetup(); renderSetup(); renderRules(); show('setup');
   $('#scr-setup').scrollTop = 0;
 }
-const onlineMode = () => setupMode === 'online' || setupMode === 'friends';
 document.addEventListener('click', e => { const b = e.target.closest('[data-mode]'); if (b) openSetup(b.dataset.mode); });
 let rulesOpen = false;
 function renderRules() {
   const mode = MODES[setup.rules.mode] || MODES.classic;
-  const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰', duel: '⚔️'};
-  const cards = (locked) => `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
-  // Online games always have a turn clock ("no limit" counts as 60 s there).
-  const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${l}</button>`).join('')}</span></div>`).join('');
+  const cards = (locked) => (typeof PG !== 'undefined' && PG.ui && PG.ui.setup)
+    ? PG.ui.setup.renderModeCardsHtml(MODES, setup.rules.mode, locked)
+    : (() => {
+      const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰', duel: '⚔️'};
+      return `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
+    })();
+  const rows = (on, room) => (typeof PG !== 'undefined' && PG.ui && PG.ui.setup)
+    ? PG.ui.setup.renderRuleRowsHtml(RULES, setup.rules, {isOnline: on, isRoom: room})
+    : RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${l}</button>`).join('')}</span></div>`).join('');
   document.querySelectorAll('[data-rules]').forEach(el => {
     const lobby = el.id === 'lbRules', rated = !lobby && setupMode === 'online', canEdit = lobby ? !!(net && net.host) : true;
     el.innerHTML = cards(!canEdit) + (rated || !canEdit ? '' : `<button class="morebtn" data-more aria-expanded="${rulesOpen}">⚙️ Свои правила <span>${rulesOpen ? '▴' : '▾'}</span></button><div class="opts"${rulesOpen ? '' : ' hidden'}>${rows(lobby || onlineMode(), lobby || setupMode === 'friends')}</div>`);
@@ -2619,6 +2676,9 @@ async function pumpRemote() {
 // Friends invited to this room who are not in it yet: the creator sees them in the list, with a status, before starting.
 const INVITE_LATE = 30000;
 function pendingInvites(seats) {
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.computePendingInvites) {
+    return PG.net.rooms.computePendingInvites(invited, seats, friends, net, INVITE_LATE);
+  }
   if (!net || invited.code !== net.code) return [];
   return [...invited.uids].filter(uid => !seats.some(x => x.uid === uid)).map(uid => {
     const f = friends.find(q => q.uid === uid), at = (invited.at || {})[uid] || 0;
@@ -2633,8 +2693,15 @@ function renderLobby() {
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
   // "for cups" is seen by everyone in the room; the creator switches it here with one tap
   const cups = !!(net.lobby && net.lobby.rules ? net.lobby.rules.cups : setup.rules.cups), cb = $('#lbCups');
-  cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : ''); cb.disabled = !net.host || !!net.gameId;
-  cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? 'Нажмите, чтобы ' + (cups ? 'выключить' : 'включить') : cups ? 'Победа даст кубки в рейтинг' : 'Дружеская партия, рейтинг не меняется'}</small>`;
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.formatCupsBadge) {
+    const badge = PG.net.rooms.formatCupsBadge(cups, net.host);
+    cb.className = badge.className;
+    cb.innerHTML = badge.innerHtml;
+  } else {
+    cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : '');
+    cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? (cups ? 'Кубки начисляются' : 'Кубки не меняются') : (cups ? 'Рейтинговая игра' : 'Без рейтинга')}</small>`;
+  }
+  cb.disabled = !net.host || !!net.gameId;
   renderMyColor();
   const seats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : []);
   if (net && !net.host && !seats.some(x => x.owner === myId)) {
@@ -2651,9 +2718,27 @@ function renderLobby() {
   }
   const pend = net.host ? pendingInvites(seats) : [];
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}${pend.length ? ` · приглашено: ${pend.length}` : ''}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b>${stTag(x.st)}<small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
-  if (pend.length) {
-    $('#plist').insertAdjacentHTML('beforeend', pend.map(p => `<li class="inv${p.late || p.declined ? ' late' : ''}${p.declined ? ' no' : ''}"><span class="av" style="--c:${validCol(p.c) ? p.c : '#5b6684'}">${(clean(p.n) || '?')[0]}</span><span class="who"><b>${clean(p.n)}</b>${stTag(p.st)}<small>${p.declined ? 'Отказался' : p.late ? 'Не отвечает' : 'Приглашён · ждём ответа'}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`).join(''));
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.renderRoomSeatsHtml) {
+    const rendered = PG.net.rooms.renderRoomSeatsHtml({
+      seats,
+      pend,
+      myId,
+      myUid: myUid(),
+      hostId: net.hostId,
+      isHost: net.host,
+      registered: registered(),
+      isFriendFn: isFriend,
+      validColFn: validCol,
+      cleanFn: clean,
+      stTagFn: stTag,
+      palette: PL0
+    });
+    $('#plist').innerHTML = rendered.seatsHtml + (pend.length ? rendered.pendHtml : '');
+  } else {
+    $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b>${stTag(x.st)}<small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+    if (pend.length) {
+      $('#plist').insertAdjacentHTML('beforeend', pend.map(p => `<li class="inv${p.late || p.declined ? ' late' : ''}${p.declined ? ' no' : ''}"><span class="av" style="--c:${validCol(p.c) ? p.c : '#5b6684'}">${(clean(p.n) || '?')[0]}</span><span class="who"><b>${clean(p.n)}</b>${stTag(p.st)}<small>${p.declined ? 'Отказался' : p.late ? 'Не отвечает' : 'Приглашён · ждём ответа'}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`).join(''));
+    }
   }
   clearTimeout(lobbyPendTimer);
   if (pend.length) lobbyPendTimer = setTimeout(() => { if (net && !$('#scr-lobby').hidden) renderLobby(); }, 5000);
@@ -2663,29 +2748,53 @@ function renderLobby() {
   const inLobby = !(net.gameId && phase !== 'end');
   const mySeat = seats.find(x => x.owner === myId);
 
-  if (net.host) {
-    $('#lobbyReady').hidden = true;
-    $('#lobbyStart').hidden = !inLobby;
-    if (seats.length < 2) {
-      $('#lobbyStart').disabled = true;
-      $('#lobbyStart').textContent = 'Нужно хотя бы 2 игрока';
-    } else if (!allReady && !net.quick) {
-      $('#lobbyStart').disabled = true;
-      const readyCount = others.filter(x => x.ready).length;
-      $('#lobbyStart').textContent = others.length > 1 ? `Прожмите готовность (${readyCount}/${others.length})` : 'Прожмите готовность';
-    } else {
-      $('#lobbyStart').disabled = false;
-      $('#lobbyStart').textContent = 'Начать игру';
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.formatLobbyButtons) {
+    const btnState = PG.net.rooms.formatLobbyButtons({
+      isHost: net.host,
+      seatsCount: seats.length,
+      others,
+      allReady,
+      isReady: !!(mySeat && mySeat.ready),
+      inLobby,
+      isQuick: !!net.quick
+    });
+    $('#lobbyStart').hidden = btnState.hostBtn.hidden;
+    if (!btnState.hostBtn.hidden) {
+      $('#lobbyStart').disabled = !!btnState.hostBtn.disabled;
+      $('#lobbyStart').textContent = btnState.hostBtn.text;
+    }
+    $('#lobbyReady').hidden = btnState.readyBtn.hidden;
+    if (!btnState.readyBtn.hidden) {
+      $('#lobbyReady').textContent = btnState.readyBtn.text;
+      $('#lobbyReady').className = btnState.readyBtn.className;
+      const hint = $('#lbWait .shint');
+      if (hint && btnState.readyBtn.hintText) hint.textContent = btnState.readyBtn.hintText;
     }
   } else {
-    $('#lobbyStart').hidden = true;
-    $('#lobbyReady').hidden = !inLobby || !!net.quick;
-    if (inLobby && !net.quick) {
-      const isReady = !!(mySeat && mySeat.ready);
-      $('#lobbyReady').textContent = isReady ? '✓ Готов (отменить)' : 'Готов';
-      $('#lobbyReady').className = isReady ? 'cta wide alt' : 'cta wide';
-      const hint = $('#lbWait .shint');
-      if (hint) hint.textContent = isReady ? 'Вы готовы. Ждём остальных игроков и старта от создателя.' : 'Нажмите «Готов», когда будете готовы начать игру.';
+    if (net.host) {
+      $('#lobbyReady').hidden = true;
+      $('#lobbyStart').hidden = !inLobby;
+      if (seats.length < 2) {
+        $('#lobbyStart').disabled = true;
+        $('#lobbyStart').textContent = 'Нужно хотя бы 2 игрока';
+      } else if (!allReady && !net.quick) {
+        $('#lobbyStart').disabled = true;
+        const readyCount = others.filter(x => x.ready).length;
+        $('#lobbyStart').textContent = others.length > 1 ? `Прожмите готовность (${readyCount}/${others.length})` : 'Прожмите готовность';
+      } else {
+        $('#lobbyStart').disabled = false;
+        $('#lobbyStart').textContent = 'Начать игру';
+      }
+    } else {
+      $('#lobbyStart').hidden = true;
+      $('#lobbyReady').hidden = !inLobby || !!net.quick;
+      if (inLobby && !net.quick) {
+        const isReady = !!(mySeat && mySeat.ready);
+        $('#lobbyReady').textContent = isReady ? '✓ Готов (отменить)' : 'Готов';
+        $('#lobbyReady').className = isReady ? 'cta wide alt' : 'cta wide';
+        const hint = $('#lbWait .shint');
+        if (hint) hint.textContent = isReady ? 'Вы готовы · ожидание старта…' : 'Нажмите «Готов» для подтверждения';
+      }
     }
   }
   $('#lbWait').hidden = net.host || !inLobby;
@@ -2844,7 +2953,9 @@ async function quickMatch(create) {
   stopMatch(true);
   leaveRoom();
   // want: the table size of the room this player opens if nobody is waiting; joining takes any room.
-  mm = {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0, create: create === true};
+  mm = (typeof PG !== 'undefined' && PG.net && PG.net.matchmaking && PG.net.matchmaking.createMatchState)
+    ? PG.net.matchmaking.createMatchState({want: setup.onN || 2, mode: setup.rules.mode, create: create === true})
+    : {t0: Date.now(), want: setup.onN || 2, mode: setup.rules.mode, other: new Map(), seeks: new Map(), closed: new Set(), skip: new Set(), ready: false, es: null, timers: [], startAt: 0, lastSeek: 0, create: create === true};
   const me = mm;
   me.timers.push(setInterval(() => matchTick(me), 1000));
   (async () => {
@@ -2944,16 +3055,28 @@ function matchRender() {
     mm.startAt = Date.now() + START_IN * 1000;
     matchSay({t: 'close', code: net.code});
   }
-  const others = Math.max(0, seats.length - 1), full = seats.length >= want;
-  const left = mm.startAt && mm.startAt !== Infinity ? Math.max(0, Math.ceil((mm.startAt - Date.now()) / 1000)) : 0;
-  $('#mLoad').classList.toggle('found', full);
-  $('#mTitle').textContent = full ? (left ? `Старт через ${left}…` : 'Начинаем!') : others ? `Найдено ${others} из ${want - 1}` : 'Ищем соперников…';
+  const status = (typeof PG !== 'undefined' && PG.net && PG.net.matchmaking)
+    ? PG.net.matchmaking.formatMatchStatus({seatsCount: seats.length, wantCount: want, startAt: mm.startAt, now: Date.now()})
+    : {
+        full: seats.length >= want,
+        left: mm.startAt && mm.startAt !== Infinity ? Math.max(0, Math.ceil((mm.startAt - Date.now()) / 1000)) : 0,
+        title: (seats.length >= want)
+          ? ((mm.startAt && mm.startAt !== Infinity && Math.ceil((mm.startAt - Date.now()) / 1000) > 0) ? `Старт через ${Math.ceil((mm.startAt - Date.now()) / 1000)}…` : 'Начинаем!')
+          : (Math.max(0, seats.length - 1) ? `Найдено ${Math.max(0, seats.length - 1)} из ${want - 1}` : 'Ищем соперников…')
+      };
+  $('#mLoad').classList.toggle('found', status.full);
+  $('#mTitle').textContent = status.title;
   const hasBot = seats.some(x => !x.owner);
-  $('#mSub').textContent = full ? (hasBot && !seats.some(x => x.ghost) ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
-  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner && !x.ghost ? ' <span class="botpill">бот</span>' : ''}</li>`);
-  if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
-  while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
-  const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
+  $('#mSub').textContent = status.full ? (hasBot && !seats.some(x => x.ghost) ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
+  const html = (typeof PG !== 'undefined' && PG.net && PG.net.matchmaking && PG.net.matchmaking.renderMatchSeatsHtml)
+    ? PG.net.matchmaking.renderMatchSeatsHtml({seats, want, myId, myName: myName(), myColor: wallet.color, palette: PL0, cleanFn: clean, meLabelFn: meLabel})
+    : (() => {
+        const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner && !x.ghost ? ' <span class="botpill">бот</span>' : ''}</li>`);
+        if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
+        while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
+        return list.join('');
+      })();
+  if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in
   // Nobody for our size yet, but a room of the same mode waits for another number of players.
   const alt = !full && seats.length <= 1 && Date.now() - mm.t0 > 4000 ? [...mm.other].filter(([c, o]) => !mm.closed.has(c) && !mm.skip.has(c) && Date.now() - o.ts < SEEK_FRESH && o.n < o.want).sort((a, b) => b[1].n - a[1].n)[0] : null;
   renderLobbyFriends();
@@ -3219,35 +3342,49 @@ function renderProgress() {
   ptabsDot();
   const el = $('#ptab');
   if (ptab === 'rewards') {
-    // Two lists in one tab: today's tasks and the achievements. Rewards ready to claim go first, then the ones in
-    // progress, claimed ones last.
-    const rank = (done, got) => got ? 2 : done ? 0 : 1;
-    const qDone = q => q.n >= QUESTS.find(x => x.id === q.id).n;
-    const qRows = [...PROG.q].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
-      const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
-      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
-    }).join('');
-    const aRows = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
-      const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
-      return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
-    }).join('');
     questsWeekly();
-    const wqDone = q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); return WQ && q.n >= WQ.n; };
-    const wqList = PROG.wq || [];
-    const wqRows = [...wqList].sort((a, b) => rank(wqDone(a), a.got) - rank(wqDone(b), b.got)).map(q => {
-      const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id) || {ic: '🎯', t: 'Цель', n: 1, g: 10};
-      const done = q.n >= WQ.n;
-      return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${WQ.ic}</span><span class="qt"><b>${WQ.t}</b><div class="xpbar"><i style="width:${Math.min(100, 100 * q.n / WQ.n)}%"></i></div><small>${q.n} / ${WQ.n} · <i class="coin"></i> ${WQ.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimwq="${q.id}">Забрать</button>` : ''}</div>`;
-    }).join('');
-    const allWqGot = wqList.length > 0 && wqList.every(q => q.got);
-    const chestClaimed = !!PROG.wchest;
-    const chestRow = `<div class="quest weekly-chest${chestClaimed ? ' got' : allWqGot ? ' done' : ''}"><span class="qi">🎁</span><span class="qt"><b>Большой сундук недели</b><small>${chestClaimed ? 'Сундук недели открыт' : allWqGot ? 'Все цели недели достигнуты!' : 'Выполните все 3 цели недели'} · <i class="coin"></i> ${WEEKLY_CHEST_GOLD || 100}</small></span>${chestClaimed ? '<span class="pill">Получено</span>' : allWqGot ? '<button class="chip pri" data-claimwchest="1">Забрать +100</button>' : '<span class="pill lock">Заперт</span>'}</div>`;
-    const wqGot = wqList.filter(q => q.got).length;
+    el.innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.progress && PG.ui.progress.renderRewardsTabHtml)
+      ? PG.ui.progress.renderRewardsTabHtml({
+          progQuests: PROG.q || [],
+          questDefs: QUESTS,
+          progWeekly: PROG.wq || [],
+          weeklyDefs: WEEKLY_QUESTS,
+          weeklyChestGold: WEEKLY_CHEST_GOLD || 100,
+          weeklyChestClaimed: !!PROG.wchest,
+          achDefs: ACH,
+          progAch: PROG.ach || {},
+          progStats: PROG.st || {},
+          progLvl: PROG.lvl || 1,
+          rewardReady: rewardReady()
+        })
+      : (() => {
+          const rank = (done, got) => got ? 2 : done ? 0 : 1;
+          const qDone = q => q.n >= QUESTS.find(x => x.id === q.id).n;
+          const qRows = [...PROG.q].sort((a, b) => rank(qDone(a), a.got) - rank(qDone(b), b.got)).map(q => {
+            const Q = QUESTS.find(x => x.id === q.id), done = q.n >= Q.n;
+            return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${Q.ic}</span><span class="qt"><b>${Q.t}</b><div class="xpbar"><i style="width:${100 * q.n / Q.n}%"></i></div><small>${q.n} / ${Q.n} · <i class="coin"></i> ${Q.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimq="${q.id}">Забрать</button>` : ''}</div>`;
+          }).join('');
+          const aRows = [...ACH].sort((a, b) => rank(a.ok(PROG.st, PROG.lvl), PROG.ach[a.id] === 'got') - rank(b.ok(PROG.st, PROG.lvl), PROG.ach[b.id] === 'got')).map(a => {
+            const ok = a.ok(PROG.st, PROG.lvl), got = PROG.ach[a.id] === 'got';
+            return `<div class="quest${got ? ' got' : ok ? ' done' : ' lock'}"><span class="qi">${a.ic}</span><span class="qt"><b>${a.t}</b><small>${a.d} · <i class="coin"></i> ${a.g}</small></span>${got ? '<span class="pill">Получено</span>' : ok ? `<button class="chip pri" data-claima="${a.id}">Забрать</button>` : ''}</div>`;
+          }).join('');
+          const wqDone = q => { const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id); return WQ && q.n >= WQ.n; };
+          const wqList = PROG.wq || [];
+          const wqRows = [...wqList].sort((a, b) => rank(wqDone(a), a.got) - rank(wqDone(b), b.got)).map(q => {
+            const WQ = (WEEKLY_QUESTS || []).find(x => x.id === q.id) || {ic: '🎯', t: 'Цель', n: 1, g: 10};
+            const done = q.n >= WQ.n;
+            return `<div class="quest${q.got ? ' got' : done ? ' done' : ''}"><span class="qi">${WQ.ic}</span><span class="qt"><b>${WQ.t}</b><div class="xpbar"><i style="width:${Math.min(100, 100 * q.n / WQ.n)}%"></i></div><small>${q.n} / ${WQ.n} · <i class="coin"></i> ${WQ.g}</small></span>${q.got ? '<span class="pill">Получено</span>' : done ? `<button class="chip pri" data-claimwq="${q.id}">Забрать</button>` : ''}</div>`;
+          }).join('');
+          const allWqGot = wqList.length > 0 && wqList.every(q => q.got);
+          const chestClaimed = !!PROG.wchest;
+          const chestRow = `<div class="quest weekly-chest${chestClaimed ? ' got' : allWqGot ? ' done' : ''}"><span class="qi">🎁</span><span class="qt"><b>Большой сундук недели</b><small>${chestClaimed ? 'Сундук недели открыт' : allWqGot ? 'Все цели недели достигнуты!' : 'Выполните все 3 цели недели'} · <i class="coin"></i> ${WEEKLY_CHEST_GOLD || 100}</small></span>${chestClaimed ? '<span class="pill">Получено</span>' : allWqGot ? '<button class="chip pri" data-claimwchest="1">Забрать +100</button>' : '<span class="pill lock">Заперт</span>'}</div>`;
+          const wqGot = wqList.filter(q => q.got).length;
 
-    const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
-    const nearQ = PROG.q.filter(q => !q.got).map(q => ({q, Q: QUESTS.find(x => x.id === q.id)})).filter(x => x.Q).sort((a, b) => (a.Q.n - a.q.n) / a.Q.n - (b.Q.n - b.q.n) / b.Q.n)[0];
-    const goalLine = rewardReady() ? '<div class="goalline ready">🎁 Есть награды: заберите их ниже</div>' : nearQ ? `<div class="goalline">🎯 Ближайшая цель: <b>${nearQ.Q.t}</b> · ${nearQ.q.n}/${nearQ.Q.n}</div>` : '<div class="goalline">✅ Все задания на сегодня выполнены</div>';
-    el.innerHTML = `${goalLine}<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
+          const qGot = PROG.q.filter(q => q.got).length, aGot = ACH.filter(a => PROG.ach[a.id] === 'got').length;
+          const nearQ = PROG.q.filter(q => !q.got).map(q => ({q, Q: QUESTS.find(x => x.id === q.id)})).filter(x => x.Q).sort((a, b) => (a.Q.n - a.q.n) / a.Q.n - (b.Q.n - b.q.n) / b.Q.n)[0];
+          const goalLine = rewardReady() ? '<div class="goalline ready">🎁 Есть награды: заберите их ниже</div>' : nearQ ? `<div class="goalline">🎯 Ближайшая цель: <b>${nearQ.Q.t}</b> · ${nearQ.q.n}/${nearQ.Q.n}</div>` : '<div class="goalline">✅ Все задания на сегодня выполнены</div>';
+          return `${goalLine}<div class="h3 sec">Задания на сегодня<em>${qGot} / ${PROG.q.length}</em></div>${qRows}<div class="h3 sec">Недельные цели<em>${wqGot} / ${wqList.length}</em></div>${wqRows}${chestRow}<div class="h3 sec">Достижения<em>${aGot} / ${ACH.length}</em></div>${aRows}`;
+        })();
   } else if (ptab === 'cols') renderCollections(el);
   else if (ptab === 'hist') renderHistory(el);
   else renderTop();
@@ -3297,6 +3434,11 @@ function editProfile() {
 }
 function renderHistory(el) {
   const rows = (() => { const a = jsonRead(GAME_HISTORY_KEY, []); return Array.isArray(a) ? a.filter(x => x && Array.isArray(x.players)) : []; })();
+  if (typeof PG !== 'undefined' && PG.ui && PG.ui.progress && PG.ui.progress.renderHistoryHtml) {
+    el.innerHTML = PG.ui.progress.renderHistoryHtml(rows, isFriend);
+    el.querySelectorAll('.hadd').forEach(b => { b.onclick = () => { b.disabled = true; addFriend(b.dataset.uid, b.dataset.n, 'history'); }; });
+    return;
+  }
   if (!rows.length) { el.innerHTML = '<p class="shint">Здесь появятся ваши партии — сыграйте первую</p>'; return; }
   const when = t => { const d = new Date(t), p = n => String(n).padStart(2, '0'); return `${p(d.getDate())}.${p(d.getMonth() + 1)} ${p(d.getHours())}:${p(d.getMinutes())}`; };
   const wins = rows.filter(r => r.reason !== 'draw' && r.players.slice().sort((a, b) => b.score - a.score)[0].me).length;
@@ -3422,33 +3564,22 @@ questsToday(); progressDot();
    happens for sure: close a town, turn a card, claim and finish a road, see the final count.
    The coach card shows one short line and waits for the action: the spot to tap pulses, other
    spots are hidden, and there is no "next" until it is done. */
-const TUT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_STEPS : [
-  {ic: '👆', t: 'Тапните по рамке', p: 'Сюда ляжет ваша карта', wait: 'select', only: [0, -1]},
-  {ic: '✅', t: 'Нажмите «Поставить»', p: 'Город сошёлся с городом', wait: 'placed', hl: '#ok'},
-  {ic: '🧍', t: 'Поставьте фишку на город', p: 'Фишка делает город вашим', wait: 'meepleDone', hl: '#mrow .chip:not(.skip)'},
-  {ic: '🏰', t: 'Город достроен: +4 очка!', p: 'Фишка вернулась к вам. Теперь ходит бот', wait: 'bot'},
-  {ic: '✋', t: 'Проведите пальцем по полю', p: 'Так поле двигается', wait: 'pan', hand: true},
-  {ic: '🔍', t: 'Нажмите «+»', p: 'Или разведите два пальца — поле приблизится', wait: 'zoom', hl: '#zin'},
-  {ic: '👆', t: 'Тапните по рамке', p: 'Продолжим дорогу бота', wait: 'select', only: [1, 1]},
-  {ic: '🔄', t: 'Поверните карту', p: 'Кнопка ↻ меняет поворот', wait: 'rotate', hl: '#rot'},
-  {ic: '✅', t: 'Нажмите «Поставить»', p: 'Дорога повернула вправо', wait: 'placed', hl: '#ok', r: 2},
-  {ic: '🧍', t: 'Поставьте фишку на дорогу', p: 'Достроите дорогу — получите очки', wait: 'meepleDone', hl: '#mrow .chip:not(.skip)'},
-  {ic: '🤝', t: 'Бот закроет один конец', p: 'Чужой ход тоже может вам помочь', wait: 'bot'},
-  {ic: '👆', t: 'Закройте второй конец', p: 'Тапните по рамке справа', wait: 'select', only: [2, 1]},
-  {ic: '✅', t: 'Нажмите «Поставить»', p: 'Дорога будет закончена', wait: 'placed', hl: '#ok'},
-  {ic: '🛤️', t: 'Дорога достроена!', p: 'Стопка кончилась — считаем очки', wait: 'end'},
-  {ic: '🏆', t: 'Вы победили! +30 золота', p: 'У кого больше очков, тот и выиграл', btn: 'Играть', done: true},
-];
+const TUT = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_STEPS : [];
 // Cards come off the end of the deck: first piece, then you, bot, you, bot, you.
-const TUT_DECK = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_DECK : ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
-const TUT_BOT = (PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_BOT : [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
+const TUT_DECK = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_DECK : ['rEnd', 'rRock', 'rC', 'rS', 'cap', 'cap'];
+const TUT_BOT = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial) ? PG.game.tutorial.TUT_BOT : [{x: 1, y: 0, r: 0}, {x: 1, y: -1, r: 2}];
 let tut = null;
 function startTutorial() {
   if (net) leaveRoom();
   track('tutorial_begin');
-  const rules = {mode: 'fast', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'};
-  startGame({tut: 1, seats: [{name: profileName(), human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules, deck: TUT_DECK.slice(), seed: 7, noIntro: true});
-  tut = {i: 0, bot: TUT_BOT.slice()}; show('game'); hideHint(); tutShow();
+  const cfg = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.createTutorialConfig)
+    ? PG.game.tutorial.createTutorialConfig(profileName(), wallet.color, wallet.fig, validCol, PL0, TUT_DECK)
+    : {tut: 1, seats: [{name: profileName(), human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules: {mode: 'fast', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, deck: TUT_DECK.slice(), seed: 7, noIntro: true};
+  startGame(cfg);
+  tut = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.createTutorialState)
+    ? PG.game.tutorial.createTutorialState()
+    : {i: 0, bot: TUT_BOT.slice()};
+  show('game'); hideHint(); tutShow();
 }
 const tutStep = () => tut && TUT[tut.i];
 // Which empty spots the tutorial lets you use right now (null: no tutorial, all of them).
@@ -3486,8 +3617,21 @@ function tutFinale(n = 0) {
 $('#over').addEventListener('click', e => { if (e.target.closest('#tutNext')) tutNext(); });
 function tutNext() {
   if (!tut) return;
-  if (TUT[tut.i].done) { track('tutorial_complete'); tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); tutShow(); return setTimeout(askProfile, 400); }
-  tut.i++; tutShow();
+  if (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.advanceTutorialStep) {
+    const res = PG.game.tutorial.advanceTutorialStep(tut, wallet, TUT);
+    if (res.done) {
+      track(res.trackEvent);
+      tut = null;
+      saveWallet();
+      beep(res.sound);
+      tutShow();
+      return setTimeout(askProfile, 400);
+    }
+    tutShow();
+  } else {
+    if (TUT[tut.i].done) { track('tutorial_complete'); tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); tutShow(); return setTimeout(askProfile, 400); }
+    tut.i++; tutShow();
+  }
 }
 // Game code reports what the player did; the coach moves on only on the awaited action.
 function tutEvent(ev) {
@@ -3510,9 +3654,9 @@ function colorPick(input, av) {
 function askProfile() {
   if (wallet.name || document.getElementById('profBox')) return;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'profBox'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм и выберите цвет — их увидят соперники и рейтинг</p>
-    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off">
-    <button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.renderAskProfileDialogHtml)
+    ? PG.game.tutorial.renderAskProfileDialogHtml(wallet.color)
+    : `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм и выберите цвет — их увидят соперники и рейтинг</p><input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   colorPick(inp, av);
@@ -3526,7 +3670,9 @@ function offerTutorial() {
   if (wallet.tut || wallet.tutAsked || loadSave()) return askProfile();
   wallet.tutAsked = true; saveWallet();
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🏰</div><h3>Добро пожаловать в Puzzlegrad!</h3><p>Новичок? Короткое обучение, затем вы придумаете никнейм — так создаётся профиль</p><button class="cta wide" data-t="go">Начать · обучение</button>${FB ? '<button class="ghostbtn" data-t="login">У меня есть профиль — войти</button>' : ''}<button class="linkbtn" data-t="no">Пропустить обучение</button></div>`;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.renderTutorialOfferDialogHtml)
+    ? PG.game.tutorial.renderTutorialOfferDialogHtml(!!FB)
+    : `<div class="ocard"><div style="font-size:44px">🏰</div><h3>Добро пожаловать в Puzzlegrad!</h3><p>Новичок? Короткое обучение, затем вы придумаете никнейм — так создаётся профиль</p><button class="cta wide" data-t="go">Начать · обучение</button>${FB ? '<button class="ghostbtn" data-t="login">У меня есть профиль — войти</button>' : ''}<button class="linkbtn" data-t="no">Пропустить обучение</button></div>`;
   document.body.append(box);
   box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); else if (b.dataset.t === 'login') accountDialog('login'); else askProfile(); };
 }
@@ -3534,10 +3680,21 @@ function offerTutorial() {
 /* "Who is online": tap the green "N в сети" badge for the list of players with the game open. */
 function showOnline(e) {
   e.stopPropagation(); e.preventDefault();
-  const me = fbAuth && fbAuth.uid;
-  const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small>${x.uid !== me && x.r && registered() && !isFriend(x.uid) ? `<button class="chip addf" data-addf="${x.uid}" aria-label="В друзья">＋</button>` : ''}</li>`).join('');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard olist"><h3>Сейчас в игре: ${presenceList.length}</h3><ul>${rows || '<li class="qnote">Никого</li>'}</ul><p class="shint">Список обновляется раз в минуту. Считаются все, у кого открыта игра, включая вас</p><button class="cta wide">Закрыть</button></div>`;
+  if (typeof PG !== 'undefined' && PG.net && PG.net.presence && PG.net.presence.renderOnlinePlayersDialogHtml) {
+    box.innerHTML = PG.net.presence.renderOnlinePlayersDialogHtml({
+      presenceList,
+      myUid: fbAuth && fbAuth.uid,
+      registered: registered(),
+      isFriendFn: isFriend,
+      cleanFn: clean,
+      stateTextMap: STATE_TEXT
+    });
+  } else {
+    const me = fbAuth && fbAuth.uid;
+    const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small>${x.uid !== me && x.r && registered() && !isFriend(x.uid) ? `<button class="chip addf" data-addf="${x.uid}" aria-label="В друзья">＋</button>` : ''}</li>`).join('');
+    box.innerHTML = `<div class="ocard olist"><h3>Сейчас в игре: ${presenceList.length}</h3><ul>${rows || '<li class="qnote">Никого</li>'}</ul><p class="shint">Список обновляется раз в минуту. Считаются все, у кого открыта игра, включая вас</p><button class="cta wide">Закрыть</button></div>`;
+  }
   document.body.append(box);
   box.onclick = ev => {
     const a = ev.target.closest('[data-addf]'); if (a) { const x = presenceList.find(y => y.uid === a.dataset.addf); a.remove(); return addFriend(a.dataset.addf, x && x.n); }
@@ -3559,12 +3716,18 @@ function fbGet(path) { return FBC.get(path); }
 function fbPut(path, v) { return FBC.put(path, v); }
 function fbDel(path) { return FBC.del(path); }
 const myUid = () => fbAuth && fbAuth.uid;
-const isOn = p => !!p && p.s !== 'off' && Date.now() - (p.t || 0) < 150000;
+const isOn = p => (typeof PG !== 'undefined' && PG.net && PG.net.presence && PG.net.presence.isOn)
+  ? PG.net.presence.isOn(p)
+  : (!!p && p.s !== 'off' && Date.now() - (p.t || 0) < 150000);
 function agoText(t) {
-  if (!t) return 'не в сети';
-  const m = Math.round((Date.now() - t) / 60000);
-  if (m < 1) return 'был(а) в сети только что';
-  return 'был(а) в сети ' + (m < 60 ? m + ' мин назад' : m < 1440 ? Math.round(m / 60) + ' ч назад' : Math.round(m / 1440) + ' дн назад');
+  return (typeof PG !== 'undefined' && PG.net && PG.net.presence && PG.net.presence.agoText)
+    ? PG.net.presence.agoText(t)
+    : (() => {
+      if (!t) return 'не в сети';
+      const m = Math.round((Date.now() - t) / 60000);
+      if (m < 1) return 'был(а) в сети только что';
+      return 'был(а) в сети ' + (m < 60 ? m + ' мин назад' : m < 1440 ? Math.round(m / 60) + ' ч назад' : Math.round(m / 1440) + ' дн назад');
+    })();
 }
 // Friends are only for finished profiles: a nickname and an e-mail account (or another sign-in
 // later). The database rules check the same: an account with an e-mail and a saved /profiles entry.
@@ -3596,7 +3759,9 @@ async function friendInvite(code) {
   if (friends.some(f => f.uid === uid && f.mutual)) { friendsBack = 'menu'; show('friends'); return toastAny(`${name || 'Игрок'} уже у вас в друзьях`); }
   document.querySelectorAll('.over.finv').forEach(x => x.remove());
   const box = document.createElement('div'); box.className = 'over finv'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🤝</div><h3>${name || 'Игрок'} приглашает вас в друзья</h3><p>Вы увидите, когда друг в сети, и сможете звать друг друга в комнату одной кнопкой</p><button class="cta wide" data-a="ok">Принять</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.net && PG.net.friends && PG.net.friends.renderFriendInviteDialogHtml)
+    ? PG.net.friends.renderFriendInviteDialogHtml(name)
+    : `<div class="ocard"><div style="font-size:44px">🤝</div><h3>${name || 'Игрок'} приглашает вас в друзья</h3><p>Вы увидите, когда друг в сети, и сможете звать друг друга в комнату одной кнопкой</p><button class="cta wide" data-a="ok">Принять</button><button class="ghostbtn" data-a="no">Не сейчас</button></div>`;
   document.body.append(box);
   box.onclick = async e => {
     const b = e.target.closest('[data-a]'); if (!b) return; box.remove();
@@ -3770,10 +3935,12 @@ const stBadge = (t, cls = '') => `<span class="stchip${cls}">${t}</span>`;
 function renderStatusShop() {
   const box = $('#stgrid'); if (!box) return;
   const own = ST().ownedStatuses(wallet), worn = wallet.statusKey || '';
-  box.innerHTML = ST().SHOP_STATUSES.map(x => {
-    const k = 'sh:' + x.id, has = own.includes(k), poor = !has && wallet.gold < x.price;
-    return `<button class="stb${worn === k ? ' sel' : ''}${poor ? ' poor' : ''}" data-stb="${x.id}">${stBadge(x.text)}<small>${worn === k ? 'Надет' : has ? 'Надеть' : `<i class="coin"></i>${x.price}`}</small></button>`;
-  }).join('');
+  box.innerHTML = (typeof PG !== 'undefined' && PG.ui && PG.ui.shop && PG.ui.shop.renderStatusShopHtml)
+    ? PG.ui.shop.renderStatusShopHtml({shopStatuses: ST().SHOP_STATUSES, ownedStatuses: own, wornKey: worn, gold: wallet.gold, stBadgeFn: stBadge})
+    : ST().SHOP_STATUSES.map(x => {
+        const k = 'sh:' + x.id, has = own.includes(k), poor = !has && wallet.gold < x.price;
+        return `<button class="stb${worn === k ? ' sel' : ''}${poor ? ' poor' : ''}" data-stb="${x.id}">${stBadge(x.text)}<small>${worn === k ? 'Надет' : has ? 'Надеть' : `<i class="coin"></i>${x.price}`}</small></button>`;
+      }).join('');
 }
 const STATUS_ERR = {short: 'Слишком короткий статус', long: 'Не больше 15 символов', bad: 'Такой текст нельзя: выберите другой', owned: 'Такой статус у вас уже есть', gold: 'Не хватает золота'};
 function afterStatusChange() { saveWallet(); renderStatusShop(); renderMenuProfile(); if (!$('#scr-items').hidden) renderItems(); presenceMark(true); syncRating(true); }
@@ -3809,6 +3976,18 @@ function renderItems() {
   const box = $('#itemsBody'); if (!box) return;
   document.querySelectorAll('#itabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.it === itab));
   const S = ST(), own = S.ownedStatuses(wallet), worn = wallet.statusKey || '';
+  if (typeof PG !== 'undefined' && PG.ui && PG.ui.shop && PG.ui.shop.renderItemsStatusesHtml) {
+    if (itab === 'st') {
+      box.innerHTML = PG.ui.shop.renderItemsStatusesHtml({shopStatuses: S.SHOP_STATUSES, exclusiveStatuses: S.EXCLUSIVE_STATUSES, ownedStatuses: own, wornKey: worn, statusTextFn: k => S.statusText(k), stBadgeFn: stBadge});
+    } else if (itab === 'fr') {
+      box.innerHTML = PG.ui.shop.renderItemsFramesHtml({frames: FRAMES, ownedFrames: wallet.frames || [], wornFrame: wallet.frame, color: wallet.color, profileInitial: profileName()[0]});
+    } else if (itab === 'fg') {
+      box.innerHTML = PG.ui.shop.renderItemsFigsHtml({figs: FIGS, ownedFigs: wallet.owned, selectedFig: wallet.fig, figPreviewFn: figPreview});
+    } else {
+      box.innerHTML = PG.ui.shop.renderItemsLocsHtml(LOCS);
+    }
+    return;
+  }
   if (itab === 'st') {
     const counted = S.SHOP_STATUSES.length + S.EXCLUSIVE_STATUSES.filter(x => !x.soon).length, have = own.filter(k => !k.startsWith('cu:')).length;
     const mine = own.map(k => ({k, t: S.statusText(k), ex: k.startsWith('ex:'), cu: k.startsWith('cu:')}));
@@ -3881,14 +4060,18 @@ function renderFriends() {
   $('#fRoom').hidden = !room; if (room) $('#fRoom').innerHTML = `<span>Ваша комната <b>${room}</b>. Друзьям, которых вы позовёте, придёт приглашение</span><button class="chip go" data-froom>Открыть комнату</button>`;
   const reqs = Object.entries(inbox).filter(([, v]) => v.k === 'f'), invs = Object.entries(inbox).filter(([, v]) => v.k === 'r');
   const on = friends.filter(f => f.on), off = friends.filter(f => f.mutual && !f.on), wait = friends.filter(f => !f.mutual);
-  let h = '';
-  if (invs.length) h += `<div class="h3">Зовут играть</div><ul class="flist">${invs.map(([k, v]) => fRow({n: clean(v.n), c: '#f2b84b'}, `<button class="chip go" data-fjoin="${k}">Войти</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'комната ' + clean(v.code))).join('')}</ul>`;
-  if (reqs.length) h += `<div class="h3">Заявки в друзья</div><ul class="flist">${reqs.map(([k, v]) => fRow({n: clean(v.n), c: '#f2b84b'}, `<button class="chip go" data-facc="${k.slice(0, -2)}">Принять</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'хочет дружить')).join('')}</ul>`;
-  h += `<div class="h3">В сети · ${on.length}</div><ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-finv="${f.uid}">${room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('') || '<li class="qnote">Никого из друзей нет в сети</li>'}</ul>`;
-  if (off.length) h += `<div class="h3">Не в сети · ${off.length}</div><ul class="flist">${off.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Удалить из друзей">✕</button>`, agoText(f.p && f.p.t))).join('')}</ul>`;
-  if (wait.length) h += `<div class="h3">Ждут ответа</div><ul class="flist">${wait.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Отменить заявку">✕</button>`, 'заявка отправлена')).join('')}</ul>`;
-  if (!friends.length && !reqs.length) h += '<p class="shint">Добавьте друга по его коду или из списка «в сети» на главном экране</p>';
-  box.innerHTML = h;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.net && PG.net.friends && PG.net.friends.renderFriendsListHtml)
+    ? PG.net.friends.renderFriendsListHtml({invs, reqs, on, off, wait, room, invited, stateTextMap: STATE_TEXT, agoTextFn: agoText, cleanFn: clean})
+    : (() => {
+        let h = '';
+        if (invs.length) h += `<div class="h3">Зовут играть</div><ul class="flist">${invs.map(([k, v]) => fRow({n: clean(v.n), c: '#f2b84b'}, `<button class="chip go" data-fjoin="${k}">Войти</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'комната ' + clean(v.code))).join('')}</ul>`;
+        if (reqs.length) h += `<div class="h3">Заявки в друзья</div><ul class="flist">${reqs.map(([k, v]) => fRow({n: clean(v.n), c: '#f2b84b'}, `<button class="chip go" data-facc="${k.slice(0, -2)}">Принять</button><button class="chip x" data-fdrop="${k}" aria-label="Отклонить">✕</button>`, 'хочет дружить')).join('')}</ul>`;
+        h += `<div class="h3">В сети · ${on.length}</div><ul class="flist">${on.map(f => fRow(f, `<button class="chip go" data-finv="${f.uid}">${room && invited.code === room && invited.joined.has(f.uid) ? '✓ Принял' : room && invited.code === room && invited.uids.has(f.uid) ? 'Ещё раз' : 'Позвать'}</button>`, STATE_TEXT[f.p.s] || 'в игре')).join('') || '<li class="qnote">Никого из друзей нет в сети</li>'}</ul>`;
+        if (off.length) h += `<div class="h3">Не в сети · ${off.length}</div><ul class="flist">${off.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Удалить из друзей">✕</button>`, agoText(f.p && f.p.t))).join('')}</ul>`;
+        if (wait.length) h += `<div class="h3">Ждут ответа</div><ul class="flist">${wait.map(f => fRow(f, `<button class="chip x" data-fdel="${f.uid}" aria-label="Отменить заявку">✕</button>`, 'заявка отправлена')).join('')}</ul>`;
+        if (!friends.length && !reqs.length) h += '<p class="shint">Добавьте друга по коду выше</p>';
+        return h;
+      })();
   renderLobbyFriends();
 }
 let friendsTimer = 0;
@@ -4026,6 +4209,11 @@ async function statsDialog() {
       fetch(`https://api.github.com/repos/${DEV_REPO}/releases?per_page=100`).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     const relOk = Array.isArray(rel), rels = relOk ? rel : []; // GitHub may answer with a limit message instead of the list
+    if (typeof PG !== 'undefined' && PG.ui && PG.ui.owner && PG.ui.owner.computePresenceStats && PG.ui.owner.renderStatsGridHtml) {
+      const stats = PG.ui.owner.computePresenceStats({pres, rels, now: Date.now()});
+      out.innerHTML = PG.ui.owner.renderStatsGridHtml(stats);
+      return;
+    }
     // Only real game records: a name and a state. Leftovers from early builds and test runs
     // (just a time, no name) are skipped.
     const now = Date.now(), P = Object.values(pres || {}).filter(v => v && typeof v.n === 'string' && v.n && v.s), D = 864e5;
@@ -4519,14 +4707,9 @@ function jigsawFrame(host, o) {
   requestAnimationFrame(draw); document.fonts && document.fonts.ready && document.fonts.ready.then(draw);
   return draw;
 }
-// Every section opens with the same kind of card: a coloured jigsaw piece with an icon, a title and a line about it.
+// Minimalist layout: section heroes removed to avoid visual clutter and vertical space consumption.
 (function sectionHeroes() {
-  const H = {
-    settings: ['#6a7dff', '⚙️', 'Настройте под себя', 'Звук, подсказки и вид игры'],
-    shop: ['#f2994a', '🛍', 'Коллекция фигурок', 'Подарки, сундуки и новые фигурки'],
-    friends: ['#4c8dff', '👥', 'Ваша компания', 'Играйте и общайтесь вместе'],
-    lobby: ['#4c8dff', '🏠', 'Играйте своими', 'Код комнаты — игра только для своих']
-  };
+  const H = {};
   for (const [id, [c, ic, t, tag]] of Object.entries(H)) {
     const lb = document.querySelector(`#scr-${id} .lb`), top = lb && lb.querySelector('.ltop'); if (!top) continue;
     const host = document.createElement('div'); host.className = 'jig shero small';
@@ -4603,6 +4786,14 @@ const AUTH_ERR = {
 // Server-side setup problems (sign-in method off, e-mail change blocked…) are not the player's
 // fault: they get a calm message, and the exact answer goes to the crash reports for the owner.
 const authErr = (j, link) => {
+  if (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.classifyAuthError) {
+    const res = PG.account.auth.classifyAuthError(j, link);
+    if (!j || !j.error) return res;
+    const c = String(j.error.message || '').split(' ')[0];
+    if (AUTH_ERR[c]) return res;
+    try { if (window.AndroidApp && AndroidApp.logError) AndroidApp.logError('auth ' + (link ? 'link' : 'login') + ': ' + String(j.error.message).slice(0, 300)); } catch (_) {}
+    return res;
+  }
   if (!j || !j.error) return ['Нет связи с сервером — проверьте интернет', ''];
   const c = String(j.error.message || '').split(' ')[0];
   if (AUTH_ERR[c]) return AUTH_ERR[c];
@@ -4614,6 +4805,9 @@ const MAIL_FIX = {'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co':
   'mail.ri': 'mail.ru', 'mail.r': 'mail.ru', 'mial.ru': 'mail.ru', 'yandex.ry': 'yandex.ru', 'yandex.com.ru': 'yandex.ru', 'yandeks.ru': 'yandex.ru', 'yndex.ru': 'yandex.ru', 'ya.ry': 'ya.ru', 'rambler.ry': 'rambler.ru', 'icloud.con': 'icloud.com', 'outlok.com': 'outlook.com', 'hotmail.con': 'hotmail.com'};
 // Checks before asking the server: [text, field] or null.
 function checkAuthInput(mail, pass, link) {
+  if (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.checkAuthInput) {
+    return PG.account.auth.checkAuthInput(mail, pass, link);
+  }
   if (!mail) return ['Введите почту', 'mail'];
   if (/\s/.test(mail)) return ['В почте не должно быть пробелов', 'mail'];
   if (!/^[^@]+@[^@]+\.[^@.]{2,}$/.test(mail)) return [mail.includes('@') ? 'После @ нужен адрес почты целиком, например name@mail.ru' : 'В почте не хватает «@». Пример: name@mail.ru', 'mail'];
@@ -4928,14 +5122,20 @@ async function cloudLoad() {
 var syncStart = Promise.race([new Promise(r => setTimeout(r, 4000)), new Promise(r => setTimeout(() => cloudSync(false).then(r, r), 800))]);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) cloudSync(false); });
 // mode: 'link' — protect this profile with an e-mail; 'login' — sign in to an existing one.
-const EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
-const EYE_SHUT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
+const EYE_OPEN = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.EYE_OPEN)
+  ? PG.account.auth.EYE_OPEN
+  : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_SHUT = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.EYE_SHUT)
+  ? PG.account.auth.EYE_SHUT
+  : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.8 10.8 0 0112 5c6.4 0 10 7 10 7a17 17 0 01-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10 10 0 005.4-1.6"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>';
 function accountDialog(mode, prefill) {
   if (!FB) return toastAny('Профили доступны в приложении');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const link = mode === 'link';
   // One form for both: a known e-mail signs in, a new one becomes a profile (gold and progress stay).
-  box.innerHTML = `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход в профиль</h3><p>Сохранение прогресса, фигурок и золота между устройствами</p>
+  box.innerHTML = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.renderAccountDialogHtml)
+    ? PG.account.auth.renderAccountDialogHtml({link, prefill})
+    : `<div class="ocard acc"><div style="font-size:40px">🔑</div><h3>Вход в профиль</h3><p>Сохранение прогресса, фигурок и золота между устройствами</p>
     <div class="gslot" id="accGSlot"><button class="ghostbtn gbtn" id="accGoogle" type="button"><span class="gicon">G</span> Продолжить с Google</button></div>
     <p class="phint acc-or" id="accOr">или по почте</p>
     <input class="field" id="accMail" type="email" inputmode="email" placeholder="Почта" autocomplete="email" autocapitalize="off" spellcheck="false" value="${(prefill || '').replace(/"/g, '')}">
@@ -5362,16 +5562,25 @@ function renderUpdPause() {
   const u = net.upd; let box = $('#updpause');
   if (!box) { box = document.createElement('div'); box.id = 'updpause'; box.className = 'over'; box.style.position = 'fixed'; document.body.append(box); }
   const left = Math.max(0, Math.ceil((u.since + UPD_WAIT - Date.now()) / 1000));
-  const rows = players.filter(p => p.owner && p.human && !p.resigned).map(p => `<li class="${u.ready.has(p.owner) ? 'ok' : ''}"><i style="background:${p.col}"></i><b>${p.name}</b><span>${u.ready.has(p.owner) ? '✓ обновился' : 'обновляется…'}</span></li>`).join('');
+  const rows = (typeof PG !== 'undefined' && PG.app && PG.app.update && PG.app.update.renderUpdPlayerRowsHtml)
+    ? PG.app.update.renderUpdPlayerRowsHtml(players, u.ready)
+    : players.filter(p => p.owner && p.human && !p.resigned).map(p => `<li class="${u.ready.has(p.owner) ? 'ok' : ''}"><i style="background:${p.col}"></i><b>${p.name}</b><span>${u.ready.has(p.owner) ? '✓ обновился' : 'обновляется…'}</span></li>`).join('');
   const mine = appCode() < u.c;
   const key = rows + mine + (left < 1);
   if (box.dataset.k !== key) {
     box.dataset.k = key;
-    box.innerHTML = `<div class="ocard"><div style="font-size:38px">⏸</div><h3>Партия на паузе</h3><p>Вышло обновление. Время хода остановлено, пока все игроки не обновятся.</p><ul class="updlist">${rows}</ul>${mine ? '<button class="cta wide" id="updGo">Обновить</button>' : ''}<button class="ghostbtn" id="updSkip">Продолжить без ожидания</button><small id="updLeft"></small></div>`;
+    box.innerHTML = (typeof PG !== 'undefined' && PG.app && PG.app.update && PG.app.update.formatUpdPauseHtml)
+      ? PG.app.update.formatUpdPauseHtml({rowsHtml: rows, mine})
+      : `<div class="ocard"><div style="font-size:38px">⏸</div><h3>Партия на паузе</h3><p>Вышло обновление. Время хода остановлено, пока все игроки не обновятся.</p><ul class="updlist">${rows}</ul>${mine ? '<button class="cta wide" id="updGo">Обновить</button>' : ''}<button class="ghostbtn" id="updSkip">Продолжить без ожидания</button><small id="updLeft"></small></div>`;
     $('#updSkip').onclick = () => { netSend({t: 'upresume', g: net.gameId, c: u.c}); updEnd('Партия продолжается'); };
     const go = $('#updGo'); if (go) go.onclick = () => { if (lastUpd) window.onUpdateAvailable(lastUpd, true); else if (window.AndroidApp && AndroidApp.checkUpdates) AndroidApp.checkUpdates(); };
   }
-  const t = $('#updLeft'); if (t) t.textContent = `Само продолжится через ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  const t = $('#updLeft');
+  if (t) {
+    t.textContent = (typeof PG !== 'undefined' && PG.app && PG.app.update && PG.app.update.formatUpdCountdown)
+      ? PG.app.update.formatUpdCountdown(left)
+      : `Само продолжится через ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
+  }
 }
 
 // Android "Back": close a dialog, open the game menu, or go back to the main menu; false lets the app close.
@@ -5442,8 +5651,16 @@ function showMaintenanceScreen(msg) {
   d.id = 'maintBox';
   d.style.cssText = 'position:fixed;inset:0;background:#0b0d13;z-index:9999999;display:flex;align-items:center;justify-content:center;padding:24px;color:#fff;font-family:sans-serif;text-align:center';
   // The message comes from the database: put it in as text, never as markup.
-  d.innerHTML = '<div style="background:#141721;border:1px solid rgba(255,255,255,0.12);padding:32px 24px;border-radius:16px;max-width:380px;box-shadow:0 24px 48px rgba(0,0,0,0.8)"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5"></p></div>';
+  d.innerHTML = '<div class="ocard" style="background:#141721;border:1.5px solid rgba(242,184,75,.35);border-top:1.5px solid rgba(255,230,150,.65);padding:32px 24px;border-radius:24px;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,0.85),0 0 32px rgba(242,184,75,.12);text-align:center"><div style="font-size:48px;margin-bottom:12px">🛠️</div><h2 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#fff">Технические работы</h2><p id="maintMsg" style="color:#8b94a7;font-size:14px;line-height:1.5;margin:0 0 16px"></p><button id="maintRetry" class="cta wide">Попробовать снова</button></div>';
   d.querySelector('#maintMsg').textContent = String(msg).slice(0, 500);
+  const retryBtn = d.querySelector('#maintRetry');
+  if (retryBtn) {
+    retryBtn.onclick = () => {
+      retryBtn.disabled = true;
+      retryBtn.textContent = 'Перезапуск…';
+      location.reload();
+    };
+  }
   document.body.appendChild(d);
 }
 window.addEventListener('error', e => reportError((e.message || 'error') + ' @' + (e.lineno || 0)));

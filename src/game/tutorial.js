@@ -54,3 +54,56 @@ export function renderCoachCardHtml(step, stepIndex, totalSteps = TUT_STEPS.leng
   const progressPercent = totalSteps > 1 ? (100 * stepIndex / (totalSteps - 1)).toFixed(0) : '0';
   return `<span class="cic">${step.ic}</span><span class="ctx"><b>${step.t}</b><small>${step.p}</small></span>${step.btn ? `<button class="cta" id="tutNext">${step.btn}</button>` : ''}${step.hand ? '<i class="swipe"></i>' : ''}<span class="cbar"><i style="width:${progressPercent}%"></i></span>`;
 }
+
+export function createTutorialConfig(profileName, walletColor, walletFig, validColFn = () => false, palette = [], tutDeck = TUT_DECK) {
+  const rules = {mode: 'fast', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'};
+  const myCol = validColFn(walletColor) ? walletColor : (palette[0] && (palette[0].col || palette[0])) || '#ef5350';
+  const botCol1 = (palette[1] && (palette[1].col || palette[1])) || '#42a5f5';
+  const botCol2 = (palette[2] && (palette[2].col || palette[2])) || '#66bb6a';
+  const botCol = walletColor === botCol1 ? botCol2 : botCol1;
+
+  const seats = [
+    {name: profileName, human: true, fig: walletFig, col: myCol},
+    {name: 'Бот Ёж', human: false, fig: 'classic', col: botCol}
+  ];
+
+  return {
+    tut: 1,
+    seats,
+    rules,
+    deck: tutDeck.slice(),
+    seed: 7,
+    noIntro: true
+  };
+}
+
+export function advanceTutorialStep(tutState, wallet, steps = TUT_STEPS) {
+  if (!tutState) return {done: false, nextStep: null};
+  const current = steps[tutState.i];
+  if (current && current.done) {
+    if (wallet) {
+      wallet.tut = true;
+      wallet.gold = (wallet.gold || 0) + 30;
+    }
+    return {
+      done: true,
+      reward: 30,
+      sound: 'coin',
+      trackEvent: 'tutorial_complete'
+    };
+  }
+  tutState.i++;
+  return {
+    done: false,
+    stepIndex: tutState.i,
+    nextStep: steps[tutState.i] || null
+  };
+}
+
+export function renderTutorialOfferDialogHtml(hasFb = false) {
+  return `<div class="ocard"><div style="font-size:44px">🏰</div><h3>Добро пожаловать в Puzzlegrad!</h3><p>Новичок? Короткое обучение, затем вы придумаете никнейм — так создаётся профиль</p><button class="cta wide" data-t="go">Начать · обучение</button>${hasFb ? '<button class="ghostbtn" data-t="login">У меня есть профиль — войти</button>' : ''}<button class="linkbtn" data-t="no">Пропустить обучение</button></div>`;
+}
+
+export function renderAskProfileDialogHtml(walletColor = '#ef5350') {
+  return `<div class="ocard prof"><div class="pav" id="pav" style="--c:${walletColor}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм и выберите цвет — их увидят соперники и рейтинг</p><input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
+}

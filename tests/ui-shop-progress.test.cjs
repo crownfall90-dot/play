@@ -51,6 +51,39 @@ test('ui/shop: renderGiftCard, renderFiguresGrid, renderFramesGrid, renderLocati
   assert.ok(locsHtml.includes('Открыта'));
   assert.ok(locsHtml.includes('Таверна'));
   assert.ok(locsHtml.includes('Скоро'));
+
+  // Status shop & items markup
+  const {renderStatusShopHtml, renderItemsStatusesHtml, renderItemsFramesHtml, renderItemsFigsHtml, renderItemsLocsHtml} = await import('../src/ui/shop.js');
+  const shopStatuses = [{id: 'king', text: 'Король', price: 100}, {id: 'baron', text: 'Барон', price: 200}];
+  const statusHtml = renderStatusShopHtml({shopStatuses, ownedStatuses: ['sh:king'], wornKey: 'sh:king', gold: 50});
+  assert.ok(statusHtml.includes('data-stb="king"'));
+  assert.ok(statusHtml.includes('sel'));
+  assert.ok(statusHtml.includes('Надет'));
+  assert.ok(statusHtml.includes('data-stb="baron"'));
+  assert.ok(statusHtml.includes('poor'));
+
+  const itemsStHtml = renderItemsStatusesHtml({
+    shopStatuses,
+    exclusiveStatuses: [{id: 'champ', ic: '🏆', text: 'Чемпион', how: 'Победите', soon: false}],
+    ownedStatuses: ['sh:king'],
+    wornKey: 'sh:king',
+    statusTextFn: k => k === 'sh:king' ? 'Король' : k
+  });
+  assert.ok(itemsStHtml.includes('Король'));
+  assert.ok(itemsStHtml.includes('data-unwear'));
+  assert.ok(itemsStHtml.includes('Чемпион'));
+
+  const itemsFrHtml = renderItemsFramesHtml({frames, ownedFrames: ['none'], wornFrame: 'none', color: '#ff0000', profileInitial: 'K'});
+  assert.ok(itemsFrHtml.includes('data-ifr="none"'));
+  assert.ok(itemsFrHtml.includes('Королевская'));
+  assert.ok(itemsFrHtml.includes('lockd'));
+
+  const itemsFigsHtml = renderItemsFigsHtml({figs, ownedFigs: ['classic'], selectedFig: 'classic', figPreviewFn: figPreview});
+  assert.ok(itemsFigsHtml.includes('data-ifig="classic"'));
+  assert.ok(itemsFigsHtml.includes('lockd'));
+
+  const itemsLocsHtml = renderItemsLocsHtml(locs);
+  assert.ok(itemsLocsHtml.includes('locgrid'));
 });
 
 test('ui/progress: ringSvg, renderMasteryGrid, renderBuildingStats, renderCollectionCard', async () => {
@@ -109,4 +142,40 @@ test('ui/progress: ringSvg, renderMasteryGrid, renderBuildingStats, renderCollec
   assert.ok(cardHtml.includes('+200'));
   assert.ok(cardHtml.includes('data-claimcol="court"'));
   assert.ok(cardHtml.includes('Забрать +200'));
+
+  // Rewards tab and history markup
+  const {renderRewardsTabHtml, renderHistoryHtml} = await import('../src/ui/progress.js');
+  const rewardsHtml = renderRewardsTabHtml({
+    progQuests: [{id: 'c3', n: 3, got: false}],
+    questDefs: [{id: 'c3', ic: '🏰', t: '3 города', n: 3, g: 15}],
+    progWeekly: [{id: 'w1', n: 5, got: true}],
+    weeklyDefs: [{id: 'w1', ic: '🏆', t: '5 побед', n: 5, g: 50}],
+    weeklyChestGold: 100,
+    weeklyChestClaimed: false,
+    achDefs: [{id: 'a1', ic: '🥇', t: 'Первая', d: 'Победа', ok: () => true, g: 20}],
+    progAch: {a1: 'got'},
+    progStats: {wins: 1},
+    progLvl: 2,
+    rewardReady: true
+  });
+  assert.ok(rewardsHtml.includes('data-claimq="c3"'));
+  assert.ok(rewardsHtml.includes('Задания на сегодня'));
+  assert.ok(rewardsHtml.includes('Недельные цели'));
+  assert.ok(rewardsHtml.includes('Большой сундук недели'));
+  assert.ok(rewardsHtml.includes('Есть награды: заберите их ниже'));
+
+  const historyHtml = renderHistoryHtml([
+    {
+      id: 'o:room1',
+      at: 1700000000000,
+      reason: 'end',
+      players: [
+        {name: 'Аня', score: 45, me: true, uid: 'u1', col: '#ef5350'},
+        {name: 'Боря', score: 30, me: false, uid: 'u2', col: '#4c8dff'}
+      ]
+    }
+  ], uid => uid === 'u2');
+  assert.ok(historyHtml.includes('Победа'));
+  assert.ok(historyHtml.includes('онлайн'));
+  assert.ok(historyHtml.includes('data-pl="u2"'));
 });
