@@ -62,18 +62,19 @@ export function renderFeedbackCardHtml({first, namePromo, stars, starLabel, cat,
     `<button type="button" class="fb-star${v <= stars ? ' active' : ''}" data-val="${v}" aria-label="${v} ${v === 1 ? 'звезда' : v < 5 ? 'звезды' : 'звёзд'}">⭐</button>`
   ).join('');
 
-  const catsHtml = FEEDBACK_CATS.map((c, i) =>
-    `<button class="fbcat fb-cat${c.k === cat ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === cat ? 'gold' : FEEDBACK_COLORS[c.k]}" data-je="${i < 3 ? 'r:tab' : ''}${i > 0 && i < 3 ? ',' : ''}${i > 0 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`
+  // Plain colour tiles (a jigsaw outline with tabs crowded four labels into a narrow dialog and looked broken).
+  const catsHtml = FEEDBACK_CATS.map(c =>
+    `<button class="fbcat fb-cat${c.k === cat ? ' sel' : ''}" data-cat="${c.k}" style="--cc:${FEEDBACK_COLORS[c.k]}"><i>${c.ic}</i><span>${c.t}</span></button>`
   ).join('');
 
   return `<div class="ocard fbcard">
-    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, идеи и сообщения об ошибках</p></div></div></div>
+    <div class="jig shero small" id="fbHero"><div class="mhero"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, идеи и сообщения об ошибках</p></div></div></div>
     ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
     ${namePromo || ''}
     <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Оцените игру:</div>
     <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Оценка">${starsHtml}</div>
     <div class="fb-star-label" id="fbStarLabel">${starLabel}</div>
-    <div class="jig fbcats" id="fbCats">${catsHtml}</div>
+    <div class="fbcats" id="fbCats">${catsHtml}</div>
     <textarea id="fbText" class="fbtext" rows="3" placeholder="${placeholder}"></textarea>
     <div class="fb-diag">
       <label class="fb-diag-check">

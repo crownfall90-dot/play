@@ -4250,8 +4250,6 @@ function openFeedback() {
     : `<div class="ocard fbcard"><button class="ghostbtn" id="fbCancel">Отмена</button></div>`;
 
   document.body.append(box);
-  jigsawFrame(box.querySelector('#fbHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
-  jigsawFrame(box.querySelector('#fbCats'), {R: 12, GAP: 4, NECK: 3.8, BR: 6.5, BULB: 4.5});
 
   let cat = 'idea';
   let stars = 5;
@@ -4272,7 +4270,6 @@ function openFeedback() {
     cat = b.dataset.cat;
     box.querySelectorAll('.fb-cat').forEach(x => {
       x.classList.toggle('sel', x === b);
-      x.dataset.jc = x === b ? 'gold' : CC[x.dataset.cat];
     });
     txtArea.placeholder = PLACEHOLDERS[cat] || 'Расскажите подробнее…';
   }));
