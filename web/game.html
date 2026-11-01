@@ -1652,6 +1652,9 @@ async function redeemPromo(code) {
           if (typeof fbAuth !== 'undefined' && fbAuth && fbAuth.uid) {
             try {
               const cr = await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`);
+              if (cr.status === 401 || cr.status === 403) {
+                return toastAny('Сервер промокодов ожидает обновления правил базы. Попробуйте позже');
+              }
               if (cr.ok && (await cr.json())) return toastAny('Промокод уже был активирован на этом аккаунте');
             } catch (_) {}
           }
@@ -1664,11 +1667,19 @@ async function redeemPromo(code) {
   if (reward > 0) {
     if (!BUILTIN_PROMOS[code] && typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbAuth !== 'undefined' && fbAuth && fbAuth.uid) {
       try {
-        await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`, {
+        const pr = await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`, {
           method: 'PUT',
           body: JSON.stringify({t: {'.sv': 'timestamp'}})
         });
-      } catch (_) {}
+        if (!pr.ok) {
+          if (pr.status === 401 || pr.status === 403) {
+            return toastAny('Не удалось активировать промокод: доступ ограничен (обновите правила базы в консоли)');
+          }
+          return toastAny('Не удалось зафиксировать активацию промокода. Попробуйте позже');
+        }
+      } catch (_) {
+        return toastAny('Ошибка сети при активации промокода. Попробуйте позже');
+      }
     }
     wallet.gold = (wallet.gold || 0) + reward;
     wallet.promos.push(code);

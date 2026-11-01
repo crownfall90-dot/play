@@ -1,19 +1,35 @@
-// Tests for Security Audit 2026-11-01: SEC-01 (XSS/sanitization), SEC-02 (PIN exposure), SEC-03 (promo claims)
+// Tests for Security Audit 2026-11-01: SEC-01 (XSS/sanitization), SEC-02 (PIN exposure & staging gate), SEC-03 (promo claims)
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 
 const GAME_PATH = path.join(__dirname, '..', 'web', 'game.html');
 const RULES_PATH = path.join(__dirname, '..', 'docs', 'firebase-rules.json');
 
+function extractFn(html, name) {
+  let i = html.indexOf('async function ' + name + '(');
+  if (i < 0) i = html.indexOf('function ' + name + '(');
+  assert.ok(i >= 0, `function ${name} not found`);
+  const b = html.indexOf('{', i);
+  let d = 0;
+  for (let j = b; j < html.length; j++) {
+    if (html[j] === '{') d++;
+    else if (html[j] === '}' && !--d) return html.slice(i, j + 1);
+  }
+  throw Error(name);
+}
+
 test('security audit: firebase rules contain promo_claims and secure testerPin', () => {
   const rules = JSON.parse(fs.readFileSync(RULES_PATH, 'utf8'));
 
-  // SEC-02: testerPin is admin-only
+  // SEC-02: testerPin is readable for staging testers (.read: true) but writable only by admins
   assert.ok(rules.rules.config && rules.rules.config.testerPin, 'testerPin rule exists');
-  assert.ok(!rules.rules.config.testerPin['.read'].includes('true') || rules.rules.config.testerPin['.read'].includes('admins'), 'testerPin is protected from public read');
+  assert.equal(rules.rules.config.testerPin['.read'], true, 'testerPin is readable by staging gate');
+  assert.ok(rules.rules.config.testerPin['.write'].includes('admins'), 'testerPin is writable only by admins');
+  assert.ok(rules.rules.config.testerPin['.validate'].includes('matches'), 'testerPin requires 4-8 digits regex');
 
   // SEC-03: promo_claims node exists with one-time write protection
   assert.ok(rules.rules.promo_claims, 'promo_claims rule branch exists');
@@ -35,4 +51,38 @@ test('security audit: game.html sanitizes remote seats, uid, and results board a
 
   // SEC-03: redeemPromo checks promo_claims
   assert.match(html, /promo_claims\/\$\{encodeURIComponent\(code\)\}/);
+});
+
+test('security audit: redeemPromo handles 401 on promo_claims gracefully without crediting gold', async () => {
+  const html = fs.readFileSync(GAME_PATH, 'utf8');
+  const code = extractFn(html, 'redeemPromo');
+
+  const toasts = [];
+  const env = {
+    wallet: { gold: 100, promos: [] },
+    saveWallet: () => {},
+    renderShop: () => {},
+    toastAny: (m) => toasts.push(m),
+    $: () => null,
+    FB: { dbUrl: 'https://test-puzzlegrad.firebaseio.com' },
+    fbToken: async () => 'mock-token',
+    fbAuth: { uid: 'user-123' },
+    fetch: async (url, opts) => {
+      if (url.includes('/promo_codes/')) {
+        return { ok: true, status: 200, json: async () => ({ active: true, gold: 50 }) };
+      }
+      if (url.includes('/promo_claims/')) {
+        // Simulate Firebase 401 Unauthorized because rules are not yet published
+        return { ok: false, status: 401, json: async () => ({ error: 'Permission denied' }) };
+      }
+      return { ok: false, status: 404 };
+    }
+  };
+
+  vm.runInNewContext(code, env);
+  await env.redeemPromo('COMMUNITY50');
+
+  assert.equal(env.wallet.gold, 100, 'gold must NOT be credited when promo_claims returns 401');
+  assert.equal(env.wallet.promos.length, 0, 'promo must NOT be recorded as claimed');
+  assert.ok(toasts.some(t => t.includes('правил базы') || t.includes('доступ')), 'player receives clear error message');
 });
