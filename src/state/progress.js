@@ -86,12 +86,13 @@ export function normalizeStats(st = {}) {
       bots: Object.assign({games: 0, wins: 0, best: 0}, byMode.bots),
       friends: Object.assign({games: 0, wins: 0, best: 0}, byMode.friends),
       online: Object.assign({games: 0, wins: 0, best: 0}, byMode.online),
+      duel: Object.assign({games: 0, wins: 0, best: 0}, byMode.duel),
     }
   };
 }
 
 export function recordGameMode(st, mode, win, score) {
-  const m = mode === 'online' || mode === 'friends' ? mode : 'bots';
+  const m = mode === 'online' || mode === 'friends' || mode === 'duel' ? mode : 'bots';
   if (!st.byMode) st.byMode = {};
   if (!st.byMode[m]) st.byMode[m] = {games: 0, wins: 0, best: 0};
   st.byMode[m].games++;

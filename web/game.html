@@ -348,7 +348,7 @@ setup.rules = Object.assign({mode: 'classic', deck: 50, rivers: true, meeples: 6
 setup.rules.tie = 'all'; // a disputed feature (equal figures) always gives every leader the full points: the usual rule, no option any more
 if (!MODES[setup.rules.mode]) setup.rules.mode = 'classic';
 if (![30, 50, 100].includes(setup.rules.deck)) setup.rules.deck = MODES[setup.rules.mode].set.deck; // the old sizes (40, 60, whole deck) became 30 / 50 / 100
-if (![4, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
+if (![4, 5, 6, 8].includes(setup.rules.meeples)) setup.rules.meeples = MODES[setup.rules.mode].set.meeples;
 const clean = v => String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);
 // Who controls a seat: people on this phone (offline) or this phone's own seat (online); bots run on one phone only.
 const isLocal = i => net ? players[i].owner === myId : players[i].human;
@@ -932,6 +932,7 @@ async function dropAt(t) {
   if (!fast()) beep('place');
   if (!fast()) { const pf = document.createElement('i'); pf.className = 'puff'; t.el.append(pf); setTimeout(() => pf.remove(), 600); }
   if (!fast()) { t.el.classList.add('puzzle-lock'); setTimeout(() => { if (t.el) t.el.classList.remove('puzzle-lock'); }, 350); }
+  if (!fast() && gameRules && gameRules.mode === 'epic' && TYPES[t.type] && TYPES[t.type].rare) toastAny(`✨ Редкая карта на поле: ${TYPES[t.type].name}!`);
   current = null; sel = null; renderDeck();
 }
 let meepleResolve = null, meepleOpts = [];
@@ -1060,6 +1061,9 @@ async function resolveFeature(c, final, placer) {
   if (!final && !fast()) {
     win.forEach(i => { if (meCounted() && isMe(players[i])) progress({[c.kind]: 1, pts: each, cityTiles: c.kind === 'c' ? c.tiles.length : 0}); });
     if (win.length && c.tiles && c.tiles[0]) featureConfetti(c.tiles[0], players[win[0]].col);
+    if (gameRules && gameRules.mode === 'epic' && (c.tiles.length >= 5 || c.tiles.some(x => TYPES[x.type] && TYPES[x.type].rare))) {
+      setTimeout(() => toastAny(`🌟 Событие в Большой игре: ${KIND[c.kind]} завершён! (${c.tiles.length} карт)`), 500);
+    }
   }
   if (!fast()) beep(each >= 8 ? 'big' : 'score');
   const done = {c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind];
@@ -1276,7 +1280,8 @@ function makeDeck(rules) {
 function newGame() {
   if (net) leaveRoom();
   let firstHuman = true;
-  const seats = setup.seats.slice(0, setup.n).map((s, i) => {
+  const numSeats = setup.rules && setup.rules.mode === 'duel' ? 2 : setup.n;
+  const seats = setup.seats.slice(0, numSeats).map((s, i) => {
     const fig = s.human ? (firstHuman ? wallet.fig : 'classic') : randomFig();
     if (s.human) firstHuman = false;
     return {name: i ? s.name : profileName(), human: s.human, fig, col: s.col};
@@ -1415,8 +1420,8 @@ function renderResults(final, gold) {
   $('#rk').textContent = final ? 'Партия окончена' : 'Счёт идущей партии';
   $('#rt').textContent = winTitle(o[0], final);
   const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]);
-  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
-  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
+  $('#podium').innerHTML = pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
+  $('#bd').innerHTML = o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
   const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
   $('#sumline').innerHTML = `<span><b>${tiles.size}</b>карт на поле</span><span><b>${moves}</b>ходов</span><span><b>${figs}</b>фишек выставлено</span><span><b>${deck.length}</b>карт в стопке</span>`;
   const ag = $('#again'); if (ag) { ag.textContent = net ? 'Реванш' : 'Ещё партию'; ag.disabled = false; }
@@ -1643,12 +1648,28 @@ async function redeemPromo(code) {
       if (r.ok) {
         offline = false;
         const data = await r.json();
-        if (data && data.active && data.gold) reward = +data.gold;
+        if (data && data.active && data.gold) {
+          if (typeof fbAuth !== 'undefined' && fbAuth && fbAuth.uid) {
+            try {
+              const cr = await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`);
+              if (cr.ok && (await cr.json())) return toastAny('Промокод уже был активирован на этом аккаунте');
+            } catch (_) {}
+          }
+          reward = +data.gold;
+        }
       }
     } catch (_) {}
   }
 
   if (reward > 0) {
+    if (!BUILTIN_PROMOS[code] && typeof FB !== 'undefined' && FB && FB.dbUrl && typeof fbAuth !== 'undefined' && fbAuth && fbAuth.uid) {
+      try {
+        await fetch(`${FB.dbUrl}/promo_claims/${encodeURIComponent(code)}/${fbAuth.uid}.json?auth=${await fbToken()}`, {
+          method: 'PUT',
+          body: JSON.stringify({t: {'.sv': 'timestamp'}})
+        });
+      } catch (_) {}
+    }
     wallet.gold = (wallet.gold || 0) + reward;
     wallet.promos.push(code);
     saveWallet();
@@ -2031,7 +2052,7 @@ document.addEventListener('click', e => { const b = e.target.closest('[data-mode
 let rulesOpen = false;
 function renderRules() {
   const mode = MODES[setup.rules.mode] || MODES.classic;
-  const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰'};
+  const ICON = {fast: '⚡', classic: '⚖️', epic: '🏰', duel: '⚔️'};
   const cards = (locked) => `<div class="modecards">${Object.entries(MODES).map(([k, m]) => `<button class="mcard" data-setmode="${k}" aria-pressed="${setup.rules.mode === k}"${locked ? ' disabled' : ''}><i>${ICON[k]}</i><b>${m.label}</b><small>${m.desc.split(' · ').slice(0, 2).join(' · ')}</small></button>`).join('')}</div>`;
   // Online games always have a turn clock ("no limit" counts as 60 s there).
   const rows = (on, room) => RULES.filter(r => r.k !== 'mode' && (!r.room || room)).map(r => `<div class="opt"><span>${r.label}</span><span class="mseg" data-k="${r.k}">${r.opts.map(([v, l], i) => on && r.k === 'timer' && !v ? '' : `<button data-i="${i}" aria-pressed="${setup.rules[r.k] === v || on && r.k === 'timer' && v === 60 && !setup.rules.timer}">${l}</button>`).join('')}</span></div>`).join('');
@@ -2363,7 +2384,7 @@ function onNet(d) {
     // flag: then what this phone remembered about the game is used.
     const was = lastOnline();
     net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
-    startGame({seats: m.seats.map(x => ({name: x.name, human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? x.uid.slice(0, 64) : null, fig: x.fig, col: x.col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
+    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
     else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
@@ -2534,7 +2555,7 @@ function renderLobby() {
     });
   }
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${x.uid}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b><small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
   $('#addBot').hidden = !net.host || seats.length >= roomMax();
   const others = seats.filter(x => x.owner && x.owner !== net.hostId);
   const allReady = others.length === 0 || others.every(x => x.ready);
@@ -2927,8 +2948,40 @@ function progress(d) {
 function gameDone(place, score) {
   const win = place === 0;
   PROG.st.best = Math.max(PROG.st.best, score);
-  const mode = net ? (net.quick ? 'online' : 'friends') : 'bots';
+  const isDuel = gameRules && gameRules.mode === 'duel';
+  const mode = isDuel ? 'duel' : (net ? (net.quick ? 'online' : 'friends') : 'bots');
   recordGameMode(PROG.st, mode, win, score);
+  if (!net && mode === 'bots') {
+    const curLevel = botLevel();
+    if (!wallet.botStreak) wallet.botStreak = { w: 0, l: 0 };
+    const adapt = PG.engine.bots.checkAdaptiveDifficulty(wallet.botStreak, win, curLevel);
+    wallet.botStreak = adapt.streak;
+    if (adapt.offer) {
+      setTimeout(() => {
+        if (adapt.offer === 'hard') {
+          confirmBox('Отличная серия побед над ботами (3 подряд)! Хотите повысить сложность на «Сложные»?<br><small style="color:var(--muted)">Вы всегда можете изменить сложность в настройках партии.</small>', 'Повысить', () => {
+            wallet.botlvl = 'hard';
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+            toastAny('Сложность ботов: Сложные');
+          }, 'Оставить', () => {
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+          });
+        } else if (adapt.offer === 'easy') {
+          confirmBox('Сложно играть против ботов? Хотите переключить сложность на «Лёгкие»?<br><small style="color:var(--muted)">Вы всегда можете изменить сложность в настройках партии.</small>', 'Переключить', () => {
+            wallet.botlvl = 'easy';
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+            toastAny('Сложность ботов: Лёгкие');
+          }, 'Оставить', () => {
+            wallet.botStreak = { w: 0, l: 0 };
+            saveWallet();
+          });
+        }
+      }, 2500);
+    }
+  }
   // Funnel markers: the owner's panel and Analytics show where newcomers stop.
   { const n = PROG.st.games + 1; if (n <= 3) track(['first_game_done', 'second_game_done', 'third_game_done'][n - 1], {win: win ? 1 : 0, score}); }
   progress({games: 1, win: win ? 1 : 0, wins: win ? 1 : 0, s30: score >= ((deckMax <= 30) ? 20 : 30) ? 1 : 0, online: net ? 1 : 0, ogames: net ? 1 : 0, owins: net && win ? 1 : 0});
@@ -3019,7 +3072,8 @@ function renderProgress() {
   const bRate = bm.bots && bm.bots.games ? Math.round(100 * bm.bots.wins / bm.bots.games) : 0;
   const fRate = bm.friends && bm.friends.games ? Math.round(100 * bm.friends.wins / bm.friends.games) : 0;
   const oRate = bm.online && bm.online.games ? Math.round(100 * bm.online.wins / bm.online.games) : 0;
-  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="smastery"><div class="h3 sec">Мастерство по режимам</div><div class="mgrid"><div class="mcard"><span class="mic">🤖</span><div><b>Боты</b><small>${bRate}% (${bm.bots.wins}/${bm.bots.games}) · рек. ${bm.bots.best}</small></div></div><div class="mcard"><span class="mic">👥</span><div><b>Друзья</b><small>${fRate}% (${bm.friends.wins}/${bm.friends.games}) · рек. ${bm.friends.best}</small></div></div><div class="mcard"><span class="mic">🌐</span><div><b>Онлайн</b><small>${oRate}% (${bm.online.wins}/${bm.online.games}) · рек. ${bm.online.best}</small></div></div></div></div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов${st.maxCity ? ` <small>(рекорд: ${st.maxCity} карт)</small>` : ''}</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
+  const dRate = bm.duel && bm.duel.games ? Math.round(100 * bm.duel.wins / bm.duel.games) : 0;
+  $('#stats').innerHTML = `<div class="sbig">${[[st.games, 'партий'], [st.wins, 'побед'], [rate + '%', '% побед'], [st.best, 'рекорд очков']].map(([v, l]) => `<div><b>${v}</b><small>${l}</small></div>`).join('')}</div><div class="smastery"><div class="h3 sec">Мастерство по режимам</div><div class="mgrid"><div class="mcard"><span class="mic">🤖</span><div><b>Боты</b><small>${bRate}% (${bm.bots.wins}/${bm.bots.games}) · рек. ${bm.bots.best}</small></div></div><div class="mcard"><span class="mic">⚔️</span><div><b>Дуэль</b><small>${dRate}% (${bm.duel ? bm.duel.wins : 0}/${bm.duel ? bm.duel.games : 0}) · рек. ${bm.duel ? bm.duel.best : 0}</small></div></div><div class="mcard"><span class="mic">👥</span><div><b>Друзья</b><small>${fRate}% (${bm.friends.wins}/${bm.friends.games}) · рек. ${bm.friends.best}</small></div></div><div class="mcard"><span class="mic">🌐</span><div><b>Онлайн</b><small>${oRate}% (${bm.online.wins}/${bm.online.games}) · рек. ${bm.online.best}</small></div></div></div></div><div class="sbuild"><span>🏰 <b>${st.c}</b> городов${st.maxCity ? ` <small>(рекорд: ${st.maxCity} карт)</small>` : ''}</span><span>🛤 <b>${st.r}</b> дорог</span><span>🏯 <b>${st.f}</b> крепостей</span></div>`;
   document.querySelectorAll('#ptabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.pt === ptab));
   ptabsDot();
   const el = $('#ptab');

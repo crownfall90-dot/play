@@ -106,9 +106,18 @@
         ".validate": "newData.hasChildren(['active']) && newData.child('active').isBoolean() && (!newData.child('message').exists() || (newData.child('message').isString() && newData.child('message').val().length <= 500))"
       },
       "testerPin": {
-        ".read": true,
+        ".read": "auth != null && root.child('admins').child(auth.uid).val() === true",
         ".write": "auth != null && root.child('admins').child(auth.uid).val() === true",
         ".validate": "newData.isString() && newData.val().matches(/^[0-9]{4,8}$/)"
+      }
+    },
+    "promo_claims": {
+      "$code": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && auth.uid === $uid && !data.exists()",
+          ".validate": "newData.hasChildren(['t']) && newData.child('t').val() === now"
+        }
       }
     },
     "errors": {
