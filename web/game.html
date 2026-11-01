@@ -202,6 +202,11 @@
           <div class="h3">Сколько игроков</div>
           <div class="seg" id="seg"><button>2</button><button>3</button><button>4</button><button>5</button></div>
           <p class="shint" id="segHint" hidden></p>
+          <div class="col" id="setupBotLvlBox" hidden>
+            <div class="h3">Сложность ботов</div>
+            <div class="seg" id="setupBotLvl"><button data-blvl="easy">Лёгкие</button><button data-blvl="normal">Обычные</button><button data-blvl="hard">Сложные</button></div>
+            <p class="shint" id="setupBotLvlHint">Обычные — взвешенные ходы и захват подходящих объектов.</p>
+          </div>
           <div class="col" id="seatsBox"><div class="h3">Игроки</div>
             <ul class="plist" id="slist"></ul></div>
           <div class="col" id="meBox" hidden><div class="h3">Ваше имя</div>
@@ -1066,7 +1071,7 @@ async function afterPlace(t, p, forced) {
       // Bot: always use placed tile only, even in anyMode.
       // Bots never reinforce their own object (only free ones), so their play stays as it was.
       const botOpts = (anyMode ? claimable(t, p).map(g => ({t, g})) : opts).filter(o => o.done || !o.g || B.component(tiles, meeples, o.t, o.g).meeples.length === 0);
-      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel(), players[p] && players[p].persona);
+      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, playerBotLevel(p), players[p] && players[p].persona);
     }
   }
   if (my !== token) return;
@@ -1268,7 +1273,8 @@ function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // themselves); from the fourth game the chosen level applies and one note says so.
 const softStart = () => (PG.game && PG.game.turns) ? PG.game.turns.isSoftStart(wallet.botlvl, PROG.st.games) : (wallet.botlvl === 'normal' && PROG.st.games < 3);
 const botLevel = () => (PG.game && PG.game.turns) ? PG.game.turns.resolveBotLevel(wallet.botlvl, PROG.st.games, PG.engine.bots.BOT_LEVELS) : (softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal');
-const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel(), players[p] && players[p].persona);
+const playerBotLevel = p => (players[p] && players[p].botlvl) || botLevel();
+const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, playerBotLevel(p), players[p] && players[p].persona);
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
@@ -1401,7 +1407,7 @@ function startGame(cfg, replay = []) {
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; doneFeats = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, ghost: !!s.ghost, st: PG.state.status.shownStatus(s.st), owner: s.owner, uid: s.uid || null, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, ghost: !!s.ghost, st: PG.state.status.shownStatus(s.st), owner: s.owner, uid: s.uid || null, fig: FIGS[s.fig] ? s.fig : 'classic', botlvl: s.botlvl || (s.human ? null : (wallet.botlvl || 'normal')), score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
   if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
   paintFigures();
   if (!net) saveGame();
@@ -2128,6 +2134,22 @@ function renderSetup() {
   document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', +b.textContent === n));
   $('#seatsBox').hidden = on; $('#meBox').hidden = !on;
   $('#segHint').hidden = !on; $('#segHint').textContent = m.seg || '';
+  const isBotGame = setupMode === 'bots';
+  const blBox = $('#setupBotLvlBox');
+  if (blBox) {
+    blBox.hidden = !isBotGame;
+    if (isBotGame) {
+      const curLvl = wallet.botlvl || 'normal';
+      document.querySelectorAll('#setupBotLvl button').forEach(b => b.setAttribute('aria-pressed', b.dataset.blvl === curLvl));
+      const HINTS = {
+        easy: 'Лёгкие — простые ходы для спокойной игры или разминки.',
+        normal: 'Обычные — взвешенные ходы и захват подходящих объектов.',
+        hard: 'Сложные — сильный расчёт очков и агрессивная борьба за города.'
+      };
+      const blHint = $('#setupBotLvlHint');
+      if (blHint) blHint.textContent = HINTS[curLvl] || HINTS.normal;
+    }
+  }
   if (on) {
     if (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSetupMeHtml) {
       const me = PG.ui.setup.renderSetupMeHtml(profileName(), wallet.color, PALETTE);
@@ -2146,6 +2168,15 @@ function renderSetup() {
   $('#start').disabled = false; $('#start').textContent = m.go;
 }
 $('#seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (onlineMode()) setup.onN = +b.textContent; else setup.n = +b.textContent; saveSetup(); renderSetup(); };
+if ($('#setupBotLvl')) $('#setupBotLvl').onclick = e => {
+  const b = e.target.closest('button'); if (!b || !b.dataset.blvl) return;
+  wallet.botlvl = b.dataset.blvl; saveWallet();
+  if (setup && setup.seats) {
+    setup.seats.filter(s => !s.human).forEach(s => s.botlvl = wallet.botlvl);
+    saveSetup();
+  }
+  renderSetup();
+};
 $('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
 $('#slist').addEventListener('click', e => {
   const cb = e.target.closest('[data-col]'); if (cb) { colorEdit = colorEdit === +cb.dataset.col ? -1 : +cb.dataset.col; return renderSetup(); }
@@ -2558,7 +2589,7 @@ function onNet(d) {
     // flag: then what this phone remembered about the game is used.
     const was = lastOnline();
     net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
-    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, ghost: !!x.ghost, st: PG.state.status.shownStatus(x.st), owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
+    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, ghost: !!x.ghost, st: PG.state.status.shownStatus(x.st), owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', botlvl: x.botlvl || 'normal', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
     else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
@@ -2870,10 +2901,27 @@ $('#join').onclick = () => {
   serverReachable().then(ok => ok ? connect(code, false) : noServer(() => $('#join').click()));
 };
 $('#lobbyBack').onclick = () => { if (net && phase === 'end' || net && !net.gameId) leaveRoom(); show('menu'); renderLobby(); };
-$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col, ready: true}); publishLobby(seats); };
+$('#addBot').onclick = () => { const seats = net.lobby.seats.slice(); seats.push({owner: null, name: BOT_NAMES.find(n => !seats.some(x => x.name === n)) || 'Бот', fig: randomFig(), col: PALETTE[(Math.random() * PALETTE.length) | 0].col, botlvl: wallet.botlvl || 'normal', ready: true}); publishLobby(seats); };
 $('#lobbyReady').onclick = () => { if (!net || net.host) return; const mySeat = net.lobby && net.lobby.seats ? net.lobby.seats.find(x => x.owner === myId) : null; const next = !(mySeat && mySeat.ready); netSend({t: 'ready', id: myId, ready: next}); };
 $('#plist').addEventListener('click', e => { const a = e.target.closest('[data-addf]'); if (a) { a.remove(); addFriend(a.dataset.addf, a.dataset.n); } });
 $('#plist').addEventListener('click', e => { const b = e.target.closest('[data-kick]'); if (!b) return; const seats = net.lobby.seats.slice(); seats.splice(+b.dataset.kick, 1); publishLobby(seats); });
+$('#plist').addEventListener('click', e => {
+  const bl = e.target.closest('[data-botlvl]');
+  if (bl && net && net.host && net.lobby && net.lobby.seats) {
+    const idx = +bl.dataset.botlvl;
+    const s = net.lobby.seats[idx];
+    if (s && !s.owner) {
+      const LEVELS = ['easy', 'normal', 'hard'];
+      const curIdx = LEVELS.indexOf(s.botlvl || 'normal');
+      const nextLvl = LEVELS[(curIdx + 1) % LEVELS.length];
+      s.botlvl = nextLvl;
+      publishLobby(net.lobby.seats);
+      renderLobby();
+      const LVL_NAMES = {easy: 'Лёгкий', normal: 'Обычный', hard: 'Сложный'};
+      toastAny(`Сложность бота: ${LVL_NAMES[nextLvl]}`);
+    }
+  }
+});
 $('#backToGame').onclick = () => show('game');
 $('#lobbyStart').onclick = () => {
   const seats = net.lobby ? net.lobby.seats : [], pend = pendingInvites(seats).filter(p => !p.late && !p.declined);
@@ -2887,7 +2935,7 @@ function startOnline(seats) {
   const rules = {...(net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : setup.rules)};
   // Rules v2 only when every guest announced it (an old client would count points differently).
   rules.rv = seats.every(x => !x.owner || x.owner === myId || (net.peerV2 && net.peerV2.get(x.owner))) ? 2 : 1;
-  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col, ghost: x.ghost ? 1 : 0, st: PG.state.status.shownStatus(x.st)})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
+  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col, ghost: x.ghost ? 1 : 0, st: PG.state.status.shownStatus(x.st), botlvl: x.botlvl || 'normal'})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
 }
 function rematchClick() {
   if (!net) { newGame(); show('game'); return; }
@@ -4007,27 +4055,73 @@ $('#stBuy').onclick = () => {
   });
 };
 let itab = 'st';
+let previewFrameKey = null;
+
+function renderPlayerShowcaseHtml() {
+  const S = ST();
+  const worn = wallet.statusKey || '';
+  const pName = profileName();
+  const initial = (pName[0] || '?').toUpperCase();
+  const effFrameKey = previewFrameKey !== null ? previewFrameKey : (wallet.frame || 'none');
+  const frameObj = FRAMES[effFrameKey] || FRAMES.none;
+  const isPreviewing = previewFrameKey !== null && previewFrameKey !== (wallet.frame || 'none');
+  const ownFr = Object.keys(FRAMES).filter(k => k === 'none' || (wallet.frames || []).includes(k) || (!FRAMES[k].price && !FRAMES[k].earn));
+  const canEquip = isPreviewing && ownFr.includes(effFrameKey);
+  const statusTxt = worn && S.statusText(worn);
+  const statusBadgeHtml = statusTxt ? stBadge(statusTxt) : '<span class="pst-none">без статуса</span>';
+  const curFig = wallet.fig || 'classic';
+  const figObj = FIGS[curFig] || FIGS.classic;
+
+  return `<div class="player-showcase-card" id="playerShowcase">
+    <div class="psc-top">
+      <span>👁️ Так вас видят в игре</span>
+      ${canEquip ? `<button class="chip go psc-apply" data-applyframe="${effFrameKey}">Надеть эту рамку</button>` : isPreviewing ? `<button class="chip x psc-apply" data-resetframe="1">Сбросить примерку</button>` : ''}
+    </div>
+    <div class="psc-body">
+      <div class="psc-av-wrap">
+        <span class="av${frameObj.ring ? ' fr' : ''}" style="--c:${wallet.color};${frameObj.ring ? `--fr:${frameObj.ring}` : ''}">${initial}</span>
+      </div>
+      <div class="psc-info">
+        <div class="psc-name-line">
+          <b class="psc-name">${clean(pName)}</b>
+          <span class="psc-status">${statusBadgeHtml}</span>
+        </div>
+        <div class="psc-meta">
+          <small class="psc-flabel">${frameObj.name}${isPreviewing ? ' · <b style="color:var(--brass)">примерка</b>' : ''}</small>
+        </div>
+      </div>
+      <div class="psc-fig-wrap">
+        <img src="${figPreview(curFig)}" class="psc-fig" alt="${figObj.name}">
+        <small>${figObj.name}</small>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderItems() {
   const box = $('#itemsBody'); if (!box) return;
   document.querySelectorAll('#itabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.it === itab));
   const S = ST(), own = S.ownedStatuses(wallet), worn = wallet.statusKey || '';
+  const showcase = renderPlayerShowcaseHtml();
   if (typeof PG !== 'undefined' && PG.ui && PG.ui.shop && PG.ui.shop.renderItemsStatusesHtml) {
+    let tabContent = '';
     if (itab === 'st') {
-      box.innerHTML = PG.ui.shop.renderItemsStatusesHtml({shopStatuses: S.SHOP_STATUSES, exclusiveStatuses: S.EXCLUSIVE_STATUSES, ownedStatuses: own, wornKey: worn, statusTextFn: k => S.statusText(k), stBadgeFn: stBadge});
+      tabContent = PG.ui.shop.renderItemsStatusesHtml({shopStatuses: S.SHOP_STATUSES, exclusiveStatuses: S.EXCLUSIVE_STATUSES, ownedStatuses: own, wornKey: worn, statusTextFn: k => S.statusText(k), stBadgeFn: stBadge});
     } else if (itab === 'fr') {
-      box.innerHTML = PG.ui.shop.renderItemsFramesHtml({frames: FRAMES, ownedFrames: wallet.frames || [], wornFrame: wallet.frame, color: wallet.color, profileInitial: profileName()[0]});
+      tabContent = PG.ui.shop.renderItemsFramesHtml({frames: FRAMES, ownedFrames: wallet.frames || [], wornFrame: wallet.frame, previewFrame: previewFrameKey, color: wallet.color, profileInitial: profileName()[0]});
     } else if (itab === 'fg') {
-      box.innerHTML = PG.ui.shop.renderItemsFigsHtml({figs: FIGS, ownedFigs: wallet.owned, selectedFig: wallet.fig, figPreviewFn: figPreview});
+      tabContent = PG.ui.shop.renderItemsFigsHtml({figs: FIGS, ownedFigs: wallet.owned, selectedFig: wallet.fig, figPreviewFn: figPreview});
     } else {
-      box.innerHTML = PG.ui.shop.renderItemsLocsHtml(LOCS);
+      tabContent = PG.ui.shop.renderItemsLocsHtml(LOCS);
     }
+    box.innerHTML = showcase + tabContent;
     return;
   }
   if (itab === 'st') {
     const counted = S.SHOP_STATUSES.length + S.EXCLUSIVE_STATUSES.filter(x => !x.soon).length, have = own.filter(k => !k.startsWith('cu:')).length;
     const mine = own.map(k => ({k, t: S.statusText(k), ex: k.startsWith('ex:'), cu: k.startsWith('cu:')}));
     const lockedEx = S.EXCLUSIVE_STATUSES.filter(x => !own.includes('ex:' + x.id));
-    box.innerHTML = `<div class="icount">Собрано <b>${have}</b> из ${counted}${own.length > have ? ` · своих: ${own.length - have}` : ''}</div>`
+    box.innerHTML = showcase + `<div class="icount">Собрано <b>${have}</b> из ${counted}${own.length > have ? ` · своих: ${own.length - have}` : ''}</div>`
       + `<div class="itnow">Сейчас: ${worn && S.statusText(worn) ? stBadge(S.statusText(worn)) + '<button class="chip x" data-unwear>Снять</button>' : '<small>статус не надет</small>'}</div>`
       + (mine.length ? `<div class="h3 sec">Мои статусы</div><div class="stgrid">${mine.map(m => `<button class="stb${worn === m.k ? ' sel' : ''}${m.ex ? ' ex' : ''}" data-iwear="${m.k}">${stBadge(m.t, m.ex ? ' ex' : '')}<small>${worn === m.k ? 'Надет' : m.ex ? 'Эксклюзив · надеть' : m.cu ? 'Свой · надеть' : 'Надеть'}</small></button>`).join('')}</div>` : '<p class="shint">Пока нет статусов. Купите в магазине или получите за достижения.</p>')
       + (lockedEx.length ? `<div class="h3 sec">Эксклюзивные</div><div class="exlist">${lockedEx.map(x => `<div class="exrow${x.soon ? ' soon' : ''}"><span class="exic">${x.ic}</span><span><b>${x.text}</b><small>${x.how}</small></span><i>🔒</i></div>`).join('')}</div>` : '')
@@ -4036,25 +4130,51 @@ function renderItems() {
     const ownFr = Object.keys(FRAMES).filter(k => k === 'none' || (wallet.frames || []).includes(k) || (!FRAMES[k].price && !FRAMES[k].earn));
     const total = Object.keys(FRAMES).length - 1, have = ownFr.filter(k => k !== 'none').length;
     const lock = Object.entries(FRAMES).filter(([k, f]) => !ownFr.includes(k));
-    box.innerHTML = `<div class="icount">Собрано <b>${have}</b> из ${total}</div><div class="frgrid">${ownFr.map(k => { const f = FRAMES[k], sel = (wallet.frame || 'none') === k; return `<button class="frb${sel ? ' sel' : ''}" data-ifr="${k}"><span class="av${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${(profileName()[0] || '?').toUpperCase()}</span><span>${f.name}</span><small>${sel ? 'Надета' : 'Надеть'}</small></button>`; }).join('')}</div>`
-      + (lock.length ? `<div class="h3 sec">Ещё не открыты</div><div class="frgrid">${lock.map(([k, f]) => `<div class="frb lockd"><span class="av fr" style="--c:#2a3254;--fr:${f.ring}">?</span><span>${f.name}</span><small>${f.earn ? '🔒 ' + f.earn : `<i class="coin"></i>${f.price}`}</small></div>`).join('')}</div>` : '')
+    const effFr = previewFrameKey || wallet.frame || 'none';
+    box.innerHTML = showcase + `<div class="icount">Собрано <b>${have}</b> из ${total}</div><div class="frgrid">${ownFr.map(k => { const f = FRAMES[k], sel = effFr === k; return `<button class="frb${sel ? ' sel' : ''}" data-ifr="${k}"><span class="av${f.ring ? ' fr' : ''}" style="--c:${wallet.color};${f.ring ? `--fr:${f.ring}` : ''}">${(profileName()[0] || '?').toUpperCase()}</span><span>${f.name}</span><small>${sel ? 'Надета' : 'Надеть'}</small></button>`; }).join('')}</div>`
+      + (lock.length ? `<div class="h3 sec">Ещё не открыты (нажмите для примерки)</div><div class="frgrid">${lock.map(([k, f]) => `<button class="frb lockd${previewFrameKey === k ? ' sel' : ''}" data-pfr="${k}" title="Нажмите для примерки"><span class="av fr" style="--c:#2a3254;--fr:${f.ring}">?</span><span>${f.name}</span><small>${previewFrameKey === k ? 'Примерка' : (f.earn ? '🔒 ' + f.earn : `<i class="coin"></i>${f.price}`)}</small></button>`).join('')}</div>` : '')
       + '<button class="ghostbtn wide" data-ishop>В магазин</button>';
   } else if (itab === 'fg') {
     const ownF = Object.keys(FIGS).filter(k => wallet.owned.includes(k)), lock = Object.keys(FIGS).filter(k => !wallet.owned.includes(k));
-    box.innerHTML = `<div class="icount">Собрано <b>${ownF.length}</b> из ${Object.keys(FIGS).length}</div><div class="figgrid">${ownF.map(k => `<button class="fig${wallet.fig === k ? ' sel' : ''}" data-ifig="${k}"><img src="${figPreview(k)}" alt=""><b>${FIGS[k].name}</b><small>${wallet.fig === k ? 'Выбрана' : 'Выбрать'}</small></button>`).join('')}</div>`
+    box.innerHTML = showcase + `<div class="icount">Собрано <b>${ownF.length}</b> из ${Object.keys(FIGS).length}</div><div class="figgrid">${ownF.map(k => `<button class="fig${wallet.fig === k ? ' sel' : ''}" data-ifig="${k}"><img src="${figPreview(k)}" alt=""><b>${FIGS[k].name}</b><small>${wallet.fig === k ? 'Выбрана' : 'Выбрать'}</small></button>`).join('')}</div>`
       + (lock.length ? `<div class="h3 sec">Ещё не куплены</div><div class="figgrid">${lock.map(k => `<div class="fig poor lockd"><img src="${figPreview(k)}" alt="" style="filter:grayscale(1) brightness(.6)"><b>${FIGS[k].name}</b><small><i class="coin"></i>${FIGS[k].price}</small></div>`).join('')}</div>` : '')
       + '<button class="ghostbtn wide" data-ishop>В магазин</button>';
   } else {
-    box.innerHTML = `<div class="icount">Открыто <b>${LOCS.filter(l => l.open).length}</b> из ${LOCS.length}</div><div class="locgrid">${LOCS.map(l => `<div class="loc${l.open ? '' : ' locked'}"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><b>${l.name}</b><small>${l.open ? 'Открыта' : 'Скоро'}</small></div>`).join('')}</div>`;
+    box.innerHTML = showcase + `<div class="icount">Открыто <b>${LOCS.filter(l => l.open).length}</b> из ${LOCS.length}</div><div class="locgrid">${LOCS.map(l => `<div class="loccard${l.open ? ' active' : ' locked'}"><div class="locart"><svg viewBox="0 0 160 90" aria-hidden="true">${l.art}</svg><span class="locbadge ${l.open ? 'open' : 'soon'}">${l.open ? '✓ Активна' : 'Скоро'}</span></div><div class="locinfo"><b>${l.name}</b><small>${l.desc || ''}</small></div></div>`).join('')}</div>`;
   }
 }
-$('#itabs').addEventListener('click', e => { const b = e.target.closest('[data-it]'); if (!b) return; itab = b.dataset.it; renderItems(); });
+$('#itabs').addEventListener('click', e => { const b = e.target.closest('[data-it]'); if (!b) return; itab = b.dataset.it; previewFrameKey = null; renderItems(); });
 $('#itemsBody').addEventListener('click', e => {
   const t = e.target;
   if (t.closest('[data-ishop]')) return show('shop');
+  if (t.closest('[data-applyframe]')) {
+    const k = t.closest('[data-applyframe]').dataset.applyframe;
+    wallet.frame = k; previewFrameKey = null; saveWallet(); renderItems(); renderMenuProfile(); toastAny('Рамка надета'); return;
+  }
+  if (t.closest('[data-resetframe]')) {
+    previewFrameKey = null; renderItems(); return;
+  }
   if (t.closest('[data-unwear]')) { ST().wearStatus(wallet, null); return afterStatusChange(); }
   const w = t.closest('[data-iwear]'); if (w) { ST().wearStatus(wallet, wallet.statusKey === w.dataset.iwear ? null : w.dataset.iwear); return afterStatusChange(); }
-  const f = t.closest('[data-ifr]'); if (f) { wallet.frame = f.dataset.ifr; saveWallet(); renderItems(); renderMenuProfile(); return; }
+  const pf = t.closest('[data-pfr]');
+  if (pf) {
+    previewFrameKey = pf.dataset.pfr;
+    renderItems();
+    const frName = (FRAMES[previewFrameKey] && FRAMES[previewFrameKey].name) || 'Рамка';
+    toastAny(`Примерка: «${frName}»`);
+    return;
+  }
+  const f = t.closest('[data-ifr]');
+  if (f) {
+    wallet.frame = f.dataset.ifr;
+    previewFrameKey = null;
+    saveWallet();
+    renderItems();
+    renderMenuProfile();
+    const frName = (FRAMES[wallet.frame] && FRAMES[wallet.frame].name) || 'Рамка';
+    toastAny(`Рамка «${frName}» надета`);
+    return;
+  }
   const g = t.closest('[data-ifig]'); if (g) { wallet.fig = g.dataset.ifig; saveWallet(); renderItems(); return; }
 });
 $('#itemsBtn').onclick = () => { show('items'); renderItems(); };
