@@ -231,21 +231,19 @@
 
       <section class="screen scroll" id="scr-lobby" hidden>
         <div class="lb">
-          <div class="ltop"><button class="iconbtn" id="lobbyBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Онлайн с друзьями</b></div>
+          <div class="ltop"><button class="iconbtn" id="lobbyBack" aria-label="Назад"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg></button><b>Комната</b></div>
           <div class="col" id="lbJoin">
             <input class="field" id="myName" hidden>
             <button class="cta wide" id="create">Создать комнату</button>
-            <div class="h3">Или войдите по коду</div>
+            <div class="h3">Войти по коду</div>
             <div class="joinrow"><input class="field codein" id="codeIn" maxlength="5" placeholder="K7Q2X" autocomplete="off" autocapitalize="characters"><button class="cta" id="join">Войти</button></div>
-            <p class="shint">Для совместной игры нужен интернет. При дисконнекте можно вернуться по коду.</p>
           </div>
           <div class="col" id="lbRoom" hidden>
-            <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div><small class="tapcopy">Нажмите, чтобы скопировать</small>
-              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить друзей</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
+            <div class="codecard"><small>Код комнаты</small><div class="code tap" id="codeShow" role="button" tabindex="0" aria-label="Скопировать код комнаты"></div>
+              <div class="row2"><button class="chip pri" id="lbInvite">👥 Пригласить</button><button class="chip" id="copyLink">🔗 Поделиться</button></div></div>
             <button class="cupsbadge" id="lbCups"></button>
             <div class="h3">Ваш цвет</div>
             <div class="mycolor" id="myColor"></div>
-            <p class="shint">Одинаковый цвет при старте распределяется автоматически.</p>
             <div class="h3" id="lbCount">Игроки</div>
             <ul class="plist" id="plist"></ul>
             <button class="chip" id="addBot">+ Добавить бота</button>
@@ -258,7 +256,7 @@
             <button class="cta wide" id="backToGame" hidden>Вернуться в партию</button>
             <button class="cta wide" id="lobbyStart">Начать игру</button>
             <button class="cta wide" id="lobbyReady" hidden>Готов</button>
-            <div class="lbwait" id="lbWait" hidden><div class="pz sm"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><p class="shint">Ожидание старта от создателя комнаты…</p></div>
+            <div class="lbwait" id="lbWait" hidden><div class="pz sm"><div class="pzb"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><p class="shint">Ожидание старта…</p></div>
           </div>
         </div>
       </section>
@@ -2634,7 +2632,7 @@ function renderLobby() {
   // "for cups" is seen by everyone in the room; the creator switches it here with one tap
   const cups = !!(net.lobby && net.lobby.rules ? net.lobby.rules.cups : setup.rules.cups), cb = $('#lbCups');
   cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : ''); cb.disabled = !net.host || !!net.gameId;
-  cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? 'Нажмите, чтобы ' + (cups ? 'выключить' : 'включить') : cups ? 'Победа даст кубки в рейтинг' : 'Дружеская партия, рейтинг не меняется'}</small>`;
+  cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? (cups ? 'Кубки начисляются' : 'Кубки не меняются') : (cups ? 'Рейтинговая игра' : 'Без рейтинга')}</small>`;
   renderMyColor();
   const seats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : []);
   if (net && !net.host && !seats.some(x => x.owner === myId)) {
@@ -2685,7 +2683,7 @@ function renderLobby() {
       $('#lobbyReady').textContent = isReady ? '✓ Готов (отменить)' : 'Готов';
       $('#lobbyReady').className = isReady ? 'cta wide alt' : 'cta wide';
       const hint = $('#lbWait .shint');
-      if (hint) hint.textContent = isReady ? 'Вы готовы. Ждём остальных игроков и старта от создателя.' : 'Нажмите «Готов», когда будете готовы начать игру.';
+      if (hint) hint.textContent = isReady ? 'Вы готовы · ожидание старта…' : 'Нажмите «Готов» для подтверждения';
     }
   }
   $('#lbWait').hidden = net.host || !inLobby;
@@ -4524,8 +4522,7 @@ function jigsawFrame(host, o) {
   const H = {
     settings: ['#6a7dff', '⚙️', 'Настройте под себя', 'Звук, подсказки и вид игры'],
     shop: ['#f2994a', '🛍', 'Коллекция фигурок', 'Подарки, сундуки и новые фигурки'],
-    friends: ['#4c8dff', '👥', 'Ваша компания', 'Играйте и общайтесь вместе'],
-    lobby: ['#4c8dff', '🏠', 'Играйте своими', 'Код комнаты — игра только для своих']
+    friends: ['#4c8dff', '👥', 'Ваша компания', 'Играйте и общайтесь вместе']
   };
   for (const [id, [c, ic, t, tag]] of Object.entries(H)) {
     const lb = document.querySelector(`#scr-${id} .lb`), top = lb && lb.querySelector('.ltop'); if (!top) continue;
