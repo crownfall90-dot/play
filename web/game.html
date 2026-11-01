@@ -3654,10 +3654,21 @@ function offerTutorial() {
 /* "Who is online": tap the green "N в сети" badge for the list of players with the game open. */
 function showOnline(e) {
   e.stopPropagation(); e.preventDefault();
-  const me = fbAuth && fbAuth.uid;
-  const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small>${x.uid !== me && x.r && registered() && !isFriend(x.uid) ? `<button class="chip addf" data-addf="${x.uid}" aria-label="В друзья">＋</button>` : ''}</li>`).join('');
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard olist"><h3>Сейчас в игре: ${presenceList.length}</h3><ul>${rows || '<li class="qnote">Никого</li>'}</ul><p class="shint">Список обновляется раз в минуту. Считаются все, у кого открыта игра, включая вас</p><button class="cta wide">Закрыть</button></div>`;
+  if (typeof PG !== 'undefined' && PG.net && PG.net.presence && PG.net.presence.renderOnlinePlayersDialogHtml) {
+    box.innerHTML = PG.net.presence.renderOnlinePlayersDialogHtml({
+      presenceList,
+      myUid: fbAuth && fbAuth.uid,
+      registered: registered(),
+      isFriendFn: isFriend,
+      cleanFn: clean,
+      stateTextMap: STATE_TEXT
+    });
+  } else {
+    const me = fbAuth && fbAuth.uid;
+    const rows = presenceList.map(x => `<li class="lead${x.uid === me ? ' me' : ''}"><i>●</i><span>${clean(x.n) || 'Игрок'}${x.uid === me ? ' (вы)' : ''}</span><small>${STATE_TEXT[x.s] || 'в игре'}</small>${x.uid !== me && x.r && registered() && !isFriend(x.uid) ? `<button class="chip addf" data-addf="${x.uid}" aria-label="В друзья">＋</button>` : ''}</li>`).join('');
+    box.innerHTML = `<div class="ocard olist"><h3>Сейчас в игре: ${presenceList.length}</h3><ul>${rows || '<li class="qnote">Никого</li>'}</ul><p class="shint">Список обновляется раз в минуту. Считаются все, у кого открыта игра, включая вас</p><button class="cta wide">Закрыть</button></div>`;
+  }
   document.body.append(box);
   box.onclick = ev => {
     const a = ev.target.closest('[data-addf]'); if (a) { const x = presenceList.find(y => y.uid === a.dataset.addf); a.remove(); return addFriend(a.dataset.addf, x && x.n); }
@@ -3679,12 +3690,18 @@ function fbGet(path) { return FBC.get(path); }
 function fbPut(path, v) { return FBC.put(path, v); }
 function fbDel(path) { return FBC.del(path); }
 const myUid = () => fbAuth && fbAuth.uid;
-const isOn = p => !!p && p.s !== 'off' && Date.now() - (p.t || 0) < 150000;
+const isOn = p => (typeof PG !== 'undefined' && PG.net && PG.net.presence && PG.net.presence.isOn)
+  ? PG.net.presence.isOn(p)
+  : (!!p && p.s !== 'off' && Date.now() - (p.t || 0) < 150000);
 function agoText(t) {
-  if (!t) return 'не в сети';
-  const m = Math.round((Date.now() - t) / 60000);
-  if (m < 1) return 'был(а) в сети только что';
-  return 'был(а) в сети ' + (m < 60 ? m + ' мин назад' : m < 1440 ? Math.round(m / 60) + ' ч назад' : Math.round(m / 1440) + ' дн назад');
+  return (typeof PG !== 'undefined' && PG.net && PG.net.presence && PG.net.presence.agoText)
+    ? PG.net.presence.agoText(t)
+    : (() => {
+      if (!t) return 'не в сети';
+      const m = Math.round((Date.now() - t) / 60000);
+      if (m < 1) return 'был(а) в сети только что';
+      return 'был(а) в сети ' + (m < 60 ? m + ' мин назад' : m < 1440 ? Math.round(m / 60) + ' ч назад' : Math.round(m / 1440) + ' дн назад');
+    })();
 }
 // Friends are only for finished profiles: a nickname and an e-mail account (or another sign-in
 // later). The database rules check the same: an account with an e-mail and a saved /profiles entry.

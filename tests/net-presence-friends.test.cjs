@@ -38,6 +38,29 @@ test('net/presence: formatPresenceRecord, filterActivePresence, getPresenceStatu
   assert.equal(active.length, 2);
   assert.equal(active[0].uid, 'u1', 'places myUid first');
   assert.equal(active[1].uid, 'u3');
+
+  // isOn and agoText
+  const {isOn, agoText, renderOnlinePlayersDialogHtml} = await import('../src/net/presence.js');
+  const now = 100000;
+  assert.equal(isOn({s: 'online', t: now - 10000}, 150000, now), true);
+  assert.equal(isOn({s: 'off', t: now - 10000}, 150000, now), false);
+  assert.equal(isOn({s: 'online', t: now - 200000}, 150000, now), false);
+
+  assert.equal(agoText(0), 'не в сети');
+  assert.equal(agoText(now - 15000, now), 'был(а) в сети только что');
+  assert.equal(agoText(now - 300000, now), 'был(а) в сети 5 мин назад');
+
+  // renderOnlinePlayersDialogHtml
+  const dialogHtml = renderOnlinePlayersDialogHtml({
+    presenceList: [{uid: 'u1', n: 'Alice', s: 'online'}, {uid: 'u2', n: 'Bob', s: 'menu', r: 1}],
+    myUid: 'u1',
+    registered: true,
+    isFriendFn: () => false
+  });
+  assert.ok(dialogHtml.includes('Сейчас в игре: 2'));
+  assert.ok(dialogHtml.includes('Alice (вы)'));
+  assert.ok(dialogHtml.includes('Bob'));
+  assert.ok(dialogHtml.includes('data-addf="u2"'));
 });
 
 test('net/friends: cleanFriendCode, formatInvitePayload, formatFriendRequestPayload, renderFriendRow', async () => {
