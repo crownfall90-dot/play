@@ -41,6 +41,64 @@ test('catalog: COLLECTIONS structure and collectionProgress logic (R-9)', async 
   assert.equal(claimedProg.isClaimed, true);
 });
 
+test('collections: repeated claim attempt is refused and does not duplicate gold (R-9)', async () => {
+  const C = await import('../src/state/catalog.js');
+  const col = C.COLLECTIONS[0];
+  const wallet = {
+    gold: 50,
+    owned: ['classic', 'knight', 'king', 'queen'],
+    frames: ['royal'],
+    colClaimed: []
+  };
+
+  function claim(w, targetCol) {
+    const p = C.collectionProgress(targetCol, w);
+    if (!p.isComplete || p.isClaimed) return false;
+    w.gold += targetCol.reward;
+    w.colClaimed = [...(w.colClaimed || []), targetCol.id];
+    return true;
+  }
+
+  // First claim succeeds
+  assert.equal(claim(wallet, col), true);
+  assert.equal(wallet.gold, 50 + col.reward);
+  assert.ok(wallet.colClaimed.includes(col.id));
+
+  // Second claim attempt must be refused
+  const goldBeforeSecond = wallet.gold;
+  assert.equal(claim(wallet, col), false);
+  assert.equal(wallet.gold, goldBeforeSecond, 'gold did not change on repeated claim');
+  assert.equal(wallet.colClaimed.filter(id => id === col.id).length, 1, 'id not duplicated in colClaimed');
+});
+
+test('behavioral: progress UI renders collections and mastery with proper DOM elements (R-9, R-11)', async () => {
+  const {renderCollectionCard, renderMasteryGrid} = await import('../src/ui/progress.js');
+  const {COLLECTIONS, collectionProgress} = await import('../src/state/catalog.js');
+  
+  const wallet = {
+    gold: 100,
+    owned: ['classic'],
+    frames: [],
+    colClaimed: []
+  };
+  const col = COLLECTIONS[0];
+  const prog = collectionProgress(col, wallet);
+  const html = renderCollectionCard(col, prog, {}, {}, wallet, () => '', 'P');
+  assert.ok(html.includes('col-card'));
+  assert.ok(html.includes(col.name));
+  assert.ok(html.includes('В процессе'));
+
+  const masteryHtml = renderMasteryGrid({
+    bots: {games: 10, wins: 8, best: 70},
+    duel: {games: 5, wins: 4, best: 55}
+  });
+  assert.ok(masteryHtml.includes('mgrid'));
+  assert.ok(masteryHtml.includes('Боты'));
+  assert.ok(masteryHtml.includes('80% (8/10) · рек. 70'));
+  assert.ok(masteryHtml.includes('Дуэль'));
+  assert.ok(masteryHtml.includes('80% (4/5) · рек. 55'));
+});
+
 test('progress: normalizeStats and recordGameMode (R-11)', async () => {
   const P = await import('../src/state/progress.js');
   

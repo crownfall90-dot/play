@@ -13,22 +13,35 @@ export function botPick(tiles, type, random) {
   return best;
 }
 
+export const BOT_ARCHETYPES = {
+  builder: {id: 'builder', label: 'Зодчий', desc: 'Упор на города и завершение построек'},
+  roadman: {id: 'roadman', label: 'Дорожник', desc: 'Приоритет длинным дорогам и трактам'},
+  monk: {id: 'monk', label: 'Хранитель', desc: 'Стремится окружать и закрывать крепости'},
+  balanced: {id: 'balanced', label: 'Тактик', desc: 'Сбалансированная универсальная стратегия'}
+};
+
 /** For a player whose clock ran out: next to their own unfinished objects first (finishing one is best), never to
  *  the benefit of an opponent who leads an object, otherwise somewhere compact. players: how many seats. */
-export function helperPick(tiles, meeples, type, p, players, random, sharp = 1) {
+export function helperPick(tiles, meeples, type, p, players, random, sharp = 1, persona = null) {
   let best = null, bs = -1e9;
   for (const m of allMoves(tiles, type)) {
     const t = {x: m.x, y: m.y, type, r: m.r, seed: 1};
     tiles.set(key(t.x, t.y), t); // tried in place, removed below
     let s = random() * .6 / sharp;
     for (const g of groupsOf(t)) {
-      if (g.kind === 'f') continue;
+      if (g.kind === 'f') {
+        if (persona === 'monk') s += 4;
+        continue;
+      }
       const c = component(tiles, meeples, t, g);
       if (!c.meeples.length) continue;
       const cnt = Array.from({length: players}, () => 0); c.meeples.forEach(x => cnt[x.p]++);
       const mx = Math.max(...cnt), shared = cnt.filter(n => n === mx).length > 1;
       const worth = c.complete ? (c.kind === 'c' ? c.tiles.length * 2 : roadPoints(tiles, c)) : c.tiles.length * .8;
-      if (cnt[p] === mx) s += 6 + worth * (shared ? .5 : 1.5) + (c.complete ? 8 * sharp : 0);
+      let affinity = 1.0;
+      if (persona === 'builder' && c.kind === 'c') affinity = 1.45;
+      else if (persona === 'roadman' && c.kind === 'r') affinity = 1.45;
+      if (cnt[p] === mx) s += (6 + worth * (shared ? .5 : 1.5) + (c.complete ? 8 * sharp : 0)) * affinity;
       else s -= 5 + worth * 1.2 + (c.complete ? 8 : 0);
     }
     tiles.delete(key(t.x, t.y));
@@ -98,15 +111,15 @@ export function featureNote(tiles, meeples, t, g) {
 export const BOT_LEVELS = ['easy', 'normal', 'hard'];
 
 /** Where a bot puts a card, by level. Always one of allMoves. */
-export function levelPick(tiles, meeples, type, p, players, random, level) {
+export function levelPick(tiles, meeples, type, p, players, random, level, persona = null) {
   if (level === 'easy') return botPick(tiles, type, random);
-  return helperPick(tiles, meeples, type, p, players, random, level === 'hard' ? 3 : 1);
+  return helperPick(tiles, meeples, type, p, players, random, level === 'hard' ? 3 : 1, persona);
 }
 
 /** Which object a bot claims with a figure (or null: keep the figure). opts: {t, g, done?}. left: figures it still has.
  *  Worth: a city 2 per card, a road 1 per card, a fort about 5, plus a finishing bonus; the fewer figures are left, the
  *  more an object must be worth, so a bot does not run out of figures in the first ten cards. */
-export function figurePick(tiles, meeples, opts, left, random, level) {
+export function figurePick(tiles, meeples, opts, left, random, level, persona = null) {
   if (level === 'easy') {
     if (!opts.length || random() >= .55) return null;
     const cs = opts.filter(o => !o.done && o.g && o.g.kind !== 'r');
@@ -120,6 +133,9 @@ export function figurePick(tiles, meeples, opts, left, random, level) {
     const n = c.tiles.length;
     let v = c.kind === 'c' ? n * 2 + 2 : c.kind === 'r' ? n + 1 : 5;
     if (c.complete) v += 4;
+    if (persona === 'builder' && c.kind === 'c') v *= 1.45;
+    else if (persona === 'roadman' && c.kind === 'r') v *= 1.45;
+    else if (persona === 'monk' && c.kind === 'f') v *= 1.45;
     v *= .85 + random() * .3;
     if (v > bs) { bs = v; best = o; }
   }

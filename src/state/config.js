@@ -3,10 +3,10 @@
 
 export const PL0 = [
   {name:'Вы',col:'#ef5350',human:true},
-  {name:'Маша',col:'#4c8dff',human:false},
-  {name:'Дима',col:'#f7c948',human:false},
-  {name:'Лёша',col:'#3fc27a',human:false},
-  {name:'Катя',col:'#b06cf0',human:false},
+  {name:'Маша',col:'#4c8dff',human:false,persona:'builder'},
+  {name:'Дима',col:'#f7c948',human:false,persona:'roadman'},
+  {name:'Лёша',col:'#3fc27a',human:false,persona:'monk'},
+  {name:'Катя',col:'#b06cf0',human:false,persona:'balanced'},
 ];
 
 export const PALETTE = [

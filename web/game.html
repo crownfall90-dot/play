@@ -1046,7 +1046,7 @@ async function afterPlace(t, p, forced) {
       // Bot: always use placed tile only, even in anyMode.
       // Bots never reinforce their own object (only free ones), so their play stays as it was.
       const botOpts = (anyMode ? claimable(t, p).map(g => ({t, g})) : opts).filter(o => o.done || !o.g || B.component(tiles, meeples, o.t, o.g).meeples.length === 0);
-      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
+      choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel(), players[p] && players[p].persona);
     }
   }
   if (my !== token) return;
@@ -1248,7 +1248,7 @@ function handOver() { $('#over').hidden = true; beginHumanTurn(); }
 // themselves); from the fourth game the chosen level applies and one note says so.
 const softStart = () => (PG.game && PG.game.turns) ? PG.game.turns.isSoftStart(wallet.botlvl, PROG.st.games) : (wallet.botlvl === 'normal' && PROG.st.games < 3);
 const botLevel = () => (PG.game && PG.game.turns) ? PG.game.turns.resolveBotLevel(wallet.botlvl, PROG.st.games, PG.engine.bots.BOT_LEVELS) : (softStart() ? 'easy' : PG.engine.bots.BOT_LEVELS.includes(wallet.botlvl) ? wallet.botlvl : 'normal');
-const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel());
+const botPick = (type, p) => PG.engine.bots.levelPick(tiles, meeples, type, p, players.length, Math.random, botLevel(), players[p] && players[p].persona);
 const helperPick = (type, p) => PG.engine.bots.helperPick(tiles, meeples, type, p, players.length, Math.random);
 async function aiTurn() {
   const p = turn, my = token, tt = turnTok;
