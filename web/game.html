@@ -3566,9 +3566,14 @@ let tut = null;
 function startTutorial() {
   if (net) leaveRoom();
   track('tutorial_begin');
-  const rules = {mode: 'fast', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'};
-  startGame({tut: 1, seats: [{name: profileName(), human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules, deck: TUT_DECK.slice(), seed: 7, noIntro: true});
-  tut = {i: 0, bot: TUT_BOT.slice()}; show('game'); hideHint(); tutShow();
+  const cfg = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.createTutorialConfig)
+    ? PG.game.tutorial.createTutorialConfig(profileName(), wallet.color, wallet.fig, validCol, PL0, TUT_DECK)
+    : {tut: 1, seats: [{name: profileName(), human: true, fig: wallet.fig, col: validCol(wallet.color) ? wallet.color : PL0[0].col}, {name: 'Бот Ёж', human: false, fig: 'classic', col: wallet.color === PL0[1].col ? PL0[2].col : PL0[1].col}], rules: {mode: 'fast', deck: 0, rivers: true, meeples: 7, timer: 0, hints: true, tie: 'all'}, deck: TUT_DECK.slice(), seed: 7, noIntro: true};
+  startGame(cfg);
+  tut = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.createTutorialState)
+    ? PG.game.tutorial.createTutorialState()
+    : {i: 0, bot: TUT_BOT.slice()};
+  show('game'); hideHint(); tutShow();
 }
 const tutStep = () => tut && TUT[tut.i];
 // Which empty spots the tutorial lets you use right now (null: no tutorial, all of them).
@@ -3606,8 +3611,21 @@ function tutFinale(n = 0) {
 $('#over').addEventListener('click', e => { if (e.target.closest('#tutNext')) tutNext(); });
 function tutNext() {
   if (!tut) return;
-  if (TUT[tut.i].done) { track('tutorial_complete'); tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); tutShow(); return setTimeout(askProfile, 400); }
-  tut.i++; tutShow();
+  if (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.advanceTutorialStep) {
+    const res = PG.game.tutorial.advanceTutorialStep(tut, wallet, TUT);
+    if (res.done) {
+      track(res.trackEvent);
+      tut = null;
+      saveWallet();
+      beep(res.sound);
+      tutShow();
+      return setTimeout(askProfile, 400);
+    }
+    tutShow();
+  } else {
+    if (TUT[tut.i].done) { track('tutorial_complete'); tut = null; wallet.tut = true; wallet.gold += 30; saveWallet(); beep('coin'); tutShow(); return setTimeout(askProfile, 400); }
+    tut.i++; tutShow();
+  }
 }
 // Game code reports what the player did; the coach moves on only on the awaited action.
 function tutEvent(ev) {
@@ -3630,9 +3648,9 @@ function colorPick(input, av) {
 function askProfile() {
   if (wallet.name || document.getElementById('profBox')) return;
   const box = document.createElement('div'); box.className = 'over'; box.id = 'profBox'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм и выберите цвет — их увидят соперники и рейтинг</p>
-    <input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off">
-    <button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.renderAskProfileDialogHtml)
+    ? PG.game.tutorial.renderAskProfileDialogHtml(wallet.color)
+    : `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм и выберите цвет — их увидят соперники и рейтинг</p><input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
   const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
   colorPick(inp, av);
@@ -3646,7 +3664,9 @@ function offerTutorial() {
   if (wallet.tut || wallet.tutAsked || loadSave()) return askProfile();
   wallet.tutAsked = true; saveWallet();
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard"><div style="font-size:44px">🏰</div><h3>Добро пожаловать в Puzzlegrad!</h3><p>Новичок? Короткое обучение, затем вы придумаете никнейм — так создаётся профиль</p><button class="cta wide" data-t="go">Начать · обучение</button>${FB ? '<button class="ghostbtn" data-t="login">У меня есть профиль — войти</button>' : ''}<button class="linkbtn" data-t="no">Пропустить обучение</button></div>`;
+  box.innerHTML = (typeof PG !== 'undefined' && PG.game && PG.game.tutorial && PG.game.tutorial.renderTutorialOfferDialogHtml)
+    ? PG.game.tutorial.renderTutorialOfferDialogHtml(!!FB)
+    : `<div class="ocard"><div style="font-size:44px">🏰</div><h3>Добро пожаловать в Puzzlegrad!</h3><p>Новичок? Короткое обучение, затем вы придумаете никнейм — так создаётся профиль</p><button class="cta wide" data-t="go">Начать · обучение</button>${FB ? '<button class="ghostbtn" data-t="login">У меня есть профиль — войти</button>' : ''}<button class="linkbtn" data-t="no">Пропустить обучение</button></div>`;
   document.body.append(box);
   box.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; box.remove(); if (b.dataset.t === 'go') startTutorial(); else if (b.dataset.t === 'login') accountDialog('login'); else askProfile(); };
 }

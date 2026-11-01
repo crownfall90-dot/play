@@ -51,3 +51,42 @@ test('game/tutorial: renderCoachCardHtml formatting', async () => {
   const empty = tutorial.renderCoachCardHtml(null, 0, 15);
   assert.equal(empty, '');
 });
+
+test('game/tutorial: createTutorialConfig, advanceTutorialStep, dialog renderers', async () => {
+  const tutorial = await import('../src/game/tutorial.js');
+
+  // createTutorialConfig
+  const cfg = tutorial.createTutorialConfig('Alice', '#ef5350', 'royal', () => true, [{col: '#ef5350'}, {col: '#42a5f5'}, {col: '#66bb6a'}]);
+  assert.equal(cfg.tut, 1);
+  assert.equal(cfg.seats[0].name, 'Alice');
+  assert.equal(cfg.seats[0].fig, 'royal');
+  assert.equal(cfg.seats[1].name, 'Бот Ёж');
+  assert.equal(cfg.deck.length, 6);
+
+  // advanceTutorialStep
+  const state = tutorial.createTutorialState();
+  const wallet = {gold: 0};
+  const stepRes = tutorial.advanceTutorialStep(state, wallet);
+  assert.equal(stepRes.done, false);
+  assert.equal(state.i, 1);
+
+  // final step
+  state.i = tutorial.TUT_STEPS.length - 1; // last step has done: true
+  const finalRes = tutorial.advanceTutorialStep(state, wallet);
+  assert.equal(finalRes.done, true);
+  assert.equal(finalRes.reward, 30);
+  assert.equal(wallet.tut, true);
+  assert.equal(wallet.gold, 30);
+
+  // renderTutorialOfferDialogHtml
+  const offerHtml = tutorial.renderTutorialOfferDialogHtml(true);
+  assert.ok(offerHtml.includes('Добро пожаловать в Puzzlegrad!'));
+  assert.ok(offerHtml.includes('data-t="go"'));
+  assert.ok(offerHtml.includes('data-t="login"'));
+
+  // renderAskProfileDialogHtml
+  const askHtml = tutorial.renderAskProfileDialogHtml('#42a5f5');
+  assert.ok(askHtml.includes('Создайте профиль'));
+  assert.ok(askHtml.includes('--c:#42a5f5'));
+  assert.ok(askHtml.includes('id="profName"'));
+});
