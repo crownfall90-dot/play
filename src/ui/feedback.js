@@ -1,0 +1,88 @@
+// Feedback categories, styling, and formatting of feedback telemetry payloads
+
+export const FEEDBACK_CATS = [
+  {k: 'bug', ic: '🐛', t: 'Баг'},
+  {k: 'lag', ic: '⚡', t: 'Лаги'},
+  {k: 'idea', ic: '💡', t: 'Идея'},
+  {k: 'other', ic: '💬', t: 'Другое'}
+];
+
+export const FEEDBACK_COLORS = {
+  bug: '#ef5350',
+  lag: '#ff7043',
+  idea: '#f2994a',
+  other: '#4c8dff'
+};
+
+export const FEEDBACK_PLACEHOLDERS = {
+  bug: 'Опишите, что пошло не так, на каком экране или при каком действии…',
+  lag: 'Где именно лагает, падает FPS или игра зависает? Сколько длится зависание?…',
+  idea: 'Какую новую механику, режим или фишку вы хотите увидеть в игре?…',
+  other: 'Ваш отзыв, впечатление или вопрос к разработчику…'
+};
+
+export const FEEDBACK_STAR_LABELS = {
+  1: '1/5 — Много багов / не понравилось',
+  2: '2/5 — Есть проблемы и баги',
+  3: '3/5 — Нормально, но есть над чем работать',
+  4: '4/5 — Хорошо, нравится!',
+  5: '5/5 — Отличная игра! 🔥'
+};
+
+/**
+ * Creates the feedback payload sent to Firebase Realtime DB
+ */
+export function formatFeedbackPayload({cat, msg, stars, ver, attachDiag, diag}) {
+  const body = {
+    k: cat || 'idea',
+    m: String(msg || '').slice(0, 1500),
+    stars: typeof stars === 'number' ? stars : 5,
+    v: ver || 'web',
+    t: {'.sv': 'timestamp'}
+  };
+  if (attachDiag && diag) {
+    body.device = {
+      os: diag.os || '',
+      screen: diag.screen || '',
+      cores: diag.cores || 0,
+      ram: diag.ram || 0,
+      net: diag.net || '',
+      fps: diag.fps || 0,
+      lags: diag.lagsRecorded || 0
+    };
+  }
+  return body;
+}
+
+/**
+ * Generates the HTML content for the feedback dialog card
+ */
+export function renderFeedbackCardHtml({first, namePromo, stars, starLabel, cat, placeholder, diagSummary}) {
+  const starsHtml = [1, 2, 3, 4, 5].map(v =>
+    `<button type="button" class="fb-star${v <= stars ? ' active' : ''}" data-val="${v}" aria-label="${v} ${v === 1 ? 'звезда' : v < 5 ? 'звезды' : 'звёзд'}">⭐</button>`
+  ).join('');
+
+  const catsHtml = FEEDBACK_CATS.map((c, i) =>
+    `<button class="fbcat fb-cat${c.k === cat ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === cat ? 'gold' : FEEDBACK_COLORS[c.k]}" data-je="${i < 3 ? 'r:tab' : ''}${i > 0 && i < 3 ? ',' : ''}${i > 0 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`
+  ).join('');
+
+  return `<div class="ocard fbcard">
+    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, баги, лаги и идеи — читаем каждый отзыв</p></div></div></div>
+    ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
+    ${namePromo || ''}
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Ваша оценка игры:</div>
+    <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Оценка">${starsHtml}</div>
+    <div class="fb-star-label" id="fbStarLabel">${starLabel}</div>
+    <div class="jig fbcats" id="fbCats">${catsHtml}</div>
+    <textarea id="fbText" class="fbtext" rows="3" placeholder="${placeholder}"></textarea>
+    <div class="fb-diag">
+      <label class="fb-diag-check">
+        <input type="checkbox" id="fbAttachDiag" checked>
+        <span>Прикрепить данные об устройстве для диагностики</span>
+      </label>
+      <div style="font-size:11px;opacity:.7">${diagSummary || ''}</div>
+    </div>
+    <button class="cta wide" id="fbSend">Отправить${first ? ' (+10 золота)' : ''}</button>
+    <button class="ghostbtn" id="fbCancel">Отмена</button>
+  </div>`;
+}

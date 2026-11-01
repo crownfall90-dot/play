@@ -20,6 +20,8 @@ import * as sync from './account/sync.js';
 import * as auth from './account/auth.js';
 import * as shop from './ui/shop.js';
 import * as progressUi from './ui/progress.js';
+import * as owner from './ui/owner.js';
+import * as feedback from './ui/feedback.js';
 
 export const engine = {rng, hash, TYPES, normEdge, rareName, deckList, isRareTile, board, scoring, bots};
 
@@ -29,4 +31,4 @@ export const render = {createArt};
 export const net = {createFirebase, friends, presence};
 export const app = {web, update};
 export const account = {google, sync, auth};
-export const ui = {shop, progress: progressUi};
+export const ui = {shop, progress: progressUi, owner, feedback};

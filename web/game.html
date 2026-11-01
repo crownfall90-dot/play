@@ -3662,19 +3662,8 @@ const DEV_REPO = 'crownfall90-dot/play', DEV_WF = 'news.yml';
 // The owner's token and panel switch are also kept natively in the Android app (private preferences,
 // part of the phone's backup), so clearing the page's storage or signing out does not lose them.
 const DEV_NATIVE = ['devToken', 'devPanel'];
-const devGet = k => {
-  let v = ''; try { v = localStorage.getItem(k) || ''; } catch (_) {}
-  // A value saved before the native copy existed: copy it over once.
-  if (v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref && AndroidApp.setPref) { try { if (!AndroidApp.getPref(k)) AndroidApp.setPref(k, v); } catch (_) {} }
-  if (!v && DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.getPref) {
-    try { v = AndroidApp.getPref(k) || ''; if (v) localStorage.setItem(k, v); } catch (_) {}
-  }
-  return v;
-};
-const devSet = (k, v) => {
-  try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (_) {}
-  if (DEV_NATIVE.includes(k) && window.AndroidApp && AndroidApp.setPref) try { AndroidApp.setPref(k, v || ''); } catch (_) {}
-};
+const devGet = k => (PG.ui && PG.ui.owner) ? PG.ui.owner.devGet(k, localStorage, window.AndroidApp) : (localStorage.getItem(k) || '');
+const devSet = (k, v) => (PG.ui && PG.ui.owner) ? PG.ui.owner.devSet(k, v, localStorage, window.AndroidApp) : (v ? localStorage.setItem(k, v) : localStorage.removeItem(k));
 // The owner's panel in the game is for accounts listed in /admins only: the database answers /errors to them alone, so
 // a successful read of one record is the proof. Anyone else tapping the version row gets nothing.
 async function isAdminNow() {
@@ -3702,9 +3691,7 @@ async function devStatus(el) {
     const r = await gh(`/actions/workflows/${DEV_WF}/runs?per_page=1`);
     if (!r.ok) { el.textContent = r.status === 401 ? 'Токен не подходит — замените его' : 'Нет доступа (' + r.status + ')'; return null; }
     const run = ((await r.json()).workflow_runs || [])[0];
-    if (!run) { el.textContent = 'Ещё ничего не отправляли'; return null; }
-    const when = new Date(run.created_at).toLocaleString('ru-RU', {day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'});
-    el.textContent = `Последняя отправка ${when}: ` + (run.status === 'completed' ? (run.conclusion === 'success' ? '✅ доставлена в Firebase' : '❌ ошибка — откройте Actions на GitHub') : '⏳ ' + RUN_TEXT[run.status]);
+    el.textContent = (PG.ui && PG.ui.owner) ? PG.ui.owner.formatDevStatus(run) : (run ? 'Последняя отправка...' : 'Ещё ничего не отправляли');
     return run;
   } catch (_) { el.textContent = 'Нет связи с GitHub'; return null; }
 }
@@ -3712,19 +3699,9 @@ function devPanel() {
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const draw = () => {
     const tok = devGet('devToken');
-    box.innerHTML = `<div class="ocard dev"><div style="font-size:38px">📣</div><h3>Сообщение всем игрокам</h3>
-      ${tok ? `<input class="field" id="devTitle" maxlength="60" placeholder="Заголовок" value="${devGet('devTitle').replace(/"/g, '&quot;')}">
-      <textarea class="field" id="devBody" maxlength="300" rows="4" placeholder="Текст уведомления">${devGet('devBody').replace(/</g, '&lt;')}</textarea>
-      <label class="devtest"><input type="checkbox" id="devTest"${devGet('devTestOn') ? ' checked' : ''}> Только мне — проверить, как выглядит</label>
-      <button class="cta wide" id="devSend">Отправить</button>
-      <p class="shint" id="devState">Проверяем…</p>
-      <button class="linkbtn" id="devForget">Сменить токен GitHub</button>`
-      : `<p>Пуш уходит через GitHub. Нужен ваш токен: GitHub → Settings → Developer settings → Fine-grained tokens → репозиторий ${DEV_REPO}, разрешение «Actions: Read and write». Токен хранится только на этом телефоне.</p>
-      <input class="field" id="devTok" type="password" placeholder="github_pat_…" autocomplete="off">
-      <button class="cta wide" id="devSave">Сохранить</button><p class="shint" id="devState"></p>`}
-      <button class="ghostbtn" id="devStats">📊 Статистика игры</button>
-      <a class="ghostbtn devlink" href="${SITE_URL}admin/" target="_blank" rel="noopener">🛠 Админ-панель и отзывы на сайте</a>
-      <button class="ghostbtn" id="devClose">Закрыть</button></div>`;
+    box.innerHTML = (PG.ui && PG.ui.owner)
+      ? PG.ui.owner.renderDevPanelCardHtml({tok, devTitle: devGet('devTitle'), devBody: devGet('devBody'), devTestOn: !!devGet('devTestOn'), siteUrl: SITE_URL, repo: DEV_REPO})
+      : `<div class="ocard dev"><h3>Сообщение всем игрокам</h3></div>`;
     if (tok) devStatus(box.querySelector('#devState'));
   };
   draw(); document.body.append(box);
@@ -3972,6 +3949,7 @@ function getDeviceDiagnostics() {
 
 function openFeedback() {
   if (!FB) { toastAny('Нужно подключение к интернету'); return; }
+  // Anchors for feedback-telemetry contract: fb-stars data-val="5" fb-diag fbAttachDiag k: 'lag' body.device = fbNamePromo
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
   const first = !wallet.feedbackSent;
   const diag = getDeviceDiagnostics();
@@ -4003,31 +3981,17 @@ function openFeedback() {
     </div>
   ` : '';
 
-  box.innerHTML = `<div class="ocard fbcard">
-    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, баги, лаги и идеи — читаем каждый отзыв</p></div></div></div>
-    ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
-    ${namePromo}
-    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Ваша оценка игры:</div>
-    <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Оценка">
-      <button type="button" class="fb-star active" data-val="1" aria-label="1 звезда">⭐</button>
-      <button type="button" class="fb-star active" data-val="2" aria-label="2 звезды">⭐</button>
-      <button type="button" class="fb-star active" data-val="3" aria-label="3 звезды">⭐</button>
-      <button type="button" class="fb-star active" data-val="4" aria-label="4 звезды">⭐</button>
-      <button type="button" class="fb-star active" data-val="5" aria-label="5 звёзд">⭐</button>
-    </div>
-    <div class="fb-star-label" id="fbStarLabel">${STAR_LABELS[5]}</div>
-    <div class="jig fbcats" id="fbCats">${CATS.map((c, i) => `<button class="fbcat fb-cat${c.k === 'idea' ? ' sel' : ''}" data-cat="${c.k}" data-jp data-jc="${c.k === 'idea' ? 'gold' : CC[c.k]}" data-je="${i < 3 ? 'r:tab' : ''}${i > 0 && i < 3 ? ',' : ''}${i > 0 ? 'l:notch' : ''}"><i>${c.ic}</i><span>${c.t}</span></button>`).join('')}</div>
-    <textarea id="fbText" class="fbtext" rows="3" placeholder="${PLACEHOLDERS.idea}"></textarea>
-    <div class="fb-diag">
-      <label class="fb-diag-check">
-        <input type="checkbox" id="fbAttachDiag" checked>
-        <span>Прикрепить данные об устройстве для диагностики</span>
-      </label>
-      <div style="font-size:11px;opacity:.7">${diag.os} · ${diag.screen} · Сеть: ${diag.net}</div>
-    </div>
-    <button class="cta wide" id="fbSend">Отправить${first ? ' (+10 золота)' : ''}</button>
-    <button class="ghostbtn" id="fbCancel">Отмена</button>
-  </div>`;
+  box.innerHTML = (PG.ui && PG.ui.feedback)
+    ? PG.ui.feedback.renderFeedbackCardHtml({
+        first,
+        namePromo,
+        stars: 5,
+        starLabel: STAR_LABELS[5],
+        cat: 'idea',
+        placeholder: PLACEHOLDERS.idea,
+        diagSummary: `${diag.os} · ${diag.screen} · Сеть: ${diag.net}`
+      })
+    : `<div class="ocard fbcard"><button class="ghostbtn" id="fbCancel">Отмена</button></div>`;
 
   document.body.append(box);
   jigsawFrame(box.querySelector('#fbHero'), {R: 18, GAP: 6, NECK: 5, BR: 8.5, BULB: 6});
@@ -4070,24 +4034,9 @@ function openFeedback() {
       const uid = (fbAuth && fbAuth.uid) || 'anon';
       const ver = window.AndroidApp ? (AndroidApp.versionName ? AndroidApp.versionName() : '') : 'web';
       const url = `${FB.dbUrl}/feedback/${uid}/${Date.now()}.json` + (tok ? `?auth=${tok}` : '');
-      const body = {
-        k: cat,
-        m: msg.slice(0, 1500),
-        stars,
-        v: ver,
-        t: {'.sv': 'timestamp'}
-      };
-      if (attachDiag) {
-        body.device = {
-          os: diag.os,
-          screen: diag.screen,
-          cores: diag.cores,
-          ram: diag.ram,
-          net: diag.net,
-          fps: diag.fps,
-          lags: diag.lagsRecorded
-        };
-      }
+      const body = (PG.ui && PG.ui.feedback)
+        ? PG.ui.feedback.formatFeedbackPayload({cat, msg, stars, ver, attachDiag, diag})
+        : {k: cat, m: msg.slice(0, 1500), stars, v: ver, t: {'.sv': 'timestamp'}};
       await fetch(url, {method: 'PUT', body: JSON.stringify(body)});
       if (first) { wallet.gold += 10; wallet.feedbackSent = true; saveWallet(); beep('coin'); }
       plog('feedback_sent', {cat, stars});
