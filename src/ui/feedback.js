@@ -67,10 +67,10 @@ export function renderFeedbackCardHtml({first, namePromo, stars, starLabel, cat,
   ).join('');
 
   return `<div class="ocard fbcard">
-    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, баги, лаги и идеи — читаем каждый отзыв</p></div></div></div>
+    <div class="jig shero small" id="fbHero"><div class="mhero" data-jp data-jc="#4c8dff" data-je="r:tab"><span class="mhi">💬</span><div><b>Поддержка и отзывы</b><p>Оценки, идеи и сообщения об ошибках</p></div></div></div>
     ${first ? '<p class="fbgift">🎁 +10 золота за первое сообщение</p>' : ''}
     ${namePromo || ''}
-    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Ваша оценка игры:</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);text-align:center;margin-top:2px">Оцените игру:</div>
     <div class="fb-stars" id="fbStars" role="radiogroup" aria-label="Оценка">${starsHtml}</div>
     <div class="fb-star-label" id="fbStarLabel">${starLabel}</div>
     <div class="jig fbcats" id="fbCats">${catsHtml}</div>
@@ -78,7 +78,7 @@ export function renderFeedbackCardHtml({first, namePromo, stars, starLabel, cat,
     <div class="fb-diag">
       <label class="fb-diag-check">
         <input type="checkbox" id="fbAttachDiag" checked>
-        <span>Прикрепить данные об устройстве для диагностики</span>
+        <span>Прикрепить данные устройства для диагностики</span>
       </label>
       <div style="font-size:11px;opacity:.7">${diagSummary || ''}</div>
     </div>
