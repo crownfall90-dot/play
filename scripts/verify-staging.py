@@ -35,8 +35,8 @@ def verify():
         report['status'] = 'wrong_application_id'
         return False
     permissions = run([str(tools / 'aapt'), 'dump', 'permissions', str(apk)])
-    if 'android.permission.INTERNET' in permissions:
-        report['status'] = 'internet_permission_present'
+    if 'android.permission.INTERNET' not in permissions:
+        report['status'] = 'internet_permission_missing'
         return False
     key = os.environ.get('STAGING_KEYSTORE_FILE')
     if key:
@@ -71,7 +71,7 @@ finally:
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
             out.write('\n'.join(lines) + '\n')
-    text = 'OFFLINE TEST ONLY\nCommit: ' + os.environ.get('GITHUB_SHA', 'local') + '\n' + '\n'.join(lines) + '\n'
+    text = 'STAGING BUILD\nCommit: ' + os.environ.get('GITHUB_SHA', 'local') + '\n' + '\n'.join(lines) + '\n'
     Path('SIGNING-DIAGNOSTICS.txt').write_text(text, encoding='utf-8')
     if os.environ.get('GITHUB_STEP_SUMMARY'):
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:

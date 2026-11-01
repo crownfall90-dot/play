@@ -33,6 +33,23 @@
 
 **С чего продолжить (рекомендуемый порядок):** H-5 (боты-«соседи» при поиске >10 с), D-1 (довести стиль на поле партии и итогах), R-5…R-8 (плашка заданий, сезоны лиги, рейтинг друзей), затем продолжение модульного распила монолита (E-1). Полный список — `docs/product/BACKLOG.md`.
 
+### 02.11.2026, ночь — Онлайн и все публичные функции для тестовой версии (Staging) (Antigravity)
+- **Выполнено по требованию пользователя («для тестовой версии нужно добавить интернет и все функции которые и в публичном»):**
+  - **Манифест Staging (`app/src/staging/AndroidManifest.xml`)**:
+    - Убраны все директивы `tools:node="remove"`: разрешены `INTERNET`, `RECEIVE_BOOT_COMPLETED`, `POST_NOTIFICATIONS`, `UpdateNotifier`, `PushService` и `FirebaseInitProvider`.
+    - Сохранена метка приложения `Puzzlegrad Test` и `allowBackup="false"`.
+  - **Автообновление Staging (`app/src/staging/java/com/crownfall/mosaic/Updater.java`)**:
+    - Заглушка заменена на полноценный рабочий класс `Updater` (как в публичной github-сборке) с поддержкой GitHub Releases API, проверки обновлений в фоне, скачивания и установки через PackageInstaller.
+  - **Firebase Configuration (`app/google-services.json` & `app/build.gradle`)**:
+    - Добавлен клиент `com.crownfall.mosaic.test` в `app/google-services.json` с тем же проектом, API ключом и Web OAuth Client ID.
+    - В `app/build.gradle` чтение `googleClientId` адаптировано для прохода по всем клиентам.
+  - **CI Workflows & Скрипты**:
+    - В `.github/workflows/staging.yml` и `.github/workflows/account-verify.yml` удалено удаление `app/google-services.json`. Тестовая сборка собирается с полной конфигурацией Firebase.
+    - В `scripts/verify-staging.py` проверка изменена на обязательное наличие `android.permission.INTERNET` (`internet_permission_missing`).
+    - В `scripts/staging.init.gradle` добавлен `UPDATE_REPO = "crownfall90-dot/play"` в productFlavor `staging`.
+    - Обновлена документация [docs/TESTING.md](file:///E:/play/docs/TESTING.md) и [docs/STAGING-SIGNING.md](file:///E:/play/docs/STAGING-SIGNING.md).
+  - **Тесты**: все 188 тестов пройдены успешно (0 ошибок, 23 пропущено по playwright).
+
 ### 02.11.2026, ночь — Релиз 1.0.250 (Promote to Production) (Antigravity)
 - **Выпуск 1.0.250 (тег `v250`) успешно опубликован в Production**:
   - PR #234 слит в `main`.

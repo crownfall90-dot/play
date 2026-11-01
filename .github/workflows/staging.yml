@@ -1,4 +1,4 @@
-name: Test APK (offline)
+name: Test APK (Staging)
 on:
   push:
     branches: [setup/test-environment, dev, 'dev/**']
@@ -42,9 +42,7 @@ jobs:
           printf 'STAGING_KEYSTORE_FILE=%s\n' "$KEY_FILE" >> "$GITHUB_ENV"
           printf '%s' "$KEY_BASE64" | base64 --decode > "$KEY_FILE"
           keytool -list -keystore "$KEY_FILE" -storetype PKCS12 -alias staging -storepass:env STORE_PASSWORD > /dev/null
-      - name: Remove production Firebase configuration from test workspace
-        run: rm -f app/google-services.json
-      - name: Build isolated offline APK
+      - name: Build staging APK
         env:
           REQUIRE_STAGING_SIGNING: ${{ github.event_name != 'pull_request' }}
           STAGING_STORE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.STAGING_STORE_PASSWORD || '' }}
@@ -109,12 +107,12 @@ jobs:
           script: |
             const title = 'Puzzlegrad Test — CI diagnostics';
             const digest = s => /^[a-f0-9]{64}$/.test(s || '') ? s : 'unavailable';
-            const allowed = ['match', 'certificate_mismatch', 'signer_digest_parse_error', 'verification_error', 'wrong_application_id', 'internet_permission_present', 'persistent_key_missing', 'temporary_pr_signature'];
+            const allowed = ['match', 'certificate_mismatch', 'signer_digest_parse_error', 'verification_error', 'wrong_application_id', 'internet_permission_missing', 'persistent_key_missing', 'temporary_pr_signature'];
             const status = allowed.includes(process.env.VERIFY_STATUS) ? process.env.VERIFY_STATUS : 'not_reached';
             const result = ['success', 'failure', 'cancelled', 'skipped'].includes(process.env.BUILD_RESULT) ? process.env.BUILD_RESULT : 'unknown';
             const sha = /^[a-f0-9]{40}$/.test(context.sha) ? context.sha : 'unknown';
             const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const body = ['Automated offline staging report.', `Commit: ${sha}`, `Run: ${url}`, `Build: ${result}`, `Verification: ${status}`, `Expected SHA-256: ${digest(process.env.EXPECTED)}`, `Actual SHA-256: ${digest(process.env.ACTUAL)}`, 'No private key, password or raw logs are included.'].join('\n\n');
+            const body = ['Automated staging report.', `Commit: ${sha}`, `Run: ${url}`, `Build: ${result}`, `Verification: ${status}`, `Expected SHA-256: ${digest(process.env.EXPECTED)}`, `Actual SHA-256: ${digest(process.env.ACTUAL)}`, 'No private key, password or raw logs are included.'].join('\n\n');
             let target;
             for await (const page of github.paginate.iterator(github.rest.issues.listForRepo, {...context.repo, state: 'open', creator: 'github-actions[bot]', per_page: 100})) {
               target = page.data.find(i => !i.pull_request && i.title === title);
