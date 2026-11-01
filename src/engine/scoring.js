@@ -22,12 +22,17 @@ export const featurePoints = (tiles, c, final) =>
  * Whoever finished somebody else's feature (placer not among the winners) gets 1 point of respect.
  * Returns {pts, win: [player indexes], each, helped}; win is empty when the feature has no figures.
  */
-export function settle(tiles, c, final, players, tie, placer) {
+export function settle(tiles, c, final, players, tie, placer, v2 = false) {
   const pts = featurePoints(tiles, c, final);
   const cnt = Array.from({length: players}, () => 0); c.meeples.forEach(m => cnt[m.p]++);
   const mx = Math.max(...cnt);
   if (!mx) return {pts, win: [], each: 0, helped: false};
-  const win = cnt.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
+  let win = cnt.map((n, i) => n === mx ? i : -1).filter(i => i >= 0);
+  // Rules v2: equal figures are decided by who laid more cards of the feature (the starting card is nobody's).
+  if (v2 && win.length > 1) {
+    const cards = win.map(i => c.tiles.filter(x => x.by === i).length), best = Math.max(...cards);
+    win = win.filter((_, k) => cards[k] === best);
+  }
   const each = win.length > 1 && tie === 'split' ? Math.floor(pts / win.length) : pts;
   const helped = !final && placer != null && !win.includes(placer);
   return {pts, win, each, helped};

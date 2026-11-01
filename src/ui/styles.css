@@ -1037,3 +1037,5 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 .col-item.has .cchk{color:#5cdbb5}
 .col-foot{display:flex;align-items:center;gap:10px}
 .col-foot .xpbar{flex:1}
+/* points and rules: a small round button among the board buttons, like the hint, not a pill hanging over the board */
+.fab.helpb{color:#f2b84b;border-color:rgba(242,184,75,.4)}

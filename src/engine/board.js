@@ -60,6 +60,13 @@ export function component(tiles, meeples, t, g) {
   }
   return {kind: g.kind, tiles: [...ts], complete: !open, ids, meeples: meeples.filter(m => ids.has(m.gid))};
 }
-/** Features of a card a figure may still go on: nobody's figure in the whole feature and not finished. */
-export const claimable = (tiles, meeples, t) => groupsOf(t).filter(g => { const c = component(tiles, meeples, t, g); return c.meeples.length === 0 && !c.complete; });
-export const claimableAll = (tiles, meeples) => { const r = []; for (const t of tiles.values()) for (const g of claimable(tiles, meeples, t)) r.push({t, g}); return r; };
+/** Features of a card a figure may still go on: nobody's figure in the whole feature and not finished.
+ *  Rules v2 (v2 = true): the player p may also add figures to a feature where only p's own figures stand (one per card
+ *  and feature), to hold it against a later merge. */
+export const claimable = (tiles, meeples, t, p = null, v2 = false) => groupsOf(t).filter(g => {
+  const c = component(tiles, meeples, t, g);
+  if (c.complete) return false;
+  if (c.meeples.length === 0) return true;
+  return !!v2 && p != null && c.meeples.every(m => m.p === p) && !meeples.some(m => m.gid === gid(t, g));
+});
+export const claimableAll = (tiles, meeples, p = null, v2 = false) => { const r = []; for (const t of tiles.values()) for (const g of claimable(tiles, meeples, t, p, v2)) r.push({t, g}); return r; };

@@ -264,12 +264,12 @@
         <div class="board" id="board">
           <div class="vp"><div class="world" id="world"></div></div>
           <div class="fog"></div>
-          <button class="helppill float" id="helpBtn" aria-label="Очки и правила"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10a3 3 0 013 3V20H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h10M9 8.5h5"/></svg><span>Очки и правила</span></button>
           <div class="toast" id="toast"></div>
           <div class="netbad" id="netBad" hidden role="status"><i></i>Нет связи — переподключаемся…</div>
           <div class="edgeglow" id="edgeglow"></div>
           <div class="fabs">
             <button class="fab tipb" id="tip" aria-label="Подсказка: лучший ход" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 00-3.6 10.8c.7.6 1.1 1.3 1.1 2.2h5c0-.9.4-1.6 1.1-2.2A6 6 0 0012 3z"/></svg></button>
+            <button class="fab helpb" id="helpBtn" aria-label="Очки и правила" title="Очки и правила"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4.5h10a3 3 0 013 3V20H8a3 3 0 01-3-3z"/><path d="M5 17a3 3 0 013-3h10M9 8.5h5"/></svg></button>
             <button class="fab" id="zin" aria-label="Приблизить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
             <button class="fab" id="zout" aria-label="Отдалить"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
             <button class="fab" id="ctr" aria-label="К центру поля"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button>
@@ -408,8 +408,10 @@ function groupPos(t, g) {
   if (g.edges.length === 2) { const b = V[g.edges[1]]; return [(a[0]*.4225 + b[0]*.1225) * .5, (a[1]*.4225 + b[1]*.1225) * .5]; }
   return [a[0] * .3, a[1] * .3];
 }
-const claimable = t => B.claimable(tiles, meeples, t);
-const claimableAll = () => B.claimableAll(tiles, meeples);
+// Rules v2 (rv = 2): a player may add figures to an object held only by their own figures; equal figures are decided by cards laid.
+const rules2 = () => !!(gameRules && gameRules.rv === 2);
+const claimable = (t, p) => B.claimable(tiles, meeples, t, p, rules2());
+const claimableAll = p => B.claimableAll(tiles, meeples, p, rules2());
 const label = g => g.kind === 'r' && g.edges.length === 1 ? 'Дорога ' + ARROW[g.edges[0]] : KIND[g.kind];
 
 /* ---------------- dom: world ---------------- */
@@ -817,7 +819,7 @@ function renderPlayers(bump = []) {
   updateOwnership();
   playersEl.innerHTML = (PG.ui && PG.ui.hud)
     ? PG.ui.hud.renderPlayersListHtml(players, {turn, phase, bump, isMe, myRing, meeplesTotal: gameRules.meeples, turnTag, clockHtml: clkHtml})
-    : players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
+    : players.map((p, i) => `<div${p.uid && !isMe(p) ? ` data-pl="${String(p.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${p.name}" data-c="${p.col}"` : ''} class="pl${i === turn && phase !== 'end' ? ' active' : ''}${bump.includes(i) ? ' bump' : ''}${p.resigned ? ' out' : ''}" style="--c:${p.col}"><span class="tg">${turnTag(i)}</span><span class="av${isMe(p) && myRing() ? ` fr" style="--fr:${myRing()}` : ''}">${p.init}</span><span class="pi"><span class="nm">${p.resigned ? 'сдался' : p.missed >= 1 ? '🤖 ' + p.name : p.name}${!p.human && !p.ghost ? ' <span class="botpill">бот</span>' : ''}</span><span class="pline"><b class="sc">${p.score}</b><span class="mp">${Array.from({length: gameRules.meeples}, (_, k) => `<i${k < p.meeples ? '' : ' class="off"'}></i>`).join('')}</span></span></span>${clkHtml(i)}</div>`).join('');
 }
 const setStatus = h => statusEl.innerHTML = h;
 let toastT;
@@ -891,7 +893,7 @@ function helpWindow(tab = 'pts') {
     ${item('t-rS', '🛤 Дорога', 'Доведите дорогу до конца с обеих сторон: до города, перекрёстка, тупика или замкните её в кольцо.', '1 очко за каждую карту дороги · с целым большим мостом ×2')}
     ${item('t-fort', '🏯 Крепость', 'Окружите крепость картами со всех 8 сторон, включая углы.', '9 очков · недостроенная в конце — 1 за каждую карту рядом')}
     ${item('t-brHalf', '🌉 Большой мост', 'Соедините две половины моста друг с другом — дорога через него становится ценнее.', 'каждая карта дороги вокруг — вдвое, сами половины — по 1')}
-    <div class="hitem"><span class="hic">🧍</span><div><b>Фишка</b><p>Поставьте её на город, дорогу или крепость на только что положенной карте, пока объект ещё ничей. Очки получает тот, у кого на объекте больше фишек; после очков фишка возвращается.</p><em>Одна фишка за ход, по желанию</em></div></div>
+    <div class="hitem"><span class="hic">🧍</span><div><b>Фишка</b><p>Поставьте её на город, дорогу или крепость на только что положенной карте, пока объект ещё ничей или на нём стоят только ваши фишки: так можно усилить свой объект. Очки получает тот, у кого на объекте больше фишек; если фишек поровну — у кого больше своих карт на объекте; если и так поровну — очки каждому лидеру. После очков фишка возвращается.</p><em>Одна фишка за ход, по желанию</em></div></div>
     <div class="hitem"><span class="hic">🤝</span><div><b>Респект</b><p>Достроили объект, на котором стоят только чужие фишки.</p><em>+1 очко вам</em></div></div>`;
   const rules = `<div class="hitem"><span class="hic">🎯</span><div><b>Цель</b><p>Стройте королевство из общей стопки. Когда стопка кончилась — больше очков значит победа.</p></div></div>
     <div class="hitem"><span class="hic">🃏</span><div><b>Ваш ход</b><p>Возьмите карту, приложите её к полю так, чтобы края совпали (город с городом, дорога с дорогой, река с рекой), поверните при необходимости и по желанию поставьте фишку.</p></div></div>
@@ -1012,7 +1014,7 @@ async function afterPlace(t, p, forced) {
   // opts: {t, g} pairs — anywhere on board if a meeple returned, otherwise only placed tile.
   const anyMode = meepleReturned && players[p].meeples > 0;
   const opts = (players[p].meeples > 0
-    ? (anyMode ? claimableAll() : claimable(t).map(g => ({t, g})))
+    ? (anyMode ? claimableAll(p) : claimable(t, p).map(g => ({t, g})))
     : []).concat(players[p].meeples > 0 ? mine.map(m => ({t: m.t, g: m.g, done: true})) : []);
   let choice = null; // {t, g} or null
   if (forced !== undefined) {
@@ -1029,7 +1031,8 @@ async function afterPlace(t, p, forced) {
     else if (tut) choice = null; // the tutorial bot never claims anything
     else {
       // Bot: always use placed tile only, even in anyMode.
-      const botOpts = anyMode ? claimable(t).map(g => ({t, g})) : opts;
+      // Bots never reinforce their own object (only free ones), so their play stays as it was.
+      const botOpts = (anyMode ? claimable(t, p).map(g => ({t, g})) : opts).filter(o => o.done || !o.g || B.component(tiles, meeples, o.t, o.g).meeples.length === 0);
       choice = PG.engine.bots.figurePick(tiles, meeples, botOpts, players[p].meeples, Math.random, botLevel());
     }
   }
@@ -1090,7 +1093,7 @@ function featureConfetti(tile, color) {
   tile.el.append(cf); setTimeout(() => cf.remove(), 800);
 }
 async function resolveFeature(c, final, placer) {
-  const {win, each, helped} = SC.settle(tiles, c, final, players.length, gameRules.tie, placer);
+  const {win, each, helped} = SC.settle(tiles, c, final, players.length, gameRules.tie, placer, rules2());
   c.tiles.forEach(x => x.el.classList.add('glow'));
   setTimeout(() => c.tiles.forEach(x => x.el.classList.remove('glow')), 1100);
   if (!win.length) { toast(`${KIND[c.kind]} ${{c: 'достроен', r: 'достроена', f: 'окружена'}[c.kind]} · фишек нет, очков нет`); await wait(600); return; }
@@ -1342,7 +1345,7 @@ function newGame() {
   if (wallet.boosts.meeple > 0 && seats.some(x => !x.human) && seats.filter(x => x.human).length === 1) {
     bonus = seats.findIndex(x => x.human); wallet.boosts.meeple--; saveWallet();
   }
-  startGame({seats, rules: {...setup.rules}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0, bonus});
+  startGame({seats, rules: {...setup.rules, rv: 2}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0, bonus});
   if (bonus >= 0) toastAny('Подарок: +1 фигурка в этой партии');
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
@@ -1365,7 +1368,7 @@ function startGame(cfg, replay = []) {
   world.innerHTML = '<div class="ground"></div>';
   ghost = null; slotEls = []; meeples = []; doneFeats = []; turn = 0; phase = 'idle';
   const rules = gameRules = cfg.rules;
-  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, owner: s.owner, uid: s.uid || null, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
+  players = cfg.seats.map((s, i) => { const name = clean(s.name) || 'Игрок ' + (i + 1); return {name, init: name[0].toUpperCase(), col: validCol(s.col) ? s.col : PL0[i].col, human: s.human, ghost: !!s.ghost, owner: s.owner, uid: s.uid || null, fig: FIGS[s.fig] ? s.fig : 'classic', score: 0, stats: {c: 0, r: 0, f: 0, t: 0, m: 0}, meeples: rules.meeples, missed: 0}; });
   if (cfg.bonus >= 0 && players[cfg.bonus]) players[cfg.bonus].meeples++;
   paintFigures();
   if (!net) saveGame();
@@ -1375,7 +1378,7 @@ function startGame(cfg, replay = []) {
   if (net) {
     const hasBots = players.some(p => !p.human);
     const isCups = !hasBots && !!(net.quick || (gameRules && gameRules.cups) || (rules && rules.cups));
-    const sub = `${isCups ? 'рейтинговая игра' : 'онлайн'}${hasBots && net.quick ? ' (с ботом)' : ''} · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}`;
+    const sub = `${isCups ? 'рейтинговая игра' : 'онлайн'}${hasBots && net.quick && !players.some(p => p.ghost) ? ' (с ботом)' : ''} · ${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}`;
     $('.room').innerHTML = `<b>${net.quick ? 'Онлайн' : 'Комната ' + net.code}</b><span><i></i>${sub}</span>`;
   }
   else if (window.AndroidApp || window.WEBAPP) $('.room').innerHTML = `<b>${b ? (h > 1 ? 'Люди и боты' : 'С ботами') : 'Один телефон'}</b><span>${players.length} ${players.length < 5 ? 'игрока' : 'игроков'}</span>`;
@@ -1452,7 +1455,7 @@ function rewardChips(g) {
   const rw = g.rw || {}, sign = n => (n > 0 ? '+' : n < 0 ? '−' : '') + Math.abs(n);
   const chips = [];
   if (rw.rated) chips.push(`<div class="rchip cup${rw.cups ? '' : ' zero'}" style="--i:0"><b>🏆 ${sign(rw.cups)}</b><small>кубков · всего ${PROG.cups}</small></div>`);
-  else if (net && players.some(p => !p.human)) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>без кубков: игра с ботом</small></div>`);
+  else if (net && players.some(p => !p.human)) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>${players.some(p => p.ghost) ? 'партия без рейтинга' : 'без кубков: игра с ботом'}</small></div>`);
   else if (net && !net.quick) chips.push(`<div class="rchip dim" style="--i:0"><b>🏆 —</b><small>без кубков: игра с друзьями</small></div>`);
   chips.push(`<div class="rchip gold${g.delta < 0 ? ' neg' : ''}" style="--i:1"><b><i class="coin"></i> ${sign(g.delta)}</b><small>золота · всего ${wallet.gold}</small></div>`);
   if (rw.xp) chips.push(`<div class="rchip xp" style="--i:2"><b>⭐ +${rw.xp}</b><small>опыта · уровень ${rw.lvl}</small></div>`);
@@ -1473,11 +1476,11 @@ function renderResults(final, gold) {
   const pod = [[o[1], 2, 70], [o[0], 1, 100], [o[2], 3, 50]].filter(x => x[0]).map(([p, n, h]) => [{...p, name: clean(p.name)}, n, h]);
   $('#podium').innerHTML = (PG.ui && PG.ui.results)
     ? PG.ui.results.renderPodiumHtml(pod, meepleImg)
-    : pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
+    : pod.map(([p, n, h]) => `<div class="pc${n === 1 ? ' first' : ''}">${meepleImg(p.i)}<b>${clean(p.name)}${!p.human && !p.ghost ? ' <span class="botpill">бот</span>' : ''}</b><span class="pts">${p.score}</span><div class="blk" style="height:${h}px">${n}</div></div>`).join('');
   const oClean = o.map(p => ({...p, name: clean(p.name)}));
   $('#bd').innerHTML = (PG.ui && PG.ui.results)
     ? PG.ui.results.renderBreakdownTableHtml(oClean)
-    : o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${clean(p.name)}${!p.human ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
+    : o.map(p => `<tr style="--c:${p.col}"><td><span class="dot"></span>${clean(p.name)}${!p.human && !p.ghost ? ' <span class="botpill">бот</span>' : ''}</td><td>${p.stats.c}</td><td>${p.stats.r}</td><td>${p.stats.f}</td><td>${p.stats.t || 0}</td><td>${p.score}</td></tr>`).join('');
   const moves = players.reduce((n, p) => n + (p.stats.t || 0), 0), figs = players.reduce((n, p) => n + (p.stats.m || 0), 0);
   $('#sumline').innerHTML = (PG.ui && PG.ui.results)
     ? PG.ui.results.renderSummaryLineHtml({tilesCount: tiles.size, movesCount: moves, figsCount: figs, deckCount: deck.length})
@@ -1790,7 +1793,7 @@ $('#figgrid').addEventListener('click', e => {
 });
 function pickFig(k) {
   wallet.fig = k; saveWallet(); renderShop();
-  if (net) netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: k, col: wallet.color});
+  if (net) netSend({t: 'hello', v2: 1, id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: k, col: wallet.color});
 }
 // Buying spends gold, so it asks first: the figure, its price and what is left afterwards.
 function confirmBuy(k) {
@@ -1839,7 +1842,7 @@ function loadSave() {
 // An online game this phone took part in during the last 3 hours, if it may still be going.
 function lastOnline() { try { const g = JSON.parse(localStorage.getItem('lastGame')); return g && Date.now() - g.at < 3 * 3600e3 ? g : null; } catch (_) { return null; } }
 function renderResume() {
-  const sv = loadSave(), b = $('#resume'), lg = !net && lastOnline();
+  const sv = loadSave(), b = $('#resume'), lg = lastOnline() && (!net || !gameVisible); // also when a dead room object is left behind after a drop
   const off = sv && sv.moves && sv.cfg;
   b.hidden = !off && !lg;
   b.querySelector('.rtx b').textContent = off ? 'Продолжить партию' : 'Вернуться в онлайн-партию';
@@ -1850,6 +1853,7 @@ $('#resume').onclick = () => {
   const sv = loadSave();
   if (sv && sv.moves && sv.cfg) { if (net) leaveRoom(); startGame(sv.cfg, sv.moves); return show('game'); }
   const lg = lastOnline(); if (!lg) return renderResume();
+  if (net) leaveRoom();
   connect(lg.code, false); show('lobby');
 };
 
@@ -1995,6 +1999,9 @@ function onResign(p) {
 const drawOffers = {};
 function onDrawOffer(m) {
   drawOffers[m.id] = {from: m.p, yes: new Set([m.p])};
+  // Players who dropped out (a bot plays for them) cannot answer: if everybody else is away the offer is accepted at once,
+  // otherwise the one who stayed could only resign.
+  if (activeHumans().every(i => i === m.p || players[i].missed >= 1)) { delete drawOffers[m.id]; return endGame('draw'); }
   const me = mySeat();
   if (me < 0 || me === m.p) return;
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
@@ -2006,7 +2013,7 @@ function onDrawReply(m) {
   const d = drawOffers[m.id]; if (!d) return;
   if (!m.ok) { delete drawOffers[m.id]; if (mySeat() === d.from) toastAny(`${players[m.p].name} отказывается от ничьей`); return; }
   d.yes.add(m.p);
-  if (activeHumans().every(i => d.yes.has(i))) { delete drawOffers[m.id]; endGame('draw'); }
+  if (activeHumans().every(i => d.yes.has(i) || players[i].missed >= 1)) { delete drawOffers[m.id]; endGame('draw'); }
 }
 
 /* ---------------- setup ---------------- */
@@ -2365,7 +2372,7 @@ function connect(code, asHost, quick) {
       if (net !== me) return;
       if (opened) return netUp(me); // back after a drop: the stream sends everything again, seen messages are skipped
       opened = true;
-      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color}));
+      (asHost ? netSend({t: 'host', id: myId}) : Promise.resolve()).then(() => netSend({t: 'hello', v2: 1, id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color}));
       if (!asHost) setTimeout(() => { if (net === me && !net.hostId) { if (me.quick) return matchSkip(code); toastAny('Комната не найдена — проверьте код'); leaveRoom(); renderLobby(); } }, 6000);
     },
     error() {
@@ -2420,6 +2427,7 @@ function onNet(d) {
   const live = d.time >= net.since - 2;
   if (!m || typeof m !== 'object' || !netAuth(d, m)) return;
   if (m.t === 'host') { if (!net.hostId) { net.hostId = m.id; net.host = m.id === myId; } return renderLobby(); }
+  if (m.t === 'hello' && net.host) { (net.peerV2 = net.peerV2 || new Map()).set(m.id, m.v2 === 1); }
   if (m.t === 'hello' && net.host && !net.gameId) {
     const seats = net.lobby ? net.lobby.seats.slice() : [];
     const s = seats.find(x => x.owner === m.id);
@@ -2445,7 +2453,7 @@ function onNet(d) {
     // flag: then what this phone remembered about the game is used.
     const was = lastOnline();
     net.quick = typeof m.quick === 'boolean' ? m.quick : !!(was && was.code === net.code && was.q);
-    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
+    startGame({seats: m.seats.map((x, i) => ({name: clean(x.name) || 'Игрок ' + (i + 1), human: !!x.owner, ghost: !!x.ghost, owner: x.owner, uid: typeof x.uid === 'string' ? String(x.uid).replace(/[^\w-]/g, '').slice(0, 64) : null, fig: FIGS[x.fig] ? x.fig : 'classic', col: validCol(x.col) ? x.col : PL0[i % PL0.length].col})), rules: m.rules, deck: m.deck, seed: m.seed, online: d.id, noIntro: !live});
     if (!m.seats.some(x => x.owner === myId)) toast('Партия уже идёт — вы смотрите');
     else { try { localStorage.setItem('lastGame', JSON.stringify({code: net.code, at: Date.now(), q: net.quick ? 1 : 0})); } catch (_) {} updAnnounce(); } // to come back after a restart
     return show('game');
@@ -2564,7 +2572,7 @@ function autoMoveFor(who) {
   if (!current) return;
   const m = helperPick(current.type, who); if (!m) return;
   const t = {x: m.x, y: m.y, type: current.type, r: m.r};
-  const botOpts = players[who].meeples > 0 ? claimable(t).map(g => ({t, g})) : [];
+  const botOpts = players[who].meeples > 0 ? claimable(t, who).map(g => ({t, g})).filter(o => B.component(tiles, meeples, o.t, o.g).meeples.length === 0) : [];
   const o = botOpts.length && Math.random() < .55 ? botOpts[(Math.random() * botOpts.length) | 0] : null;
   netSend({t: 'move', g: net.gameId, n: applied, p: who, x: m.x, y: m.y, r: m.r, seed: (Math.random() * 1e9) | 0, m: o ? groupsOf(t).findIndex(q => gid(t, q) === gid(t, o.g)) : -1, auto: 1});
 }
@@ -2655,6 +2663,10 @@ function renderLobby() {
   renderLobbyFriends();
 }
 const BOT_NAMES = ['Бот Ёж', 'Бот Сова', 'Бот Лис', 'Бот Барсук'];
+// Quick match: after FILL_SECS without an opponent a stand-in joins under a human-looking name (no rating for that game).
+const FILL_SECS = 84;
+const GHOST_NAMES = ['Артём', 'Лёха_77', 'Marina', 'dimon', 'Катя', 'Nikita_K', 'Сергей', 'Alex', 'Оля', 'Vlad', 'Кирилл', 'Tanya', 'Максим', 'ivan_s', 'Даша', 'Roman', 'Настя', 'Denis', 'Юля', 'Egor', 'Полина', 'Pasha', 'Ксюша', 'Stas', 'Аня', 'Gleb', 'Миша', 'Vika', 'Андрей', 'Lena', 'Игорь', 'Sofi', 'Тимур', 'Oleg', 'Лиза', 'Danil', 'Вика_', 'Misha_', 'Ярик', 'Nastya', 'Коля', 'Ruslan', 'Таня', 'Matvey', 'Ира', 'Artur', 'Саша', 'Kris', 'Влад_', 'Zhenya', 'Света', 'Boris', 'Лера', 'Fedor', 'Дима', 'Alina', 'Паша_', 'Yana', 'Слава', 'Anton'];
+const ghostName = taken => { const free = GHOST_NAMES.filter(n => !taken.some(x => x.name === n)); return free.length ? free[(Math.random() * free.length) | 0] : 'Игрок ' + ((Math.random() * 90 + 10) | 0); };
 // Everyone may want any colour; a colour wanted by several goes to one of them at random,
 // the others (and anyone without a valid choice) get random colours nobody took.
 function assignColors(seats) {
@@ -2671,7 +2683,7 @@ function renderMyColor() {
 $('#myColor').addEventListener('click', e => {
   const sw = e.target.closest('[data-sw]'); if (!sw) return;
   wallet.color = sw.dataset.sw; saveWallet(); renderMyColor();
-  if (net) netSend({t: 'hello', id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
+  if (net) netSend({t: 'hello', v2: 1, id: myId, uid: myUid(), reg: registered() ? 1 : 0, name: myName(), fig: wallet.fig, col: wallet.color});
 });
 $('#create').onclick = () => openSetup('friends');
 const newCode = () => (PG.net && PG.net.rooms) ? PG.net.rooms.newCode() : (() => { const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; return Array.from({length: 5}, () => A[(Math.random() * A.length) | 0]).join(''); })();
@@ -2691,8 +2703,10 @@ $('#lobbyStart').onclick = () => startOnline(net.lobby.seats);
 // Rated games (quick match) use the same rules for everybody: only the mode is chosen.
 const ratedRules = mode => (PG.net && PG.net.rooms) ? PG.net.rooms.ratedRules(mode, MODES) : ({mode, ...MODES[mode].set, rivers: true, timer: 60, hints: true, tie: 'all'});
 function startOnline(seats) {
-  const rules = net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : {...setup.rules};
-  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
+  const rules = {...(net && net.quick ? ratedRules(mm ? mm.mode : setup.rules.mode) : setup.rules)};
+  // Rules v2 only when every guest announced it (an old client would count points differently).
+  rules.rv = seats.every(x => !x.owner || x.owner === myId || (net.peerV2 && net.peerV2.get(x.owner))) ? 2 : 1;
+  netSend({t: 'start', sec: FB ? 1 : 0, seats: assignColors(seats).map(x => ({name: x.name, owner: x.owner || null, uid: x.uid || null, fig: x.fig || 'classic', col: x.col, ghost: x.ghost ? 1 : 0})), rules, deck: makeDeck(rules), seed: (Math.random() * 1e9) | 0, quick: !!(net && net.quick)});
 }
 function rematchClick() {
   if (!net) { newGame(); show('game'); return; }
@@ -2858,25 +2872,24 @@ function matchTick(me) {
   $('#mClock').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
   const seats = net && net.quick && net.lobby ? net.lobby.seats : [];
   // After a while the creator may fill the empty seats with bots; anyone else may go play bots.
-  $('#mBots').hidden = sec < 10 || !!me.startAt;
+  $('#mBots').hidden = sec < FILL_SECS || !!me.startAt;
   $('#mBots').textContent = net && net.host && seats.length >= 2 ? 'Добавить ботов и начать' : 'Пока сыграть с ботами';
   if (!net || !net.quick || net.gameId) return;
   if (net.host && !me.startAt && (Date.now() - me.lastSeek > SEEK_MS || me.lastN !== seats.length)) { me.lastN = seats.length; me.lastSeek = Date.now(); matchSay({t: 'seek', code: net.code, id: myId, want: me.want, mode: me.mode, n: seats.length}); }
   // We knocked but the room's creator never let us in (closed the app, or the room is full).
   if (!net.host && Date.now() - net.since * 1000 > 9000 && !seats.some(x => x.owner === myId)) return matchSkip(net.code);
   // Guest waiting alone or with unresponsive host for >= 10s: skip to own room
-  if (!net.host && sec >= 10 && !me.startAt && seats.length < me.want) return matchSkip(net.code);
+  if (!net.host && sec >= FILL_SECS && !me.startAt && seats.length < me.want) return matchSkip(net.code);
 
   // H-5: if no human opponent found within ~10 seconds, auto-fill remaining seats with bots so player doesn't wait in empty room
-  if (net.host && !me.startAt && sec >= 10 && seats.length < me.want) {
+  if (net.host && !me.startAt && sec >= FILL_SECS && seats.length < me.want) {
     const nextSeats = (PG.net && PG.net.matchmaking)
-      ? PG.net.matchmaking.autoFillSeats(net.lobby && net.lobby.seats ? net.lobby.seats : seats, me.want, {owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color}, BOT_NAMES, randomFig)
+      ? PG.net.matchmaking.autoFillSeats(net.lobby && net.lobby.seats ? net.lobby.seats : seats, me.want, {owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color}, [], randomFig)
       : (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : (seats.slice() || []));
     if (!nextSeats.some(x => x.owner === myId)) nextSeats.unshift({owner: myId, uid: myUid(), name: myName(), fig: wallet.fig, col: wallet.color, ready: true});
-    while (nextSeats.length < me.want) {
-      const bName = BOT_NAMES.find(n => !nextSeats.some(x => x.name === n)) || ('Бот ' + (nextSeats.length + 1));
-      nextSeats.push({owner: null, bot: true, name: bName, fig: randomFig(), col: null, ready: true});
-    }
+    while (nextSeats.length < me.want) nextSeats.push({owner: null, bot: true, ghost: 1, name: ghostName(nextSeats), fig: randomFig(), col: null, ready: true});
+    // seats added by the module above carry no human-like name yet
+    nextSeats.forEach(x => { if (x.bot && !x.owner && !x.ghost) { x.ghost = 1; x.name = ghostName(nextSeats.filter(y => y !== x)); } });
     publishLobby(nextSeats);
     if (net.lobby) net.lobby.seats = nextSeats;
     me.startAt = Date.now() + 1500;
@@ -2899,8 +2912,8 @@ function matchRender() {
   $('#mLoad').classList.toggle('found', full);
   $('#mTitle').textContent = full ? (left ? `Старт через ${left}…` : 'Начинаем!') : others ? `Найдено ${others} из ${want - 1}` : 'Ищем соперников…';
   const hasBot = seats.some(x => !x.owner);
-  $('#mSub').textContent = full ? (hasBot ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
-  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner ? ' <span class="botpill">бот</span>' : ''}</li>`);
+  $('#mSub').textContent = full ? (hasBot && !seats.some(x => x.ghost) ? 'Соперников нет — играем с ботом (без кубков)' : 'Все игроки собрались') : `Партия на ${want} ${want < 5 ? 'игрока' : 'игроков'} начнётся, когда соберутся все`;
+  const list = seats.map((x, i) => `<li><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i].col}">${(clean(x.name) || '?')[0]}</span>${meLabel(x.owner === myId, x.name)}${!x.owner && !x.ghost ? ' <span class="botpill">бот</span>' : ''}</li>`);
   if (!seats.length) list.push(`<li><span class="av" style="--c:${validCol(wallet.color) ? wallet.color : PL0[0].col}">${myName()[0]}</span>${meLabel(true, myName())}</li>`);
   while (list.length < want) list.push('<li class="wait"><span class="av">?</span>Ищем</li>');
   const html = list.join(''); if ($('#mSeats').innerHTML !== html) $('#mSeats').innerHTML = html; // re-rendering restarts the pop-in

@@ -12,11 +12,11 @@ const path = require('node:path');
 const GAME_PATH = path.join(__dirname, '..', 'web', 'game.html');
 const STYLES_PATH = path.join(__dirname, '..', 'src', 'ui', 'styles.css');
 
-test('neighbor bots (H-5): auto-fill after 10 seconds in quick match', () => {
+test('neighbor bots (H-5, owner decision 01.11): stand-in joins after 84 seconds in quick match', () => {
   const code = fs.readFileSync(GAME_PATH, 'utf8');
 
   // Matchmaking tick logic checks for 10 seconds
-  assert.ok(code.includes('sec >= 10'), 'matchTick checks for 10s threshold');
+  assert.ok(code.includes('sec >= FILL_SECS') && code.includes('const FILL_SECS = 84'), 'matchTick checks the 84 s (1:24) threshold');
   assert.ok(code.includes('seats.length < me.want'), 'auto-fills when seats are below wanted table size');
   assert.ok(code.includes('bot: true'), 'marks auto-added bot seats');
   assert.ok(code.includes('BOT_NAMES'), 'picks from neighbor bot names list');
@@ -33,13 +33,13 @@ test('bot mark (H-5): honest bot pill badge displayed in player cards, lobby, an
   assert.ok(styles.includes('.botpill'), 'styles.css contains .botpill class definition');
 
   // In-game player card displays bot mark
-  assert.ok(code.includes('!p.human ? \' <span class="botpill">бот</span>\''), 'renderPlayers displays bot pill for non-human');
+  assert.ok(code.includes('!p.human && !p.ghost ? \' <span class="botpill">бот</span>\''), 'renderPlayers displays bot pill for non-human');
 
   // Lobby/matchmaking display shows bot mark
-  assert.ok(code.includes('!x.owner ? \' <span class="botpill">бот</span>\''), 'matchRender displays bot pill in seat list');
+  assert.ok(code.includes('!x.owner && !x.ghost ? \' <span class="botpill">бот</span>\''), 'matchRender displays bot pill in seat list');
 
   // Results podium & table display bot mark
-  assert.ok(code.includes('!p.human ? \' <span class="botpill">бот</span>\''), 'renderResults displays bot pill on podium and scoreboard');
+  assert.ok(code.includes('!p.human && !p.ghost ? \' <span class="botpill">бот</span>\''), 'renderResults displays bot pill on podium and scoreboard');
 });
 
 test('cups safety (H-5): no cups awarded for games containing bots', () => {
