@@ -4139,12 +4139,12 @@ function showNameProposalDialog(force) {
   const already = !!(wallet && wallet.nameSuggested);
   const curName = (wallet && wallet.suggestedGameName) || '';
 
-  box.innerHTML = `<div class="ocard namecard">
+  box.innerHTML = `<div class="ocard namecard" role="dialog" aria-modal="true" aria-labelledby="nameCardTitle">
     <button class="namecard-close" id="nameIdeaClose" aria-label="Закрыть">✕</button>
     <div class="namecard-head">
       <div class="namecard-badge">✨</div>
       <div class="namecard-titles">
-        <b>Новое имя для игры!</b>
+        <b id="nameCardTitle">Новое имя для игры!</b>
         <small>Конкурс для игроков и авторов</small>
       </div>
     </div>
@@ -4162,9 +4162,15 @@ function showNameProposalDialog(force) {
       </div>
     </div>
     ${already ? `<div class="namecard-already">Ваш текущий вариант: <b>«${clean(curName)}»</b> (+100 🟡 начислено). Можно обновить:</div>` : ''}
-    <div class="namecard-label">Вариант названия</div>
+    <div class="namecard-label-row">
+      <span class="namecard-label">Вариант названия</span>
+      <span class="namecard-counter" id="nameIdeaCount">${curName.length}/40</span>
+    </div>
     <input class="field namecard-input" id="nameIdeaInput" maxlength="40" placeholder="Например: Каркассония, Тайлоград…" value="${clean(curName)}" autocomplete="off">
-    <div class="namecard-label">Почему оно подходит? <span style="font-weight:400;text-transform:none;opacity:.7">(по желанию)</span></div>
+    <div class="namecard-label-row">
+      <span class="namecard-label">Почему оно подходит? <span style="font-weight:400;text-transform:none;opacity:.7">(по желанию)</span></span>
+      <span class="namecard-counter" id="nameWhyCount">0/200</span>
+    </div>
     <textarea class="fbtext namecard-why" id="nameIdeaWhy" rows="2" maxlength="200" placeholder="Ассоциации, смысл, почему звучит здорово…"></textarea>
     <button class="cta wide namecard-cta" id="nameIdeaSend"${curName.length >= 2 ? '' : ' disabled'}>${already ? '✨ Обновить название' : '✨ Предложить название (+100 🟡)'}</button>
   </div>`;
@@ -4173,16 +4179,54 @@ function showNameProposalDialog(force) {
 
   const inp = box.querySelector('#nameIdeaInput');
   const why = box.querySelector('#nameIdeaWhy');
+  const nameCount = box.querySelector('#nameIdeaCount');
+  const whyCount = box.querySelector('#nameWhyCount');
   const sendBtn = box.querySelector('#nameIdeaSend');
   const closeBtn = box.querySelector('#nameIdeaClose');
 
-  inp.oninput = () => {
-    const val = inp.value.trim();
-    sendBtn.disabled = val.length < 2;
-  };
+  function closeDialog() {
+    if (box.classList.contains('closing')) return;
+    box.classList.add('closing');
+    window.removeEventListener('keydown', onKeyDown);
+    setTimeout(() => box.remove(), 180);
+  }
 
-  if (closeBtn) closeBtn.onclick = () => box.remove();
-  box.onclick = e => { if (e.target === box) box.remove(); };
+  function updateCounters() {
+    const val = inp.value;
+    const whyVal = why.value;
+    sendBtn.disabled = val.trim().length < 2;
+    if (nameCount) {
+      nameCount.textContent = `${val.length}/40`;
+      nameCount.classList.toggle('warn', val.length >= 35);
+    }
+    if (whyCount) {
+      whyCount.textContent = `${whyVal.length}/200`;
+      whyCount.classList.toggle('warn', whyVal.length >= 180);
+    }
+  }
+
+  inp.oninput = updateCounters;
+  why.oninput = updateCounters;
+
+  const onKeyDown = e => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeDialog();
+    } else if (e.key === 'Enter' && e.target === inp && !e.shiftKey) {
+      if (!sendBtn.disabled) {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    }
+  };
+  window.addEventListener('keydown', onKeyDown);
+
+  if (closeBtn) closeBtn.onclick = closeDialog;
+  box.onclick = e => { if (e.target === box) closeDialog(); };
+
+  setTimeout(() => {
+    try { inp.focus(); } catch (_) {}
+  }, 60);
 
   sendBtn.onclick = async () => {
     const title = inp.value.trim().slice(0, 40);
@@ -4217,7 +4261,7 @@ function showNameProposalDialog(force) {
       wallet.suggestedGameName = title;
       saveWallet();
       plog('name_suggested', title);
-      box.remove();
+      closeDialog();
       toastAny(already ? 'Ваш вариант обновлён! Спасибо! 🎉' : '🎉 Отлично! +100 золота начислено. Спасибо за идею!');
       updateNameProposalBtnLabel();
     } catch (_) {
@@ -4228,7 +4272,7 @@ function showNameProposalDialog(force) {
       }
       wallet.suggestedGameName = title;
       saveWallet();
-      box.remove();
+      closeDialog();
       toastAny('Идея сохранена! +100 золота 🎉');
       updateNameProposalBtnLabel();
     }
