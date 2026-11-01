@@ -1067,3 +1067,7 @@ html.app .screen.scroll{--sp:var(--it,0px);padding-top:0}/* the status-bar gap i
 /* sign-in / sign-out buttons sit inside the profile card (the account block itself stays hidden: it keeps the handlers) */
 #acct{display:none}
 .profile .pacts{display:flex;width:100%}.profile .pacts .chip{flex:1;justify-content:center;padding:10px 8px}
+/* room: invited friends who have not come yet */
+.plist li.inv{opacity:.88;border-style:dashed}.plist li.inv .who small{color:var(--brass)}.plist li.inv.late .who small{color:var(--muted)}
+.plist li.inv .av{filter:saturate(.6)}
+.who .fst{display:block;width:fit-content}
