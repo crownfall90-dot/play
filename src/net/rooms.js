@@ -83,3 +83,132 @@ export function isLobbyAllReady(seats, hostId) {
   const others = (seats || []).filter(x => x.owner && x.owner !== hostId);
   return others.length === 0 || others.every(x => x.ready);
 }
+
+export function computePendingInvites(invited, seats = [], friends = [], net = null, inviteLateMs = 30000, now = Date.now()) {
+  if (!net || !invited || invited.code !== net.code || !invited.uids) return [];
+  return [...invited.uids].filter(uid => !seats.some(x => x.uid === uid)).map(uid => {
+    const f = (friends || []).find(q => q.uid === uid);
+    const at = (invited.at || {})[uid] || 0;
+    return {
+      uid,
+      n: f ? f.n : 'Друг',
+      st: f ? f.st : '',
+      c: f && f.c,
+      late: !!at && now - at > inviteLateMs,
+      declined: !!(invited.declined && invited.declined.has(uid))
+    };
+  });
+}
+
+export function formatCupsBadge(cups, isHost) {
+  const className = 'cupsbadge' + (cups ? ' on' : '') + (isHost ? ' host' : '');
+  const title = cups ? '🏆 Игра на кубки' : '🤝 Без кубков';
+  const subtitle = isHost
+    ? (cups ? 'Кубки начисляются' : 'Кубки не меняются')
+    : (cups ? 'Рейтинговая игра' : 'Без рейтинга');
+  const innerHtml = `<b>${title}</b><small>${subtitle}</small>`;
+  return {className, innerHtml};
+}
+
+export function renderRoomSeatsHtml({
+  seats = [],
+  pend = [],
+  myId = '',
+  myUid = '',
+  hostId = '',
+  isHost = false,
+  registered = false,
+  isFriendFn = () => false,
+  validColFn = () => false,
+  cleanFn = s => s,
+  stTagFn = () => '',
+  palette = []
+} = {}) {
+  const seatsHtml = seats.length ? seats.map((x, i) => {
+    const isMe = x.owner === myId;
+    const isBot = !x.owner;
+    const isRoomHost = x.owner === hostId;
+    const safeUid = String(x.uid || '').replace(/[^\w-]/g, '').slice(0, 64);
+    const safeName = cleanFn(x.name);
+    const initial = (safeName || '?')[0];
+    const colVal = validColFn(x.col) ? x.col : (palette[i % palette.length] ? (palette[i % palette.length].col || palette[i % palette.length]) : '#3fc27a');
+    const dataAttrs = (x.uid && !isMe) ? ` data-pl="${safeUid}" data-n="${safeName}" data-c="${validColFn(x.col) ? x.col : ''}"` : '';
+
+    const whoHtml = `<b>${safeName}${isMe ? ' (вы)' : ''}</b>${stTagFn(x.st)}<small>${isBot ? 'Бот' : isRoomHost ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small>`;
+    
+    const canAddFriend = (!isMe && !isBot && x.uid && x.uid !== myUid && !isFriendFn(x.uid) && registered);
+    const addFriendBtn = canAddFriend ? `<button class="chip addf" data-addf="${safeUid}" data-n="${safeName}" aria-label="В друзья">＋</button>` : '';
+
+    let actionOrPill;
+    if (isHost && !isMe) {
+      actionOrPill = `<button class="chip" data-kick="${i}">Убрать</button>`;
+    } else if (isBot) {
+      actionOrPill = '<span class="pill">Бот</span>';
+    } else if (isRoomHost) {
+      actionOrPill = '<span class="pill host">Создатель</span>';
+    } else if (x.ready) {
+      actionOrPill = '<span class="pill ok">✓ Готов</span>';
+    } else {
+      actionOrPill = '<span class="pill wait">Не готов</span>';
+    }
+
+    return `<li${dataAttrs}><span class="av" style="--c:${colVal}">${initial}</span><span class="who">${whoHtml}</span>${addFriendBtn}${actionOrPill}</li>`;
+  }).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+
+  const pendHtml = pend.map(p => {
+    const safeName = cleanFn(p.n);
+    const initial = (safeName || '?')[0];
+    const colVal = validColFn(p.c) ? p.c : '#5b6684';
+    const statusText = p.declined ? 'Отказался' : p.late ? 'Не отвечает' : 'Приглашён · ждём ответа';
+    return `<li class="inv${p.late || p.declined ? ' late' : ''}${p.declined ? ' no' : ''}"><span class="av" style="--c:${colVal}">${initial}</span><span class="who"><b>${safeName}</b>${stTagFn(p.st)}<small>${statusText}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`;
+  }).join('');
+
+  return {seatsHtml, pendHtml};
+}
+
+export function formatLobbyButtons({
+  isHost,
+  seatsCount,
+  others = [],
+  allReady,
+  isReady,
+  inLobby,
+  isQuick
+}) {
+  if (isHost) {
+    if (seatsCount < 2) {
+      return {
+        hostBtn: {hidden: !inLobby, disabled: true, text: 'Нужно хотя бы 2 игрока'},
+        readyBtn: {hidden: true}
+      };
+    }
+    if (!allReady && !isQuick) {
+      const readyCount = others.filter(x => x.ready).length;
+      const text = others.length > 1 ? `Прожмите готовность (${readyCount}/${others.length})` : 'Прожмите готовность';
+      return {
+        hostBtn: {hidden: !inLobby, disabled: true, text},
+        readyBtn: {hidden: true}
+      };
+    }
+    return {
+      hostBtn: {hidden: !inLobby, disabled: false, text: 'Начать игру'},
+      readyBtn: {hidden: true}
+    };
+  } else {
+    if (!inLobby || isQuick) {
+      return {
+        hostBtn: {hidden: true},
+        readyBtn: {hidden: true}
+      };
+    }
+    return {
+      hostBtn: {hidden: true},
+      readyBtn: {
+        hidden: false,
+        text: isReady ? '✓ Готов (отменить)' : 'Готов',
+        className: isReady ? 'cta wide alt' : 'cta wide',
+        hintText: isReady ? 'Вы готовы · ожидание старта…' : 'Нажмите «Готов» для подтверждения'
+      }
+    };
+  }
+}

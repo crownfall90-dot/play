@@ -2672,6 +2672,9 @@ async function pumpRemote() {
 // Friends invited to this room who are not in it yet: the creator sees them in the list, with a status, before starting.
 const INVITE_LATE = 30000;
 function pendingInvites(seats) {
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.computePendingInvites) {
+    return PG.net.rooms.computePendingInvites(invited, seats, friends, net, INVITE_LATE);
+  }
   if (!net || invited.code !== net.code) return [];
   return [...invited.uids].filter(uid => !seats.some(x => x.uid === uid)).map(uid => {
     const f = friends.find(q => q.uid === uid), at = (invited.at || {})[uid] || 0;
@@ -2686,8 +2689,15 @@ function renderLobby() {
   $('#codeShow').innerHTML = [...net.code].map(c => `<span>${c}</span>`).join('');
   // "for cups" is seen by everyone in the room; the creator switches it here with one tap
   const cups = !!(net.lobby && net.lobby.rules ? net.lobby.rules.cups : setup.rules.cups), cb = $('#lbCups');
-  cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : ''); cb.disabled = !net.host || !!net.gameId;
-  cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? (cups ? 'Кубки начисляются' : 'Кубки не меняются') : (cups ? 'Рейтинговая игра' : 'Без рейтинга')}</small>`;
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.formatCupsBadge) {
+    const badge = PG.net.rooms.formatCupsBadge(cups, net.host);
+    cb.className = badge.className;
+    cb.innerHTML = badge.innerHtml;
+  } else {
+    cb.className = 'cupsbadge' + (cups ? ' on' : '') + (net.host ? ' host' : '');
+    cb.innerHTML = `<b>${cups ? '🏆 Игра на кубки' : '🤝 Без кубков'}</b><small>${net.host ? (cups ? 'Кубки начисляются' : 'Кубки не меняются') : (cups ? 'Рейтинговая игра' : 'Без рейтинга')}</small>`;
+  }
+  cb.disabled = !net.host || !!net.gameId;
   renderMyColor();
   const seats = (net.lobby && net.lobby.seats ? net.lobby.seats.slice() : []);
   if (net && !net.host && !seats.some(x => x.owner === myId)) {
@@ -2704,9 +2714,27 @@ function renderLobby() {
   }
   const pend = net.host ? pendingInvites(seats) : [];
   $('#lbCount').textContent = `Игроки · ${seats.length} из ${roomMax()}${pend.length ? ` · приглашено: ${pend.length}` : ''}`;
-  $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b>${stTag(x.st)}<small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
-  if (pend.length) {
-    $('#plist').insertAdjacentHTML('beforeend', pend.map(p => `<li class="inv${p.late || p.declined ? ' late' : ''}${p.declined ? ' no' : ''}"><span class="av" style="--c:${validCol(p.c) ? p.c : '#5b6684'}">${(clean(p.n) || '?')[0]}</span><span class="who"><b>${clean(p.n)}</b>${stTag(p.st)}<small>${p.declined ? 'Отказался' : p.late ? 'Не отвечает' : 'Приглашён · ждём ответа'}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`).join(''));
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.renderRoomSeatsHtml) {
+    const rendered = PG.net.rooms.renderRoomSeatsHtml({
+      seats,
+      pend,
+      myId,
+      myUid: myUid(),
+      hostId: net.hostId,
+      isHost: net.host,
+      registered: registered(),
+      isFriendFn: isFriend,
+      validColFn: validCol,
+      cleanFn: clean,
+      stTagFn: stTag,
+      palette: PL0
+    });
+    $('#plist').innerHTML = rendered.seatsHtml + (pend.length ? rendered.pendHtml : '');
+  } else {
+    $('#plist').innerHTML = seats.length ? seats.map((x, i) => `<li${x.uid && x.owner !== myId ? ` data-pl="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" data-c="${validCol(x.col) ? x.col : ''}"` : ''}><span class="av" style="--c:${validCol(x.col) ? x.col : PL0[i % PL0.length].col}">${(clean(x.name) || '?')[0]}</span><span class="who"><b>${clean(x.name)}${x.owner === myId ? ' (вы)' : ''}</b>${stTag(x.st)}<small>${!x.owner ? 'Бот' : x.owner === net.hostId ? 'Создатель комнаты' : (x.ready ? '✓ Готов к игре' : 'Ждём готовности')}</small></span>${x.owner && x.owner !== myId && x.uid && x.uid !== myUid() && !isFriend(x.uid) && registered() ? `<button class="chip addf" data-addf="${String(x.uid).replace(/[^\w-]/g, '').slice(0, 64)}" data-n="${clean(x.name)}" aria-label="В друзья">＋</button>` : ''}${net.host && x.owner !== myId ? `<button class="chip" data-kick="${i}">Убрать</button>` : (!x.owner ? '<span class="pill">Бот</span>' : x.owner === net.hostId ? '<span class="pill host">Создатель</span>' : x.ready ? '<span class="pill ok">✓ Готов</span>' : '<span class="pill wait">Не готов</span>')}</li>`).join('') : '<li class="empty"><span class="who"><b>Подключаемся…</b></span></li>';
+    if (pend.length) {
+      $('#plist').insertAdjacentHTML('beforeend', pend.map(p => `<li class="inv${p.late || p.declined ? ' late' : ''}${p.declined ? ' no' : ''}"><span class="av" style="--c:${validCol(p.c) ? p.c : '#5b6684'}">${(clean(p.n) || '?')[0]}</span><span class="who"><b>${clean(p.n)}</b>${stTag(p.st)}<small>${p.declined ? 'Отказался' : p.late ? 'Не отвечает' : 'Приглашён · ждём ответа'}</small></span><button class="chip go" data-linv="${p.uid}">Ещё раз</button><button class="chip x" data-idrop="${p.uid}" aria-label="Убрать из приглашённых">✕</button></li>`).join(''));
+    }
   }
   clearTimeout(lobbyPendTimer);
   if (pend.length) lobbyPendTimer = setTimeout(() => { if (net && !$('#scr-lobby').hidden) renderLobby(); }, 5000);
@@ -2716,29 +2744,53 @@ function renderLobby() {
   const inLobby = !(net.gameId && phase !== 'end');
   const mySeat = seats.find(x => x.owner === myId);
 
-  if (net.host) {
-    $('#lobbyReady').hidden = true;
-    $('#lobbyStart').hidden = !inLobby;
-    if (seats.length < 2) {
-      $('#lobbyStart').disabled = true;
-      $('#lobbyStart').textContent = 'Нужно хотя бы 2 игрока';
-    } else if (!allReady && !net.quick) {
-      $('#lobbyStart').disabled = true;
-      const readyCount = others.filter(x => x.ready).length;
-      $('#lobbyStart').textContent = others.length > 1 ? `Прожмите готовность (${readyCount}/${others.length})` : 'Прожмите готовность';
-    } else {
-      $('#lobbyStart').disabled = false;
-      $('#lobbyStart').textContent = 'Начать игру';
+  if (typeof PG !== 'undefined' && PG.net && PG.net.rooms && PG.net.rooms.formatLobbyButtons) {
+    const btnState = PG.net.rooms.formatLobbyButtons({
+      isHost: net.host,
+      seatsCount: seats.length,
+      others,
+      allReady,
+      isReady: !!(mySeat && mySeat.ready),
+      inLobby,
+      isQuick: !!net.quick
+    });
+    $('#lobbyStart').hidden = btnState.hostBtn.hidden;
+    if (!btnState.hostBtn.hidden) {
+      $('#lobbyStart').disabled = !!btnState.hostBtn.disabled;
+      $('#lobbyStart').textContent = btnState.hostBtn.text;
+    }
+    $('#lobbyReady').hidden = btnState.readyBtn.hidden;
+    if (!btnState.readyBtn.hidden) {
+      $('#lobbyReady').textContent = btnState.readyBtn.text;
+      $('#lobbyReady').className = btnState.readyBtn.className;
+      const hint = $('#lbWait .shint');
+      if (hint && btnState.readyBtn.hintText) hint.textContent = btnState.readyBtn.hintText;
     }
   } else {
-    $('#lobbyStart').hidden = true;
-    $('#lobbyReady').hidden = !inLobby || !!net.quick;
-    if (inLobby && !net.quick) {
-      const isReady = !!(mySeat && mySeat.ready);
-      $('#lobbyReady').textContent = isReady ? '✓ Готов (отменить)' : 'Готов';
-      $('#lobbyReady').className = isReady ? 'cta wide alt' : 'cta wide';
-      const hint = $('#lbWait .shint');
-      if (hint) hint.textContent = isReady ? 'Вы готовы · ожидание старта…' : 'Нажмите «Готов» для подтверждения';
+    if (net.host) {
+      $('#lobbyReady').hidden = true;
+      $('#lobbyStart').hidden = !inLobby;
+      if (seats.length < 2) {
+        $('#lobbyStart').disabled = true;
+        $('#lobbyStart').textContent = 'Нужно хотя бы 2 игрока';
+      } else if (!allReady && !net.quick) {
+        $('#lobbyStart').disabled = true;
+        const readyCount = others.filter(x => x.ready).length;
+        $('#lobbyStart').textContent = others.length > 1 ? `Прожмите готовность (${readyCount}/${others.length})` : 'Прожмите готовность';
+      } else {
+        $('#lobbyStart').disabled = false;
+        $('#lobbyStart').textContent = 'Начать игру';
+      }
+    } else {
+      $('#lobbyStart').hidden = true;
+      $('#lobbyReady').hidden = !inLobby || !!net.quick;
+      if (inLobby && !net.quick) {
+        const isReady = !!(mySeat && mySeat.ready);
+        $('#lobbyReady').textContent = isReady ? '✓ Готов (отменить)' : 'Готов';
+        $('#lobbyReady').className = isReady ? 'cta wide alt' : 'cta wide';
+        const hint = $('#lbWait .shint');
+        if (hint) hint.textContent = isReady ? 'Вы готовы · ожидание старта…' : 'Нажмите «Готов» для подтверждения';
+      }
     }
   }
   $('#lbWait').hidden = net.host || !inLobby;

@@ -166,3 +166,59 @@ test('net/matchmaking: H-5 bot fallback triggers and fills seats', async () => {
   assert.ok(seatsHtml.includes('botpill'));
   assert.ok(seatsHtml.includes('Ищем'));
 });
+
+test('net/rooms: computePendingInvites, formatCupsBadge, renderRoomSeatsHtml, formatLobbyButtons', async () => {
+  const rooms = await import('../src/net/rooms.js');
+
+  // computePendingInvites
+  const net = {code: 'ROOM1'};
+  const invited = {
+    code: 'ROOM1',
+    uids: new Set(['u1', 'u2']),
+    at: {u1: 1000, u2: 50000},
+    declined: new Set(['u1'])
+  };
+  const seats = [{uid: 'host-uid'}];
+  const friends = [{uid: 'u1', n: 'Friend1', st: 'Pro', c: '#ff0000'}, {uid: 'u2', n: 'Friend2'}];
+  const pend = rooms.computePendingInvites(invited, seats, friends, net, 30000, 60000);
+  assert.equal(pend.length, 2);
+  assert.equal(pend[0].declined, true);
+  assert.equal(pend[0].late, true); // 60000 - 1000 > 30000
+  assert.equal(pend[1].late, false); // 60000 - 50000 <= 30000
+
+  // formatCupsBadge
+  const badgeHost = rooms.formatCupsBadge(true, true);
+  assert.ok(badgeHost.className.includes('cupsbadge on host'));
+  assert.ok(badgeHost.innerHtml.includes('Игра на кубки'));
+
+  // renderRoomSeatsHtml
+  const roomSeats = [
+    {owner: 'h1', uid: 'uid-host', name: 'Host', ready: true, col: '#ff0000'},
+    {owner: 'g1', uid: 'uid-guest', name: 'Guest', ready: false, col: '#00ff00'},
+    {owner: null, name: 'Бот Ёж', col: '#0000ff'}
+  ];
+  const rendered = rooms.renderRoomSeatsHtml({
+    seats: roomSeats,
+    pend: [{uid: 'u3', n: 'Pending', late: false, declined: false}],
+    myId: 'g1',
+    myUid: 'uid-guest',
+    hostId: 'h1',
+    isHost: false,
+    registered: true,
+    cleanFn: s => s,
+    validColFn: () => true
+  });
+  assert.ok(rendered.seatsHtml.includes('Host'));
+  assert.ok(rendered.seatsHtml.includes('Guest (вы)'));
+  assert.ok(rendered.seatsHtml.includes('Бот'));
+  assert.ok(rendered.pendHtml.includes('Pending'));
+
+  // formatLobbyButtons
+  const hostButtonsNeedPlayers = rooms.formatLobbyButtons({isHost: true, seatsCount: 1, inLobby: true});
+  assert.equal(hostButtonsNeedPlayers.hostBtn.disabled, true);
+  assert.equal(hostButtonsNeedPlayers.hostBtn.text, 'Нужно хотя бы 2 игрока');
+
+  const guestButtons = rooms.formatLobbyButtons({isHost: false, inLobby: true, isReady: false, isQuick: false});
+  assert.equal(guestButtons.readyBtn.hidden, false);
+  assert.equal(guestButtons.readyBtn.text, 'Готов');
+});
