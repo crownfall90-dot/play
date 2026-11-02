@@ -29,7 +29,7 @@ jobs:
           rc=$?
           if [ "$rc" -eq 0 ]; then
             chmod +x gradlew
-            ./gradlew -I scripts/staging.init.gradle assembleStagingDebug -PversionCode=1 --no-daemon >> /tmp/build.log 2>&1
+            ./gradlew assembleGithubRelease -PversionCode=1 --no-daemon >> /tmp/build.log 2>&1
             rc=$?
           fi
           echo "$rc" > /tmp/build.exit
@@ -41,7 +41,7 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import os,re
-          out=['# Account verification','Source: '+os.environ['SOURCE_SHA'],'Tests exit code: '+Path('/tmp/tests.exit').read_text().strip(),'Staging assembleStagingDebug exit code: '+Path('/tmp/build.exit').read_text().strip(),'No APK publication, FCM send, production Firebase access, main change or signing-key rotation.']
+          out=['# Account verification','Source: '+os.environ['SOURCE_SHA'],'Tests exit code: '+Path('/tmp/tests.exit').read_text().strip(),'Staging assembleGithubRelease exit code: '+Path('/tmp/build.exit').read_text().strip(),'No APK publication, FCM send, production Firebase access, main change or signing-key rotation.']
           for name in ['tests','build']:
               log=Path('/tmp/'+name+'.log').read_text(errors='replace')
               if name=='build':
