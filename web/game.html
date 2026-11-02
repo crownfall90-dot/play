@@ -4992,6 +4992,8 @@ const AUTH_ERR = {
   USER_DISABLED: ['Этот профиль отключён. Напишите в поддержку', 'mail'],
   TOO_MANY_ATTEMPTS_TRY_LATER: ['Слишком много попыток подряд. Подождите несколько минут или смените пароль через «Забыли пароль?»', ''],
   CREDENTIAL_TOO_OLD_LOGIN_AGAIN: ['Для этого нужно войти заново', ''],
+  CREDENTIAL_ALREADY_IN_USE: ['Этот аккаунт Google уже используется. Выполняем вход...', ''],
+  FEDERATED_USER_ID_ALREADY_LINKED: ['Этот аккаунт Google уже привязан к другому профилю. Выполняем вход...', ''],
   SHORT_OR_WRONG: ['Пароль не подходит. Для нового профиля пароль нужен от 6 символов', 'pass'],
 };
 // Server-side setup problems (sign-in method off, e-mail change blocked…) are not the player's
@@ -5078,7 +5080,7 @@ async function finishGoogle(idToken, link, onFail) {
       try { await fbToken(); j = await googleIdp(idToken, fbAuth.idToken); joined = true; }
       catch (e) {
         // Already the key of another profile: sign in to that one (a saved profile asking to link is told so instead).
-        if (!gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED/) || (link && wasRegistered)) throw e;
+        if (!gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED|CREDENTIAL_ALREADY_IN_USE/) || (link && wasRegistered)) throw e;
       }
     }
     if (!j) j = await googleIdp(idToken, null);
@@ -5108,7 +5110,7 @@ async function finishGoogle(idToken, link, onFail) {
       accountDialog('login', jwtEmail(idToken));
     } else {
       const [t] = authErr(e, link); toastAny(t);
-      if (link && gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED/)) setTimeout(() => accountDialog('login'), 400);
+      if (link && gErr(e, /FEDERATED_USER_ID_ALREADY_LINKED|CREDENTIAL_ALREADY_IN_USE/)) setTimeout(() => accountDialog('login'), 400);
     }
     if (onFail) onFail(e);
   } finally { googleBusy = false; }
@@ -5142,28 +5144,35 @@ function finishSignup() {
 }
 // One entry point: the native sheet on the phone, Google's own button in the browser.
 function startGoogle(link, onFail, btn) {
+  if (btn && btn.innerHTML && !btn._origHtml) {
+    btn._origHtml = btn.innerHTML;
+    btn.innerHTML = '<span class="gicon">⏳</span> Входим...';
+  }
+  const resetBtn = () => { if (btn && btn._origHtml) { btn.innerHTML = btn._origHtml; btn._origHtml = null; } };
   if (googleAvailable()) {
     startGoogle.reqId = (startGoogle.reqId || 0) + 1;
     const reqId = startGoogle.reqId;
     window.onGoogleToken = t => {
       track('google_token', {stale: reqId !== startGoogle.reqId ? 1 : 0}); // shows in Analytics whether the phone got a token at all
-      if (reqId !== startGoogle.reqId) return;
+      if (reqId !== startGoogle.reqId) { resetBtn(); return; }
       window.onGoogleToken = null;
       window.onGoogleError = null;
-      finishGoogle(t, link, onFail);
+      finishGoogle(t, link, err => { resetBtn(); if (typeof onFail === 'function') onFail(err); });
     };
     window.onGoogleError = c => {
       track('google_error', {code: String(c)});
-      if (reqId !== startGoogle.reqId) return;
+      if (reqId !== startGoogle.reqId) { resetBtn(); return; }
       window.onGoogleToken = null;
       window.onGoogleError = null;
+      resetBtn();
       try {
-        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'misconfigured' ? 'Вход через Google пока не подключён для этой версии игры. Войдите по почте — профиль тот же' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
+        if (c !== 'canceled') toastAny(c === 'not_configured' ? 'Google-вход не настроен в этой сборке' : c === 'misconfigured' ? 'Вход через Google пока не подключён для этой версии игры. Войдите по почте — профиль тот же' : c === 'no_credentials' ? 'Google не предоставил учётные данные. Проверьте аккаунт Google на устройстве и попробуйте снова' : c === 'bad_credential' ? 'Не удалось прочитать ответ Google. Попробуйте снова' : 'Не получилось открыть вход Google. Попробуйте снова');
       } finally { if (typeof onFail === 'function') onFail(c); }
     };
     try { AndroidApp.googleSignIn(); } catch (_) { window.onGoogleError('failed'); }
     return;
   }
+  resetBtn();
   if (googleWebOk() && btn) return googleWebButton(btn, link, onFail);
   toastAny('Вход через Google доступен в приложении');
   if (onFail) onFail('unavailable');
