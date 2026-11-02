@@ -234,7 +234,7 @@ html.app .saybtn:not([hidden])+.deck{margin-left:0}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .stats div{padding:10px 6px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--line);text-align:center}
 .stats b{display:block;font:800 18px var(--f-display);font-variant-numeric:tabular-nums}.stats small{color:var(--muted);font-size:11px}
-#ptabs{grid-template-columns:repeat(4,minmax(0,1fr))}
+#ptabs{grid-template-columns:repeat(3,minmax(0,1fr))}
 #ptabs button{font:800 12.5px var(--f-display);padding:0 2px;position:relative;white-space:nowrap}
 #ptabs button.hasdot::after{content:"";position:absolute;top:4px;right:6px;width:7px;height:7px;border-radius:50%;background:#ef5350;border:1.5px solid #141b33}
 .quest{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
