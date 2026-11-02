@@ -2,6 +2,24 @@
 
 export const RENAME_PRICE = 50;
 
+export const NICKNAME_ADJECTIVES = [
+  'Мудрый', 'Смелый', 'Тихий', 'Быстрый', 'Горный', 'Вольный',
+  'Храбрый', 'Светлый', 'Верный', 'Зоркий', 'Тайный', 'Ловкий'
+];
+
+export const NICKNAME_NOUNS = [
+  'Зодчий', 'Искатель', 'Странник', 'Следопыт', 'Картограф', 'Магистр',
+  'Хранитель', 'Страж', 'Орион', 'Бастион', 'Атлас', 'Компас'
+];
+
+/** Generates an evocative, universal fantasy/adventure nickname (up to 12 chars). */
+export function generateRandomNickname(rngFn = Math.random) {
+  const pick = arr => arr[Math.floor(rngFn() * arr.length)];
+  if (rngFn() < 0.45) return pick(NICKNAME_NOUNS);
+  const combo = `${pick(NICKNAME_ADJECTIVES)} ${pick(NICKNAME_NOUNS)}`;
+  return combo.length <= 12 ? combo : pick(NICKNAME_NOUNS);
+}
+
 /** Sanitize nickname and constrain length to 12 characters. */
 export function sanitizeNickname(v) {
   return String(v || '').replace(/[<>&"'`]/g, '').trim().slice(0, 12);

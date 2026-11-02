@@ -214,6 +214,10 @@
             <div class="seg" id="setupBotLvl"><button data-blvl="easy">Лёгкие</button><button data-blvl="normal">Обычные</button><button data-blvl="hard">Сложные</button></div>
             <p class="shint" id="setupBotLvlHint">Обычные — взвешенные ходы и захват подходящих объектов.</p>
           </div>
+          <div class="col" id="setupLocBox">
+            <div class="h3">Локация стола</div>
+            <div class="seg" id="setupLoc"><button data-loc="village" class="on">🌳 Деревня</button><button data-loc="city">🏙️ Мегаполис</button><button data-loc="siberia">❄️ Сибирь</button><button data-loc="jungle">🌴 Джунгли</button></div>
+          </div>
           <div class="col" id="seatsBox"><div class="h3">Игроки</div>
             <ul class="plist" id="slist"></ul></div>
           <div class="col" id="meBox" hidden><div class="h3">Ваше имя</div>
@@ -1336,8 +1340,9 @@ async function endGame(reason) {
   const rows = order.slice(0, 5).map((p, k) => `<li class="${p.i === meIdx ? 'me' : ''}" style="--c:${p.col};--d:${k * 90}ms"><span class="n">${k + 1}</span><i></i><b>${p.name}</b><span class="v">${p.score}</span></li>`).join('');
   const myCol = (players[meIdx] && players[meIdx].col) || wallet.color || '#f2b84b';
   const confetti = won ? `<div class="confetti">${Array.from({length: 22}, (_, k) => `<span style="left:${(k * 4.6 + (k % 3) * 3) % 100}%;--dl:${(k % 7) * 120}ms;--cc:${[myCol, '#f2b84b', '#ffffff', myCol, '#ffd75e'][k % 5]}"></span>`).join('')}</div>` : '';
-  // After the first win a guest is offered to keep the progress (a profile with sign-in), once.
-  const saveCard = won && FB && !fbAuth && PROG.st.wins === 1 && !wallet.saveAsked ? `<button class="ghostbtn savecard" id="saveProg"><b>☁️ Сохранить прогресс</b><small>Войдите, чтобы золото и уровень не пропали при смене телефона</small></button>` : '';
+  // Offer guests to secure their progress with an account
+  const needsSave = FB && !fbAuth && !registered();
+  const saveCard = needsSave && (PROG.st.games >= 1) && !wallet.saveDismissed ? `<button class="ghostbtn savecard" id="saveProg"><b>🏰 Сохранить прогресс</b><small>Войдите через Google в 1 клик, чтобы не потерять фигурки, ${wallet.gold} 💰 золота и кубки</small></button>` : '';
   over.innerHTML = `<div class="ocard fin">${confetti}<div class="medal">${medal}</div><h3>${title}</h3><p>${sub}</p><ol class="standings">${rows}</ol>${rewardChips(gold)}${xpLine()}${saveCard}<button class="cta wide" id="again2">${net ? 'Реванш' : 'Ещё партию'}</button><button class="ghostbtn" data-go="results">Подробные итоги</button></div>`;
   over.hidden = false;
   historySave(reason, true);
@@ -1391,7 +1396,7 @@ function newGame() {
   if (wallet.boosts.meeple > 0 && seats.some(x => !x.human) && seats.filter(x => x.human).length === 1) {
     bonus = seats.findIndex(x => x.human); wallet.boosts.meeple--; saveWallet();
   }
-  startGame({seats, rules: {...setup.rules, rv: 2}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0, bonus});
+  startGame({seats, rules: {...setup.rules, rv: 2}, deck: makeDeck(setup.rules), seed: (Math.random() * 1e9) | 0, bonus, loc: wallet.loc || 'village'});
   if (bonus >= 0) toastAny('Подарок: +1 фигурка в этой партии');
 }
 // Everything random about a game is in cfg, so every phone in an online room builds the same game.
@@ -1405,7 +1410,10 @@ function startGame(cfg, replay = []) {
   }
   if (!replay.length && !cfg.tut && !cfg.noIntro) track('game_start', {mode: cfg.online ? (net && net.quick ? 'online' : 'friends') : cfg.seats.filter(s => s.human).length > 1 ? 'local' : 'bots', players: cfg.seats.length, rules: (cfg.rules && cfg.rules.mode) || 'classic'});
   tut = null; tutShow();
-  $('#sayBtn').hidden = !cfg.online; $('#sayBox').hidden = true;
+  const locId = (cfg && cfg.loc) || wallet.loc || 'village';
+  const gameScr = $('#scr-game');
+  if (gameScr) gameScr.dataset.loc = locId;
+  $('#sayBtn').hidden = false; $('#sayBox').hidden = true;
   queue = replay.map(m => ({...m, old: true})); applied = 0; clearTimeout(catchT); catchUp = replay.length > 0; lastPlaced = null; markOwn();
   gameLog = {cfg, moves: replay.slice()};
   if (meepleResolve) { meepleResolve = null; mrow.hidden = true; prow.hidden = false; }
@@ -2098,7 +2106,16 @@ async function ensureGuestName() {
   try {
     const tok = await fbToken(), me = fbAuth && fbAuth.uid;
     const mine = await fetch(`${FB.dbUrl}/playerNo/${me}.json?auth=${tok}`).then(r => r.ok ? r.json() : null).catch(() => null);
-    const take = n => { wallet.no = n; if (!clean(wallet.name)) wallet.guest = 'nickname' + n; saveWallet(); renderSetup(); if (typeof presenceMark === 'function') presenceMark(true); };
+    const take = n => {
+      wallet.no = n;
+      if (!clean(wallet.name)) {
+        const gen = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.generateRandomNickname)
+          ? PG.account.auth.generateRandomNickname()
+          : 'Зодчий';
+        wallet.guest = gen;
+      }
+      saveWallet(); renderSetup(); if (typeof presenceMark === 'function') presenceMark(true);
+    };
     if (mine) return take(mine);
     const url = `${FB.dbUrl}/guestN.json?auth=${tok}`;
     for (let i = 0; i < 5 && !wallet.no; i++) {
@@ -2157,6 +2174,8 @@ function renderSetup() {
       if (blHint) blHint.textContent = HINTS[curLvl] || HINTS.normal;
     }
   }
+  const curLoc = wallet.loc || 'village';
+  document.querySelectorAll('#setupLoc button').forEach(b => b.setAttribute('aria-pressed', b.dataset.loc === curLoc));
   if (on) {
     if (typeof PG !== 'undefined' && PG.ui && PG.ui.setup && PG.ui.setup.renderSetupMeHtml) {
       const me = PG.ui.setup.renderSetupMeHtml(profileName(), wallet.color, PALETTE);
@@ -2182,6 +2201,11 @@ if ($('#setupBotLvl')) $('#setupBotLvl').onclick = e => {
     setup.seats.filter(s => !s.human).forEach(s => s.botlvl = wallet.botlvl);
     saveSetup();
   }
+  renderSetup();
+};
+if ($('#setupLoc')) $('#setupLoc').onclick = e => {
+  const b = e.target.closest('button'); if (!b || !b.dataset.loc) return;
+  wallet.loc = b.dataset.loc; saveWallet();
   renderSetup();
 };
 $('#slist').addEventListener('input', e => { const i = +e.target.id.slice(2); setup.seats[i].name = e.target.value; saveSetup(); });
@@ -3218,11 +3242,22 @@ function sayLockUi() {
 $('#sayBtn').onclick = e => { e.stopPropagation(); const box = $('#sayBox'); box.hidden = !box.hidden; if (!box.hidden) box.classList.toggle('lock', sayLocked()); };
 document.addEventListener('pointerdown', e => { if (!e.target.closest('#sayBox,#sayBtn')) $('#sayBox').hidden = true; });
 $('#sayBox').addEventListener('click', e => {
-  const b = e.target.closest('[data-say]'); if (!b || !net || sayLocked()) return;
+  const b = e.target.closest('[data-say]'); if (!b || sayLocked()) return;
   const me = players.findIndex(isMe); if (me < 0) return;
   $('#sayBox').hidden = true;
   sayAt = Date.now() + SAY_MS; sayLockUi(); setTimeout(() => { $('#sayBox').classList.remove('lock'); $('#sayBtn').classList.remove('cool'); }, SAY_MS);
-  netSend({t: 'say', g: net.gameId, p: me, i: +b.dataset.say});
+  if (net) {
+    netSend({t: 'say', g: net.gameId, p: me, i: +b.dataset.say});
+  } else {
+    showSay(me, +b.dataset.say);
+    const botIdxs = players.map((p, i) => !isMe(p) && !p.human ? i : -1).filter(i => i >= 0);
+    if (botIdxs.length && Math.random() < 0.45) {
+      const bIdx = botIdxs[Math.floor(Math.random() * botIdxs.length)];
+      const botReplies = [0, 1, 11, 13, 16]; // '👍', '😄', '👏', '🤔', '❤️'
+      const reply = botReplies[Math.floor(Math.random() * botReplies.length)];
+      setTimeout(() => { if (typeof phase !== 'undefined' && phase !== 'end') showSay(bIdx, reply); }, 1200 + Math.random() * 800);
+    }
+  }
 });
 function showSay(p, i) {
   const txt = SAYS[i], card = playersEl.children[p]; if (!txt || !card) return;
@@ -3750,9 +3785,19 @@ function askProfile() {
     ? PG.game.tutorial.renderAskProfileDialogHtml(wallet.color)
     : `<div class="ocard prof"><div class="pav" id="pav" style="--c:${wallet.color}">?</div><h3>Создайте профиль</h3><p>Придумайте никнейм и выберите цвет — их увидят соперники и рейтинг</p><input class="field" id="profName" maxlength="12" placeholder="Никнейм" autocomplete="off"><button class="cta wide" id="profOk" disabled>Готово</button><button class="ghostbtn" id="profLogin">У меня уже есть профиль — войти</button></div>`;
   document.body.append(box);
-  const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav');
+  const inp = box.querySelector('#profName'), ok = box.querySelector('#profOk'), av = box.querySelector('#pav'), dice = box.querySelector('#profDice');
   colorPick(inp, av);
   inp.oninput = () => { const n = clean(inp.value); ok.disabled = n.length < 2 || n === 'Вы'; av.textContent = (n[0] || '?').toUpperCase(); };
+  if (dice) {
+    dice.onclick = () => {
+      const gen = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.generateRandomNickname)
+        ? PG.account.auth.generateRandomNickname()
+        : 'Зодчий';
+      inp.value = gen;
+      inp.dispatchEvent(new Event('input'));
+      beep('coin');
+    };
+  }
   ok.onclick = () => { if (!setProfileName(inp.value)) return; box.remove(); toastAny(`Привет, ${profileName()}!`); renderSetup(); if (FB) setTimeout(() => accountDialog('link'), 600); if (typeof checkNameProposal === 'function') setTimeout(checkNameProposal, 1200); };
   box.querySelector('#profLogin').onclick = () => { box.remove(); accountDialog('login'); };
   setTimeout(() => inp.focus(), 200);
@@ -5409,10 +5454,20 @@ function accountDialog(mode, prefill) {
 function renameDialog() {
   if (wallet.gold < RENAME_PRICE) return toastAny(`Смена имени стоит ${RENAME_PRICE} золота — не хватает ${RENAME_PRICE - wallet.gold}`);
   const box = document.createElement('div'); box.className = 'over'; box.style.position = 'fixed';
-  box.innerHTML = `<div class="ocard acc"><h3>Смена имени</h3><p>Стоимость: <b><i class="coin" style="display:inline-block;vertical-align:-3px"></i> ${RENAME_PRICE}</b> · останется ${wallet.gold - RENAME_PRICE}</p><input class="field" id="newName" maxlength="12" placeholder="${profileName()}"><button class="cta wide" id="rnGo" disabled>Сменить имя</button><button class="ghostbtn" id="rnNo">Отмена</button></div>`;
+  box.innerHTML = `<div class="ocard acc"><h3>Смена имени</h3><p>Стоимость: <b><i class="coin" style="display:inline-block;vertical-align:-3px"></i> ${RENAME_PRICE}</b> · останется ${wallet.gold - RENAME_PRICE}</p><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input class="field" id="newName" maxlength="12" placeholder="${profileName()}" style="flex:1"><button type="button" class="iconbtn" id="rnDice" title="Случайное имя" style="width:44px;height:44px;border-radius:10px;background:var(--surface-hover);font-size:20px;border:1px solid var(--line);cursor:pointer;flex:0 0 auto">🎲</button></div><button class="cta wide" id="rnGo" disabled>Сменить имя</button><button class="ghostbtn" id="rnNo">Отмена</button></div>`;
   document.body.append(box);
-  const inp = box.querySelector('#newName'), go = box.querySelector('#rnGo');
+  const inp = box.querySelector('#newName'), go = box.querySelector('#rnGo'), dice = box.querySelector('#rnDice');
   inp.oninput = () => { const n = clean(inp.value); go.disabled = n.length < 2 || n === profileName(); };
+  if (dice) {
+    dice.onclick = () => {
+      const gen = (typeof PG !== 'undefined' && PG.account && PG.account.auth && PG.account.auth.generateRandomNickname)
+        ? PG.account.auth.generateRandomNickname()
+        : 'Зодчий';
+      inp.value = gen;
+      inp.dispatchEvent(new Event('input'));
+      beep('coin');
+    };
+  }
   box.querySelector('#rnNo').onclick = () => box.remove();
   go.onclick = () => { if (wallet.gold < RENAME_PRICE) return; wallet.gold -= RENAME_PRICE; setProfileName(inp.value); beep('coin'); box.remove(); toastAny(`Теперь вы — ${profileName()}`); renderAccount(); syncRating(true); };
   setTimeout(() => inp.focus(), 200);
